@@ -1,6 +1,6 @@
 package attestation
 
-type SignatureVerifiction struct{}
+type SignatureVerification struct{}
 type VerificationOptions interface{}
 
 type Predicate interface{}
@@ -10,5 +10,5 @@ type Statement interface {
 	Subjects() []Subject
 	Predicate() Predicate
 	Type() string
-	VerifySignature(...VerificationOptions) (*SignatureVerifiction, error)
+	VerifySignature(...VerificationOptions) (*SignatureVerification, error)
 }

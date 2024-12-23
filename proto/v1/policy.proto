@@ -1,0 +1,58 @@
+
+syntax = "proto3";
+
+package ampel.v1;
+
+// import "google/protobuf/timestamp.proto";
+
+message PolicySet {
+    string id = 1; 
+    string runtime = 2; 
+    repeated Policy policies = 3;
+}
+
+message Policy {
+    string id = 1;
+    string description = 2;
+    repeated Identity identities = 3;
+    Context context = 4;
+    repeated string predicateTypes = 5;
+    repeated Transformer transformer = 6;
+    string runtime = 7;
+    repeated Tenet tenets = 8;
+    repeated Output outputs = 9;
+}
+
+message Identity {
+    string type = 1; // exact | regexp
+    string issuer = 2; // https://accounts.google.com
+    string identity = 3; //  "identity": "puerco@gmail.com"
+}
+
+message Context {
+    repeated ValueDef values = 1;
+    
+    message ValueDef {
+        string name = 1;
+        string type = 2;
+        bool required = 3;
+        oneof default {
+            string string = 4;
+        }
+    }    
+}
+
+// Este hay que arreglarlo
+message Transformer {
+    string id = 1;
+}
+
+// Terminar
+message Tenet {
+    string code = 1;
+}
+
+message Output {
+    string id = 1;
+    string type = 2;
+}

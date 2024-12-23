@@ -1,0 +1,27 @@
+
+syntax = "proto3";
+
+package ampel.v1;
+
+import "google/protobuf/timestamp.proto";
+import "policy.proto";
+
+message Result {
+    string status = 1;
+    google.protobuf.Timestamp date = 2;
+    PolicyRef policy = 3;
+    repeated StatementRef statements = 4;
+    repeated Output data = 5;
+}
+
+message PolicyRef {
+    string id = 1; 
+}
+
+message StatementRef {
+    string id = 1;
+}
+
+message ResultSet {
+    repeated Result results = 1;
+}

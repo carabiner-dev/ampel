@@ -1,4 +1,4 @@
-package storage
+package collector
 
 import (
 	"github.com/puerco/ampel/pkg/attestation"

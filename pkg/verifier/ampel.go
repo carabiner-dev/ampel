@@ -3,6 +3,9 @@ package verifier
 import (
 	"fmt"
 
+	intoto "github.com/in-toto/attestation/go/v1"
+
+	v1 "github.com/puerco/ampel/pkg/api/v1"
 	"github.com/puerco/ampel/pkg/policy"
 	"github.com/puerco/ampel/pkg/principal"
 	"github.com/puerco/ampel/pkg/storage"
@@ -25,32 +28,19 @@ type Ampel struct {
 	StorageBackends []*storage.Repository
 }
 
-// CheckObject checks the status of an object
-func (ampel *Ampel) CheckObject(obj *principal.Object) (*policy.ResultSet, error) {
-	policies, err := ampel.impl.GetObjectPolicies(obj)
-	if err != nil {
-		return nil, fmt.Errorf("fetching object policies: %w", err)
-	}
-
-	res, err := ampel.impl.EvalObject(policies, obj)
-	if err != nil {
-		return nil, fmt.Errorf("evaluating object: %w", err)
-	}
-	return res, err
+// VerifyObject
+func (ampel *Ampel) Verify(*v1.PolicySet, []*intoto.ResourceDescriptor) (*v1.Result, error) {
+	// Fetch Evidence
+	// Transform Evidence
+	// Eval Policy
+	// Generate outputs
 }
 
-// Eval applies a policy
-func (ampel *Ampel) Eval(checklist *policy.Checklist, obj *principal.Object) (*policy.ResultSet, error) {
-	results := policy.ResultSet{}
-	for i, chk := range checklist.Checks {
-		res, err := evaluateCheck(chk, obj)
-		if err != nil {
-			return nil, fmt.Errorf("eval check #%d [%s]", i, chk.ID())
-		}
-		results.Results = append(results.Results, &res)
-	}
-
-	return &results, nil
+func (ampel *Ampel) VerifySubject(*v1.PolicySet, *intoto.ResourceDescriptor) (*v1.Result, error) {
+	// Filter evidence
+	// Transform
+	// Eval
+	// Generate outputs
 }
 
 func evaluateCheck(chk policy.Check, obj *principal.Object) (policy.Result, error) {
