@@ -1,11 +1,8 @@
 package verifier
 
 import (
-	"fmt"
-
-	intoto "github.com/in-toto/attestation/go/v1"
-
 	v1 "github.com/puerco/ampel/pkg/api/v1"
+	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/policy"
 	"github.com/puerco/ampel/pkg/principal"
 	"github.com/puerco/ampel/pkg/storage"
@@ -29,24 +26,16 @@ type Ampel struct {
 }
 
 // VerifyObject
-func (ampel *Ampel) Verify(*v1.PolicySet, []*intoto.ResourceDescriptor) (*v1.Result, error) {
-	// Fetch Evidence
+func (ampel *Ampel) Verify(*v1.PolicySet, []*attestation.Subject) (*v1.Result, error) {
+	// Fetch applicable evidence
 	// Transform Evidence
 	// Eval Policy
 	// Generate outputs
 }
 
-func (ampel *Ampel) VerifySubject(*v1.PolicySet, *intoto.ResourceDescriptor) (*v1.Result, error) {
+func (ampel *Ampel) VerifySubject(*v1.PolicySet, *attestation.Subject) (*v1.Result, error) {
 	// Filter evidence
 	// Transform
 	// Eval
 	// Generate outputs
-}
-
-func evaluateCheck(chk policy.Check, obj *principal.Object) (policy.Result, error) {
-	res, err := chk.Eval(obj)
-	if err != nil {
-		return res, fmt.Errorf("eval: %w", err)
-	}
-	return res, nil
 }

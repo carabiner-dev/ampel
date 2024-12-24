@@ -1,30 +1,32 @@
 package collector
 
 import (
+	v1 "github.com/puerco/ampel/pkg/api/v1"
 	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/policy"
-	"github.com/puerco/ampel/pkg/principal"
+	"github.com/puerco/ampel/pkg/collector/filter"
 )
-
-type AttestationQuery struct{}
 
 type Repository interface {
 }
 
-type Fetcher interface {
-	Fetch(AttestationQuery) ([]*attestation.Statement, error)
-	FetchObjectStatements(principal.Object) ([]attestation.Statement, error)
+type FetchOptions struct {
+	Query filter.AttestationQuery
+}
+
+type AttestationFetcher interface {
+	Fetch(*FetchOptions) ([]attestation.Envelope, error)
+	FetchObjectStatements(attestation.Subject) ([]attestation.Envelope, error)
 }
 
 type PolicyStorageKey string
 
 type PolicyStore interface {
-	ListPolicies() ([]*policy.Checklist, error)
-	FetchPolicy(PolicyStorageKey) (*policy.Checklist, error)
+	ListPolicies() ([]*v1.PolicySet, error)
+	FetchPolicy(PolicyStorageKey) (*v1.PolicySet, error)
 }
 
 type Storer interface {
-	Store(*attestation.Statement) error
+	Store(attestation.Envelope) error
 }
 
 type RepoFilter func([]Repository) []Repository
@@ -33,7 +35,7 @@ type RepoFilter func([]Repository) []Repository
 var FilterFetchers = func(repos []Repository) []Repository {
 	repos = []Repository{}
 	for _, r := range repos {
-		if _, ok := r.(Fetcher); ok {
+		if _, ok := r.(AttestationFetcher); ok {
 			repos = append(repos, r)
 		}
 	}
