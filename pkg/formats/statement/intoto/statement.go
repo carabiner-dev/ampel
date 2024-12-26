@@ -3,22 +3,49 @@
 package intoto
 
 import (
+	"fmt"
+
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate"
 )
 
-var _ attestation.Subject = (*InTotoSubject)(nil)
+// var _ attestation.Subject = (*Subject)(nil)
 
-type InTotoSubject struct {
-	gointoto.ResourceDescriptor
-}
+// type Subject struct {
+// 	gointoto.ResourceDescriptor
+// }
 
-func (its *InTotoSubject) GetURI() string {
-	return its.GetURI()
-}
-
-type InToto struct {
+type Statement struct {
+	Predicate attestation.Predicate
 	gointoto.Statement
 }
 
-type Parser struct{}
+func (s *Statement) GetPredicate() attestation.Predicate {
+	return s.Predicate
+}
+
+// ParsePredicate reparses the underlying intoto predicate and regenerates the
+// statement's predicate.
+func (s *Statement) ParsePredicate() error {
+	pred, err := predicate.Parsers.Parse([]byte(s.Statement.Predicate.String()))
+	if err != nil {
+		return fmt.Errorf("parsing predicate: %w", err)
+	}
+
+	s.Predicate = pred
+	return nil
+}
+
+func (s *Statement) Type() attestation.Type {
+	return gointoto.StatementTypeUri
+}
+
+// GetSubjects returns the statement's subjects
+func (s *Statement) GetSubjects() []attestation.Subject {
+	var ret = []attestation.Subject{}
+	for i := range s.Subject {
+		ret = append(ret, s.Subject[i])
+	}
+	return ret
+}

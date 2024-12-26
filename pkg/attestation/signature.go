@@ -1,5 +1,9 @@
 package attestation
 
+// Signature abstracts a signature. At least for now.
+type Signature interface{}
+type Certificate interface{}
+
 // Results of the signature verification process
 type SignatureVerification struct{}
 

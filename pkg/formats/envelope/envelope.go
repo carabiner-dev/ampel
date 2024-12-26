@@ -24,6 +24,6 @@ var Parsers = ParserList{
 }
 
 // Parse takes a reader and parses
-func (list *ParserList) Parse(r io.Reader) {
-
+func (list *ParserList) Parse(r io.Reader) ([]attestation.Envelope, error) {
+	return nil, nil
 }

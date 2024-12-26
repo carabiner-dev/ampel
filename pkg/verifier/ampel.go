@@ -3,14 +3,9 @@ package verifier
 import (
 	v1 "github.com/puerco/ampel/pkg/api/v1"
 	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/policy"
-	"github.com/puerco/ampel/pkg/principal"
-	"github.com/puerco/ampel/pkg/storage"
 )
 
 type AmpelImplementation interface {
-	GetObjectPolicies(*principal.Object) (*policy.Checklist, error)
-	EvalObject(*policy.Checklist, *principal.Object) (*policy.ResultSet, error)
 }
 
 func New() *Ampel {
@@ -21,8 +16,8 @@ func New() *Ampel {
 
 // Ampel is the attestation verifier
 type Ampel struct {
-	impl            AmpelImplementation
-	StorageBackends []*storage.Repository
+	impl AmpelImplementation
+	/// StorageBackends []*storage.Repository
 }
 
 // VerifyObject
@@ -31,6 +26,7 @@ func (ampel *Ampel) Verify(*v1.PolicySet, []*attestation.Subject) (*v1.Result, e
 	// Transform Evidence
 	// Eval Policy
 	// Generate outputs
+	return nil, nil
 }
 
 func (ampel *Ampel) VerifySubject(*v1.PolicySet, *attestation.Subject) (*v1.Result, error) {
@@ -38,4 +34,5 @@ func (ampel *Ampel) VerifySubject(*v1.PolicySet, *attestation.Subject) (*v1.Resu
 	// Transform
 	// Eval
 	// Generate outputs
+	return nil, nil
 }
