@@ -3,15 +3,29 @@
 package bare
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/statement"
 )
 
 type Parser struct{}
 
 func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {
-	return nil, nil
+	env := &Envelope{}
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return nil, fmt.Errorf("reading input data: %w", err)
+	}
+
+	// Parse the predicate
+	s, err := statement.Parsers.Parse(data)
+	if err != nil {
+		return nil, fmt.Errorf("parsing predicate: %w", err)
+	}
+	env.Statement = s
+	return []attestation.Envelope{env}, nil
 }
 
 // FileExtensions returns the file extennsions this parser will look at.

@@ -11,12 +11,15 @@ type Envelope struct {
 func (env *Envelope) GetStatement() attestation.Statement {
 	return env.Statement
 }
+
 func (env *Envelope) GetSignatures() []attestation.Signature {
 	return []attestation.Signature{}
 }
+
 func (env *Envelope) GetCertificate() attestation.Certificate {
 	return nil
 }
+
 func (env *Envelope) VerifySignature() (*attestation.SignatureVerification, error) {
 	return nil, nil
 }

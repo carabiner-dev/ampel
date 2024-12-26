@@ -8,6 +8,7 @@ import (
 )
 
 func TestParseStream(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name    string
 		file    string
@@ -24,7 +25,6 @@ func TestParseStream(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-
 		})
 	}
 }
