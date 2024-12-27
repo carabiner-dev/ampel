@@ -1,8 +1,10 @@
 package intoto
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/formats/predicate"
@@ -12,8 +14,15 @@ type Parser struct{}
 
 func (p *Parser) Parse(b []byte) (attestation.Statement, error) {
 	stmt := Statement{}
-	if err := json.Unmarshal(b, &stmt); err != nil {
-		return nil, err
+	dec := json.NewDecoder(bytes.NewReader(b))
+	dec.DisallowUnknownFields()
+
+	// Decode the statement data
+	if err := dec.Decode(&stmt); err != nil {
+		if strings.Contains(err.Error(), "json: unknown field ") {
+			return nil, fmt.Errorf("%v: %w", attestation.ErrNotCorrectFormat, err)
+		}
+		return nil, fmt.Errorf("decoding statement json: %w", err)
 	}
 	pdata, err := stmt.Statement.Predicate.MarshalJSON()
 	if err != nil {

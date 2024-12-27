@@ -12,11 +12,17 @@ import (
 
 // var _ attestation.Subject = (*Subject)(nil)
 
-// type Subject struct {
-// 	gointoto.ResourceDescriptor
-// }
+func NewStatement() *Statement {
+	return &Statement{
+		Predicate: nil,
+		Statement: gointoto.Statement{
+			Type: gointoto.StatementTypeUri,
+		},
+	}
+}
 
 type Statement struct {
+	// Type      string `protobuf:"bytes,1,opt,name=type,json=_type,proto3" json:"type,omitempty"`
 	Predicate attestation.Predicate
 	gointoto.Statement
 }
@@ -35,10 +41,6 @@ func (s *Statement) ParsePredicate() error {
 
 	s.Predicate = pred
 	return nil
-}
-
-func (s *Statement) Type() attestation.Type {
-	return gointoto.StatementTypeUri
 }
 
 // GetSubjects returns the statement's subjects
