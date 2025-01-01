@@ -14,7 +14,7 @@ var _ attestation.PredicateParser = (*Parser)(nil)
 
 // Parse generates a generic JSON predicate object from any JSON it gets.
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
-	pred := Predicate{
+	pred := &Predicate{
 		Data: data,
 	}
 	parsedData := DataMap{}

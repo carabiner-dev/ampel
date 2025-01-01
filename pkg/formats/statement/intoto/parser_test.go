@@ -33,7 +33,7 @@ func TestParse(t *testing.T) {
 			require.NotNil(t, res)
 			require.NotNil(t, res.GetPredicate())
 			pred := res.GetPredicate()
-			jsonPred, ok := pred.(json.Predicate)
+			jsonPred, ok := pred.(*json.Predicate)
 			require.True(t, ok)
 			require.Equal(t, "https://github.com/Attestations/GitHubActionsWorkflow@v1", jsonPred.Parsed["buildType"])
 			require.Len(t, res.GetSubjects(), 10)

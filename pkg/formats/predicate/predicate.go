@@ -5,18 +5,15 @@ import (
 
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/formats/predicate/json"
+	"github.com/puerco/ampel/pkg/formats/predicate/protobom"
 )
 
-type Format string
-
-const (
-	FormatJSON Format = "json"
-)
-
-type ParsersList map[Format]attestation.PredicateParser
+type ParsersList map[attestation.PredicateType]attestation.PredicateParser
 
 // Parsers
-var Parsers = ParsersList{}
+var Parsers = ParsersList{
+	protobom.PredicateType: protobom.New(),
+}
 
 func (pl *ParsersList) Parse(data []byte) (attestation.Predicate, error) {
 	var errs = []error{}
@@ -35,7 +32,7 @@ func (pl *ParsersList) Parse(data []byte) (attestation.Predicate, error) {
 		return nil, errors.Join(errs...)
 	}
 
-	// Finally try the vanilla parser
+	// Finally try the vanilla JSON parser
 	p := &json.Parser{}
 	pred, err := p.Parse(data)
 	if err != nil {

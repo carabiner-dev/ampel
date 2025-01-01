@@ -20,7 +20,7 @@ func (p *Parser) Parse(b []byte) (attestation.Statement, error) {
 	// Decode the statement data
 	if err := dec.Decode(&stmt); err != nil {
 		if strings.Contains(err.Error(), "json: unknown field ") {
-			return nil, fmt.Errorf("%v: %w", attestation.ErrNotCorrectFormat, err)
+			return nil, attestation.ErrNotCorrectFormat
 		}
 		return nil, fmt.Errorf("decoding statement json: %w", err)
 	}

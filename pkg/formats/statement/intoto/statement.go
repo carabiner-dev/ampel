@@ -51,3 +51,7 @@ func (s *Statement) GetSubjects() []attestation.Subject {
 	}
 	return ret
 }
+
+func (s *Statement) GetPredicateType() attestation.PredicateType {
+	return s.Predicate.GetType()
+}

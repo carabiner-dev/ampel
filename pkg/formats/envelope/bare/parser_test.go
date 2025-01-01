@@ -13,11 +13,13 @@ func TestParseStream(t *testing.T) {
 		name    string
 		file    string
 		mustErr bool
-	}{} {
-		t.Parallel()
+	}{
+		{"normal", "testdata/ampel.spdx.json", false},
+	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			p := Parser{}
-			f, err := os.Open(tc.name)
+			f, err := os.Open(tc.file)
 			require.NoError(t, err)
 			_, err = p.ParseStream(f)
 			if tc.mustErr {
