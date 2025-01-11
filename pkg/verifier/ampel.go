@@ -12,6 +12,7 @@ import (
 type AmpelImplementation interface {
 	GatherAttestations(context.Context, []*attestation.Subject) ([]*attestation.Envelope, error)
 	ParseAttestations(context.Context, []string) ([]*attestation.Envelope, error)
+	AssertResults([]*v1.ResultSet) (bool, error)
 }
 
 func New() *Ampel {
@@ -45,8 +46,8 @@ func (ampel *Ampel) Verify(ctx context.Context, opts *VerificationOptions, polic
 	}
 	atts = append(atts, moreatts...)
 
-	// Here, the policy may not require attestations (noop) but
-	// it's a stretch, we'll feix it later
+	// Here, the policy may not require attestations (noop) but it's a corner
+	// case, we'll feix it later.
 	if len(atts) == 0 {
 		return nil, errors.New("no evidence found to evaluate policy")
 	}

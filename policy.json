@@ -28,9 +28,9 @@
                 { "id": "sbom-merge" },
                 { "id": "vex-applier" }
             ],
-            "runtime": "cel/v14.0",
             "tenets": [
                 {
+                    "runtime": "cel/v14.0",
                     "code": "privateer.checks.mfa"
                 },
                 {
