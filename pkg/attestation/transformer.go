@@ -1,36 +1,44 @@
-package attestation
+package transformer
 
 import "time"
+
+// Factory returns a list of transformers from
+// a list of string identifiers
+type Factory struct {
+}
+
+func (tf *Factory) Get([]string) ([]*Transformer, error) {
+}
 
 // Transformer is an interface that models a predicate transformer
 type Transformer interface {
 	Transform([]*Predicate) (*Predicate, error)
 }
 
-type TransformerInfo struct {
+type Info struct {
 	Identifier string
 	Version    string
 	Hashes     map[string]string
 }
 
-// TransformerInputRecord records the inputs that went into a predicate
+// InputRecord records the inputs that went into a predicate
 // transformation process.
-type TransformerInputRecord struct {
+type InputRecord struct {
 	Type     PredicateType
 	Subjects []Subject
 	Hashes   map[string]string
 }
 
-// TransformerOutputRecord is a struct that catpures metadata about
+// OutputRecord is a struct that catpures metadata about
 // the outputs resulting from a tranformer run.
-type TransformerOutputRecord struct {
+type OutputRecord struct {
 	Hashes map[string]string
 	Type   PredicateType
 }
 
-// TransformationEvidence is a struct that records a run
+// Record is a struct that records a run
 // of a transformer.
-type TransformationRecord struct {
+type Record struct {
 	Date        *time.Time
 	Transformer TransformerInfo
 	Inputs      []TransformerInputRecord
