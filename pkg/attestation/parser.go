@@ -18,4 +18,5 @@ type StatementParser interface {
 
 type PredicateParser interface {
 	Parse([]byte) (Predicate, error)
+	SupportsType(...string) bool
 }

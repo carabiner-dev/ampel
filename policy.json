@@ -17,8 +17,7 @@
                 "values": [{
                     "name": "author",
                     "type": "regex",
-                    "required": false,
-                    "default": "*"
+                    "required": true                    
                 }]
             },
             "predicateTypes": [
@@ -26,23 +25,21 @@
                 "application/vnd.cyclonedx+json"
             ],    
             "transformers": [
-                {
-                    "id": "sbom-merge"
-                },
+                { "id": "sbom-merge" },
                 { "id": "vex-applier" }
             ],
             "runtime": "cel/v14.0",
             "tenets": [
                 {
                     "code": "privateer.checks.mfa"
-                }
-            ],
-            "outputs": [
+                },
                 {
-                    "id": "sbom.supplier",
-                    "type": "string"
+                    "code": "privateer.checks.mfa.sms = false", 
+                    "outputs": [ 
+                        {"id": "sbom.supplier", "type": "string"}
+                    ]
                 }
-            ]
+            ]            
         }
     ]
 }

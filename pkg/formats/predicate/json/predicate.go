@@ -17,7 +17,7 @@ type Predicate struct {
 	Parsed DataMap
 }
 
-func (_ *Predicate) GetType() attestation.PredicateType {
+func (*Predicate) GetType() attestation.PredicateType {
 	return PredicateType
 }
 

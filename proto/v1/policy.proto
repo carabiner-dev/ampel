@@ -1,6 +1,7 @@
 
 syntax = "proto3";
-
+import "google/protobuf/struct.proto";
+// google.protobuf.Struct
 package ampel.v1;
 
 // import "google/protobuf/timestamp.proto";
@@ -8,7 +9,8 @@ package ampel.v1;
 message PolicySet {
     string id = 1; 
     string runtime = 2; 
-    repeated Policy policies = 3;
+    string version = 3;
+    repeated Policy policies = 4;
 }
 
 message Policy {
@@ -17,7 +19,7 @@ message Policy {
     repeated Identity identities = 3;
     Context context = 4;
     repeated string predicateTypes = 5;
-    repeated Transformer transformer = 6;
+    repeated Transformer transformers = 6;
     string runtime = 7;
     repeated Tenet tenets = 8;
     repeated Output outputs = 9;
@@ -35,10 +37,9 @@ message Context {
     message ValueDef {
         string name = 1;
         string type = 2;
-        bool required = 3;
-        oneof default {
-            string string = 4;
-        }
+        string value = 3;
+        bool required = 4;
+        // google.protobuf.Struct default = 4;
     }    
 }
 
@@ -50,6 +51,7 @@ message Transformer {
 // Terminar
 message Tenet {
     string code = 1;
+    repeated Output outputs = 2;
 }
 
 message Output {

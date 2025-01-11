@@ -12,7 +12,7 @@ type Predicate struct {
 	Parsed *sbom.Document
 }
 
-func (_ *Predicate) GetType() attestation.PredicateType {
+func (*Predicate) GetType() attestation.PredicateType {
 	return PredicateType
 }
 

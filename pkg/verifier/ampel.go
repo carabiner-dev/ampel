@@ -1,6 +1,8 @@
 package verifier
 
 import (
+	"context"
+
 	v1 "github.com/puerco/ampel/pkg/api/v1"
 	"github.com/puerco/ampel/pkg/attestation"
 )
@@ -20,19 +22,15 @@ type Ampel struct {
 	/// StorageBackends []*storage.Repository
 }
 
+type VerificationOptions struct {
+	AttestationFiles []string
+}
+
 // VerifyObject
-func (ampel *Ampel) Verify(*v1.PolicySet, []*attestation.Subject) (*v1.Result, error) {
+func (ampel *Ampel) Verify(ctx context.Context, opts *VerificationOptions, policy *v1.PolicySet, subjects []*attestation.Subject) (*v1.Result, error) {
 	// Fetch applicable evidence
 	// Transform Evidence
 	// Eval Policy
-	// Generate outputs
-	return nil, nil
-}
-
-func (ampel *Ampel) VerifySubject(*v1.PolicySet, *attestation.Subject) (*v1.Result, error) {
-	// Filter evidence
-	// Transform
-	// Eval
 	// Generate outputs
 	return nil, nil
 }

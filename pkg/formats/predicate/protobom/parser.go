@@ -3,6 +3,7 @@ package protobom
 import (
 	"bytes"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/protobom/protobom/pkg/reader"
@@ -17,6 +18,8 @@ var _ attestation.PredicateParser = (*Parser)(nil)
 func New() *Parser {
 	return &Parser{}
 }
+
+var PredicateTypes = []string{}
 
 // Parse generates a generic JSON predicate object from any JSON it gets.
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
@@ -37,4 +40,13 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 		Data:   data,
 		Parsed: doc,
 	}, err
+}
+
+func (p *Parser) SupportsType(testTypes ...string) bool {
+	for _, pt := range PredicateTypes {
+		if slices.Contains(testTypes, pt) {
+			return true
+		}
+	}
+	return false
 }
