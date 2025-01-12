@@ -5,14 +5,24 @@ import (
 	"errors"
 	"fmt"
 
-	v1 "github.com/puerco/ampel/pkg/api/v1"
+	api "github.com/puerco/ampel/pkg/api/v1"
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/collector"
+	"github.com/puerco/ampel/pkg/evaluator"
+	"github.com/puerco/ampel/pkg/transformer"
 )
 
+// AmpelImplementation
 type AmpelImplementation interface {
-	GatherAttestations(context.Context, []*attestation.Subject) ([]*attestation.Envelope, error)
-	ParseAttestations(context.Context, []string) ([]*attestation.Envelope, error)
-	AssertResults([]*v1.ResultSet) (bool, error)
+	GatherAttestations(context.Context, *VerificationOptions, attestation.Subject) ([]attestation.Envelope, error)
+	ParseAttestations(context.Context, []string) ([]attestation.Envelope, error)
+	BuildEvaluators(*VerificationOptions, *api.Policy) (map[evaluator.Class]evaluator.Evaluator, error)
+	BuildTransformers(*VerificationOptions, *api.Policy) (map[transformer.Class]transformer.Transformer, error)
+	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *api.Policy, []attestation.Predicate) ([]attestation.Predicate, error)
+	CheckIdentities(*VerificationOptions, *api.Policy, []attestation.Envelope) error
+	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
+	AssertResults([]*api.ResultSet) (bool, error)
+	VerifySubject(*VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.ResultSet, error)
 }
 
 func New() *Ampel {
@@ -24,17 +34,22 @@ func New() *Ampel {
 // Ampel is the attestation verifier
 type Ampel struct {
 	impl AmpelImplementation
-	/// StorageBackends []*storage.Repository
 }
 
 type VerificationOptions struct {
+	// Collectors is a collection of configured attestation fetchers
+	Collectors []collector.AttestationFetcher
+
+	// AttestationFiles are additional attestations passed manually
 	AttestationFiles []string
 }
 
-// VerifyObject
-func (ampel *Ampel) Verify(ctx context.Context, opts *VerificationOptions, policy *v1.PolicySet, subjects []*attestation.Subject) (*v1.Result, error) {
+// Verify checks a number of subjects against a policy using the available evidence
+func (ampel *Ampel) Verify(
+	ctx context.Context, opts *VerificationOptions, policy *api.Policy, subject attestation.Subject,
+) (*api.ResultSet, error) {
 	// Fetch applicable evidence
-	atts, err := ampel.impl.GatherAttestations(ctx, subjects)
+	atts, err := ampel.impl.GatherAttestations(ctx, opts, subject)
 	if err != nil {
 		return nil, fmt.Errorf("gathering evidence: %w", err)
 	}
@@ -47,13 +62,47 @@ func (ampel *Ampel) Verify(ctx context.Context, opts *VerificationOptions, polic
 	atts = append(atts, moreatts...)
 
 	// Here, the policy may not require attestations (noop) but it's a corner
-	// case, we'll feix it later.
+	// case, we'll fix it later.
 	if len(atts) == 0 {
 		return nil, errors.New("no evidence found to evaluate policy")
 	}
 
-	// Transform Evidence
+	// Check identities to see if the attestations can be admitted
+	// TODO(puerco)
+	// Option: Unmatched identities cause a:fail or b:ignore
+	if err := ampel.impl.CheckIdentities(opts, policy, atts); err != nil {
+		return nil, fmt.Errorf("admission failed: %w", err)
+	}
+
+	// Filter attestations to those applicable to the subject
+	preds, err := ampel.impl.FilterAttestations(opts, subject, atts)
+	if err != nil {
+		return nil, fmt.Errorf("filtering attestations: %w", err)
+	}
+
+	transformers, err := ampel.impl.BuildTransformers(opts, policy)
+	if err != nil {
+		return nil, fmt.Errorf("building policy transformers: %w", err)
+	}
+
+	// Apply the defined tranformations to the predicates
+	preds, err = ampel.impl.Transform(opts, transformers, policy, preds)
+	if err != nil {
+		return nil, fmt.Errorf("applying transformations: %w", err)
+	}
+
+	// Build the required evaluators
+	evaluators, err := ampel.impl.BuildEvaluators(opts, policy)
+	if err != nil {
+		return nil, fmt.Errorf("building evaluators: %w", err)
+	}
+
 	// Eval Policy
+	results, err := ampel.impl.VerifySubject(opts, evaluators, policy, subject, preds)
+	if err != nil {
+		return nil, fmt.Errorf("verifying subject: %w", err)
+	}
+
 	// Generate outputs
-	return nil, nil
+	return results, nil
 }

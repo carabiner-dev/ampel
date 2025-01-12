@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	v1 "github.com/puerco/ampel/pkg/api/v1"
+	api "github.com/puerco/ampel/pkg/api/v1"
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/evaluator/options"
 )
@@ -23,8 +23,8 @@ type Evaluator struct {
 
 // Exec executes each tenet and returns the combined results
 func (e *Evaluator) Exec(
-	ctx context.Context, opts options.Options, tenets []*v1.Tenet, statements []*attestation.Statement,
-) (*v1.ResultSet, error) {
+	ctx context.Context, opts options.Options, tenets []*api.Tenet, statements []*attestation.Statement,
+) (*api.ResultSet, error) {
 	// Create the evaluation enviroment
 	env, err := e.impl.CreateEnvironment()
 	if err != nil {

@@ -13,17 +13,30 @@ import (
 // Ensure this parser implements the interface
 var _ Transformer = (*protobom.Transformer)(nil)
 
+type Class string
+
+func (c *Class) Version() string {
+	_, a, _ := strings.Cut(string(*c), "/")
+	return a
+}
+
+func (c *Class) Name() string {
+	b, _, _ := strings.Cut(string(*c), "/")
+	return b
+}
+
 // Factory returns a list of transformers from
 // a list of string identifiers
 type Factory struct {
 }
 
-func (tf *Factory) Get(s string) (Transformer, error) {
-	if !strings.HasPrefix(s, "internal:") {
+// Get returns
+func (tf *Factory) Get(c Class) (Transformer, error) {
+	if !strings.HasPrefix(c.Name(), "internal:") {
 		return nil, errors.New("only internal transformers are supported for now")
 	}
 
-	s = strings.TrimPrefix(s, "internal:")
+	s := strings.TrimPrefix(c.Name(), "internal:")
 	switch s {
 	case "protobom":
 		return protobom.New(), nil

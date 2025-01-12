@@ -6,20 +6,20 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/ext"
-	v1 "github.com/puerco/ampel/pkg/api/v1"
+	api "github.com/puerco/ampel/pkg/api/v1"
 )
 
 type CelEvaluatorImplementation interface {
-	CompileTenets(*cel.Env, []*v1.Tenet) ([]*cel.Ast, error)
+	CompileTenets(*cel.Env, []*api.Tenet) ([]*cel.Ast, error)
 	CreateEnvironment() (*cel.Env, error)
-	Evaluate([]*cel.Ast) (*v1.ResultSet, error)
-	Assert(*v1.ResultSet) bool
+	Evaluate([]*cel.Ast) (*api.ResultSet, error)
+	Assert(*api.ResultSet) bool
 }
 
 type defaulCelEvaluator struct{}
 
 // compileTenets compiles the CEL code from the teenets into their syntax trees.
-func (dce *defaulCelEvaluator) CompileTenets(env *cel.Env, tenets []*v1.Tenet) ([]*cel.Ast, error) {
+func (dce *defaulCelEvaluator) CompileTenets(env *cel.Env, tenets []*api.Tenet) ([]*cel.Ast, error) {
 	// Compile the tenets into their ASTs
 	var asts = []*cel.Ast{}
 	var errs = []error{}
@@ -64,10 +64,10 @@ func (dce *defaulCelEvaluator) CreateEnvironment() (*cel.Env, error) {
 }
 
 // Evaluate
-func (dce *defaulCelEvaluator) Evaluate([]*cel.Ast) (*v1.ResultSet, error) {
+func (dce *defaulCelEvaluator) Evaluate([]*cel.Ast) (*api.ResultSet, error) {
 	return nil, nil
 }
 
-func (dce *defaulCelEvaluator) Assert(*v1.ResultSet) bool {
+func (dce *defaulCelEvaluator) Assert(*api.ResultSet) bool {
 	return false
 }

@@ -15,12 +15,12 @@ var _ Evaluator = (*cel.Evaluator)(nil)
 
 type Factory struct{}
 
-func Get(c Class) (Evaluator, error) {
+func (f *Factory) Get(c Class) (Evaluator, error) {
 	switch c.Name() {
 	case "cel":
 		return &cel.Evaluator{}, nil
 	default:
-		return nil, fmt.Errorf("cannot produce evaluator of class %q", c.Name())
+		return nil, fmt.Errorf("no evaluator defined for class %q", c.Name())
 	}
 }
 

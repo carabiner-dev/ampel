@@ -47,8 +47,8 @@ func (o *verifyOptions) Validate() error {
 func addVerify(parentCmd *cobra.Command) {
 	opts := verifyOptions{}
 	evalCmd := &cobra.Command{
-		Short:             fmt.Sprintf("%s verify: checks artifacts against a policy", appname),
-		Long:              fmt.Sprintf(`%s verify: checks artifacts against a policy`, appname),
+		Short:             "check artifacts against a policy",
+		Long:              "checks artifacts against a policy",
 		Use:               "verify",
 		SilenceUsage:      false,
 		SilenceErrors:     false,
