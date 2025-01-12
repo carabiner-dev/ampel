@@ -1,6 +1,6 @@
 
 syntax = "proto3";
-import "google/protobuf/struct.proto";
+// import "google/protobuf/struct.proto";
 // google.protobuf.Struct
 package ampel.v1;
 
@@ -48,13 +48,16 @@ message Transformer {
     string id = 1;
 }
 
-// Terminar
+// Tenet
 message Tenet {
-    string code = 1;
-    repeated Output outputs = 2;
+    int32 ID = 1;
+    string runtime = 2;
+    string code = 3;
+    repeated Output outputs = 4;
 }
 
 message Output {
     string id = 1;
     string type = 2;
 }
+
