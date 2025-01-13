@@ -59,5 +59,6 @@ message Tenet {
 message Output {
     string id = 1;
     string type = 2;
+    string code = 3;
 }
 

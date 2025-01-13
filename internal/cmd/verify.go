@@ -91,7 +91,7 @@ func addVerify(parentCmd *cobra.Command) {
 			for _, path := range opts.SubjectFiles {
 				sub, err := subject.FromPath(path)
 				if err != nil {
-					return fmt.Errorf("generating subject from %q: %w", sub, err)
+					return fmt.Errorf("generating subject from %q: %w", path, err)
 				}
 				subjects = append(subjects, sub)
 			}
