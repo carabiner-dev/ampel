@@ -13,12 +13,16 @@ type DataMap map[string]any
 
 // Predicate is a generic JSON predicate type for all unknown JSON
 type Predicate struct {
+	Type   attestation.PredicateType
 	Data   []byte
 	Parsed DataMap
 }
 
-func (*Predicate) GetType() attestation.PredicateType {
-	return PredicateType
+func (p *Predicate) GetType() attestation.PredicateType {
+	if p.Type == "" {
+		return PredicateType
+	}
+	return p.Type
 }
 
 func (p *Predicate) GetData() []byte {
