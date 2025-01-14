@@ -25,10 +25,10 @@ type AmpelImplementation interface {
 	VerifySubject(*VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.ResultSet, error)
 }
 
-func New() *Ampel {
+func New() (*Ampel, error) {
 	return &Ampel{
 		impl: &defaultIplementation{},
-	}
+	}, nil
 }
 
 // Ampel is the attestation verifier

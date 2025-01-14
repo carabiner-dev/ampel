@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/policy"
 	"github.com/puerco/ampel/pkg/subject"
+	"github.com/puerco/ampel/pkg/verifier"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +30,7 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	)
 
 	cmd.PersistentFlags().StringSliceVarP(
-		&o.SubjectFiles, "attestation", "a", []string{}, "additional attestations to read",
+		&o.AttestationFiles, "attestation", "a", []string{}, "additional attestations to read",
 	)
 }
 
@@ -99,11 +101,29 @@ func addVerify(parentCmd *cobra.Command) {
 
 			// Parse the polcy file
 			parser := policy.NewParser()
-			policy, err := parser.ParseFile(opts.PolicyFile)
+			p, err := parser.ParseFile(opts.PolicyFile)
 			if err != nil {
 				return fmt.Errorf("parsing policy: %w", err)
 			}
-			fmt.Printf("policy: %+v", policy)
+			fmt.Printf("policy: %+v\n", p)
+
+			// Run the ampel verifier
+			ampel, err := verifier.New()
+			if err != nil {
+				return fmt.Errorf("creating verifier")
+			}
+
+			vopts := &verifier.VerificationOptions{
+				// Collectors:       []collector.AttestationFetcher{},
+				AttestationFiles: opts.AttestationFiles,
+			}
+
+			results, err := ampel.Verify(context.Background(), vopts, p.Policies[0], subjects[0])
+			if err != nil {
+				return fmt.Errorf("runnig subject verification: %w", err)
+			}
+
+			fmt.Printf("Results:\n%+v\n", results)
 
 			return nil
 		},

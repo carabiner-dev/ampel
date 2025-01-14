@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	api "github.com/puerco/ampel/pkg/api/v1"
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/evaluator"
+	"github.com/puerco/ampel/pkg/formats/envelope"
 	"github.com/puerco/ampel/pkg/transformer"
+	"github.com/sirupsen/logrus"
 )
 
 type defaultIplementation struct{}
@@ -17,9 +20,33 @@ func (di *defaultIplementation) GatherAttestations(vtx context.Context, opts *Ve
 	// TODO: Implement
 	return []attestation.Envelope{}, nil
 }
-func (di *defaultIplementation) ParseAttestations(context.Context, []string) ([]attestation.Envelope, error) {
-	// TODO: Implement
-	return []attestation.Envelope{}, nil
+
+// ParseAttestations parses additional attestations defined to support the
+// subject verification
+func (di *defaultIplementation) ParseAttestations(ctx context.Context, paths []string) ([]attestation.Envelope, error) {
+	errs := []error{}
+	res := []attestation.Envelope{}
+	for _, path := range paths {
+		logrus.Infof("parsing %s (%d envelope drivers loaded)", path, len(envelope.Parsers))
+		f, err := os.Open(path)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		env, err := envelope.Parsers.Parse(f)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		if env == nil {
+			continue
+		}
+
+		res = append(res, env...)
+	}
+	return res, errors.Join(errs...)
 }
 
 // AssertResults conducts the final assertion to allow/block based on the
