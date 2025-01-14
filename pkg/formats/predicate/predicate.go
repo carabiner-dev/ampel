@@ -4,16 +4,22 @@ import (
 	"errors"
 
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate/cyclonedx"
 	"github.com/puerco/ampel/pkg/formats/predicate/json"
 	"github.com/puerco/ampel/pkg/formats/predicate/protobom"
+	"github.com/puerco/ampel/pkg/formats/predicate/spdx"
 	"github.com/sirupsen/logrus"
 )
+
+var ErrWrongEncoding = errors.New("wrong data encoding, should be text/json")
 
 type ParsersList map[attestation.PredicateType]attestation.PredicateParser
 
 // Parsers
 var Parsers = ParsersList{
-	protobom.PredicateType: protobom.New(),
+	protobom.PredicateType:  protobom.New(),
+	spdx.PredicateType:      spdx.New(),
+	cyclonedx.PredicateType: cyclonedx.New(),
 }
 
 type Options struct {
@@ -26,7 +32,7 @@ func (pl *ParsersList) Parse(data []byte) (attestation.Predicate, error) {
 		logrus.Debugf("Checking if predicate is %s", f)
 		pred, err := p.Parse(data)
 		if err == nil {
-			logrus.Debugf("Found predicate of type %s", f)
+			logrus.Infof("Found predicate of type %s", f)
 			return pred, nil
 		}
 
@@ -50,5 +56,6 @@ func (pl *ParsersList) Parse(data []byte) (attestation.Predicate, error) {
 	if err != nil {
 		return nil, err
 	}
+	logrus.Warning("Treating predicate as generic JSON type")
 	return pred, nil
 }
