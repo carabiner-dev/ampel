@@ -14,18 +14,6 @@ import (
 // Ensure this parser implements the interface
 var _ Transformer = (*protobom.Transformer)(nil)
 
-type Class string
-
-func (c *Class) Version() string {
-	_, a, _ := strings.Cut(string(*c), "/")
-	return a
-}
-
-func (c *Class) Name() string {
-	b, _, _ := strings.Cut(string(*c), "/")
-	return b
-}
-
 // Factory returns a list of transformers from
 // a list of string identifiers
 type Factory struct {
