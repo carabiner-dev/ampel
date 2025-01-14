@@ -113,10 +113,8 @@ func addVerify(parentCmd *cobra.Command) {
 				return fmt.Errorf("creating verifier")
 			}
 
-			vopts := &verifier.VerificationOptions{
-				// Collectors:       []collector.AttestationFetcher{},
-				AttestationFiles: opts.AttestationFiles,
-			}
+			vopts := verifier.NewVerificationOptions()
+			vopts.AttestationFiles = opts.AttestationFiles
 
 			results, err := ampel.Verify(context.Background(), vopts, p.Policies[0], subjects[0])
 			if err != nil {

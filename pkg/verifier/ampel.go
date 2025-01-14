@@ -42,6 +42,24 @@ type VerificationOptions struct {
 
 	// AttestationFiles are additional attestations passed manually
 	AttestationFiles []string
+
+	// DefaultEvaluator is the default evaluator we use when a policy does
+	// not define one.
+	DefaultEvaluator evaluator.Class
+}
+
+var defaultVerificationOptions = VerificationOptions{
+	// DefaultEvaluator the the default eval enfine is the lowest version
+	// of CEL available
+	DefaultEvaluator: evaluator.Class("cel/1"),
+}
+
+func NewVerificationOptions() *VerificationOptions {
+	return &VerificationOptions{
+		Collectors:       []collector.AttestationFetcher{},
+		AttestationFiles: []string{},
+		DefaultEvaluator: defaultVerificationOptions.DefaultEvaluator,
+	}
 }
 
 // Verify checks a number of subjects against a policy using the available evidence

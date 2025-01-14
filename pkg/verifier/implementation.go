@@ -60,14 +60,17 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 	evaluators := map[evaluator.Class]evaluator.Evaluator{}
 	factory := evaluator.Factory{}
 	// First, build the default evaluator
-	def := p.Runtime
+	def := evaluator.Class(p.Runtime)
+	// TODO(puerco): Move this to defaultOptions
 	if p.Runtime == "" {
-		def = "cel/1"
+		def = opts.DefaultEvaluator
 	}
-	e, err := factory.Get(evaluator.Class(def))
+
+	e, err := factory.Get(def)
 	if err != nil {
 		return nil, fmt.Errorf("unable to build default runtime")
 	}
+	logrus.Debugf("Registered default evaluator of class %s", def)
 	evaluators[evaluator.Class("default")] = e
 
 	for _, t := range p.Tenets {
@@ -81,6 +84,7 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 				return nil, fmt.Errorf("building %q runtime: %w", t.Runtime, err)
 			}
 			evaluators[cl] = e
+			logrus.Debugf("Registered evaluator of class %s", cl)
 		}
 	}
 
