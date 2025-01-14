@@ -37,7 +37,7 @@ func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {
 		return []attestation.Envelope{env}, nil
 	}
 
-	if err != nil && !errors.Is(err, attestation.ErrNotCorrectFormat) {
+	if !errors.Is(err, attestation.ErrNotCorrectFormat) {
 		return nil, fmt.Errorf("parsing predicate: %w", err)
 	}
 
