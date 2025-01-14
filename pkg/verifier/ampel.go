@@ -22,7 +22,7 @@ type AmpelImplementation interface {
 	CheckIdentities(*VerificationOptions, *api.Policy, []attestation.Envelope) error
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
 	AssertResults([]*api.ResultSet) (bool, error)
-	VerifySubject(*VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.ResultSet, error)
+	VerifySubject(context.Context, *VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.ResultSet, error)
 }
 
 func New() (*Ampel, error) {
@@ -116,7 +116,7 @@ func (ampel *Ampel) Verify(
 	}
 
 	// Eval Policy
-	results, err := ampel.impl.VerifySubject(opts, evaluators, policy, subject, preds)
+	results, err := ampel.impl.VerifySubject(ctx, opts, evaluators, policy, subject, preds)
 	if err != nil {
 		return nil, fmt.Errorf("verifying subject: %w", err)
 	}

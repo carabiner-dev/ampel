@@ -9,6 +9,7 @@ import (
 	api "github.com/puerco/ampel/pkg/api/v1"
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/evaluator"
+	"github.com/puerco/ampel/pkg/evaluator/options"
 	"github.com/puerco/ampel/pkg/formats/envelope"
 	"github.com/puerco/ampel/pkg/transformer"
 	"github.com/sirupsen/logrus"
@@ -141,13 +142,18 @@ func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, su
 	return preds, nil
 }
 
-// VerifySubject
+// VerifySubject performs the core verification of attested data. This step runs after
+// all gathering, parsing, transforming and verification is performed.
 func (di *defaultIplementation) VerifySubject(
-	opts *VerificationOptions, evaluators map[evaluator.Class]evaluator.Evaluator,
+	ctx context.Context, opts *VerificationOptions, evaluators map[evaluator.Class]evaluator.Evaluator,
 	p *api.Policy, subject attestation.Subject, predicates []attestation.Predicate,
 ) (*api.ResultSet, error) {
 	rs := &api.ResultSet{
 		Results: []*api.Result{},
+	}
+
+	for _, tenet := range p.Tenets {
+		evaluators[evaluator.Class(tenet.Runtime)].Exec(ctx, options.Options{}, tenet, predicates)
 	}
 
 	return rs, nil

@@ -26,5 +26,5 @@ func (f *Factory) Get(c Class) (Evaluator, error) {
 
 // Evaluator
 type Evaluator interface {
-	Exec(context.Context, options.Options, []*api.Tenet, []*attestation.Statement) (*api.ResultSet, error)
+	Exec(context.Context, options.Options, *api.Tenet, []attestation.Predicate) (*api.ResultSet, error)
 }

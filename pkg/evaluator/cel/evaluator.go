@@ -23,7 +23,7 @@ type Evaluator struct {
 
 // Exec executes each tenet and returns the combined results
 func (e *Evaluator) Exec(
-	ctx context.Context, opts options.Options, tenets []*api.Tenet, statements []*attestation.Statement,
+	ctx context.Context, opts options.Options, tenet *api.Tenet, predicates []attestation.Predicate,
 ) (*api.ResultSet, error) {
 	// Create the evaluation enviroment
 	env, err := e.impl.CreateEnvironment()
@@ -32,7 +32,7 @@ func (e *Evaluator) Exec(
 	}
 
 	// Compile the tenet code into ASTs
-	asts, err := e.impl.CompileTenets(env, tenets)
+	asts, err := e.impl.CompileTenets(env, []*api.Tenet{tenet})
 	if err != nil {
 		return nil, fmt.Errorf("compiling program: %w", err)
 	}
