@@ -19,3 +19,7 @@ func (*Predicate) GetType() attestation.PredicateType {
 func (p *Predicate) GetData() []byte {
 	return p.Data
 }
+
+func (p *Predicate) GetParsed() any {
+	return p.Parsed
+}

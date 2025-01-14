@@ -13,6 +13,7 @@ type Statement interface {
 
 type Predicate interface {
 	GetType() PredicateType
+	GetParsed() any
 	GetData() []byte
 }
 
