@@ -1,6 +1,6 @@
 
 syntax = "proto3";
-// import "google/protobuf/struct.proto";
+import "google/protobuf/struct.proto";
 // google.protobuf.Struct
 package ampel.v1;
 
@@ -32,14 +32,13 @@ message Identity {
 }
 
 message Context {
-    repeated ValueDef values = 1;
+    map<string, ValueDef> values = 1;
     
     message ValueDef {
-        string name = 1;
-        string type = 2;
-        string value = 3;
-        bool required = 4;
-        // google.protobuf.Struct default = 4;
+        string type = 1;
+        bool required = 2;
+        google.protobuf.Value value = 3;
+        google.protobuf.Value default = 4;
     }    
 }
 
