@@ -3,6 +3,7 @@ package cel
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/google/cel-go/cel"
@@ -17,7 +18,7 @@ import (
 type CelEvaluatorImplementation interface {
 	CompileTenet(*cel.Env, *api.Tenet) (*cel.Ast, error)
 	CreateEnvironment() (*cel.Env, error)
-	BuildVariables([]attestation.Predicate) (*map[string]interface{}, error)
+	BuildVariables(*api.Tenet, []attestation.Predicate) (*map[string]interface{}, error)
 	Evaluate(*cel.Env, *cel.Ast, *map[string]interface{}) (*api.Result, error)
 	Assert(*api.ResultSet) bool
 }
@@ -59,11 +60,17 @@ func (dce *defaulCelEvaluator) CreateEnvironment() (*cel.Env, error) {
 
 // BuildVariables builds the set of variables that will be exposed in the
 // CEL runtime.
-func (dce *defaulCelEvaluator) BuildVariables(predicates []attestation.Predicate) (*map[string]any, error) {
+func (dce *defaulCelEvaluator) BuildVariables(tenet *api.Tenet, predicates []attestation.Predicate) (*map[string]any, error) {
 	ret := map[string]any{}
 	preds := []*structpb.Value{}
 
 	for _, p := range predicates {
+		if tenet.Predicates != nil {
+			if len(tenet.Predicates.Types) > 0 && !slices.Contains(tenet.Predicates.Types, string(p.GetType())) {
+				logrus.Debugf("skipping predicate of type %q (not in tenet predicate types)", p.GetType())
+				continue
+			}
+		}
 		d := map[string]any{}
 		if err := json.Unmarshal(p.GetData(), &d); err != nil {
 			return nil, fmt.Errorf("unmarshalling predicate data: %w", err)

@@ -42,7 +42,7 @@ func (e *Evaluator) ExecTenet(
 		return nil, fmt.Errorf("compiling program: %w", err)
 	}
 
-	vars, err := e.impl.BuildVariables(predicates)
+	vars, err := e.impl.BuildVariables(tenet, predicates)
 	if err != nil {
 		return nil, fmt.Errorf("building variables for eval environment: %w", err)
 	}

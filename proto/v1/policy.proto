@@ -18,7 +18,7 @@ message Policy {
     string description = 2;
     repeated Identity identities = 3;
     Context context = 4;
-    repeated string predicateTypes = 5;
+    PredicateSpec predicates = 5;
     repeated Transformer transformers = 6;
     string runtime = 7;
     repeated Tenet tenets = 8;
@@ -47,12 +47,17 @@ message Transformer {
     string id = 1;
 }
 
+message PredicateSpec {
+    repeated string types = 1;
+}
+
 // Tenet
 message Tenet {
     int32 ID = 1;
     string runtime = 2;
     string code = 3;
-    repeated Output outputs = 4;
+    PredicateSpec predicates = 4;
+    repeated Output outputs = 5;
 }
 
 message Output {
