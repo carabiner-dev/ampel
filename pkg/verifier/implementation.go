@@ -27,13 +27,13 @@ func (di *defaultIplementation) ParseAttestations(ctx context.Context, paths []s
 	errs := []error{}
 	res := []attestation.Envelope{}
 	for _, path := range paths {
-		logrus.Infof("parsing %s (%d envelope drivers loaded)", path, len(envelope.Parsers))
 		f, err := os.Open(path)
 		if err != nil {
 			errs = append(errs, err)
 			continue
 		}
 
+		logrus.Infof("parsing %s (%d envelope drivers loaded)", path, len(envelope.Parsers))
 		env, err := envelope.Parsers.Parse(f)
 		if err != nil {
 			errs = append(errs, err)
@@ -41,7 +41,7 @@ func (di *defaultIplementation) ParseAttestations(ctx context.Context, paths []s
 		}
 
 		if env == nil {
-			continue
+			return nil, fmt.Errorf("unable to obtain envelope from: %q", path)
 		}
 
 		res = append(res, env...)

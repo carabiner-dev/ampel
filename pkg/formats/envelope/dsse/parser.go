@@ -21,6 +21,11 @@ func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {
 		return nil, err
 	}
 
+	// If there is no payload, then don't treat the envelope as DSSE
+	if env.Payload == nil && len(env.Signatures) == 0 {
+		return nil, attestation.ErrNotCorrectFormat
+	}
+
 	for _, s := range env.Envelope.Signatures {
 		env.Signatures = append(env.Signatures, &Signature{
 			KeyID:     s.GetKeyid(),

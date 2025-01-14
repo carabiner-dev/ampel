@@ -6,6 +6,7 @@ import (
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/formats/predicate/json"
 	"github.com/puerco/ampel/pkg/formats/predicate/protobom"
+	"github.com/sirupsen/logrus"
 )
 
 type ParsersList map[attestation.PredicateType]attestation.PredicateParser
@@ -21,9 +22,11 @@ type Options struct {
 
 func (pl *ParsersList) Parse(data []byte) (attestation.Predicate, error) {
 	var errs = []error{}
-	for _, p := range *pl {
+	for f, p := range *pl {
+		logrus.Debugf("Checking if predicate is %s", f)
 		pred, err := p.Parse(data)
 		if err == nil {
+			logrus.Debugf("Found predicate of type %s", f)
 			return pred, nil
 		}
 

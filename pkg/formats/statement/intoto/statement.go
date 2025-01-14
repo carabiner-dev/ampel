@@ -11,14 +11,27 @@ import (
 )
 
 // var _ attestation.Subject = (*Subject)(nil)
+type StatementOption func(*Statement)
 
-func NewStatement() *Statement {
-	return &Statement{
+func WithPredicate(pred attestation.Predicate) StatementOption {
+	return func(stmnt *Statement) {
+		stmnt.Predicate = pred
+	}
+}
+
+func NewStatement(opts ...StatementOption) *Statement {
+	s := &Statement{
 		Predicate: nil,
 		Statement: gointoto.Statement{
 			Type: gointoto.StatementTypeUri,
 		},
 	}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	return s
 }
 
 type Statement struct {
