@@ -51,7 +51,7 @@ type VerificationOptions struct {
 var defaultVerificationOptions = VerificationOptions{
 	// DefaultEvaluator the the default eval enfine is the lowest version
 	// of CEL available
-	DefaultEvaluator: evaluator.Class("cel/1"),
+	DefaultEvaluator: evaluator.Class("cel@v1.0.0"),
 }
 
 func NewVerificationOptions() *VerificationOptions {

@@ -9,6 +9,11 @@ import (
 	"github.com/puerco/ampel/pkg/evaluator/options"
 )
 
+const (
+	VarNamePredicates = "predicates"
+	VarNameContext    = "context"
+)
+
 // New creates a new CEL evaluator with the default options
 func New() *Evaluator {
 	return &Evaluator{
@@ -22,9 +27,9 @@ type Evaluator struct {
 }
 
 // Exec executes each tenet and returns the combined results
-func (e *Evaluator) Exec(
+func (e *Evaluator) ExecTenet(
 	ctx context.Context, opts options.Options, tenet *api.Tenet, predicates []attestation.Predicate,
-) (*api.ResultSet, error) {
+) (*api.Result, error) {
 	// Create the evaluation enviroment
 	env, err := e.impl.CreateEnvironment()
 	if err != nil {
@@ -32,16 +37,21 @@ func (e *Evaluator) Exec(
 	}
 
 	// Compile the tenet code into ASTs
-	asts, err := e.impl.CompileTenets(env, []*api.Tenet{tenet})
+	ast, err := e.impl.CompileTenet(env, tenet)
 	if err != nil {
 		return nil, fmt.Errorf("compiling program: %w", err)
 	}
 
+	vars, err := e.impl.BuildVariables(predicates)
+	if err != nil {
+		return nil, fmt.Errorf("building variables for eval environment: %w", err)
+	}
+
 	// Evaluate the asts and compile the results into a resultset
-	resultset, err := e.impl.Evaluate(asts)
+	result, err := e.impl.Evaluate(env, ast, vars)
 	if err != nil {
 		return nil, fmt.Errorf("evaluating ASTs: %w", err)
 	}
 
-	return resultset, err
+	return result, err
 }

@@ -151,10 +151,19 @@ func (di *defaultIplementation) VerifySubject(
 	rs := &api.ResultSet{
 		Results: []*api.Result{},
 	}
-
-	for _, tenet := range p.Tenets {
-		evaluators[evaluator.Class(tenet.Runtime)].Exec(ctx, options.Options{}, tenet, predicates)
+	var errs = []error{}
+	for i, tenet := range p.Tenets {
+		key := evaluator.Class(tenet.Runtime)
+		if key == "" {
+			key = evaluator.Class("default")
+		}
+		res, err := evaluators[key].ExecTenet(ctx, options.Options{}, tenet, predicates)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("executing tenet #%d: %w", i, err))
+			continue
+		}
+		logrus.Infof("Tenet #%d eval: %+v", i, res)
 	}
 
-	return rs, nil
+	return rs, errors.Join(errs...)
 }

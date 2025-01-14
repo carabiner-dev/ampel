@@ -18,7 +18,7 @@ type Factory struct{}
 func (f *Factory) Get(c Class) (Evaluator, error) {
 	switch c.Name() {
 	case "cel":
-		return &cel.Evaluator{}, nil
+		return cel.New(), nil
 	default:
 		return nil, fmt.Errorf("no evaluator defined for class %q", c.Name())
 	}
@@ -26,5 +26,5 @@ func (f *Factory) Get(c Class) (Evaluator, error) {
 
 // Evaluator
 type Evaluator interface {
-	Exec(context.Context, options.Options, *api.Tenet, []attestation.Predicate) (*api.ResultSet, error)
+	ExecTenet(context.Context, options.Options, *api.Tenet, []attestation.Predicate) (*api.Result, error)
 }
