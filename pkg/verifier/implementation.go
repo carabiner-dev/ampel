@@ -101,21 +101,40 @@ func (di *defaultIplementation) BuildTransformers(opts *VerificationOptions, pol
 		}
 		transformers[transformer.Class(classString.Id)] = t
 	}
+	logrus.Infof("Loaded %d transformers defined in the policy", len(transformers))
 	return transformers, nil
 }
 
 // Transform takes the predicates and a set of transformers and applies the transformations
 // defined in the policy
 func (di defaultIplementation) Transform(opts *VerificationOptions, transformers map[transformer.Class]transformer.Transformer, policy *api.Policy, predicates []attestation.Predicate) ([]attestation.Predicate, error) {
-	return []attestation.Predicate{}, nil
+	var err error
+	i := 0
+	for _, t := range transformers {
+		predicates, err = t.Default(predicates)
+		if err != nil {
+			return nil, fmt.Errorf("applying transformation #%d (%T): %w", i, t, err)
+		}
+		i++
+	}
+	ts := []string{}
+	for _, s := range predicates {
+		ts = append(ts, string(s.GetType()))
+	}
+	logrus.Infof("Predicate types after tranform: %v", ts)
+	return predicates, nil
 }
 
 func (di *defaultIplementation) CheckIdentities(*VerificationOptions, *api.Policy, []attestation.Envelope) error {
 	return nil
 }
 
-func (di *defaultIplementation) FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error) {
-	return nil, nil
+func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, subject attestation.Subject, envs []attestation.Envelope) ([]attestation.Predicate, error) {
+	preds := []attestation.Predicate{}
+	for _, env := range envs {
+		preds = append(preds, env.GetStatement().GetPredicate())
+	}
+	return preds, nil
 }
 
 // VerifySubject

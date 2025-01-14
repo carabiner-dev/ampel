@@ -3,26 +3,46 @@ package protobom
 import (
 	"bytes"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/protobom/protobom/pkg/reader"
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate/cyclonedx"
 	"github.com/puerco/ampel/pkg/formats/predicate/protobom"
+	"github.com/puerco/ampel/pkg/formats/predicate/spdx"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type Transformer struct{}
 
+var ClassName = "protobom"
+
 func New() *Transformer {
 	return &Transformer{}
 }
 
-var PredicateTypes = []string{}
+// PredicateTypes
+var PredicateTypes = []attestation.PredicateType{
+	spdx.PredicateType,
+	cyclonedx.PredicateType,
+}
 
 // Transformer generates a protobom predicate from any of the supported SBOM
 // formats.
-func (p *Transformer) Default(preds []attestation.Predicate) (attestation.Predicate, error) {
+func (p *Transformer) Default(preds []attestation.Predicate) ([]attestation.Predicate, error) {
 	r := reader.New()
+	if len(preds) != 1 {
+		return nil, fmt.Errorf("default tranformation requires exactly one predicate")
+	}
+
+	if !slices.Contains(PredicateTypes, preds[0].GetType()) {
+		return nil, fmt.Errorf(
+			"predicate type not supported, must be one of %v (got %s)",
+			PredicateTypes, preds[0].GetType(),
+		)
+	}
+
 	s := bytes.NewReader(preds[0].GetData())
 	doc, err := r.ParseStream(s)
 	if err != nil {
@@ -38,9 +58,11 @@ func (p *Transformer) Default(preds []attestation.Predicate) (attestation.Predic
 		return nil, fmt.Errorf("marshaling rendered protobom predicate: %w", err)
 	}
 	// Reset the predicates
-	return &protobom.Predicate{
-		Data:   bdata,
-		Parsed: doc,
+	return []attestation.Predicate{
+		&protobom.Predicate{
+			Data:   bdata,
+			Parsed: doc,
+		},
 	}, err
 }
 

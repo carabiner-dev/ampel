@@ -8,6 +8,7 @@ import (
 
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/transformer/protobom"
+	"github.com/sirupsen/logrus"
 )
 
 // Ensure this parser implements the interface
@@ -38,7 +39,8 @@ func (tf *Factory) Get(c Class) (Transformer, error) {
 
 	s := strings.TrimPrefix(c.Name(), "internal:")
 	switch s {
-	case "protobom":
+	case protobom.ClassName:
+		logrus.Debugf("Found driver for transformer transformer class %s", s)
 		return protobom.New(), nil
 	default:
 		return nil, fmt.Errorf("unknown transformer %q", s)
@@ -47,7 +49,7 @@ func (tf *Factory) Get(c Class) (Transformer, error) {
 
 // Transformer is an interface that models a predicate transformer
 type Transformer interface {
-	Default([]attestation.Predicate) (attestation.Predicate, error)
+	Default([]attestation.Predicate) ([]attestation.Predicate, error)
 }
 
 type Info struct {
