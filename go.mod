@@ -3,6 +3,7 @@ module github.com/puerco/ampel
 go 1.23.4
 
 require (
+	github.com/fatih/color v1.18.0
 	github.com/google/cel-go v0.22.1
 	github.com/in-toto/attestation v1.1.0
 	github.com/protobom/protobom v0.5.0
@@ -25,6 +26,8 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spdx/tools-golang v0.5.5 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect

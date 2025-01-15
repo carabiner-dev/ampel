@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	v1 "github.com/puerco/ampel/pkg/api/v1"
+	"github.com/fatih/color"
+	"github.com/spf13/cobra"
+
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/policy"
 	"github.com/puerco/ampel/pkg/subject"
 	"github.com/puerco/ampel/pkg/verifier"
-	"github.com/spf13/cobra"
 )
 
 type verifyOptions struct {
@@ -49,8 +50,40 @@ func (o *verifyOptions) Validate() error {
 func addVerify(parentCmd *cobra.Command) {
 	opts := verifyOptions{}
 	evalCmd := &cobra.Command{
-		Short:             "check artifacts against a policy",
-		Long:              "checks artifacts against a policy",
+		Short: "check artifacts against a policy",
+		Long: fmt.Sprintf(`
+%s
+
+Ampel verify checks an artifact (a subject) against a policy file to assert
+the policy tenets to be true.
+
+To verify an artifact, ampel required three pieces:
+
+%s
+This is often an artifact such as a file. Most commonly, a policy will be evaluated
+against a hash. Ampel canobtain the hashes from files for you but you can specify
+them in the command line or using a subject reader.
+
+%s
+The policy code. Ampel policies are written in JSON, they can be signed and verified 
+just as any other attestation. The policy contains Tenets, the principles that
+we want to be true to verify an artifact. Tenets are written in a language such
+as CEL and once verified are turned into Assertions once verified using available 
+evidence.
+
+%s
+Evidence lets Ampel prove that the policy Tenets are true. Ampel is designed to
+operate on signed attestations which capture evidence in an envelope that makes
+it immutable, verifiable and linked to an identity to ensure the highest levels
+of trust. Attestations can be supplied through the command line or can be obtained
+using a collector.
+
+		`,
+			AmpelBanner("Amazing Multipurpose Policy Engine and L"),
+			color.New(color.FgHiWhite).Sprint("The Subject"),
+			color.New(color.FgHiWhite).Sprint("The Policy"),
+			color.New(color.FgHiWhite).Sprint("Attested Evidence"),
+		),
 		Use:               "verify",
 		SilenceUsage:      false,
 		SilenceErrors:     false,
@@ -63,24 +96,6 @@ func addVerify(parentCmd *cobra.Command) {
 
 			// Supress output from here as options are correct
 			c.SilenceUsage = true
-
-			_ = v1.Context{
-				Values: []*v1.Context_ValueDef{
-					{
-						Name:     "test",
-						Type:     "type",
-						Required: true,
-					},
-					// {
-					// 	Name:     "test",
-					// 	Type:     "type",
-					// 	Required: true,
-					// 	Default: &v1.Context_ValueDef_Int{
-					// 		Int: 23,
-					// 	},
-					// },
-				},
-			}
 
 			// data, err := protojson.Marshal(&ctx)
 			// if err != nil {
