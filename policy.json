@@ -1,7 +1,7 @@
 {
-    "runtime": "cedar/v1.0.0",
+    "runtime": "cedar@v1.0.0",
     "id": "OSPS",
-    "version": "",
+    "version": "1",
     "policies": [
         {
             "id": "AC-07",
@@ -14,28 +14,32 @@
                 }
             ],
             "context": {
-                "values": [{
-                    "name": "author",
-                    "type": "regex",
-                    "required": true                    
-                }]
+                "values": {
+                    "author": { "type": "string", "required": true, "default": "Puerco" },
+                    "count": { "type": "int", "required": true, "default": 1 },
+                    "shopping_list": { "type": "list", "required": true, "default": ["soup", "apples"] }
+                }
             },
-            "predicateTypes": [
-                "text/spdx",
-                "application/vnd.cyclonedx+json"
-            ],    
             "transformers": [
                 { "id": "internal:protobom" }
             ],
             "tenets": [
                 {
-                    "runtime": "cel/v14.0",
-                    "code": "privateer.checks.mfa"
+                    "runtime": "cel@v14.0",
+                    "code": "size(predicates) > 0",
+                    "predicates": {
+                        "types": ["application/protobom"]
+                    }                    
                 },
                 {
-                    "code": "privateer.checks.mfa.sms = false", 
-                    "outputs": [ 
-                        {"code": "sbom.supplier", "type": "string"}
+                    "runtime": "cel@v14.0",
+                    "code": "predicates[0].data.metadata.name == \"SBOM-SPDX-08bdfa07-a9a1-404e-b892-9f45896c715a\" "
+                },
+                {
+                    "runtime": "cel@v14.0",
+                    "code": "context.author == \"Puerco\" ",
+                    "outputs": [
+                        {"code": "context.author"}
                     ]
                 }
             ]            
