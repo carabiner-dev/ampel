@@ -28,10 +28,10 @@ type Evaluator struct {
 
 // Exec executes each tenet and returns the combined results
 func (e *Evaluator) ExecTenet(
-	ctx context.Context, opts options.Options, tenet *api.Tenet, predicates []attestation.Predicate,
+	ctx context.Context, opts *options.Options, tenet *api.Tenet, predicates []attestation.Predicate,
 ) (*api.Result, error) {
 	// Create the evaluation enviroment
-	env, err := e.impl.CreateEnvironment()
+	env, err := e.impl.CreateEnvironment(opts)
 	if err != nil {
 		return nil, fmt.Errorf("creating CEL environment: %w", err)
 	}
@@ -42,7 +42,7 @@ func (e *Evaluator) ExecTenet(
 		return nil, fmt.Errorf("compiling program: %w", err)
 	}
 
-	vars, err := e.impl.BuildVariables(tenet, predicates)
+	vars, err := e.impl.BuildVariables(opts, tenet, predicates)
 	if err != nil {
 		return nil, fmt.Errorf("building variables for eval environment: %w", err)
 	}

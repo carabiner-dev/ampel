@@ -1,3 +1,9 @@
 package options
 
-type Options struct{}
+import (
+	api "github.com/puerco/ampel/pkg/api/v1"
+)
+
+type Options struct {
+	Context *api.Context
+}

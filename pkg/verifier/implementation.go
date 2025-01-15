@@ -151,13 +151,18 @@ func (di *defaultIplementation) VerifySubject(
 	rs := &api.ResultSet{
 		Results: []*api.Result{},
 	}
+
+	evalOpts := &options.Options{
+		Context: p.Context,
+	}
+
 	var errs = []error{}
 	for i, tenet := range p.Tenets {
 		key := evaluator.Class(tenet.Runtime)
 		if key == "" {
 			key = evaluator.Class("default")
 		}
-		res, err := evaluators[key].ExecTenet(ctx, options.Options{}, tenet, predicates)
+		res, err := evaluators[key].ExecTenet(ctx, evalOpts, tenet, predicates)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("executing tenet #%d: %w", i, err))
 			continue

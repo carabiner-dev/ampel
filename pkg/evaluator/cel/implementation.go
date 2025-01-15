@@ -10,6 +10,7 @@ import (
 	"github.com/google/cel-go/ext"
 	api "github.com/puerco/ampel/pkg/api/v1"
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/evaluator/options"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -17,8 +18,8 @@ import (
 
 type CelEvaluatorImplementation interface {
 	CompileTenet(*cel.Env, *api.Tenet) (*cel.Ast, error)
-	CreateEnvironment() (*cel.Env, error)
-	BuildVariables(*api.Tenet, []attestation.Predicate) (*map[string]interface{}, error)
+	CreateEnvironment(*options.Options) (*cel.Env, error)
+	BuildVariables(*options.Options, *api.Tenet, []attestation.Predicate) (*map[string]interface{}, error)
 	Evaluate(*cel.Env, *cel.Ast, *map[string]interface{}) (*api.Result, error)
 	Assert(*api.ResultSet) bool
 }
@@ -40,9 +41,10 @@ func (dce *defaulCelEvaluator) CompileTenet(env *cel.Env, tenet *api.Tenet) (*ce
 }
 
 // CreateEnvironment
-func (dce *defaulCelEvaluator) CreateEnvironment() (*cel.Env, error) {
+func (dce *defaulCelEvaluator) CreateEnvironment(*options.Options) (*cel.Env, error) {
 	envOpts := []cel.EnvOption{
 		cel.Variable(VarNamePredicates, cel.MapType(cel.IntType, cel.AnyType)),
+		cel.Variable(VarNameContext, cel.AnyType),
 		ext.Bindings(),
 		ext.Strings(),
 		ext.Encoders(),
@@ -60,10 +62,11 @@ func (dce *defaulCelEvaluator) CreateEnvironment() (*cel.Env, error) {
 
 // BuildVariables builds the set of variables that will be exposed in the
 // CEL runtime.
-func (dce *defaulCelEvaluator) BuildVariables(tenet *api.Tenet, predicates []attestation.Predicate) (*map[string]any, error) {
+func (dce *defaulCelEvaluator) BuildVariables(opts *options.Options, tenet *api.Tenet, predicates []attestation.Predicate) (*map[string]any, error) {
 	ret := map[string]any{}
-	preds := []*structpb.Value{}
 
+	// Collected predicates
+	preds := []*structpb.Value{}
 	for _, p := range predicates {
 		if tenet.Predicates != nil {
 			if len(tenet.Predicates.Types) > 0 && !slices.Contains(tenet.Predicates.Types, string(p.GetType())) {
@@ -85,6 +88,17 @@ func (dce *defaulCelEvaluator) BuildVariables(tenet *api.Tenet, predicates []att
 		preds = append(preds, val)
 	}
 	ret[VarNamePredicates] = preds
+
+	// Context
+	var contextData = map[string]any{}
+	if opts.Context != nil {
+		contextData = opts.Context.ToMap()
+	}
+	s, err := structpb.NewStruct(contextData)
+	if err != nil {
+		return nil, fmt.Errorf("structuring context data: %w", err)
+	}
+	ret[VarNameContext] = s
 	return &ret, nil
 }
 
@@ -100,8 +114,7 @@ func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *m
 	}
 
 	// First evaluate the tenet.
-	result, deets, err := program.Eval(*variables)
-	logrus.Infof("Eval result: %+v deets: %+v", result, deets)
+	result, _, err := program.Eval(*variables)
 	if err != nil {
 		return nil, fmt.Errorf("evaluation error: %w", err)
 	}
