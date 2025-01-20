@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate/ampel"
 	"github.com/puerco/ampel/pkg/formats/predicate/cyclonedx"
 	"github.com/puerco/ampel/pkg/formats/predicate/json"
 	"github.com/puerco/ampel/pkg/formats/predicate/protobom"
@@ -20,6 +21,7 @@ var Parsers = ParsersList{
 	protobom.PredicateType:  protobom.New(),
 	spdx.PredicateType:      spdx.New(),
 	cyclonedx.PredicateType: cyclonedx.New(),
+	ampel.PredicateType:     ampel.New(),
 }
 
 type Options struct {
