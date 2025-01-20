@@ -6,6 +6,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/ext"
 	api "github.com/puerco/ampel/pkg/api/v1"
@@ -17,24 +18,25 @@ import (
 )
 
 type CelEvaluatorImplementation interface {
-	CompileTenet(*cel.Env, *api.Tenet) (*cel.Ast, error)
+	CompileCode(*cel.Env, string) (*cel.Ast, error)
 	CreateEnvironment(*options.Options) (*cel.Env, error)
 	BuildVariables(*options.Options, *api.Tenet, []attestation.Predicate) (*map[string]interface{}, error)
-	Evaluate(*cel.Env, *cel.Ast, *map[string]interface{}) (*api.Result, error)
+	EvaluateOutputs(*cel.Env, map[string]*cel.Ast, *map[string]any) (map[string]any, error)
+	Evaluate(*cel.Env, *cel.Ast, *map[string]any) (*api.Result, error)
 	Assert(*api.ResultSet) bool
 }
 
 type defaulCelEvaluator struct{}
 
-// compileTenets compiles the CEL code from the teenets into their syntax trees.
-func (dce *defaulCelEvaluator) CompileTenet(env *cel.Env, tenet *api.Tenet) (*cel.Ast, error) {
+// compileCode compiles CEL code from the tenets or output into their syntax trees.
+func (dce *defaulCelEvaluator) CompileCode(env *cel.Env, code string) (*cel.Ast, error) {
 	// Compile the tenets into their ASTs
 	if env == nil {
-		return nil, fmt.Errorf("unable to compile tenet, no cel environment created")
+		return nil, fmt.Errorf("unable to compile CEL code, environment is nil")
 	}
-	ast, iss := env.Compile(tenet.Code)
+	ast, iss := env.Compile(code)
 	if iss.Err() != nil {
-		return nil, fmt.Errorf("compiling tenet %w", iss.Err())
+		return nil, fmt.Errorf("compiling CEL code %w", iss.Err())
 	}
 
 	return ast, nil
@@ -102,6 +104,53 @@ func (dce *defaulCelEvaluator) BuildVariables(opts *options.Options, tenet *api.
 	return &ret, nil
 }
 
+// EvaluateOutputs
+func (dce *defaulCelEvaluator) EvaluateOutputs(
+	env *cel.Env, outputAsts map[string]*cel.Ast, vars *map[string]any,
+) (map[string]any, error) {
+	var evalResult = map[string]any{}
+	if env == nil {
+		return nil, fmt.Errorf("CEL environment not set")
+	}
+	if vars == nil {
+		return nil, fmt.Errorf("variable set undefined")
+	}
+
+	for id, ast := range outputAsts {
+		program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
+		if err != nil {
+			return nil, fmt.Errorf("generating program from AST: %w", err)
+		}
+
+		// First evaluate the tenet.
+		result, _, err := program.Eval(*vars)
+		if err != nil {
+			return nil, fmt.Errorf("evaluation error: %w", err)
+		}
+
+		//structpb.Value.UnmarshalJSON
+
+		evalResult[id] = result.Value()
+	}
+
+	// Round tripit
+	data, err := json.Marshal(evalResult)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling output evals: %w", err)
+	}
+
+	// Unmarshal to generic
+	ret := map[string]any{}
+	if err := json.Unmarshal(data, &ret); err != nil {
+		return nil, fmt.Errorf("unmarshaling data: %w", err)
+	}
+
+	spew.Dump(ret)
+
+	(*vars)["outputs"] = ret
+	return ret, nil
+}
+
 // Evaluate the precompiled ASTs
 func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *map[string]any) (*api.Result, error) {
 	program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
@@ -119,9 +168,14 @@ func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *m
 		return nil, fmt.Errorf("evaluation error: %w", err)
 	}
 
-	st := "FAILED"
+	// Tenets must evaluate to true always
+	evalResult, ok := result.Value().(bool)
+	if !ok {
+		return nil, fmt.Errorf("eval error: tenet must evaluate to boolean")
+	}
 
-	if result.Value().(bool) {
+	st := "FAILED"
+	if evalResult {
 		st = "PASSED"
 	}
 
@@ -131,7 +185,6 @@ func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *m
 		Date:       timestamppb.New(time.Now()),
 		Policy:     &api.PolicyRef{},
 		Statements: []*api.StatementRef{},
-		Data:       []*api.Output{},
 	}, nil
 }
 

@@ -4,14 +4,16 @@ syntax = "proto3";
 package ampel.v1;
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
 import "policy.proto";
 
 message Result {
     string status = 1;
     google.protobuf.Timestamp date = 2;
-    PolicyRef policy = 3;
-    repeated StatementRef statements = 4;
-    repeated Output data = 5;
+    google.protobuf.Struct output = 3;
+    // repeated Output output = 3;
+    PolicyRef policy = 4;
+    repeated StatementRef statements = 5;
 }
 
 message PolicyRef {

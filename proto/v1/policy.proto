@@ -22,7 +22,6 @@ message Policy {
     repeated Transformer transformers = 6;
     string runtime = 7;
     repeated Tenet tenets = 8;
-    repeated Output outputs = 9;
 }
 
 message Identity {
@@ -57,12 +56,10 @@ message Tenet {
     string runtime = 2;
     string code = 3;
     PredicateSpec predicates = 4;
-    repeated Output outputs = 5;
+    map <string, Output> outputs = 5;
 }
 
 message Output {
-    string id = 1;
-    string type = 2;
-    string code = 3;
+    string code = 1;
+    google.protobuf.Value value = 2;
 }
-

@@ -67,7 +67,7 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 		def = opts.DefaultEvaluator
 	}
 
-	e, err := factory.Get(def)
+	e, err := factory.Get(&options.Options{}, def)
 	if err != nil {
 		return nil, fmt.Errorf("unable to build default runtime")
 	}
@@ -80,7 +80,8 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 			if _, ok := evaluators[cl]; ok {
 				continue
 			}
-			e, err := factory.Get(cl)
+			// TODO(puerco): Options here should come from the verifier options
+			e, err := factory.Get(&options.Options{}, cl)
 			if err != nil {
 				return nil, fmt.Errorf("building %q runtime: %w", t.Runtime, err)
 			}
@@ -168,7 +169,39 @@ func (di *defaultIplementation) VerifySubject(
 			continue
 		}
 		logrus.Infof("Tenet #%d eval: %+v", i, res)
+		rs.Results = append(rs.Results, res)
 	}
 
 	return rs, errors.Join(errs...)
 }
+
+// // EvalOutputs evaluates the policy outputs. It is the evaluators responsibility to
+// // ensure the results are exposed to the policy runtime.
+// func (di *defaultIplementation) EvalOutputs(
+// 	ctx context.Context, opts *VerificationOptions, evaluators map[evaluator.Class]evaluator.Evaluator,
+// 	p *api.Policy, subject attestation.Subject, predicates []attestation.Predicate,
+// ) (*api.ResultSet, error) {
+// 	rs := &api.ResultSet{
+// 		Results: []*api.Result{},
+// 	}
+
+// 	evalOpts := &options.Options{
+// 		Context: p.Context,
+// 	}
+
+// 	var errs = []error{}
+// 	for i, output := range p.Outputs {
+// 		key := evaluator.Class(output.Runtime)
+// 		if key == "" {
+// 			key = evaluator.Class("default")
+// 		}
+// 		res, err := evaluators[key].ExecOutput(ctx, evalOpts, output, predicates)
+// 		if err != nil {
+// 			errs = append(errs, fmt.Errorf("executing tenet #%d: %w", i, err))
+// 			continue
+// 		}
+// 		logrus.Infof("Tenet #%d eval: %+v", i, res)
+// 	}
+
+// 	return rs, errors.Join(errs...)
+// }

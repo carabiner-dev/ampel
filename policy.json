@@ -38,9 +38,10 @@
                 {
                     "runtime": "cel@v14.0",
                     "code": "context.author == \"Puerco\" ",
-                    "outputs": [
-                        {"code": "context.author"}
-                    ]
+                    "outputs": {
+                        "author": {"code": "context.author"},
+                        "context": {"code": "context"}
+                    }
                 }
             ]            
         }

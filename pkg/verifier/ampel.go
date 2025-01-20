@@ -10,6 +10,7 @@ import (
 	"github.com/puerco/ampel/pkg/collector"
 	"github.com/puerco/ampel/pkg/evaluator"
 	"github.com/puerco/ampel/pkg/transformer"
+	"github.com/sirupsen/logrus"
 )
 
 // AmpelImplementation
@@ -22,6 +23,7 @@ type AmpelImplementation interface {
 	CheckIdentities(*VerificationOptions, *api.Policy, []attestation.Envelope) error
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
 	AssertResults([]*api.ResultSet) (bool, error)
+	//EvalOutputs(context.Context, *VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) error
 	VerifySubject(context.Context, *VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.ResultSet, error)
 }
 
@@ -120,6 +122,8 @@ func (ampel *Ampel) Verify(
 	if err != nil {
 		return nil, fmt.Errorf("verifying subject: %w", err)
 	}
+
+	logrus.Infof("resultSet: %+v", results)
 
 	// Generate outputs
 	return results, nil
