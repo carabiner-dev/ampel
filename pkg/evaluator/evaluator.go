@@ -15,7 +15,7 @@ var _ Evaluator = (*cel.Evaluator)(nil)
 
 type Factory struct{}
 
-func (f *Factory) Get(opts *options.Options, c Class) (Evaluator, error) {
+func (f *Factory) Get(opts *options.EvaluatorOptions, c Class) (Evaluator, error) {
 	switch c.Name() {
 	case "cel":
 		return cel.New(opts)
@@ -26,5 +26,5 @@ func (f *Factory) Get(opts *options.Options, c Class) (Evaluator, error) {
 
 // Evaluator
 type Evaluator interface {
-	ExecTenet(context.Context, *options.Options, *api.Tenet, []attestation.Predicate) (*api.Result, error)
+	ExecTenet(context.Context, *options.EvaluatorOptions, *api.Tenet, []attestation.Predicate) (*api.Result, error)
 }

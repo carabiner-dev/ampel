@@ -67,7 +67,7 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 		def = opts.DefaultEvaluator
 	}
 
-	e, err := factory.Get(&options.Options{}, def)
+	e, err := factory.Get(&opts.EvaluatorOptions, def)
 	if err != nil {
 		return nil, fmt.Errorf("unable to build default runtime")
 	}
@@ -81,7 +81,7 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 				continue
 			}
 			// TODO(puerco): Options here should come from the verifier options
-			e, err := factory.Get(&options.Options{}, cl)
+			e, err := factory.Get(&options.EvaluatorOptions{}, cl)
 			if err != nil {
 				return nil, fmt.Errorf("building %q runtime: %w", t.Runtime, err)
 			}
@@ -153,7 +153,7 @@ func (di *defaultIplementation) VerifySubject(
 		Results: []*api.Result{},
 	}
 
-	evalOpts := &options.Options{
+	evalOpts := &options.EvaluatorOptions{
 		Context: p.Context,
 	}
 

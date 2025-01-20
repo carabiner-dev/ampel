@@ -4,6 +4,6 @@ import (
 	api "github.com/puerco/ampel/pkg/api/v1"
 )
 
-type Options struct {
+type EvaluatorOptions struct {
 	Context *api.Context
 }

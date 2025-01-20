@@ -9,6 +9,7 @@ import (
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/collector"
 	"github.com/puerco/ampel/pkg/evaluator"
+	"github.com/puerco/ampel/pkg/evaluator/options"
 	"github.com/puerco/ampel/pkg/transformer"
 	"github.com/sirupsen/logrus"
 )
@@ -39,6 +40,9 @@ type Ampel struct {
 }
 
 type VerificationOptions struct {
+	// Embed the evaluator options
+	options.EvaluatorOptions
+
 	// Collectors is a collection of configured attestation fetchers
 	Collectors []collector.AttestationFetcher
 
@@ -48,9 +52,14 @@ type VerificationOptions struct {
 	// DefaultEvaluator is the default evaluator we use when a policy does
 	// not define one.
 	DefaultEvaluator evaluator.Class
+
+	// AttestResults will generate an attestation of the evaluation results
+	AttestResults bool
 }
 
 var defaultVerificationOptions = VerificationOptions{
+	EvaluatorOptions: options.EvaluatorOptions{},
+
 	// DefaultEvaluator the the default eval enfine is the lowest version
 	// of CEL available
 	DefaultEvaluator: evaluator.Class("cel@v1.0.0"),
@@ -58,6 +67,7 @@ var defaultVerificationOptions = VerificationOptions{
 
 func NewVerificationOptions() *VerificationOptions {
 	return &VerificationOptions{
+		EvaluatorOptions: options.EvaluatorOptions{},
 		Collectors:       []collector.AttestationFetcher{},
 		AttestationFiles: []string{},
 		DefaultEvaluator: defaultVerificationOptions.DefaultEvaluator,

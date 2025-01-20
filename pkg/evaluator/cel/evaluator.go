@@ -17,7 +17,7 @@ const (
 )
 
 // New creates a new CEL evaluator with the default options
-func New(opts *options.Options) (*Evaluator, error) {
+func New(opts *options.EvaluatorOptions) (*Evaluator, error) {
 	impl := &defaulCelEvaluator{}
 
 	// Create the evaluation enviroment
@@ -40,7 +40,7 @@ type Evaluator struct {
 
 // Exec executes each tenet and returns the combined results
 func (e *Evaluator) ExecTenet(
-	ctx context.Context, opts *options.Options, tenet *api.Tenet, predicates []attestation.Predicate,
+	ctx context.Context, opts *options.EvaluatorOptions, tenet *api.Tenet, predicates []attestation.Predicate,
 ) (*api.Result, error) {
 	// Compile the tenet code into ASTs
 	ast, err := e.impl.CompileCode(e.Environment, tenet.Code)

@@ -19,8 +19,8 @@ import (
 
 type CelEvaluatorImplementation interface {
 	CompileCode(*cel.Env, string) (*cel.Ast, error)
-	CreateEnvironment(*options.Options) (*cel.Env, error)
-	BuildVariables(*options.Options, *api.Tenet, []attestation.Predicate) (*map[string]interface{}, error)
+	CreateEnvironment(*options.EvaluatorOptions) (*cel.Env, error)
+	BuildVariables(*options.EvaluatorOptions, *api.Tenet, []attestation.Predicate) (*map[string]interface{}, error)
 	EvaluateOutputs(*cel.Env, map[string]*cel.Ast, *map[string]any) (map[string]any, error)
 	Evaluate(*cel.Env, *cel.Ast, *map[string]any) (*api.Result, error)
 	Assert(*api.ResultSet) bool
@@ -43,7 +43,7 @@ func (dce *defaulCelEvaluator) CompileCode(env *cel.Env, code string) (*cel.Ast,
 }
 
 // CreateEnvironment
-func (dce *defaulCelEvaluator) CreateEnvironment(*options.Options) (*cel.Env, error) {
+func (dce *defaulCelEvaluator) CreateEnvironment(*options.EvaluatorOptions) (*cel.Env, error) {
 	envOpts := []cel.EnvOption{
 		cel.Variable(VarNamePredicates, cel.MapType(cel.IntType, cel.AnyType)),
 		cel.Variable(VarNameContext, cel.AnyType),
@@ -64,7 +64,7 @@ func (dce *defaulCelEvaluator) CreateEnvironment(*options.Options) (*cel.Env, er
 
 // BuildVariables builds the set of variables that will be exposed in the
 // CEL runtime.
-func (dce *defaulCelEvaluator) BuildVariables(opts *options.Options, tenet *api.Tenet, predicates []attestation.Predicate) (*map[string]any, error) {
+func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, tenet *api.Tenet, predicates []attestation.Predicate) (*map[string]any, error) {
 	ret := map[string]any{}
 
 	// Collected predicates
