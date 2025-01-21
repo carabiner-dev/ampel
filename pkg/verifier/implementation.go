@@ -11,6 +11,8 @@ import (
 	"github.com/puerco/ampel/pkg/evaluator"
 	"github.com/puerco/ampel/pkg/evaluator/options"
 	"github.com/puerco/ampel/pkg/formats/envelope"
+	ampelPred "github.com/puerco/ampel/pkg/formats/predicate/ampel"
+	"github.com/puerco/ampel/pkg/formats/statement/intoto"
 	"github.com/puerco/ampel/pkg/transformer"
 	"github.com/sirupsen/logrus"
 )
@@ -175,11 +177,46 @@ func (di *defaultIplementation) VerifySubject(
 	return rs, errors.Join(errs...)
 }
 
+// AttestResults writes an attestation captring the evaluation
+// results set.
+func (di *defaultIplementation) AttestResults(
+	ctx context.Context, opts *VerificationOptions, subject attestation.Subject, results *api.ResultSet,
+) error {
+	if !opts.AttestResults {
+		return nil
+	}
+
+	if results == nil {
+		return fmt.Errorf("unable to attest results, set is nil")
+	}
+
+	logrus.Infof("writing evaluation attestation to %s", opts.ResultsAttestationPath)
+
+	// Create the predicate file
+	pred := ampelPred.NewPredicate()
+	pred.Parsed = results
+
+	// Create the statement
+	stmt := intoto.NewStatement()
+	stmt.AddSubject(subject)
+	stmt.Predicate = pred
+
+	// Open the file in the options
+	f, err := os.Create(opts.ResultsAttestationPath)
+	if err != nil {
+		return fmt.Errorf("opening results attestation file: %w", err)
+	}
+
+	// Write the statement to json
+	return stmt.WriteJson(f)
+}
+
 // // EvalOutputs evaluates the policy outputs. It is the evaluators responsibility to
 // // ensure the results are exposed to the policy runtime.
 // func (di *defaultIplementation) EvalOutputs(
 // 	ctx context.Context, opts *VerificationOptions, evaluators map[evaluator.Class]evaluator.Evaluator,
 // 	p *api.Policy, subject attestation.Subject, predicates []attestation.Predicate,
+
 // ) (*api.ResultSet, error) {
 // 	rs := &api.ResultSet{
 // 		Results: []*api.Result{},

@@ -3,7 +3,10 @@
 package intoto
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/puerco/ampel/pkg/attestation"
@@ -36,8 +39,17 @@ func NewStatement(opts ...StatementOption) *Statement {
 
 type Statement struct {
 	// Type      string `protobuf:"bytes,1,opt,name=type,json=_type,proto3" json:"type,omitempty"`
-	Predicate attestation.Predicate
+	Predicate attestation.Predicate `json:"predicate"`
 	gointoto.Statement
+}
+
+func (s *Statement) AddSubject(sbj attestation.Subject) {
+	descr := gointoto.ResourceDescriptor{
+		Name:   sbj.GetName(),
+		Uri:    sbj.GetUri(),
+		Digest: sbj.GetDigest(),
+	}
+	s.Subject = append(s.Subject, &descr)
 }
 
 func (s *Statement) GetPredicate() attestation.Predicate {
@@ -67,4 +79,22 @@ func (s *Statement) GetSubjects() []attestation.Subject {
 
 func (s *Statement) GetPredicateType() attestation.PredicateType {
 	return s.Predicate.GetType()
+}
+
+// ToJson returns a byte slice with the predicate in JSON
+func (s *Statement) ToJson() ([]byte, error) {
+	var b bytes.Buffer
+	if err := s.WriteJson(&b); err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
+}
+
+func (s *Statement) WriteJson(w io.Writer) error {
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(s); err != nil {
+		return fmt.Errorf("writing JSON stream: %w", err)
+	}
+	return nil
 }

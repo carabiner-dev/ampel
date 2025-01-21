@@ -1,6 +1,7 @@
 package ampel
 
 import (
+	"encoding/json"
 	"fmt"
 	"slices"
 
@@ -11,9 +12,17 @@ import (
 
 var PredicateType = attestation.PredicateType("https://carabiner.dev/predicate/v0.0.1")
 
+func NewPredicate() *Predicate {
+	return &Predicate{}
+}
+
 type Predicate struct {
-	Data   []byte
+	Data   []byte `json:"-"`
 	Parsed *api.ResultSet
+}
+
+func (p *Predicate) MarshalJSON() ([]byte, error) {
+	return json.Marshal(p.Parsed)
 }
 
 func (*Predicate) GetType() attestation.PredicateType {

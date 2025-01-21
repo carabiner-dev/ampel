@@ -7,9 +7,7 @@ import (
 
 	api "github.com/puerco/ampel/pkg/api/v1"
 	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/collector"
 	"github.com/puerco/ampel/pkg/evaluator"
-	"github.com/puerco/ampel/pkg/evaluator/options"
 	"github.com/puerco/ampel/pkg/transformer"
 	"github.com/sirupsen/logrus"
 )
@@ -24,7 +22,7 @@ type AmpelImplementation interface {
 	CheckIdentities(*VerificationOptions, *api.Policy, []attestation.Envelope) error
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
 	AssertResults([]*api.ResultSet) (bool, error)
-	//EvalOutputs(context.Context, *VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) error
+	AttestResults(context.Context, *VerificationOptions, attestation.Subject, *api.ResultSet) error
 	VerifySubject(context.Context, *VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.ResultSet, error)
 }
 
@@ -37,41 +35,6 @@ func New() (*Ampel, error) {
 // Ampel is the attestation verifier
 type Ampel struct {
 	impl AmpelImplementation
-}
-
-type VerificationOptions struct {
-	// Embed the evaluator options
-	options.EvaluatorOptions
-
-	// Collectors is a collection of configured attestation fetchers
-	Collectors []collector.AttestationFetcher
-
-	// AttestationFiles are additional attestations passed manually
-	AttestationFiles []string
-
-	// DefaultEvaluator is the default evaluator we use when a policy does
-	// not define one.
-	DefaultEvaluator evaluator.Class
-
-	// AttestResults will generate an attestation of the evaluation results
-	AttestResults bool
-}
-
-var defaultVerificationOptions = VerificationOptions{
-	EvaluatorOptions: options.EvaluatorOptions{},
-
-	// DefaultEvaluator the the default eval enfine is the lowest version
-	// of CEL available
-	DefaultEvaluator: evaluator.Class("cel@v1.0.0"),
-}
-
-func NewVerificationOptions() *VerificationOptions {
-	return &VerificationOptions{
-		EvaluatorOptions: options.EvaluatorOptions{},
-		Collectors:       []collector.AttestationFetcher{},
-		AttestationFiles: []string{},
-		DefaultEvaluator: defaultVerificationOptions.DefaultEvaluator,
-	}
 }
 
 // Verify checks a number of subjects against a policy using the available evidence
@@ -131,6 +94,12 @@ func (ampel *Ampel) Verify(
 	results, err := ampel.impl.VerifySubject(ctx, opts, evaluators, policy, subject, preds)
 	if err != nil {
 		return nil, fmt.Errorf("verifying subject: %w", err)
+	}
+
+	// Generate the results attestation. If the attestation is disabled in the
+	// options, this is a NOOP.
+	if err := ampel.impl.AttestResults(ctx, opts, subject, results); err != nil {
+		return nil, fmt.Errorf("attesting results: %w", err)
 	}
 
 	logrus.Infof("resultSet: %+v", results)

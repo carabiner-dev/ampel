@@ -15,9 +15,9 @@ import (
 )
 
 type verifyOptions struct {
-	PolicyFile       string
-	SubjectFiles     []string
-	AttestationFiles []string
+	verifier.VerificationOptions
+	PolicyFile   string
+	SubjectFiles []string
 }
 
 // AddFlags adds the flags
@@ -31,7 +31,15 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	)
 
 	cmd.PersistentFlags().StringSliceVarP(
-		&o.AttestationFiles, "attestation", "a", []string{}, "additional attestations to read",
+		&o.AttestationFiles, "attestation", "a", o.AttestationFiles, "additional attestations to read",
+	)
+
+	cmd.PersistentFlags().BoolVar(
+		&o.AttestResults, "attest-results", o.AttestResults, "write an attestation with the evaluation results to --results-path",
+	)
+
+	cmd.PersistentFlags().StringVar(
+		&o.ResultsAttestationPath, "results-path", o.ResultsAttestationPath, "path to the evaluation results attestation",
 	)
 }
 
@@ -48,7 +56,11 @@ func (o *verifyOptions) Validate() error {
 }
 
 func addVerify(parentCmd *cobra.Command) {
-	opts := verifyOptions{}
+	opts := verifyOptions{
+		VerificationOptions: verifier.NewVerificationOptions(),
+		PolicyFile:          "",
+		SubjectFiles:        []string{},
+	}
 	evalCmd := &cobra.Command{
 		Short: "check artifacts against a policy",
 		Long: fmt.Sprintf(`
@@ -128,10 +140,7 @@ using a collector.
 				return fmt.Errorf("creating verifier")
 			}
 
-			vopts := verifier.NewVerificationOptions()
-			vopts.AttestationFiles = opts.AttestationFiles
-
-			results, err := ampel.Verify(context.Background(), vopts, p.Policies[0], subjects[0])
+			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, p.Policies[0], subjects[0])
 			if err != nil {
 				return fmt.Errorf("runnig subject verification: %w", err)
 			}
