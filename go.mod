@@ -6,13 +6,13 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/fatih/color v1.18.0
 	github.com/google/cel-go v0.22.1
-	github.com/in-toto/attestation v1.1.0
+	github.com/in-toto/attestation v1.1.1-0.20250116170412-11ca4fce9b7a
 	github.com/protobom/protobom v0.5.0
 	github.com/sigstore/protobuf-specs v0.3.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
-	github.com/stretchr/testify v1.9.0
-	google.golang.org/protobuf v1.36.0
+	github.com/stretchr/testify v1.10.0
+	google.golang.org/protobuf v1.36.3
 	sigs.k8s.io/release-utils v0.8.4
 )
 
