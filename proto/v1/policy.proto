@@ -15,13 +15,19 @@ message PolicySet {
 
 message Policy {
     string id = 1;
-    string description = 2;
-    repeated Identity identities = 3;
+    string version = 2;
+    Meta meta = 3;
     Context context = 4;
-    PredicateSpec predicates = 5;
-    repeated Transformer transformers = 6;
-    string runtime = 7;
+    repeated Identity identities = 5;
+    PredicateSpec predicates = 6;
+    repeated Transformer transformers = 7;
     repeated Tenet tenets = 8;
+}
+
+message Meta {
+    string runtime = 1;
+    string description = 2;
+    string assert_mode = 3;
 }
 
 message Identity {

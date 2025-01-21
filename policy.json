@@ -5,7 +5,12 @@
     "policies": [
         {
             "id": "AC-07",
-            "description": "The project's version control system MUST require multi-factor authentication that does not include SMS ",
+            "version": "v0.0.1",
+            "meta": {
+                "description": "The project's version control system MUST require multi-factor authentication that does not include SMS ",
+                "runtime": "cel@v0",
+                "assert_mode": "OR"
+            },
             "identities": [
                 {
                     "type": "exact",
