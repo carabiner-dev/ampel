@@ -38,6 +38,9 @@
                 },
                 {
                     "runtime": "cel@v14.0",
+                    "outputs": {
+                        "first_sbom_name": { "code": "predicates[0].data.metadata.name" } 
+                    },
                     "code": "predicates[0].data.metadata.name == \"SBOM-SPDX-08bdfa07-a9a1-404e-b892-9f45896c715a\" "
                 },
                 {

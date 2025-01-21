@@ -52,10 +52,30 @@ func (di *defaultIplementation) ParseAttestations(ctx context.Context, paths []s
 	return res, errors.Join(errs...)
 }
 
-// AssertResults conducts the final assertion to allow/block based on the
+// AssertResult conducts the final assertion to allow/block based on the
 // result sets returned by the evaluators.
-func (di *defaultIplementation) AssertResults([]*api.ResultSet) (bool, error) {
-	return true, nil
+func (di *defaultIplementation) AssertResult(policy *api.Policy, result *api.Result) error {
+	switch policy.GetMeta().GetAssertMode() {
+	case "OR", "":
+		for _, er := range result.EvalResults {
+			if er.Status == "PASSED" {
+				result.Status = "PASSED"
+				return nil
+			}
+		}
+		result.Status = "FAILED"
+	case "AND":
+		for _, er := range result.EvalResults {
+			if er.Status == "FAILED" {
+				result.Status = "FAILED"
+				return nil
+			}
+		}
+		result.Status = "PASSED"
+	default:
+		return fmt.Errorf("invalid policy assertion mode")
+	}
+	return nil
 }
 
 // BuildEvaluators checks a policy and build the required evaluators to run the tenets
@@ -150,10 +170,8 @@ func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, su
 func (di *defaultIplementation) VerifySubject(
 	ctx context.Context, opts *VerificationOptions, evaluators map[evaluator.Class]evaluator.Evaluator,
 	p *api.Policy, subject attestation.Subject, predicates []attestation.Predicate,
-) (*api.ResultSet, error) {
-	rs := &api.ResultSet{
-		Results: []*api.Result{},
-	}
+) (*api.Result, error) {
+	var rs = &api.Result{}
 
 	evalOpts := &options.EvaluatorOptions{
 		Context: p.Context,
@@ -165,13 +183,13 @@ func (di *defaultIplementation) VerifySubject(
 		if key == "" {
 			key = evaluator.Class("default")
 		}
-		res, err := evaluators[key].ExecTenet(ctx, evalOpts, tenet, predicates)
+		evalres, err := evaluators[key].ExecTenet(ctx, evalOpts, tenet, predicates)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("executing tenet #%d: %w", i, err))
 			continue
 		}
-		logrus.Infof("Tenet #%d eval: %+v", i, res)
-		rs.Results = append(rs.Results, res)
+		logrus.Infof("Tenet #%d eval: %+v", i, evalres)
+		rs.EvalResults = append(rs.EvalResults, evalres)
 	}
 
 	return rs, errors.Join(errs...)
@@ -179,14 +197,14 @@ func (di *defaultIplementation) VerifySubject(
 
 // AttestResults writes an attestation captring the evaluation
 // results set.
-func (di *defaultIplementation) AttestResults(
-	ctx context.Context, opts *VerificationOptions, subject attestation.Subject, results *api.ResultSet,
+func (di *defaultIplementation) AttestResult(
+	ctx context.Context, opts *VerificationOptions, subject attestation.Subject, result *api.Result,
 ) error {
 	if !opts.AttestResults {
 		return nil
 	}
 
-	if results == nil {
+	if result == nil {
 		return fmt.Errorf("unable to attest results, set is nil")
 	}
 
@@ -194,7 +212,9 @@ func (di *defaultIplementation) AttestResults(
 
 	// Create the predicate file
 	pred := ampelPred.NewPredicate()
-	pred.Parsed = results
+	pred.Parsed = &api.ResultSet{
+		Results: []*api.Result{result},
+	}
 
 	// Create the statement
 	stmt := intoto.NewStatement()
@@ -210,35 +230,3 @@ func (di *defaultIplementation) AttestResults(
 	// Write the statement to json
 	return stmt.WriteJson(f)
 }
-
-// // EvalOutputs evaluates the policy outputs. It is the evaluators responsibility to
-// // ensure the results are exposed to the policy runtime.
-// func (di *defaultIplementation) EvalOutputs(
-// 	ctx context.Context, opts *VerificationOptions, evaluators map[evaluator.Class]evaluator.Evaluator,
-// 	p *api.Policy, subject attestation.Subject, predicates []attestation.Predicate,
-
-// ) (*api.ResultSet, error) {
-// 	rs := &api.ResultSet{
-// 		Results: []*api.Result{},
-// 	}
-
-// 	evalOpts := &options.Options{
-// 		Context: p.Context,
-// 	}
-
-// 	var errs = []error{}
-// 	for i, output := range p.Outputs {
-// 		key := evaluator.Class(output.Runtime)
-// 		if key == "" {
-// 			key = evaluator.Class("default")
-// 		}
-// 		res, err := evaluators[key].ExecOutput(ctx, evalOpts, output, predicates)
-// 		if err != nil {
-// 			errs = append(errs, fmt.Errorf("executing tenet #%d: %w", i, err))
-// 			continue
-// 		}
-// 		logrus.Infof("Tenet #%d eval: %+v", i, res)
-// 	}
-
-// 	return rs, errors.Join(errs...)
-// }

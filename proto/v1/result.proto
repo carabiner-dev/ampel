@@ -9,10 +9,18 @@ import "policy.proto";
 
 message Result {
     string status = 1;
-    google.protobuf.Timestamp date = 2;
-    google.protobuf.Struct output = 3;
+    google.protobuf.Timestamp date_start = 2;
+    google.protobuf.Timestamp date_end = 3;
     // repeated Output output = 3;
     PolicyRef policy = 4;
+    repeated EvalResult eval_results = 5;
+}
+
+message EvalResult {
+    string id = 1;
+    string status = 2;
+    google.protobuf.Timestamp date = 3;
+    google.protobuf.Struct output = 4;
     repeated StatementRef statements = 5;
 }
 

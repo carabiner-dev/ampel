@@ -9,7 +9,6 @@ import (
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/evaluator"
 	"github.com/puerco/ampel/pkg/transformer"
-	"github.com/sirupsen/logrus"
 )
 
 // AmpelImplementation
@@ -21,9 +20,9 @@ type AmpelImplementation interface {
 	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *api.Policy, []attestation.Predicate) ([]attestation.Predicate, error)
 	CheckIdentities(*VerificationOptions, *api.Policy, []attestation.Envelope) error
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
-	AssertResults([]*api.ResultSet) (bool, error)
-	AttestResults(context.Context, *VerificationOptions, attestation.Subject, *api.ResultSet) error
-	VerifySubject(context.Context, *VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.ResultSet, error)
+	AssertResult(*api.Policy, *api.Result) error
+	AttestResult(context.Context, *VerificationOptions, attestation.Subject, *api.Result) error
+	VerifySubject(context.Context, *VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.Result, error)
 }
 
 func New() (*Ampel, error) {
@@ -40,7 +39,7 @@ type Ampel struct {
 // Verify checks a number of subjects against a policy using the available evidence
 func (ampel *Ampel) Verify(
 	ctx context.Context, opts *VerificationOptions, policy *api.Policy, subject attestation.Subject,
-) (*api.ResultSet, error) {
+) (*api.Result, error) {
 	// Fetch applicable evidence
 	atts, err := ampel.impl.GatherAttestations(ctx, opts, subject)
 	if err != nil {
@@ -91,19 +90,22 @@ func (ampel *Ampel) Verify(
 	}
 
 	// Eval Policy
-	results, err := ampel.impl.VerifySubject(ctx, opts, evaluators, policy, subject, preds)
+	result, err := ampel.impl.VerifySubject(ctx, opts, evaluators, policy, subject, preds)
 	if err != nil {
 		return nil, fmt.Errorf("verifying subject: %w", err)
 	}
 
 	// Generate the results attestation. If the attestation is disabled in the
 	// options, this is a NOOP.
-	if err := ampel.impl.AttestResults(ctx, opts, subject, results); err != nil {
+	if err := ampel.impl.AttestResult(ctx, opts, subject, result); err != nil {
 		return nil, fmt.Errorf("attesting results: %w", err)
 	}
 
-	logrus.Infof("resultSet: %+v", results)
+	// Assert the results
+	if err := ampel.impl.AssertResult(policy, result); err != nil {
+		return nil, fmt.Errorf("asserting results: %w", err)
+	}
 
 	// Generate outputs
-	return results, nil
+	return result, nil
 }

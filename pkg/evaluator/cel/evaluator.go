@@ -41,7 +41,7 @@ type Evaluator struct {
 // Exec executes each tenet and returns the combined results
 func (e *Evaluator) ExecTenet(
 	ctx context.Context, opts *options.EvaluatorOptions, tenet *api.Tenet, predicates []attestation.Predicate,
-) (*api.Result, error) {
+) (*api.EvalResult, error) {
 	// Compile the tenet code into ASTs
 	ast, err := e.impl.CompileCode(e.Environment, tenet.Code)
 	if err != nil {

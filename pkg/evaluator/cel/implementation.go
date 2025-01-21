@@ -22,7 +22,7 @@ type CelEvaluatorImplementation interface {
 	CreateEnvironment(*options.EvaluatorOptions) (*cel.Env, error)
 	BuildVariables(*options.EvaluatorOptions, *api.Tenet, []attestation.Predicate) (*map[string]interface{}, error)
 	EvaluateOutputs(*cel.Env, map[string]*cel.Ast, *map[string]any) (map[string]any, error)
-	Evaluate(*cel.Env, *cel.Ast, *map[string]any) (*api.Result, error)
+	Evaluate(*cel.Env, *cel.Ast, *map[string]any) (*api.EvalResult, error)
 	Assert(*api.ResultSet) bool
 }
 
@@ -152,7 +152,7 @@ func (dce *defaulCelEvaluator) EvaluateOutputs(
 }
 
 // Evaluate the precompiled ASTs
-func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *map[string]any) (*api.Result, error) {
+func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *map[string]any) (*api.EvalResult, error) {
 	program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
 	if err != nil {
 		return nil, fmt.Errorf("generating program from AST: %w", err)
@@ -180,10 +180,10 @@ func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *m
 	}
 
 	// Convert cel result to an api.Result
-	return &api.Result{
-		Status:     st,
-		Date:       timestamppb.New(time.Now()),
-		Policy:     &api.PolicyRef{},
+	return &api.EvalResult{
+		Status: st,
+		Date:   timestamppb.New(time.Now()),
+		// Policy:     &api.PolicyRef{},
 		Statements: []*api.StatementRef{},
 	}, nil
 }
