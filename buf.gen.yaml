@@ -4,13 +4,21 @@ version: v2
 managed:
   enabled: true
   override:
-    - file_option: go_package
-      value: github.com/ampel/pkg/api/v1
-
+    # - file_option: go_package
+    #   value: github.com/puerco/ampel/pkg/api/v1
+    #   path: proto/v1
+    # - file_option: go_package_prefix
+    #   path: proto/osv
+    #   value: github.com/puerco/ampel/pkg/
 plugins:
   - protoc_builtin: go
-    out: pkg/api/v1
-    opt: module=github.com/ampel/pkg/api/v1
+    out: pkg/
+    #opt: module=github.com/puerco/ampel/pkg/api/v1
+    opt: paths=import
+  # - protoc_builtin: go
+  #   out: pkg/osv/v1_6_7
+  #   opt: module=github.com/puerco/ampel/pkg/osv/v1_6_7
 
 inputs:
   - directory: proto/v1
+  - directory: proto/osv

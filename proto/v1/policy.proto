@@ -1,8 +1,9 @@
-
 syntax = "proto3";
-import "google/protobuf/struct.proto";
-// google.protobuf.Struct
 package ampel.v1;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "api/v1";
 
 // import "google/protobuf/timestamp.proto";
 

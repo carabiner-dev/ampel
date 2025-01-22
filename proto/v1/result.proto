@@ -7,6 +7,8 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 import "policy.proto";
 
+option go_package = "api/v1";
+
 message Result {
     string status = 1;
     google.protobuf.Timestamp date_start = 2;

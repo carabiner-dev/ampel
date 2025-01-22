@@ -3,7 +3,7 @@
 version: v2
 
 modules:
-  - path: api
+  - path: proto/api
     lint:
       except:
         - ENUM_VALUE_PREFIX
@@ -13,7 +13,6 @@ modules:
     breaking:
       except:
         - FILE_SAME_GO_PACKAGE
-
 lint:
   use:
     - STANDARD
