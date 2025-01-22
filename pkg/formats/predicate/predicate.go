@@ -9,6 +9,8 @@ import (
 	"github.com/puerco/ampel/pkg/formats/predicate/json"
 	"github.com/puerco/ampel/pkg/formats/predicate/protobom"
 	"github.com/puerco/ampel/pkg/formats/predicate/spdx"
+	"github.com/puerco/ampel/pkg/formats/predicate/trivy"
+	"github.com/puerco/ampel/pkg/formats/predicate/vulns"
 	"github.com/sirupsen/logrus"
 )
 
@@ -22,6 +24,8 @@ var Parsers = ParsersList{
 	spdx.PredicateType:      spdx.New(),
 	cyclonedx.PredicateType: cyclonedx.New(),
 	ampel.PredicateType:     ampel.New(),
+	vulns.PredicateType:     vulns.New(),
+	trivy.PredicateType:     trivy.New(),
 }
 
 type Options struct {

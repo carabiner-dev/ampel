@@ -1,6 +1,12 @@
 package trivy
 
-import "time"
+import (
+	"time"
+
+	"github.com/puerco/ampel/pkg/attestation"
+)
+
+var PredicateType = attestation.PredicateType("https://trivy.dev/report")
 
 type Predicate struct {
 	Parsed *TrivyReport

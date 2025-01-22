@@ -16,8 +16,6 @@ func New() *Parser {
 	return &Parser{}
 }
 
-var PredicateType = attestation.PredicateType("https://trivy.dev/report")
-
 func (*Parser) SupportsType(predTypes ...string) bool {
 	return slices.Contains(predTypes, string(PredicateType))
 }
