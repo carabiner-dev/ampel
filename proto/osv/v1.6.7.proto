@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package osv.v1_6_7;
-option go_package = "osv/v1_6_7";
+option go_package = "github.com/puerco/ampel/pkg/osv/v1_6_7";
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";

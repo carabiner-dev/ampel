@@ -7,14 +7,16 @@ managed:
     # - file_option: go_package
     #   value: github.com/puerco/ampel/pkg/api/v1
     #   path: proto/v1
-    # - file_option: go_package_prefix
-    #   path: proto/osv
-    #   value: github.com/puerco/ampel/pkg/
+    # - file_option: go_package
+    #   path: proto/osv/v1.6.7.proto
+    #   value: pkg/osv/v1_6_7
 plugins:
   - protoc_builtin: go
-    out: pkg/
+    out: .
     #opt: module=github.com/puerco/ampel/pkg/api/v1
-    opt: paths=import
+    opt: 
+      - paths=import
+      - module=github.com/puerco/ampel
   # - protoc_builtin: go
   #   out: pkg/osv/v1_6_7
   #   opt: module=github.com/puerco/ampel/pkg/osv/v1_6_7
