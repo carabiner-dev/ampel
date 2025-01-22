@@ -139,7 +139,7 @@ func (di defaultIplementation) Transform(opts *VerificationOptions, transformers
 	var err error
 	i := 0
 	for _, t := range transformers {
-		predicates, err = t.Default(predicates)
+		predicates, err = t.Mutate(predicates)
 		if err != nil {
 			return nil, fmt.Errorf("applying transformation #%d (%T): %w", i, t, err)
 		}

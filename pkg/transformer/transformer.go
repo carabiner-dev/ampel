@@ -37,7 +37,7 @@ func (tf *Factory) Get(c Class) (Transformer, error) {
 
 // Transformer is an interface that models a predicate transformer
 type Transformer interface {
-	Default([]attestation.Predicate) ([]attestation.Predicate, error)
+	Mutate([]attestation.Predicate) ([]attestation.Predicate, error)
 }
 
 type Info struct {

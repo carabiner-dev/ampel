@@ -30,7 +30,7 @@ var PredicateTypes = []attestation.PredicateType{
 
 // Transformer generates a protobom predicate from any of the supported SBOM
 // formats.
-func (p *Transformer) Default(preds []attestation.Predicate) ([]attestation.Predicate, error) {
+func (p *Transformer) Mutate(preds []attestation.Predicate) ([]attestation.Predicate, error) {
 	r := reader.New()
 	if len(preds) != 1 {
 		return nil, fmt.Errorf("default tranformation requires exactly one predicate")
