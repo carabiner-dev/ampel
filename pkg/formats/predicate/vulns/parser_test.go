@@ -1,9 +1,11 @@
 package vulns
 
 import (
+	"errors"
 	"os"
 	"testing"
 
+	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,9 +16,10 @@ func TestParseV2(t *testing.T) {
 		filename          string
 		data              []byte
 		mustErr           bool
+		errType           error
 		validatePredicate func(*testing.T, *PredicateV2)
 	}{
-		{"v2", "testdata/vulns-v02.json", []byte{}, false, func(t *testing.T, p *PredicateV2) {
+		{"v2", "testdata/vulns-v02.json", []byte{}, false, nil, func(t *testing.T, p *PredicateV2) {
 			t.Helper()
 			require.NotNil(t, p.Parsed)
 			require.NotNil(t, p.Parsed.Scanner)
@@ -30,6 +33,7 @@ func TestParseV2(t *testing.T) {
 			require.Equal(t, p.Parsed.Scanner.Result[0].Id, "CVE-123")
 			require.Len(t, p.Parsed.Scanner.Result[0].Severity, 2)
 		}},
+		{"other-json", "", []byte(`{name: "John Doe", "Today": 1, "IsItTrue": false}`), true, attestation.ErrNotCorrectFormat, nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -41,6 +45,9 @@ func TestParseV2(t *testing.T) {
 			}
 			pred, err := parseV2(data)
 			if tc.mustErr {
+				if tc.errType != nil {
+					require.True(t, errors.Is(err, tc.errType))
+				}
 				require.Error(t, err)
 				return
 			}

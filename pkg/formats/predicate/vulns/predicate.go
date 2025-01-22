@@ -6,6 +6,9 @@ import (
 	"github.com/puerco/ampel/pkg/attestation"
 )
 
+var PredicateTypeV2 = attestation.PredicateType("https://in-toto.io/attestation/vulns/v0.2")
+var PredicateType = PredicateTypeV2
+
 type predicate struct {
 	Type   attestation.PredicateType
 	Parsed any
