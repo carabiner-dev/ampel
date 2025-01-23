@@ -8,16 +8,17 @@ import (
 
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/transformer/protobom"
+	"github.com/puerco/ampel/pkg/transformer/vulnreport"
 	"github.com/sirupsen/logrus"
 )
 
-// Ensure this parser implements the interface
+// Ensure the loaded drivers implement the transformers interface
 var _ Transformer = (*protobom.Transformer)(nil)
+var _ Transformer = (*vulnreport.Transformer)(nil)
 
 // Factory returns a list of transformers from
 // a list of string identifiers
-type Factory struct {
-}
+type Factory struct{}
 
 // Get returns
 func (tf *Factory) Get(c Class) (Transformer, error) {
@@ -28,7 +29,10 @@ func (tf *Factory) Get(c Class) (Transformer, error) {
 	s := strings.TrimPrefix(c.Name(), "internal:")
 	switch s {
 	case protobom.ClassName:
-		logrus.Debugf("Found driver for transformer transformer class %s", s)
+		logrus.Debugf("Found driver for transformer class %s", s)
+		return protobom.New(), nil
+	case vulnreport.ClassName:
+		logrus.Debugf("Found driver for transformer class %s", s)
 		return protobom.New(), nil
 	default:
 		return nil, fmt.Errorf("unknown transformer %q", s)
