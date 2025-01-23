@@ -7,6 +7,7 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/google/cel-go v0.22.1
 	github.com/in-toto/attestation v1.1.1-0.20250116170412-11ca4fce9b7a
+	github.com/openvex/go-vex v0.2.5
 	github.com/protobom/protobom v0.5.0
 	github.com/sigstore/protobuf-specs v0.3.2
 	github.com/sirupsen/logrus v1.9.3
@@ -28,6 +29,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/package-url/packageurl-go v0.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spdx/tools-golang v0.5.5 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
