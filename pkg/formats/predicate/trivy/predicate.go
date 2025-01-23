@@ -26,16 +26,23 @@ type Result struct {
 	Vulnerabilities []*Vulnerability
 }
 
-type CVSS map[string]any
+type CVSS struct {
+	V3Vector string
+	V3Score  float32
+}
 
 type Vulnerability struct {
-	VulnerabilityID string
-	PkgIdentifier   map[string]string
-	CVSS            map[string]CVSS
-	Title           string
-	Description     string
-	Severity        string // "CRITICAL"
-	CweIDs          []string
-	References      []string
-	PublishedDate   *time.Time
+	VulnerabilityID  string
+	PkgName          string
+	InstalledVersion string
+	FixedVersion     string
+	PkgIdentifier    map[string]string
+	CVSS             map[string]CVSS
+	Title            string
+	Description      string
+	Severity         string // "CRITICAL"
+	CweIDs           []string
+	References       []string
+	PublishedDate    *time.Time
+	LastModifiedDate *time.Time
 }
