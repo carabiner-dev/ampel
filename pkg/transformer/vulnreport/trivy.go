@@ -8,7 +8,6 @@ import (
 	posv "github.com/puerco/ampel/pkg/formats/predicate/osv"
 	"github.com/puerco/ampel/pkg/formats/predicate/trivy"
 	"github.com/puerco/ampel/pkg/osv"
-	"github.com/puerco/ampel/pkg/osv/v1_6_7"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -47,7 +46,7 @@ func (t *Transformer) TrivyToOSV(original *trivy.Predicate) (*posv.Predicate, er
 							Name: vuln.PkgName,
 						},
 						Severity:          []*osv.Severity{},
-						Ranges:            []*v1_6_7.Range{},
+						Ranges:            []*osv.Range{},
 						Versions:          []string{},
 						EcosystemSpecific: &structpb.Struct{},
 						DatabaseSpecific:  &structpb.Struct{},
@@ -84,7 +83,6 @@ func (t *Transformer) TrivyToOSV(original *trivy.Predicate) (*posv.Predicate, er
 					Type:  "CVSS_V3",
 					Score: fmt.Sprintf("%.1f", cvss.V3Score),
 				})
-
 			}
 
 			// Compute a range with the versions
@@ -97,6 +95,19 @@ func (t *Transformer) TrivyToOSV(original *trivy.Predicate) (*posv.Predicate, er
 					},
 				},
 			})
+
+			// Add the ecosystem specific data with our findings
+			dbs, err := structpb.NewStruct(map[string]any{
+				"ampel": map[string]any{
+					"severity": vuln.Severity,
+					"CWE":      vuln.CweIDs,
+					"KEV":      "",
+				},
+			})
+			if err != nil {
+				return nil, fmt.Errorf("creating database specific entry: %w", err)
+			}
+			rec.DatabaseSpecific = dbs
 
 			// Append the record to the OSV predicate
 			ret.Parsed.Records = append(ret.Parsed.Records, rec)
