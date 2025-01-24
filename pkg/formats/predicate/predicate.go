@@ -7,6 +7,7 @@ import (
 	"github.com/puerco/ampel/pkg/formats/predicate/ampel"
 	"github.com/puerco/ampel/pkg/formats/predicate/cyclonedx"
 	"github.com/puerco/ampel/pkg/formats/predicate/json"
+	"github.com/puerco/ampel/pkg/formats/predicate/openeox"
 	"github.com/puerco/ampel/pkg/formats/predicate/openvex"
 	"github.com/puerco/ampel/pkg/formats/predicate/osv"
 	"github.com/puerco/ampel/pkg/formats/predicate/protobom"
@@ -30,6 +31,7 @@ var Parsers = ParsersList{
 	trivy.PredicateType:     trivy.New(),
 	osv.PredicateType:       osv.New(),
 	openvex.PredicateType:   openvex.New(),
+	openeox.PredicateType:   openeox.New(),
 }
 
 type Options struct {

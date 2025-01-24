@@ -1,0 +1,9 @@
+{
+    "$schema": "https://openeox.org/schema-0.2.0.json",
+    "supplierId": "yes",
+    "supplierName": "No",
+    "productId": "id",
+    "productName": "my product",
+    "productVersion": "1.2.2.2.",
+    "EOLDate": "2006-01-02T15:04:05Z"
+}
