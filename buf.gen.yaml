@@ -23,4 +23,4 @@ plugins:
 
 inputs:
   - directory: proto/v1
-  - directory: proto/osv
+

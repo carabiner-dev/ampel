@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"time"
 
-	posv "github.com/puerco/ampel/pkg/formats/predicate/osv"
+	posv "github.com/carabiner-dev/osv/go/osv"
+	"github.com/puerco/ampel/pkg/formats/predicate/osv"
 	"github.com/puerco/ampel/pkg/formats/predicate/trivy"
-	"github.com/puerco/ampel/pkg/osv"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // trivyToOSV converts a trivy v2 output to an OSV feed
-func (t *Transformer) TrivyToOSV(original *trivy.Predicate) (*posv.Predicate, error) {
+func (t *Transformer) TrivyToOSV(original *trivy.Predicate) (*osv.Predicate, error) {
 	if original == nil {
 		return nil, errors.New("original predicate undefined")
 	}
@@ -23,37 +23,55 @@ func (t *Transformer) TrivyToOSV(original *trivy.Predicate) (*posv.Predicate, er
 		createdat = *original.Parsed.CreatedAt
 	}
 
-	ret := &posv.Predicate{
-		Parsed: &osv.Predicate{
-			Date:    timestamppb.New(createdat),
-			Records: []*osv.Record{},
+	ret := &osv.Predicate{
+		Parsed: &posv.Results{
+			Date: timestamppb.New(createdat),
+			Results: []*posv.Result{
+				{
+					Source: &posv.Result_Source{
+						Path: original.Parsed.ArtifactName,
+						Type: original.Parsed.ArtifactType,
+					},
+					Packages: []*posv.Result_Package{
+						{
+							Package: &posv.Result_Package_Info{
+								Name: original.Parsed.ArtifactName,
+							},
+							Vulnerabilities: []*posv.Record{},
+						},
+					},
+				},
+			},
 		},
 	}
 
+	results := map[string][]*posv.Record{}
+
 	for _, result := range original.Parsed.Results {
 		for _, vuln := range result.Vulnerabilities {
-			rec := &osv.Record{
-				SchemaVersion: osv.Version,
+			// Check if we have a collection for this one
+			rec := &posv.Record{
+				SchemaVersion: posv.Version,
 				Id:            vuln.VulnerabilityID,
 				Aliases:       []string{},
 				Related:       []string{},
 				Summary:       vuln.Title,
 				Details:       vuln.Description,
-				Severity:      []*osv.Severity{},
-				Affected: []*osv.Affected{
+				Severity:      []*posv.Severity{},
+				Affected: []*posv.Affected{
 					{
-						Package: &osv.Package{
+						Package: &posv.Package{
 							Name: vuln.PkgName,
 						},
-						Severity:          []*osv.Severity{},
-						Ranges:            []*osv.Range{},
+						Severity:          []*posv.Severity{},
+						Ranges:            []*posv.Range{},
 						Versions:          []string{},
 						EcosystemSpecific: &structpb.Struct{},
 						DatabaseSpecific:  &structpb.Struct{},
 					},
 				},
-				References: []*osv.Reference{},
-				Credits:    []*osv.Credit{},
+				References: []*posv.Reference{},
+				Credits:    []*posv.Credit{},
 			}
 
 			if vuln.PublishedDate != nil {
@@ -71,7 +89,7 @@ func (t *Transformer) TrivyToOSV(original *trivy.Predicate) (*posv.Predicate, er
 			}
 
 			for _, r := range vuln.References {
-				rec.References = append(rec.References, &osv.Reference{
+				rec.References = append(rec.References, &posv.Reference{
 					Type: "URL",
 					Url:  r,
 				})
@@ -79,16 +97,16 @@ func (t *Transformer) TrivyToOSV(original *trivy.Predicate) (*posv.Predicate, er
 
 			// Add the severities
 			for _, cvss := range vuln.CVSS {
-				rec.Severity = append(rec.Severity, &osv.Severity{
+				rec.Severity = append(rec.Severity, &posv.Severity{
 					Type:  "CVSS_V3",
 					Score: fmt.Sprintf("%.1f", cvss.V3Score),
 				})
 			}
 
 			// Compute a range with the versions
-			rec.Affected[0].Ranges = append(rec.Affected[0].Ranges, &osv.Range{
+			rec.Affected[0].Ranges = append(rec.Affected[0].Ranges, &posv.Range{
 				Type: "SEMVER",
-				Events: []*osv.Range_Event{
+				Events: []*posv.Range_Event{
 					{
 						Introduced: vuln.InstalledVersion,
 						Fixed:      vuln.FixedVersion,
@@ -100,8 +118,9 @@ func (t *Transformer) TrivyToOSV(original *trivy.Predicate) (*posv.Predicate, er
 			dbs, err := structpb.NewStruct(map[string]any{
 				"ampel": map[string]any{
 					"severity": vuln.Severity,
-					"CWE":      vuln.CweIDs,
-					"KEV":      "",
+					// TODO(puerco): Fix this, the []string does not serialize
+					//"CWE":      vuln.CweIDs,
+					"KEV": "",
 				},
 			})
 			if err != nil {
@@ -110,8 +129,23 @@ func (t *Transformer) TrivyToOSV(original *trivy.Predicate) (*posv.Predicate, er
 			rec.DatabaseSpecific = dbs
 
 			// Append the record to the OSV predicate
-			ret.Parsed.Records = append(ret.Parsed.Records, rec)
+			if _, ok := results[vuln.PkgName]; !ok {
+				results[vuln.PkgName] = []*posv.Record{}
+			}
+			results[vuln.PkgName] = append(results[vuln.PkgName], rec)
 		}
 	}
+
+	for name, records := range results {
+		pkg := &posv.Result_Package{
+			Package: &posv.Result_Package_Info{
+				Name: name,
+			},
+			Vulnerabilities: []*posv.Record{},
+		}
+		pkg.Vulnerabilities = append(pkg.Vulnerabilities, records...)
+		ret.Parsed.Results[0].Packages = append(ret.Parsed.Results[0].Packages, pkg)
+	}
+
 	return ret, nil
 }
