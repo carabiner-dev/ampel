@@ -3,6 +3,7 @@ module github.com/puerco/ampel
 go 1.23.4
 
 require (
+	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
 	github.com/davecgh/go-spew v1.1.1
 	github.com/fatih/color v1.18.0
 	github.com/google/cel-go v0.22.1
