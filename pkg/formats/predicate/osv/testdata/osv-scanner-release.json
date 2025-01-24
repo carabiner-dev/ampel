@@ -1,0 +1,1959 @@
+{
+  "date": "2014-09-20T00:00:00Z",
+  "results": [
+    {
+      "source": {
+        "path": "/home/urbano/projects/release/go.mod",
+        "type": "lockfile"
+      },
+      "packages": [
+        {
+          "package": {
+            "name": "github.com/go-git/go-git/v5",
+            "version": "5.12.0",
+            "ecosystem": "Go"
+          },
+          "vulnerabilities": [
+            {
+              "modified": "2025-01-07T16:27:03Z",
+              "published": "2025-01-06T16:20:28Z",
+              "schema_version": "1.6.0",
+              "id": "GHSA-r9px-m959-cxf4",
+              "aliases": [
+                "CVE-2025-21614",
+                "GO-2025-3367"
+              ],
+              "related": [
+                "CGA-25c9-3jr6-jxxg",
+                "CGA-3h2w-crfm-c9gv",
+                "CGA-3qvf-p8pm-rccq",
+                "CGA-42gf-352f-h47v",
+                "CGA-46xm-6g2f-4cmx",
+                "CGA-4mfq-qwq3-crjj",
+                "CGA-4pc6-rw7j-v45x",
+                "CGA-4vxc-2qw8-5v4q",
+                "CGA-522w-5h2g-rq48",
+                "CGA-533m-33r2-x84m",
+                "CGA-5j4g-3886-7v27",
+                "CGA-5m79-5w86-96qw",
+                "CGA-5mf4-9qx3-q7g3",
+                "CGA-659p-xcf5-v3f3",
+                "CGA-6w85-7vgh-xj58",
+                "CGA-72pf-vrm4-5rxh",
+                "CGA-7f4h-7ph7-8w8m",
+                "CGA-8fcr-29p8-r7xg",
+                "CGA-8w56-f4x5-3c94",
+                "CGA-9736-4825-g56m",
+                "CGA-9q56-86g9-6ppw",
+                "CGA-9qxg-j6r4-2rc7",
+                "CGA-c53m-wj6m-g89q",
+                "CGA-fqjp-gqgv-chrp",
+                "CGA-fwcg-h4x9-8xr4",
+                "CGA-fxxc-w9cp-gg3w",
+                "CGA-g3jj-gxhm-g5jj",
+                "CGA-gc77-5phf-vxm8",
+                "CGA-h665-8mm8-2hq6",
+                "CGA-jfjj-c8f2-8jwg",
+                "CGA-jj5h-hmwf-mmmr",
+                "CGA-m53m-7mr9-m2wp",
+                "CGA-mmrm-qfr7-g2w5",
+                "CGA-mq8r-c5gf-jvxw",
+                "CGA-mqpq-qrj4-2hj9",
+                "CGA-mr43-vw9h-c5jx",
+                "CGA-p74p-5f53-p34c",
+                "CGA-p88v-hqxj-6wr9",
+                "CGA-pc74-h874-vf2j",
+                "CGA-pcc5-v84x-9cvx",
+                "CGA-pjf8-phcp-8c4r",
+                "CGA-qfxp-35rx-vp74",
+                "CGA-qmpc-49qf-33h6",
+                "CGA-r4p7-5659-wj66",
+                "CGA-rjjg-xxq6-9m54",
+                "CGA-rqrp-5g3v-mv2p",
+                "CGA-v8x4-7hq3-9jp4",
+                "CGA-vcfc-jvvw-jjhm",
+                "CGA-vp8v-c6r9-6vxr",
+                "CGA-vpqw-7vr4-49wr",
+                "CGA-vrwf-vm3x-frp4",
+                "CGA-vvmc-7mgm-gcvc",
+                "CGA-w7w5-364f-67p2",
+                "CGA-wccq-9g8j-w469",
+                "CGA-wv9c-q6j7-75mv",
+                "CGA-x982-x58x-37xq"
+              ],
+              "summary": "go-git clients vulnerable to DoS via maliciously crafted Git server replies",
+              "details": "### Impact\nA denial of service (DoS) vulnerability was discovered in go-git versions prior to `v5.13`. This vulnerability allows an attacker to perform denial of service attacks by providing specially crafted responses from a Git server which triggers resource exhaustion in `go-git` clients. \n\nThis is a `go-git` implementation issue and does not affect the upstream `git` cli.\n\n### Patches\nUsers running versions of `go-git` from `v4` and above are recommended to upgrade to `v5.13` in order to mitigate this vulnerability.\n\n### Workarounds\nIn cases where a bump to the latest version of `go-git` is not possible, we recommend limiting its use to only trust-worthy Git servers.\n\n## Credit\nThanks to Ionut Lalu for responsibly disclosing this vulnerability to us.\n",
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "gopkg.in/src-d/go-git.v4",
+                    "purl": "pkg:golang/gopkg.in/src-d/go-git.v4"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "4.0.0"
+                        },
+                        {
+                          "last_affected": "4.13.1"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2025/01/GHSA-r9px-m959-cxf4/GHSA-r9px-m959-cxf4.json"
+                  }
+                },
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "github.com/go-git/go-git/v5",
+                    "purl": "pkg:golang/github.com/go-git/go-git/v5"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "5.13.0"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2025/01/GHSA-r9px-m959-cxf4/GHSA-r9px-m959-cxf4.json"
+                  }
+                },
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "github.com/go-git/go-git",
+                    "purl": "pkg:golang/github.com/go-git/go-git"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "4.0.0"
+                        },
+                        {
+                          "last_affected": "4.13.1"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2025/01/GHSA-r9px-m959-cxf4/GHSA-r9px-m959-cxf4.json"
+                  }
+                }
+              ],
+              "severity": [
+                {
+                  "type": "CVSS_V3",
+                  "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+                }
+              ],
+              "references": [
+                {
+                  "type": "WEB",
+                  "url": "https://github.com/go-git/go-git/security/advisories/GHSA-r9px-m959-cxf4"
+                },
+                {
+                  "type": "ADVISORY",
+                  "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-21614"
+                },
+                {
+                  "type": "PACKAGE",
+                  "url": "https://github.com/go-git/go-git"
+                }
+              ],
+              "database_specific": {
+                "cwe_ids": [
+                  "CWE-20",
+                  "CWE-400",
+                  "CWE-770"
+                ],
+                "github_reviewed": true,
+                "github_reviewed_at": "2025-01-06T16:20:28Z",
+                "nvd_published_at": "2025-01-06T17:15:47Z",
+                "severity": "HIGH"
+              }
+            },
+            {
+              "modified": "2025-01-07T16:27:03Z",
+              "published": "2025-01-06T16:16:30Z",
+              "schema_version": "1.6.0",
+              "id": "GHSA-v725-9546-7q7m",
+              "aliases": [
+                "CVE-2025-21613",
+                "GO-2025-3368"
+              ],
+              "related": [
+                "CGA-2gw7-q958-rqwh",
+                "CGA-3jvx-c583-733j",
+                "CGA-44m4-m589-h366",
+                "CGA-489m-x2wg-g49v",
+                "CGA-4fww-c4xq-q3m5",
+                "CGA-52r4-787f-9qrc",
+                "CGA-576g-jv9m-gr4c",
+                "CGA-5xrg-m884-hm48",
+                "CGA-63fc-j3h2-ghc8",
+                "CGA-65rx-fh74-p426",
+                "CGA-6823-c2q6-5r5f",
+                "CGA-76wv-2jg5-vrrv",
+                "CGA-7739-w2fq-74jc",
+                "CGA-8gmj-w7qg-pmcw",
+                "CGA-8jqf-m7w3-vp9j",
+                "CGA-9393-h7qv-437w",
+                "CGA-96x6-8r9x-5v7q",
+                "CGA-985j-mpqm-gmq5",
+                "CGA-9j6c-fxv2-wc33",
+                "CGA-c32h-ccm6-3vcv",
+                "CGA-ccvc-56mj-q9jw",
+                "CGA-cfvf-q7hm-jmmw",
+                "CGA-cv6j-2q78-849x",
+                "CGA-cxxw-ww5f-xfjm",
+                "CGA-f39c-cmxc-xx62",
+                "CGA-f42v-q6c4-cx7m",
+                "CGA-f5vf-w399-j39m",
+                "CGA-f7mr-58rr-gg27",
+                "CGA-f88x-fxpg-h67j",
+                "CGA-f9v2-mx43-f44p",
+                "CGA-fvw4-hwxq-jhx7",
+                "CGA-g8qq-fhq3-2j3r",
+                "CGA-gp2q-hf8j-2x67",
+                "CGA-gr8m-q6jf-rh2f",
+                "CGA-gx3v-fxp6-q2vr",
+                "CGA-h3q4-57gf-67j9",
+                "CGA-hj95-286v-4qj5",
+                "CGA-hw7r-f52f-m3rg",
+                "CGA-hwpw-cmjx-86rw",
+                "CGA-j73v-8j3q-5rc6",
+                "CGA-jw69-p35g-9w49",
+                "CGA-m4f3-x9vr-m54m",
+                "CGA-m7cr-h2vc-67q9",
+                "CGA-p75x-8qj2-hrj6",
+                "CGA-p772-f7g3-9mf8",
+                "CGA-pcc8-xh9f-57f4",
+                "CGA-q827-pgvp-wh74",
+                "CGA-q8xv-qpf6-7qwh",
+                "CGA-qmmh-7pp9-7h68",
+                "CGA-qp62-rh46-26hw",
+                "CGA-r5v9-2qgc-4p4c",
+                "CGA-rpmq-2h2m-hc99",
+                "CGA-wjw3-52wx-2q53",
+                "CGA-x37r-j7w5-4xr4",
+                "CGA-x68h-g3fx-w43c",
+                "CGA-xw2h-vxp4-vfvg"
+              ],
+              "summary": "go-git has an Argument Injection via the URL field",
+              "details": "### Impact\nAn argument injection vulnerability was discovered in `go-git` versions prior to `v5.13`. \n\nSuccessful exploitation of this vulnerability could allow an attacker to set arbitrary values to [git-upload-pack flags](https://git-scm.com/docs/git-upload-pack). This only happens when the `file` transport protocol is being used, as that is the only protocol that shells out to `git` binaries.\n\n### Affected versions\nUsers running versions of `go-git` from `v4` and above are recommended to upgrade to `v5.13` in order to mitigate this vulnerability.\n\n### Workarounds\nIn cases where a bump to the latest version of `go-git` is not possible, we recommend users to enforce restrict validation rules for values passed in the URL field.\n\n## Credit\nThanks to @vin01 for responsibly disclosing this vulnerability to us.",
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "gopkg.in/src-d/go-git.v4",
+                    "purl": "pkg:golang/gopkg.in/src-d/go-git.v4"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "4.0.0"
+                        },
+                        {
+                          "last_affected": "4.13.1"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2025/01/GHSA-v725-9546-7q7m/GHSA-v725-9546-7q7m.json"
+                  }
+                },
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "github.com/go-git/go-git/v5",
+                    "purl": "pkg:golang/github.com/go-git/go-git/v5"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "5.13.0"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2025/01/GHSA-v725-9546-7q7m/GHSA-v725-9546-7q7m.json"
+                  }
+                }
+              ],
+              "severity": [
+                {
+                  "type": "CVSS_V3",
+                  "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+                },
+                {
+                  "type": "CVSS_V4",
+                  "score": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N/E:X/CR:X/IR:X/AR:X/MAV:X/MAC:X/MAT:X/MPR:X/MUI:X/MVC:X/MVI:X/MVA:X/MSC:X/MSI:X/MSA:X/S:X/AU:X/R:X/V:X/RE:X/U:Clear"
+                }
+              ],
+              "references": [
+                {
+                  "type": "WEB",
+                  "url": "https://github.com/go-git/go-git/security/advisories/GHSA-v725-9546-7q7m"
+                },
+                {
+                  "type": "ADVISORY",
+                  "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-21613"
+                },
+                {
+                  "type": "PACKAGE",
+                  "url": "https://github.com/go-git/go-git"
+                }
+              ],
+              "database_specific": {
+                "cwe_ids": [
+                  "CWE-88"
+                ],
+                "github_reviewed": true,
+                "github_reviewed_at": "2025-01-06T16:16:30Z",
+                "nvd_published_at": "2025-01-06T17:15:47Z",
+                "severity": "CRITICAL"
+              }
+            },
+            {
+              "modified": "2025-01-07T16:27:03Z",
+              "published": "2025-01-07T16:03:20Z",
+              "schema_version": "1.6.0",
+              "id": "GO-2025-3367",
+              "aliases": [
+                "CVE-2025-21614",
+                "GHSA-r9px-m959-cxf4"
+              ],
+              "summary": "Clients vulnerable to DoS via maliciously crafted Git server replies in github.com/go-git/go-git",
+              "details": "Clients vulnerable to DoS via maliciously crafted Git server replies in github.com/go-git/go-git",
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "github.com/go-git/go-git/v4",
+                    "purl": "pkg:golang/github.com/go-git/go-git/v4"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "4.0.0"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://vuln.go.dev/ID/GO-2025-3367.json"
+                  }
+                },
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "github.com/go-git/go-git/v5",
+                    "purl": "pkg:golang/github.com/go-git/go-git/v5"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "5.13.0"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://vuln.go.dev/ID/GO-2025-3367.json"
+                  }
+                },
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "gopkg.in/src-d/go-git.v4",
+                    "purl": "pkg:golang/gopkg.in/src-d/go-git.v4"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "4.0.0"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://vuln.go.dev/ID/GO-2025-3367.json"
+                  }
+                }
+              ],
+              "references": [
+                {
+                  "type": "ADVISORY",
+                  "url": "https://github.com/go-git/go-git/security/advisories/GHSA-r9px-m959-cxf4"
+                }
+              ],
+              "credits": [
+                {
+                  "name": "Ionut Lalu"
+                }
+              ],
+              "database_specific": {
+                "review_status": "REVIEWED",
+                "url": "https://pkg.go.dev/vuln/GO-2025-3367"
+              }
+            },
+            {
+              "modified": "2025-01-07T16:27:03Z",
+              "published": "2025-01-07T16:04:06Z",
+              "schema_version": "1.6.0",
+              "id": "GO-2025-3368",
+              "aliases": [
+                "CVE-2025-21613",
+                "GHSA-v725-9546-7q7m"
+              ],
+              "summary": "Argument Injection via the URL field in github.com/go-git/go-git",
+              "details": "Argument Injection via the URL field in github.com/go-git/go-git",
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "github.com/go-git/go-git/v5",
+                    "purl": "pkg:golang/github.com/go-git/go-git/v5"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "5.13.0"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://vuln.go.dev/ID/GO-2025-3368.json"
+                  }
+                },
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "github.com/go-git/go-git/v4",
+                    "purl": "pkg:golang/github.com/go-git/go-git/v4"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "4.0.0"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://vuln.go.dev/ID/GO-2025-3368.json"
+                  }
+                },
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "gopkg.in/src-d/go-git.v4",
+                    "purl": "pkg:golang/gopkg.in/src-d/go-git.v4"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "4.0.0"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://vuln.go.dev/ID/GO-2025-3368.json"
+                  }
+                }
+              ],
+              "references": [
+                {
+                  "type": "ADVISORY",
+                  "url": "https://github.com/go-git/go-git/security/advisories/GHSA-v725-9546-7q7m"
+                }
+              ],
+              "credits": [
+                {
+                  "name": "@vin01"
+                }
+              ],
+              "database_specific": {
+                "review_status": "REVIEWED",
+                "url": "https://pkg.go.dev/vuln/GO-2025-3368"
+              }
+            }
+          ],
+          "groups": [
+            {
+              "ids": [
+                "GO-2025-3367",
+                "GHSA-r9px-m959-cxf4"
+              ],
+              "aliases": [
+                "CVE-2025-21614",
+                "GHSA-r9px-m959-cxf4",
+                "GO-2025-3367"
+              ],
+              "max_severity": "7.5"
+            },
+            {
+              "ids": [
+                "GO-2025-3368",
+                "GHSA-v725-9546-7q7m"
+              ],
+              "aliases": [
+                "CVE-2025-21613",
+                "GHSA-v725-9546-7q7m",
+                "GO-2025-3368"
+              ],
+              "max_severity": "9.8"
+            }
+          ]
+        },
+        {
+          "package": {
+            "name": "github.com/gomarkdown/markdown",
+            "version": "0.0.0-20240328165702-4d01890c35c0",
+            "ecosystem": "Go"
+          },
+          "vulnerabilities": [
+            {
+              "modified": "2024-12-12T17:59:12Z",
+              "published": "2024-10-15T21:30:39Z",
+              "schema_version": "1.6.0",
+              "id": "GHSA-xhr3-wf7j-h255",
+              "aliases": [
+                "CVE-2024-44337",
+                "GO-2024-3205"
+              ],
+              "summary": "Infinite loop in github.com/gomarkdown/markdown",
+              "details": "The package `github.com/gomarkdown/markdown` is a Go library for parsing Markdown text and rendering as HTML. Prior to pseudoversion `v0.0.0-20240729232818-a2a9c4f`, which corresponds with commit `a2a9c4f76ef5a5c32108e36f7c47f8d310322252`, there was a logical problem in the paragraph function of the parser/block.go file, which allowed a remote attacker to cause a denial of service (DoS) condition by providing a tailor-made input that caused an infinite loop, causing the program to hang and consume resources indefinitely. Submit `a2a9c4f76ef5a5c32108e36f7c47f8d310322252` contains fixes to this problem.",
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "github.com/gomarkdown/markdown",
+                    "purl": "pkg:golang/github.com/gomarkdown/markdown"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "0.0.0-20240729212818-a2a9c4f76ef5"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2024/10/GHSA-xhr3-wf7j-h255/GHSA-xhr3-wf7j-h255.json"
+                  }
+                }
+              ],
+              "severity": [
+                {
+                  "type": "CVSS_V3",
+                  "score": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:L"
+                },
+                {
+                  "type": "CVSS_V4",
+                  "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:L/SC:N/SI:N/SA:N"
+                }
+              ],
+              "references": [
+                {
+                  "type": "ADVISORY",
+                  "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-44337"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://github.com/gomarkdown/markdown/commit/a2a9c4f76ef5a5c32108e36f7c47f8d310322252"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://github.com/Brinmon/CVE-2024-44337"
+                },
+                {
+                  "type": "PACKAGE",
+                  "url": "https://github.com/gomarkdown/markdown"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://pkg.go.dev/vuln/GO-2024-3205"
+                }
+              ],
+              "database_specific": {
+                "cwe_ids": [
+                  "CWE-835"
+                ],
+                "github_reviewed": true,
+                "github_reviewed_at": "2024-10-16T14:09:50Z",
+                "nvd_published_at": "2024-10-15T20:15:21Z",
+                "severity": "MODERATE"
+              }
+            },
+            {
+              "modified": "2024-12-12T15:57:46Z",
+              "published": "2024-12-12T15:16:09Z",
+              "schema_version": "1.6.0",
+              "id": "GO-2024-3205",
+              "aliases": [
+                "CVE-2024-44337",
+                "GHSA-xhr3-wf7j-h255"
+              ],
+              "summary": "Infinite loop in github.com/gomarkdown/markdown",
+              "details": "Infinite loop in github.com/gomarkdown/markdown",
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "github.com/gomarkdown/markdown",
+                    "purl": "pkg:golang/github.com/gomarkdown/markdown"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "0.0.0-20240729212818-a2a9c4f76ef5"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://vuln.go.dev/ID/GO-2024-3205.json"
+                  },
+                  "ecosystem_specific": {
+                    "imports": [
+                      {
+                        "path": "github.com/gomarkdown/markdown/parser",
+                        "symbols": [
+                          "Parser.Block",
+                          "Parser.Parse",
+                          "Parser.paragraph"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "references": [
+                {
+                  "type": "ADVISORY",
+                  "url": "https://github.com/advisories/GHSA-xhr3-wf7j-h255"
+                },
+                {
+                  "type": "FIX",
+                  "url": "https://github.com/gomarkdown/markdown/commit/a2a9c4f76ef5a5c32108e36f7c47f8d310322252"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://github.com/Brinmon/CVE-2024-44337"
+                }
+              ],
+              "database_specific": {
+                "review_status": "REVIEWED",
+                "url": "https://pkg.go.dev/vuln/GO-2024-3205"
+              }
+            }
+          ],
+          "groups": [
+            {
+              "ids": [
+                "GO-2024-3205",
+                "GHSA-xhr3-wf7j-h255"
+              ],
+              "aliases": [
+                "CVE-2024-44337",
+                "GHSA-xhr3-wf7j-h255",
+                "GO-2024-3205"
+              ],
+              "experimentalAnalysis": {
+                "GO-2024-3205": {
+                  "called": true,
+                  "unimportant": false
+                }
+              },
+              "max_severity": "6.9"
+            }
+          ]
+        },
+        {
+          "package": {
+            "name": "golang.org/x/crypto",
+            "version": "0.29.0",
+            "ecosystem": "Go"
+          },
+          "vulnerabilities": [
+            {
+              "modified": "2024-12-13T21:56:08Z",
+              "published": "2024-12-11T22:03:04Z",
+              "schema_version": "1.6.0",
+              "id": "GHSA-v778-237x-gjrc",
+              "aliases": [
+                "CVE-2024-45337",
+                "GO-2024-3321"
+              ],
+              "related": [
+                "CGA-228h-fjfr-4vfr",
+                "CGA-22m6-2hv7-7wqc",
+                "CGA-24pq-h5fw-43v3",
+                "CGA-24qr-hvcm-4q6h",
+                "CGA-24x9-q5mv-7v9v",
+                "CGA-25f7-3m9j-6x3w",
+                "CGA-2696-jcc9-wg7p",
+                "CGA-26wp-vph9-62vq",
+                "CGA-27mq-c8jc-h222",
+                "CGA-282g-jfq6-gvqf",
+                "CGA-2c37-2f5r-fvfm",
+                "CGA-2cq4-g93r-r7cx",
+                "CGA-2cq9-whwg-vcq7",
+                "CGA-2gj2-jr2x-5mgh",
+                "CGA-2hhc-rfjx-f4pm",
+                "CGA-2j5c-px48-8jgh",
+                "CGA-2m32-83jj-g3q4",
+                "CGA-2m7v-gpw4-26c3",
+                "CGA-2v9m-wm23-p9p8",
+                "CGA-2vmw-4c88-gjm9",
+                "CGA-3363-x4w5-7776",
+                "CGA-35ww-mr3v-6w38",
+                "CGA-35ww-v6f7-hx5c",
+                "CGA-36j3-j65h-3xcc",
+                "CGA-36v3-q669-gw4x",
+                "CGA-37fm-qjpv-4cx4",
+                "CGA-37gf-4mjx-5629",
+                "CGA-392f-crf2-77pr",
+                "CGA-39wv-69mw-6h45",
+                "CGA-3cp6-44f3-3vq9",
+                "CGA-3cxc-qxp5-8qj9",
+                "CGA-3f8p-vv39-3w73",
+                "CGA-3g5w-w2qq-gpj7",
+                "CGA-3hgp-9626-rg23",
+                "CGA-3hv7-g8r7-pmx2",
+                "CGA-3j2f-8wc3-wfrj",
+                "CGA-3jv7-v9p9-hmgx",
+                "CGA-3pfc-crhw-h2wh",
+                "CGA-3q4v-qxc2-3rc2",
+                "CGA-3r45-fq28-3c25",
+                "CGA-3rgj-87fj-6728",
+                "CGA-436r-p3r5-jqf9",
+                "CGA-43r9-hjw7-m833",
+                "CGA-43vg-5qp9-8rpx",
+                "CGA-44hq-5m6p-8q86",
+                "CGA-459h-4qpg-5j6c",
+                "CGA-45c5-q3w8-g43w",
+                "CGA-4679-8wrp-4r63",
+                "CGA-473x-w4j2-38vx",
+                "CGA-474h-r6w9-95xv",
+                "CGA-4776-hhq4-jppr",
+                "CGA-48j5-fv57-x85q",
+                "CGA-4cmq-3qw8-c33m",
+                "CGA-4cqf-x2x4-29p2",
+                "CGA-4f32-2x3j-93qh",
+                "CGA-4f5v-pvmp-6ph8",
+                "CGA-4g46-hxjp-w3v5",
+                "CGA-4g9r-xhgv-5pvf",
+                "CGA-4jxx-jrm8-6v8h",
+                "CGA-4m39-wwwv-xwjx",
+                "CGA-4m59-74mf-hpcg",
+                "CGA-4pmm-w9pg-7429",
+                "CGA-4qq9-2mhh-69vv",
+                "CGA-4qwr-w3fg-h22g",
+                "CGA-4r86-767f-hm58",
+                "CGA-4w2h-ch3p-539h",
+                "CGA-4wwx-8234-9g87",
+                "CGA-52p2-fj4m-fxvh",
+                "CGA-54hp-796x-hxhq",
+                "CGA-54q9-7p22-g82c",
+                "CGA-5552-6828-hwgp",
+                "CGA-57qh-jmcr-675m",
+                "CGA-587j-389f-9gpp",
+                "CGA-58vx-6h3x-5qx2",
+                "CGA-5932-73x5-grp8",
+                "CGA-599f-2q9r-79hw",
+                "CGA-5fhh-43c2-ccq5",
+                "CGA-5g22-gv59-hhvx",
+                "CGA-5g53-phfv-7f36",
+                "CGA-5grx-x7x3-g64j",
+                "CGA-5mhp-3f8p-f6fw",
+                "CGA-5mw4-3x3q-qmxx",
+                "CGA-5p4w-9cg5-f227",
+                "CGA-5qp4-w7m8-p5hx",
+                "CGA-5vg8-mq5j-wg95",
+                "CGA-5w2h-wmmr-w558",
+                "CGA-5wf4-jch7-5x48",
+                "CGA-5x49-fr4f-3r6j",
+                "CGA-5xg4-qfwc-j48x",
+                "CGA-62mq-jc64-fqwh",
+                "CGA-636w-mfc4-ccwh",
+                "CGA-6395-xhp7-85w4",
+                "CGA-63xx-6rq2-76r3",
+                "CGA-64hq-862p-3pww",
+                "CGA-65rw-4h88-grmh",
+                "CGA-686g-m4w7-jjpv",
+                "CGA-68m5-3xv6-h4p5",
+                "CGA-6fph-5pff-5wrw",
+                "CGA-6ggg-hxhg-6r88",
+                "CGA-6ggr-vj32-5548",
+                "CGA-6ghr-2q92-3h6g",
+                "CGA-6h44-69mr-359m",
+                "CGA-6h6q-x48q-2f7m",
+                "CGA-6j37-68g3-9gx7",
+                "CGA-6q78-qj84-mhg3",
+                "CGA-6q8f-f288-p2r8",
+                "CGA-6rf3-47xp-mc9v",
+                "CGA-6rm2-vjqw-48pm",
+                "CGA-6v78-xcp2-pvj8",
+                "CGA-6v7c-jw3j-fx47",
+                "CGA-6vh6-q6gv-m796",
+                "CGA-6w46-mfhh-4w97",
+                "CGA-6whc-93q8-7j38",
+                "CGA-6wr9-56fj-c4vf",
+                "CGA-722j-p23c-v724",
+                "CGA-726f-cjw3-6c3q",
+                "CGA-73qq-2p2x-x784",
+                "CGA-75q8-q5hf-56x7",
+                "CGA-76x5-f86g-qxcx",
+                "CGA-7c63-47wj-mgg4",
+                "CGA-7fvv-qv68-g7xh",
+                "CGA-7g82-vfv8-h7xh",
+                "CGA-7g8c-qchp-5gp5",
+                "CGA-7hhh-3fr3-5fjq",
+                "CGA-7hrx-8rgm-47xm",
+                "CGA-7jcm-h3m5-fw37",
+                "CGA-7jm6-hwmw-vwwm",
+                "CGA-7jww-84m9-6326",
+                "CGA-7mp3-fw8m-fj56",
+                "CGA-7p8h-x538-8x98",
+                "CGA-7pf4-r5m7-5mx5",
+                "CGA-7q4h-pcmq-797h",
+                "CGA-7rfh-x547-r82q",
+                "CGA-7whf-qg3p-r2mh",
+                "CGA-8226-gq6c-h5h6",
+                "CGA-82gr-6h3h-qv54",
+                "CGA-82wv-fpr5-w59f",
+                "CGA-83p4-j7xg-58pg",
+                "CGA-84xh-r6qp-rrr8",
+                "CGA-8543-22m5-68fm",
+                "CGA-85f5-rhw9-pcm9",
+                "CGA-86qh-q5wf-2p3h",
+                "CGA-86qx-gwp4-g57p",
+                "CGA-86xm-w6w7-2mr4",
+                "CGA-877v-7wv7-84j9",
+                "CGA-88j8-v3xc-rcjg",
+                "CGA-89h5-qq6w-3vcr",
+                "CGA-8c23-rf9p-x688",
+                "CGA-8g9j-qj6w-55m4",
+                "CGA-8gc6-vgv7-82wj",
+                "CGA-8h84-f783-h27h",
+                "CGA-8hj9-r2q6-g64v",
+                "CGA-8hq2-hh82-w5wc",
+                "CGA-8hrr-jxm5-vpwx",
+                "CGA-8m22-jxm3-585q",
+                "CGA-8m9m-3vhw-hjmj",
+                "CGA-8p29-6qmj-mfqw",
+                "CGA-8p67-6v2x-6q5w",
+                "CGA-8q5x-p5qp-6vwc",
+                "CGA-8q78-gvrh-55p9",
+                "CGA-8w5v-qppj-3hv9",
+                "CGA-8wqj-7gp8-v3qg",
+                "CGA-8x4f-mrjw-3rrh",
+                "CGA-8x6g-x82v-gfpw",
+                "CGA-8xhw-pw8q-xw76",
+                "CGA-9232-7rhx-c2ph",
+                "CGA-927x-f937-89jc",
+                "CGA-92jg-f62g-rx9g",
+                "CGA-92w6-746j-vx8v",
+                "CGA-94gf-9rf6-v4rw",
+                "CGA-95jw-v3pv-jvx4",
+                "CGA-95wm-p2qv-6jmm",
+                "CGA-96rp-r5mr-qqpc",
+                "CGA-97jf-22mh-596x",
+                "CGA-98mw-3pp9-hq84",
+                "CGA-98p4-c2rm-5276",
+                "CGA-996f-7v5h-5f38",
+                "CGA-9c33-mfm6-cvvv",
+                "CGA-9cq7-xg7w-mxr8",
+                "CGA-9f96-7jwr-p2f3",
+                "CGA-9fh3-v8v2-6rf9",
+                "CGA-9gm3-367f-hmmj",
+                "CGA-9jxv-f66p-gj3p",
+                "CGA-9m7w-9xq2-mrgg",
+                "CGA-9mx9-7g57-cxgr",
+                "CGA-9rxv-wxx9-v7rr",
+                "CGA-9x89-g9hh-h49j",
+                "CGA-c57q-f6c6-9jj7",
+                "CGA-c589-3fmv-mv98",
+                "CGA-c593-jq73-qjc8",
+                "CGA-c5fx-82mm-hv2v",
+                "CGA-c5w3-rfpw-2q5m",
+                "CGA-c6rg-5vmq-cpcc",
+                "CGA-c85q-x79v-9j93",
+                "CGA-c99v-rjqm-wf2m",
+                "CGA-c9gg-r469-c9mm",
+                "CGA-cc5g-7vh9-fjhv",
+                "CGA-cf64-mcp5-jxfv",
+                "CGA-cf7j-p2gj-8r5x",
+                "CGA-cfpj-w2pp-m43x",
+                "CGA-cg38-mv4g-6pfx",
+                "CGA-cjmv-2gq7-cm5g",
+                "CGA-cmjx-98m5-92vv",
+                "CGA-cmv9-xv86-6p6j",
+                "CGA-cr49-jp4x-mm9v",
+                "CGA-crqg-m8c2-w7jj",
+                "CGA-crrg-rmjw-v7rc",
+                "CGA-cx9r-h47m-3rx2",
+                "CGA-f244-x97j-93mq",
+                "CGA-f24f-34q5-g6gf",
+                "CGA-f3ph-rgv3-8x94",
+                "CGA-f3pw-84ch-q3jh",
+                "CGA-f5r9-vhhm-6w7r",
+                "CGA-f8fq-37hf-mwm3",
+                "CGA-f8h2-cc76-pg5v",
+                "CGA-f9cj-8fqf-pm58",
+                "CGA-ffcq-fg4h-8pww",
+                "CGA-fff5-x3qv-qg2p",
+                "CGA-fh3g-gqgw-pqm6",
+                "CGA-fjg2-gm44-jqv2",
+                "CGA-fjmv-r6mp-rcp8",
+                "CGA-fm4m-mcf4-75ph",
+                "CGA-fpp9-6gpf-fvpf",
+                "CGA-fvmx-f5wr-pwcf",
+                "CGA-fvxq-852h-cghq",
+                "CGA-fw89-7ghw-3cmg",
+                "CGA-fwhh-73gg-92qv",
+                "CGA-g2g9-rw35-jjjc",
+                "CGA-g2hr-67m8-863x",
+                "CGA-g2j4-frfj-6jjq",
+                "CGA-g3f8-vj92-fj7j",
+                "CGA-g3qj-w336-37j9",
+                "CGA-g3vw-vvp3-m48g",
+                "CGA-g4w9-f4gr-8jph",
+                "CGA-g5gw-3fr6-hqhj",
+                "CGA-g7jw-82cf-9hwj",
+                "CGA-g7rr-j37m-32vm",
+                "CGA-g7wj-64wc-p87r",
+                "CGA-g8fw-vfqv-fmjx",
+                "CGA-g8hh-p45f-8cp9",
+                "CGA-g9jg-fv2p-wg77",
+                "CGA-gc49-jmcx-3r34",
+                "CGA-gc4c-wjpx-7fpv",
+                "CGA-gcf7-mwgp-xv39",
+                "CGA-gcxq-pj9w-4h7j",
+                "CGA-gfg6-pcvg-3h5v",
+                "CGA-gfgg-vw6c-v7f9",
+                "CGA-gm3m-4gj7-m7fr",
+                "CGA-gm9r-mp76-4v56",
+                "CGA-gp82-34xg-j3hq",
+                "CGA-gpfg-9qjj-j45w",
+                "CGA-gqq6-jpg3-p5rx",
+                "CGA-gvfr-wwf9-32w9",
+                "CGA-gwgc-rfpp-f64c",
+                "CGA-gxgf-572r-m86g",
+                "CGA-h24c-x62v-p62h",
+                "CGA-h25p-pvrv-vqrf",
+                "CGA-h3g2-gcrj-r5jf",
+                "CGA-h46q-f568-mh9p",
+                "CGA-h4p2-gf67-r7gm",
+                "CGA-h5jr-8xcc-q6w2",
+                "CGA-h63p-686q-wc75",
+                "CGA-h6gp-75m9-qp4g",
+                "CGA-h85h-45qc-v23p",
+                "CGA-h8vg-3m33-5gff",
+                "CGA-h98w-j7x9-g2p3",
+                "CGA-h9gh-4hfh-w6h8",
+                "CGA-hc5x-qvpv-9xp2",
+                "CGA-hcmf-c28m-5hj8",
+                "CGA-hg88-x5fp-q473",
+                "CGA-hggw-7f3j-mj95",
+                "CGA-hgh6-g93x-4m88",
+                "CGA-hgm8-x79f-ghvm",
+                "CGA-hh22-p4q4-696x",
+                "CGA-hjfv-h3rf-vr9p",
+                "CGA-hjv6-hhw4-cxg9",
+                "CGA-hmh3-9h85-q97c",
+                "CGA-hmjv-qv47-6jfq",
+                "CGA-hmxv-7hjp-cwpp",
+                "CGA-hpc9-3m9v-4chh",
+                "CGA-hpv4-7q3j-33gh",
+                "CGA-hq5j-q73m-qqc9",
+                "CGA-hqw4-h7qr-848p",
+                "CGA-hv8x-cwhf-9cx9",
+                "CGA-hx8x-vf82-j88r",
+                "CGA-hxcx-7xm8-jcr4",
+                "CGA-j276-fj8m-j66f",
+                "CGA-j276-q65g-gpc9",
+                "CGA-j27m-2488-v6gm",
+                "CGA-j2r3-xm6j-qjc5",
+                "CGA-j3jp-5v6c-3849",
+                "CGA-j56h-f6mc-fcpm",
+                "CGA-j674-wrhf-8r6q",
+                "CGA-j6gc-4pgq-fwxg",
+                "CGA-j6rv-g4h9-x9fw",
+                "CGA-j7w4-wcvf-px8g",
+                "CGA-j9q4-288x-gpf5",
+                "CGA-jc2g-82h2-4x7r",
+                "CGA-jfpj-xwv7-v2cp",
+                "CGA-jg72-55h2-6r59",
+                "CGA-jhhw-w8gg-53px",
+                "CGA-jm2m-5fpj-vfwc",
+                "CGA-jm4m-9wvm-c7pq",
+                "CGA-jxmf-hmx5-h9c8",
+                "CGA-m25p-vxc9-4g24",
+                "CGA-m27x-mcj6-vf59",
+                "CGA-m3fw-frq7-fq22",
+                "CGA-m3h4-4x5g-fh7j",
+                "CGA-m3vv-qxqq-v354",
+                "CGA-m68x-p339-v6jh",
+                "CGA-m8hr-4jrh-j292",
+                "CGA-m9rg-wpwq-v8q7",
+                "CGA-m9rp-87wr-xj88",
+                "CGA-mg3w-h4gh-wmvh",
+                "CGA-mpqp-fr27-g8q3",
+                "CGA-mr9v-m9xp-q2m5",
+                "CGA-mx48-9fff-v82f",
+                "CGA-mxwj-h8cg-vpxv",
+                "CGA-p35f-qv46-7jwr",
+                "CGA-p489-vmhm-7pq8",
+                "CGA-p49w-jmvf-8j87",
+                "CGA-p599-xf5w-c9r2",
+                "CGA-p5m5-c65j-m9gv",
+                "CGA-p62m-fwhf-gwc6",
+                "CGA-p6c3-h48r-gxpw",
+                "CGA-p6cp-g4vh-9345",
+                "CGA-p6wc-p263-fcgg",
+                "CGA-p9c4-rrvc-jm8g",
+                "CGA-p9w2-qpf7-f95m",
+                "CGA-pg24-67h9-vrmq",
+                "CGA-pg9v-2xr3-55x6",
+                "CGA-ph9j-8mh6-qhgr",
+                "CGA-phf7-g396-8869",
+                "CGA-phrr-4hg6-4phx",
+                "CGA-pj53-24w6-3vrv",
+                "CGA-pjrh-66vw-v55f",
+                "CGA-pjwm-22pg-r975",
+                "CGA-pm5p-rjx9-74xw",
+                "CGA-pqvx-7q2v-qxx7",
+                "CGA-prhv-hgr8-865h",
+                "CGA-prm5-xj5j-vq7r",
+                "CGA-prpr-4mxq-w67p",
+                "CGA-pvv9-fx7w-49x4",
+                "CGA-pwwf-29cm-r8jq",
+                "CGA-q285-j6xx-3hgp",
+                "CGA-q324-7949-wc56",
+                "CGA-q3qg-5fvw-744j",
+                "CGA-q3x4-f9vf-32h4",
+                "CGA-q4j6-v3q3-9p22",
+                "CGA-q598-x4c2-qcg9",
+                "CGA-q69c-ggmp-5wrg",
+                "CGA-q82v-6gfq-87gp",
+                "CGA-q892-385q-9p8q",
+                "CGA-q8gg-x8pm-wvfg",
+                "CGA-qc23-8j6m-xxxc",
+                "CGA-qcw5-w98w-3prj",
+                "CGA-qg9x-whvc-99rm",
+                "CGA-qjw7-pv7h-82w6",
+                "CGA-qp7g-84hh-mw3r",
+                "CGA-qqg7-74mx-fcp9",
+                "CGA-qqvr-wq75-xrxq",
+                "CGA-qr7p-rgfg-r5mm",
+                "CGA-qwgr-cx5h-5r9f",
+                "CGA-qx9g-2jr3-8gjm",
+                "CGA-qxrc-957p-4mjc",
+                "CGA-r247-46rw-m7qr",
+                "CGA-r28p-8x4c-qcwh",
+                "CGA-r2p6-w3wp-xmm5",
+                "CGA-r36x-64c8-7qgf",
+                "CGA-r45m-9fpq-8xgf",
+                "CGA-r49f-8xpf-3gh9",
+                "CGA-r53h-8h6c-7rw7",
+                "CGA-r5gh-fgmr-qv59",
+                "CGA-r786-mcqw-6fmw",
+                "CGA-r7mp-c398-8gm9",
+                "CGA-r868-wgr8-339v",
+                "CGA-r8rp-chwc-2h84",
+                "CGA-rc9p-ww2x-9rgj",
+                "CGA-rhwr-6gwm-29jx",
+                "CGA-rhxq-3f3m-cqvq",
+                "CGA-rm5p-8wgw-x292",
+                "CGA-rq5g-94jh-v9jp",
+                "CGA-rrp7-934v-555r",
+                "CGA-rv7r-v22v-8rff",
+                "CGA-rw2h-cpf6-4593",
+                "CGA-rw55-mxmc-g8q4",
+                "CGA-rx4x-cvh9-8rmj",
+                "CGA-rx8g-m8qf-793x",
+                "CGA-rxq7-37gv-5963",
+                "CGA-v2xh-wx8w-qc9x",
+                "CGA-v4p7-qg79-m8c2",
+                "CGA-v527-rp3p-8j6j",
+                "CGA-v5gj-2v8h-5r69",
+                "CGA-v62c-555x-px98",
+                "CGA-v76x-cq2h-6hhp",
+                "CGA-v7rx-jcgq-jwr6",
+                "CGA-v895-95j9-5q8g",
+                "CGA-vc23-fwpw-mmh2",
+                "CGA-vcf8-5chr-mm2w",
+                "CGA-vchj-hmpg-6jxr",
+                "CGA-vcw8-8rcc-3r7x",
+                "CGA-vg8m-2vfq-4jj3",
+                "CGA-vgcm-w7fr-ffh2",
+                "CGA-vgjg-grjj-x2jj",
+                "CGA-vjpm-5vg7-g4j3",
+                "CGA-vjpm-wc83-c8h5",
+                "CGA-vjr2-cm95-q645",
+                "CGA-vpvp-x383-xjmc",
+                "CGA-vqmj-97w8-99gr",
+                "CGA-vqw4-2rjp-547r",
+                "CGA-vrcm-5rpr-rxfp",
+                "CGA-vv5w-qgjm-mw6r",
+                "CGA-vvgr-wwx8-2f82",
+                "CGA-w2j3-9pgv-v97g",
+                "CGA-w3qx-p3xm-r2m9",
+                "CGA-w5qq-94m2-qmh9",
+                "CGA-w78m-575p-jq85",
+                "CGA-w7j5-fhmj-wxwg",
+                "CGA-w8mc-m4fr-c9w6",
+                "CGA-w95r-p5xp-fpmf",
+                "CGA-w9j3-mf28-5f6g",
+                "CGA-wc46-vmph-j9m8",
+                "CGA-wcrw-4592-hcjq",
+                "CGA-wg8m-qmp4-xv2j",
+                "CGA-whqm-9326-qf4h",
+                "CGA-whwp-wmhx-3gr9",
+                "CGA-wm37-fp68-gvjm",
+                "CGA-wm6x-qxjv-98rv",
+                "CGA-wm9r-whv7-47c8",
+                "CGA-wpc6-j64x-j6cp",
+                "CGA-wqjh-jc5x-gxj2",
+                "CGA-wr4x-mgcg-prv5",
+                "CGA-wrg3-v3h8-537c",
+                "CGA-wv8j-6rfq-7p4v",
+                "CGA-wvcw-8j3m-9v73",
+                "CGA-wxvp-3cmv-6vj2",
+                "CGA-x29g-9rpf-c3v8",
+                "CGA-x34q-5q5m-8q8v",
+                "CGA-x3jg-4hfr-m5xf",
+                "CGA-x444-gwfj-x9r7",
+                "CGA-x4c5-j935-r8pp",
+                "CGA-x4c9-8x9h-9882",
+                "CGA-x5f4-h23r-j9xf",
+                "CGA-x67h-f9x3-85jr",
+                "CGA-x77p-g2pv-fqqw",
+                "CGA-x88c-rxf4-5g6v",
+                "CGA-x8w9-87rm-gwfc",
+                "CGA-x97h-qx7x-2q4r",
+                "CGA-xc3h-99g2-95ph",
+                "CGA-xg27-jwq5-4wcm",
+                "CGA-xg63-rghc-rjx3",
+                "CGA-xhpf-3gjh-w494",
+                "CGA-xm22-gv2v-8724",
+                "CGA-xpg7-78v6-qgf2",
+                "CGA-xqv5-pch6-8ch6",
+                "CGA-xw88-p9wq-p9wp",
+                "CGA-xxrv-9627-w8wm"
+              ],
+              "summary": "Misuse of ServerConfig.PublicKeyCallback may cause authorization bypass in golang.org/x/crypto",
+              "details": "Applications and libraries which misuse the ServerConfig.PublicKeyCallback callback may be susceptible to an authorization bypass.\n\nThe documentation for ServerConfig.PublicKeyCallback says that \"A call to this function does not guarantee that the key offered is in fact used to authenticate.\" Specifically, the SSH protocol allows clients to inquire about whether a public key is acceptable before proving control of the corresponding private key. PublicKeyCallback may be called with multiple keys, and the order in which the keys were provided cannot be used to infer which key the client successfully authenticated with, if any. Some applications, which store the key(s) passed to PublicKeyCallback (or derived information) and make security relevant determinations based on it once the connection is established, may make incorrect assumptions.\n\nFor example, an attacker may send public keys A and B, and then authenticate with A. PublicKeyCallback would be called only twice, first with A and then with B. A vulnerable application may then make authorization decisions based on key B for which the attacker does not actually control the private key.\n\nSince this API is widely misused, as a partial mitigation golang.org/x/crypto@v0.31.0 enforces the property that, when successfully authenticating via public key, the last key passed to ServerConfig.PublicKeyCallback will be the key used to authenticate the connection. PublicKeyCallback will now be called multiple times with the same key, if necessary. Note that the client may still not control the last key passed to PublicKeyCallback if the connection is then authenticated with a different method, such as PasswordCallback, KeyboardInteractiveCallback, or NoClientAuth.\n\nUsers should be using the Extensions field of the Permissions return value from the various authentication callbacks to record data associated with the authentication attempt instead of referencing external state. Once the connection is established the state corresponding to the successful authentication attempt can be retrieved via the ServerConn.Permissions field. Note that some third-party libraries misuse the Permissions type by sharing it across authentication attempts; users of third-party libraries should refer to the relevant projects for guidance.",
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "golang.org/x/crypto",
+                    "purl": "pkg:golang/golang.org/x/crypto"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "0.31.0"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2024/12/GHSA-v778-237x-gjrc/GHSA-v778-237x-gjrc.json"
+                  }
+                }
+              ],
+              "severity": [
+                {
+                  "type": "CVSS_V3",
+                  "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+                }
+              ],
+              "references": [
+                {
+                  "type": "ADVISORY",
+                  "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-45337"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://github.com/golang/crypto/commit/b4f1988a35dee11ec3e05d6bf3e90b695fbd8909"
+                },
+                {
+                  "type": "PACKAGE",
+                  "url": "https://github.com/golang/crypto"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://go.dev/cl/635315"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://go.dev/issue/70779"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://groups.google.com/g/golang-announce/c/-nPEi39gI4Q/m/cGVPJCqdAQAJ"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://pkg.go.dev/vuln/GO-2024-3321"
+                },
+                {
+                  "type": "WEB",
+                  "url": "http://www.openwall.com/lists/oss-security/2024/12/11/2"
+                }
+              ],
+              "database_specific": {
+                "cwe_ids": [
+                  "CWE-285"
+                ],
+                "github_reviewed": true,
+                "github_reviewed_at": "2024-12-11T22:03:04Z",
+                "nvd_published_at": "2024-12-12T02:02:07Z",
+                "severity": "CRITICAL"
+              }
+            },
+            {
+              "modified": "2024-12-12T20:30:13Z",
+              "published": "2024-12-11T18:40:19Z",
+              "schema_version": "1.6.0",
+              "id": "GO-2024-3321",
+              "aliases": [
+                "CVE-2024-45337",
+                "GHSA-v778-237x-gjrc"
+              ],
+              "summary": "Misuse of ServerConfig.PublicKeyCallback may cause authorization bypass in golang.org/x/crypto",
+              "details": "Applications and libraries which misuse the ServerConfig.PublicKeyCallback callback may be susceptible to an authorization bypass.\n\nThe documentation for ServerConfig.PublicKeyCallback says that \"A call to this function does not guarantee that the key offered is in fact used to authenticate.\" Specifically, the SSH protocol allows clients to inquire about whether a public key is acceptable before proving control of the corresponding private key. PublicKeyCallback may be called with multiple keys, and the order in which the keys were provided cannot be used to infer which key the client successfully authenticated with, if any. Some applications, which store the key(s) passed to PublicKeyCallback (or derived information) and make security relevant determinations based on it once the connection is established, may make incorrect assumptions.\n\nFor example, an attacker may send public keys A and B, and then authenticate with A. PublicKeyCallback would be called only twice, first with A and then with B. A vulnerable application may then make authorization decisions based on key B for which the attacker does not actually control the private key.\n\nSince this API is widely misused, as a partial mitigation golang.org/x/cry...@v0.31.0 enforces the property that, when successfully authenticating via public key, the last key passed to ServerConfig.PublicKeyCallback will be the key used to authenticate the connection. PublicKeyCallback will now be called multiple times with the same key, if necessary. Note that the client may still not control the last key passed to PublicKeyCallback if the connection is then authenticated with a different method, such as PasswordCallback, KeyboardInteractiveCallback, or NoClientAuth.\n\nUsers should be using the Extensions field of the Permissions return value from the various authentication callbacks to record data associated with the authentication attempt instead of referencing external state. Once the connection is established the state corresponding to the successful authentication attempt can be retrieved via the ServerConn.Permissions field. Note that some third-party libraries misuse the Permissions type by sharing it across authentication attempts; users of third-party libraries should refer to the relevant projects for guidance.",
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "golang.org/x/crypto",
+                    "purl": "pkg:golang/golang.org/x/crypto"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "0.31.0"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://vuln.go.dev/ID/GO-2024-3321.json"
+                  },
+                  "ecosystem_specific": {
+                    "imports": [
+                      {
+                        "path": "golang.org/x/crypto/ssh",
+                        "symbols": [
+                          "ServerConfig.PublicKeyCallback"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "references": [
+                {
+                  "type": "FIX",
+                  "url": "https://github.com/golang/crypto/commit/b4f1988a35dee11ec3e05d6bf3e90b695fbd8909"
+                },
+                {
+                  "type": "FIX",
+                  "url": "https://go.dev/cl/635315"
+                },
+                {
+                  "type": "REPORT",
+                  "url": "https://go.dev/issue/70779"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://groups.google.com/g/golang-announce/c/-nPEi39gI4Q/m/cGVPJCqdAQAJ"
+                }
+              ],
+              "credits": [
+                {
+                  "name": "Damien Tournoud (Platform.sh / Upsun)"
+                },
+                {
+                  "name": "Patrick Dawkins (Platform.sh / Upsun)"
+                },
+                {
+                  "name": "Vince Parker (Platform.sh / Upsun)"
+                },
+                {
+                  "name": "Jules Duvivier (Platform.sh / Upsun)"
+                }
+              ],
+              "database_specific": {
+                "review_status": "REVIEWED",
+                "url": "https://pkg.go.dev/vuln/GO-2024-3321"
+              }
+            }
+          ],
+          "groups": [
+            {
+              "ids": [
+                "GO-2024-3321",
+                "GHSA-v778-237x-gjrc"
+              ],
+              "aliases": [
+                "CVE-2024-45337",
+                "GHSA-v778-237x-gjrc",
+                "GO-2024-3321"
+              ],
+              "experimentalAnalysis": {
+                "GO-2024-3321": {
+                  "called": false,
+                  "unimportant": false
+                }
+              },
+              "max_severity": "9.1"
+            }
+          ]
+        },
+        {
+          "package": {
+            "name": "golang.org/x/net",
+            "version": "0.31.0",
+            "ecosystem": "Go"
+          },
+          "vulnerabilities": [
+            {
+              "modified": "2024-12-18T22:11:53Z",
+              "published": "2024-12-18T21:59:48Z",
+              "schema_version": "1.6.0",
+              "id": "GHSA-w32m-9786-jp63",
+              "aliases": [
+                "CVE-2024-45338",
+                "GO-2024-3333"
+              ],
+              "related": [
+                "CGA-22cc-jwcv-w329",
+                "CGA-23wp-xgcv-fmwc",
+                "CGA-2489-j9r3-xx48",
+                "CGA-2529-m92c-7g9f",
+                "CGA-25fh-79w2-q553",
+                "CGA-25gr-mpxp-g5g2",
+                "CGA-26pf-fr79-vw5x",
+                "CGA-26pm-q8qj-c6gx",
+                "CGA-2cqj-w55r-3rcf",
+                "CGA-2f8g-vw27-6p86",
+                "CGA-2g8w-w5xp-pmh4",
+                "CGA-2gvr-qv7p-c3mg",
+                "CGA-2gvx-h7c2-3mh8",
+                "CGA-2gwx-r97v-mv53",
+                "CGA-2h76-rq2g-rm23",
+                "CGA-2j39-wg8g-8vr2",
+                "CGA-2xvx-2chr-r3h7",
+                "CGA-2xxm-2hg3-mx2j",
+                "CGA-3433-qrqq-p65c",
+                "CGA-34xr-g2f2-55qg",
+                "CGA-36jx-4h2r-78fw",
+                "CGA-36q8-rc5w-g8hf",
+                "CGA-36w8-3qw6-xhxm",
+                "CGA-3799-mmj9-v3cg",
+                "CGA-3866-jhvj-7mwr",
+                "CGA-3968-78vg-4rv2",
+                "CGA-397j-wc65-q76v",
+                "CGA-399p-22q7-xr44",
+                "CGA-3fvv-v8vq-mjr9",
+                "CGA-3gxx-pj27-5vmh",
+                "CGA-3hcg-86qm-c365",
+                "CGA-3hw5-92gc-9cvv",
+                "CGA-3hxc-g5wc-89g7",
+                "CGA-3m34-gw74-cq87",
+                "CGA-3m4h-mc9f-c6qv",
+                "CGA-3m6m-jr48-2rm9",
+                "CGA-3m8j-77x2-gj79",
+                "CGA-3mjw-qcpg-w6gc",
+                "CGA-3p5v-f62x-5m56",
+                "CGA-3p7c-2h7x-xxjx",
+                "CGA-3q2c-p9vm-57f3",
+                "CGA-3r56-c25q-w28q",
+                "CGA-42cf-xvwx-4974",
+                "CGA-42cw-qx6m-m3v4",
+                "CGA-44rq-5px8-gqhx",
+                "CGA-453v-qgw6-299g",
+                "CGA-462w-55w8-j9q9",
+                "CGA-47g6-3p9r-fpc9",
+                "CGA-48fr-jgw2-9gfj",
+                "CGA-48pr-v7mw-gp8r",
+                "CGA-49c3-vpjc-5wh7",
+                "CGA-4crh-5qrg-37pp",
+                "CGA-4g8x-mjmq-hmq2",
+                "CGA-4gc2-h526-q3x9",
+                "CGA-4gw3-grxf-p9fc",
+                "CGA-4h25-6j8p-r259",
+                "CGA-4j3q-v45f-5936",
+                "CGA-4mqx-qghm-j26m",
+                "CGA-4mr7-qpvx-r3qp",
+                "CGA-4p3q-mgfx-fm9x",
+                "CGA-4p49-g6gf-r9ph",
+                "CGA-4pmv-7h85-79ww",
+                "CGA-4pr6-6429-jq3h",
+                "CGA-4q26-6mff-g926",
+                "CGA-4r7q-j27j-2w44",
+                "CGA-4rx5-j875-vgv5",
+                "CGA-4w5f-7847-x7gp",
+                "CGA-4wq6-53m3-66gg",
+                "CGA-4x4q-jh67-hf43",
+                "CGA-5233-2m4w-7vhg",
+                "CGA-5297-cw32-w8jf",
+                "CGA-52q6-rp99-g282",
+                "CGA-55ph-v94j-hhmg",
+                "CGA-5684-6774-mvjj",
+                "CGA-5797-xq7c-6424",
+                "CGA-57mw-pf7c-4v2m",
+                "CGA-585x-pfwp-vf75",
+                "CGA-59mj-p5qc-fpgv",
+                "CGA-59wj-ph6r-vr36",
+                "CGA-5c4h-gchv-7vjw",
+                "CGA-5g63-7698-jf44",
+                "CGA-5hcx-8gwq-qxmf",
+                "CGA-5p6v-qm2p-crc5",
+                "CGA-5qpw-rjrw-58hm",
+                "CGA-5r3r-f9p6-xwhp",
+                "CGA-5v3p-3r72-9h95",
+                "CGA-5wj3-jcw6-f28h",
+                "CGA-5x25-9pfq-prhw",
+                "CGA-5xfg-49r5-j5q6",
+                "CGA-63mq-j24q-p7p8",
+                "CGA-63rc-3395-99px",
+                "CGA-64f3-q6h6-r6xg",
+                "CGA-64hv-5m68-556r",
+                "CGA-664w-vmrm-9g2j",
+                "CGA-668r-52hp-3fff",
+                "CGA-677j-5595-m8c9",
+                "CGA-677m-xx67-2v88",
+                "CGA-67fr-gghm-jhqc",
+                "CGA-67xw-qf7w-53c3",
+                "CGA-68m2-m3rj-89ch",
+                "CGA-69cw-j962-7rxc",
+                "CGA-6gf7-wv3f-9f5x",
+                "CGA-6h9j-f4pj-w4xr",
+                "CGA-6hg3-pwrj-2772",
+                "CGA-6hx6-f2j9-79r7",
+                "CGA-6j7j-9rr2-rpc2",
+                "CGA-6mfp-5qgf-5mh7",
+                "CGA-6mww-6542-fq9c",
+                "CGA-6p6q-4mj7-qp8c",
+                "CGA-6q8j-q2jh-r8mv",
+                "CGA-6r34-5xxx-wq7f",
+                "CGA-6wjg-v32r-wgqq",
+                "CGA-6ww5-9wjg-62hm",
+                "CGA-6xfg-p2h4-5g47",
+                "CGA-72hc-8jv5-wrwm",
+                "CGA-72wj-v65w-64r8",
+                "CGA-752r-6jf6-pxgv",
+                "CGA-75mr-fqfp-pg55",
+                "CGA-7889-9c3r-p8jq",
+                "CGA-78fw-fp3c-45x3",
+                "CGA-793c-p5q8-mjm8",
+                "CGA-79ch-h78m-xpw7",
+                "CGA-7cm9-8wp4-5h5p",
+                "CGA-7f79-3835-69xc",
+                "CGA-7gqm-xf2p-7xjv",
+                "CGA-7gr4-fxw6-vp94",
+                "CGA-7jh5-p466-9ghc",
+                "CGA-7mfx-9h6f-79cv",
+                "CGA-7prf-fffj-hc47",
+                "CGA-7qhp-66xg-jcfp",
+                "CGA-7r54-x7w6-xqhg",
+                "CGA-7rc5-5746-3whg",
+                "CGA-7wwv-49p9-fh4f",
+                "CGA-7xjq-4w42-j4gh",
+                "CGA-7xrc-7rch-cpx3",
+                "CGA-8246-3w73-wm6c",
+                "CGA-8347-g2f6-hp74",
+                "CGA-83h6-mxxh-vp6h",
+                "CGA-84j8-wrmp-7cxx",
+                "CGA-84pq-f8mx-gq9f",
+                "CGA-8744-8f68-67x8",
+                "CGA-875c-5xx8-qwjf",
+                "CGA-884r-m6w5-7v39",
+                "CGA-899g-pqrj-cp8p",
+                "CGA-8m7j-p4f4-8g2f",
+                "CGA-8pjm-3xfw-mxhc",
+                "CGA-8pxr-x3p2-9xgq",
+                "CGA-8qhh-2qm9-37mq",
+                "CGA-8r8f-g5j8-4xwh",
+                "CGA-95cg-cj7v-4h99",
+                "CGA-96pp-pj97-4h2q",
+                "CGA-9729-m9qm-hvxr",
+                "CGA-974x-cf77-jcxh",
+                "CGA-9cx2-rxcf-vmf4",
+                "CGA-9hw9-p8p4-9h4v",
+                "CGA-9rv8-72rf-qqqj",
+                "CGA-9v92-rjch-23wh",
+                "CGA-9w25-xrvr-g74w",
+                "CGA-9wh8-5w4c-rfvr",
+                "CGA-9x5w-5wqq-xggh",
+                "CGA-c2g3-w8mc-w655",
+                "CGA-c35g-fvgc-qwhj",
+                "CGA-c38x-3vjq-ww2x",
+                "CGA-c3hp-g9qv-p8vv",
+                "CGA-c49h-28c2-cpwj",
+                "CGA-c4ff-q96g-598j",
+                "CGA-c4jr-7h78-vj53",
+                "CGA-c54c-5xmj-x57r",
+                "CGA-c565-wm6g-wpcc",
+                "CGA-c5wg-63f4-7c4m",
+                "CGA-c6gj-w6ph-qp3p",
+                "CGA-c6jc-gjgh-r235",
+                "CGA-c9gm-754c-mwfg",
+                "CGA-c9pg-73rj-g3rh",
+                "CGA-cc9c-wqcq-7xrj",
+                "CGA-ccr4-5p34-c3f7",
+                "CGA-cf86-46rr-q2qf",
+                "CGA-cgqx-ch65-vmpm",
+                "CGA-chm7-h279-7xfg",
+                "CGA-cj7r-4hfm-8f22",
+                "CGA-cp4h-jmmr-99h3",
+                "CGA-crpp-6834-52pg",
+                "CGA-crxx-j3mx-f29c",
+                "CGA-cv2m-g2v8-fwmh",
+                "CGA-cvc2-5p6c-m73j",
+                "CGA-cwrx-325r-3q88",
+                "CGA-cxhw-phgv-w62g",
+                "CGA-f2x8-r4wq-228f",
+                "CGA-f3h7-gmf2-7g62",
+                "CGA-f5q6-2mjc-pxf6",
+                "CGA-f638-cq7f-3m6h",
+                "CGA-f69w-gf5q-jjmh",
+                "CGA-f6vm-9vrg-4cjq",
+                "CGA-f8r8-gcp7-278j",
+                "CGA-f9w6-q5xq-jh96",
+                "CGA-fc88-hwv5-5j2m",
+                "CGA-fcj4-xq6x-7543",
+                "CGA-fgj7-g95g-6j84",
+                "CGA-fgqj-8g7q-vpmr",
+                "CGA-fgxf-f9gr-xwr8",
+                "CGA-fh6x-v262-28jh",
+                "CGA-fhgw-65cm-r8vq",
+                "CGA-fjm6-h695-w7wx",
+                "CGA-fjpj-4qqh-r9mv",
+                "CGA-fmgp-qxxg-5vp7",
+                "CGA-fp9x-hfxf-2cww",
+                "CGA-fq7c-5683-jmfw",
+                "CGA-frgx-m77p-wx8q",
+                "CGA-fv5p-ghmf-p93r",
+                "CGA-fv8h-r4vf-pqp2",
+                "CGA-fwqv-xwr9-2gvf",
+                "CGA-fww7-h6j5-x399",
+                "CGA-g254-hq7c-x5xp",
+                "CGA-g29f-qmxw-898c",
+                "CGA-g542-fcm5-gcwf",
+                "CGA-g5j4-vxj6-ch4c",
+                "CGA-g6hf-h89h-c666",
+                "CGA-g7fq-hg49-gp9r",
+                "CGA-g7q3-cxp6-3c25",
+                "CGA-g83w-hp6g-c9fm",
+                "CGA-g8v5-vhfx-53xc",
+                "CGA-g9x3-vj3c-vwp5",
+                "CGA-gh53-cf7x-8wcw",
+                "CGA-gp2q-gw6h-6c7p",
+                "CGA-gp9v-g8hh-8rm6",
+                "CGA-gq2f-h6wf-gpxq",
+                "CGA-gq97-32xw-9chj",
+                "CGA-gqfx-fc46-rccr",
+                "CGA-grmc-f69v-xmxm",
+                "CGA-grqg-g6f8-w2r8",
+                "CGA-grxv-mvc3-mmch",
+                "CGA-gw2g-vr35-hjv8",
+                "CGA-gw7m-cqmv-356x",
+                "CGA-gxqw-98mh-fhr9",
+                "CGA-gxxg-5m4c-4hf6",
+                "CGA-h332-mhrh-j67c",
+                "CGA-h3jw-5qhp-c7g2",
+                "CGA-h693-m2vv-xfmh",
+                "CGA-h6j7-rrph-q2vh",
+                "CGA-hc6q-p7vh-qqm4",
+                "CGA-hfjh-c8h2-25v4",
+                "CGA-hg9f-gr5j-gpvc",
+                "CGA-hmc9-7m57-r8p2",
+                "CGA-hmvh-96m2-wcrj",
+                "CGA-hp49-8c88-wc5h",
+                "CGA-hp88-gvjr-p7mw",
+                "CGA-hr7p-r7wv-g4gx",
+                "CGA-hrr5-96x7-xv53",
+                "CGA-hvwv-x624-392j",
+                "CGA-hww9-c8x5-grgg",
+                "CGA-hx53-29r5-p52v",
+                "CGA-j2g9-vgcv-79fv",
+                "CGA-j2w7-5fhx-m9xg",
+                "CGA-j66m-cw3g-g8h8",
+                "CGA-j8jh-9hm8-6q4p",
+                "CGA-j8p9-6jmc-79ph",
+                "CGA-j8pj-4p42-46r4",
+                "CGA-j8w8-2r9f-qjwc",
+                "CGA-j9p8-2mm9-4vwq",
+                "CGA-jc25-5mjg-p7hj",
+                "CGA-jgxw-2cwm-v5x8",
+                "CGA-jh22-p8xx-jqmp",
+                "CGA-jh2p-p7r8-463x",
+                "CGA-jjrr-rpjx-gx8j",
+                "CGA-jmpj-f9j9-h5cm",
+                "CGA-jwq3-5872-8qv3",
+                "CGA-m34f-vh84-xhq5",
+                "CGA-m3vv-4q63-r828",
+                "CGA-m4vv-x2gj-h7w8",
+                "CGA-m6x6-vh2m-462j",
+                "CGA-m76g-84w4-jwcg",
+                "CGA-m8m9-4r86-966j",
+                "CGA-m8qf-cm95-hrvc",
+                "CGA-m96q-rh9c-8hq4",
+                "CGA-m994-q496-257c",
+                "CGA-mcmg-fg9v-hx4j",
+                "CGA-mcx9-3mf4-37r4",
+                "CGA-mf95-8wq4-28x9",
+                "CGA-mgfw-vqhf-gqc8",
+                "CGA-mgg9-3vgw-5vr3",
+                "CGA-mp5j-4w3w-7qc9",
+                "CGA-mppq-2pw7-h2jq",
+                "CGA-mq22-chfx-3x2h",
+                "CGA-mxwx-4v6h-5vjc",
+                "CGA-p6vh-hcp7-34wc",
+                "CGA-p7cj-6x38-hqjq",
+                "CGA-p9cj-4q76-5fwc",
+                "CGA-pf3x-h4p6-m373",
+                "CGA-pggc-4h3f-5pgp",
+                "CGA-pjfc-mxmw-jw57",
+                "CGA-pjq3-4gjh-f2vx",
+                "CGA-pm45-74j9-4r56",
+                "CGA-pm8w-q5v3-p8g7",
+                "CGA-pm9f-8788-4g75",
+                "CGA-pp36-v4j6-q2r4",
+                "CGA-ppxg-h398-pvvx",
+                "CGA-pq9w-4v5c-cjqq",
+                "CGA-pwjw-j294-24qr",
+                "CGA-px6w-wv92-fq7m",
+                "CGA-pxj6-r3gf-vmhq",
+                "CGA-pxpj-w9rw-gpfm",
+                "CGA-q3rc-973x-j4cf",
+                "CGA-q45c-g42g-h7vp",
+                "CGA-q47v-92m6-39vq",
+                "CGA-q5mw-p3cj-f7cr",
+                "CGA-q6p6-56g3-m7c2",
+                "CGA-q8pj-2mwx-jv8p",
+                "CGA-q934-h92r-75fg",
+                "CGA-qfvh-jg6h-hqjr",
+                "CGA-qjp7-583q-844f",
+                "CGA-qm24-39m6-4jj8",
+                "CGA-qqmw-6363-qg5w",
+                "CGA-qv4x-wgvx-pvmj",
+                "CGA-qv64-jh5p-fph4",
+                "CGA-qx82-54x4-2vrc",
+                "CGA-r359-f9wj-qjv9",
+                "CGA-r35q-8xh6-6563",
+                "CGA-r7g7-3r9p-q283",
+                "CGA-r84c-4hvv-2h4m",
+                "CGA-r8j2-g864-gwj4",
+                "CGA-r98x-c7ch-hj4f",
+                "CGA-rcpx-8vjm-f382",
+                "CGA-rf69-3c6p-vq9r",
+                "CGA-rgfv-47qf-p5pq",
+                "CGA-rghh-gj8p-m22w",
+                "CGA-rgvm-gv3p-5fmv",
+                "CGA-rjqq-4rxg-r73m",
+                "CGA-rjxf-32m5-p6hm",
+                "CGA-rm3q-v7gh-5h4w",
+                "CGA-rrjx-xfmf-35wx",
+                "CGA-rv94-8j74-wh68",
+                "CGA-rxvh-64r3-phv3",
+                "CGA-v3mh-3fq2-3fj5",
+                "CGA-v6hq-pxqq-ch2w",
+                "CGA-v94m-53jx-gf8r",
+                "CGA-vc3j-mm8g-v69v",
+                "CGA-vfxh-hhw7-576p",
+                "CGA-vg86-fh4c-v7qp",
+                "CGA-vh4h-7p8p-f32h",
+                "CGA-vhj4-x4pf-2pmg",
+                "CGA-vpr8-p9p9-wjq3",
+                "CGA-vr23-4pp7-4rhp",
+                "CGA-vr8f-mhqq-2jj4",
+                "CGA-vvp7-2fc7-xvw7",
+                "CGA-w32g-5mwx-6frf",
+                "CGA-w5g7-vm23-fc97",
+                "CGA-w5rc-x6vr-7cc9",
+                "CGA-w728-gggg-43q3",
+                "CGA-w777-grfv-pfvj",
+                "CGA-w7jm-2wmj-w388",
+                "CGA-w893-7g5g-8hfv",
+                "CGA-wcwg-2rfx-pv56",
+                "CGA-wgc5-fx3w-gfq6",
+                "CGA-wph4-mj85-c6mx",
+                "CGA-wpj9-gw6w-8q53",
+                "CGA-wppw-w643-pqg6",
+                "CGA-wv59-v5p4-hfj6",
+                "CGA-wv9f-cj8f-3v4p",
+                "CGA-wvj2-3chg-gqv6",
+                "CGA-ww39-rq4c-pg4f",
+                "CGA-wx55-4wv4-xwc7",
+                "CGA-wxp6-2p5r-h642",
+                "CGA-x4m6-vm8x-r7mp",
+                "CGA-x59p-mmrw-qjpv",
+                "CGA-x67r-rr43-2q7x",
+                "CGA-x6wj-hf2p-2rcj",
+                "CGA-x738-rr83-5mg5",
+                "CGA-x8c7-rm97-h256",
+                "CGA-x8wp-wv6h-5cfm",
+                "CGA-x8wx-7qm6-jcqx",
+                "CGA-xfw9-2fvm-j9x5",
+                "CGA-xg2f-c775-jpgf",
+                "CGA-xm7h-xf4j-rx82",
+                "CGA-xm88-m8c9-hmrg",
+                "CGA-xm8j-qxpf-3fxc",
+                "CGA-xwjv-j2m3-p4cv",
+                "CGA-xx69-98pg-jxm9"
+              ],
+              "summary": "Non-linear parsing of case-insensitive content in golang.org/x/net/html",
+              "details": "An attacker can craft an input to the Parse functions that would be processed non-linearly with respect to its length, resulting in extremely slow parsing. This could cause a denial of service.",
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "golang.org/x/net",
+                    "purl": "pkg:golang/golang.org/x/net"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "0.33.0"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2024/12/GHSA-w32m-9786-jp63/GHSA-w32m-9786-jp63.json"
+                  }
+                }
+              ],
+              "severity": [
+                {
+                  "type": "CVSS_V4",
+                  "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N"
+                }
+              ],
+              "references": [
+                {
+                  "type": "ADVISORY",
+                  "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-45338"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://github.com/golang/go/issues/70906"
+                },
+                {
+                  "type": "PACKAGE",
+                  "url": "https://cs.opensource.google/go/x/net"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://go.dev/cl/637536"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://go.dev/issue/70906"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://groups.google.com/g/golang-announce/c/wSCRmFnNmPA/m/Lvcd0mRMAwAJ"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://pkg.go.dev/vuln/GO-2024-3333"
+                }
+              ],
+              "database_specific": {
+                "cwe_ids": [
+                  "CWE-770"
+                ],
+                "github_reviewed": true,
+                "github_reviewed_at": "2024-12-18T21:59:48Z",
+                "nvd_published_at": "2024-12-18T21:15:08Z",
+                "severity": "HIGH"
+              }
+            },
+            {
+              "modified": "2024-12-20T20:37:27Z",
+              "published": "2024-12-18T20:22:06Z",
+              "schema_version": "1.6.0",
+              "id": "GO-2024-3333",
+              "aliases": [
+                "CVE-2024-45338",
+                "GHSA-w32m-9786-jp63"
+              ],
+              "summary": "Non-linear parsing of case-insensitive content in golang.org/x/net/html",
+              "details": "An attacker can craft an input to the Parse functions that would be processed non-linearly with respect to its length, resulting in extremely slow parsing. This could cause a denial of service.",
+              "affected": [
+                {
+                  "package": {
+                    "ecosystem": "Go",
+                    "name": "golang.org/x/net",
+                    "purl": "pkg:golang/golang.org/x/net"
+                  },
+                  "ranges": [
+                    {
+                      "type": "SEMVER",
+                      "events": [
+                        {
+                          "introduced": "0"
+                        },
+                        {
+                          "fixed": "0.33.0"
+                        }
+                      ]
+                    }
+                  ],
+                  "database_specific": {
+                    "source": "https://vuln.go.dev/ID/GO-2024-3333.json"
+                  },
+                  "ecosystem_specific": {
+                    "imports": [
+                      {
+                        "path": "golang.org/x/net/html",
+                        "symbols": [
+                          "Parse",
+                          "ParseFragment",
+                          "ParseFragmentWithOptions",
+                          "ParseWithOptions",
+                          "htmlIntegrationPoint",
+                          "inBodyIM",
+                          "inTableIM",
+                          "parseDoctype"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "references": [
+                {
+                  "type": "FIX",
+                  "url": "https://go.dev/cl/637536"
+                },
+                {
+                  "type": "REPORT",
+                  "url": "https://go.dev/issue/70906"
+                },
+                {
+                  "type": "WEB",
+                  "url": "https://groups.google.com/g/golang-announce/c/wSCRmFnNmPA/m/Lvcd0mRMAwAJ"
+                }
+              ],
+              "credits": [
+                {
+                  "name": "Guido Vranken"
+                }
+              ],
+              "database_specific": {
+                "review_status": "REVIEWED",
+                "url": "https://pkg.go.dev/vuln/GO-2024-3333"
+              }
+            }
+          ],
+          "groups": [
+            {
+              "ids": [
+                "GO-2024-3333",
+                "GHSA-w32m-9786-jp63"
+              ],
+              "aliases": [
+                "CVE-2024-45338",
+                "GHSA-w32m-9786-jp63",
+                "GO-2024-3333"
+              ],
+              "experimentalAnalysis": {
+                "GO-2024-3333": {
+                  "called": false,
+                  "unimportant": false
+                }
+              },
+              "max_severity": "8.7"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "experimental_config": {
+    "licenses": {
+      "summary": false,
+      "allowlist": null
+    }
+  }
+}

@@ -16,13 +16,18 @@ func TestParse(t *testing.T) {
 		mustErr     bool
 		verifyParse func(*testing.T, *Predicate)
 	}{
-		{"debian", "testdata/osv-debian.json", []byte{}, false, func(t *testing.T, pred *Predicate) {
+		{"debian", "testdata/osv-scanner-release.json", []byte{}, false, func(t *testing.T, pred *Predicate) {
+			t.Helper()
 			require.NotNil(t, pred.GetParsed())
 			require.NotNil(t, pred.Parsed.Date)
-			require.NotNil(t, pred.Parsed.Records)
-			require.Len(t, pred.Parsed.Records, 1)
-			require.Equal(t, pred.Parsed.Records[0].Id, "DSA-3029-1")
-			require.Equal(t, pred.Parsed.Records[0].Aliases[0], "CVE-2014-3616")
+			require.NotNil(t, pred.Parsed.Results)
+
+			require.Len(t, pred.Parsed.Results, 1)
+			require.Len(t, pred.Parsed.Results[0].Packages, 4)
+			require.Len(t, pred.Parsed.Results[0].Packages[0].Vulnerabilities, 4)
+			require.Len(t, pred.Parsed.Results[0].Packages[0].Vulnerabilities[0].Affected, 3)
+
+			require.Equal(t, "GHSA-r9px-m959-cxf4", pred.Parsed.Results[0].Packages[0].Vulnerabilities[0].Id)
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

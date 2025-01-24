@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"slices"
 
+	protoOSV "github.com/carabiner-dev/osv/go/osv"
 	"github.com/puerco/ampel/pkg/attestation"
-	protoOSV "github.com/puerco/ampel/pkg/osv"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type Parser struct{}
@@ -24,13 +23,14 @@ func (*Parser) SupportsType(predTypes ...string) bool {
 
 // Parse parses a byte slice into a OSV predicate
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
-	var report = &protoOSV.Predicate{}
-
-	if err := protojson.Unmarshal(data, report); err != nil {
-		return nil, fmt.Errorf("unmarshalling OSV report: %w", err)
+	var parser = protoOSV.NewParser()
+	results, err := parser.ParseResults(data)
+	if err != nil {
+		return nil, fmt.Errorf("parsing results into predicate: %w", err)
 	}
+
 	return &Predicate{
-		Parsed: report,
+		Parsed: results,
 		Data:   data,
 	}, nil
 }

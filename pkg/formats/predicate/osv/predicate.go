@@ -1,14 +1,14 @@
 package osv
 
 import (
+	protoOSV "github.com/carabiner-dev/osv/go/osv"
 	"github.com/puerco/ampel/pkg/attestation"
-	protoOSV "github.com/puerco/ampel/pkg/osv"
 )
 
-var PredicateType = attestation.PredicateType("https://ossf.github.io/osv-schema/v1.6.7")
+var PredicateType = attestation.PredicateType("https://ossf.github.io/osv-schema/results@v1.6.7")
 
 type Predicate struct {
-	Parsed *protoOSV.Predicate
+	Parsed *protoOSV.Results
 	Data   []byte
 }
 
