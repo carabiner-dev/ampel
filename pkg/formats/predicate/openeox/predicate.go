@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Copyright 2025 Carabiner Systems, Inc
+// SPDX-License-Identifier: Apache-2.0
+
 package openeox
 
 import "github.com/puerco/ampel/pkg/attestation"

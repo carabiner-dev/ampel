@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Copyright 2025 Carabiner Systems, Inc
+// SPDX-License-Identifier: Apache-2.0
+
 // Package intoto implements a parser and a statement variant for
 // attestations in the in-toto format.
 package intoto

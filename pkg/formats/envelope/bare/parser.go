@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Copyright 2025 Carabiner Systems, Inc
+// SPDX-License-Identifier: Apache-2.0
+
 // Package bare implenta a parser to make non-signed attestations
 // compatible with the ampel policy engine.
 package bare

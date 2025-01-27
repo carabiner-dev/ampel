@@ -1,5 +1,7 @@
-// Package filesystem implements an attestation collector from a filesystem
+// SPDX-FileCopyrightText: Copyright 2025 Carabiner Systems, Inc
+// SPDX-License-Identifier: Apache-2.0
 
+// Package filesystem implements an attestation collector from a fs.FS
 package filesystem
 
 import (

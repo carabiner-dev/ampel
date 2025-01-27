@@ -1,5 +1,4 @@
 syntax = "proto3";
-option go_package = "github.com/puerco/ampel/pkg/api/v1";
 
 package slsa.v1;
 

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Copyright 2025 Carabiner Systems, Inc
+// SPDX-License-Identifier: Apache-2.0
+
 syntax = "proto3";
 package ampel.v1;
 
@@ -8,9 +11,9 @@ option go_package = "github.com/puerco/ampel/pkg/api/v1";
 // import "google/protobuf/timestamp.proto";
 
 message PolicySet {
+    string version = 3;
     string id = 1; 
     string runtime = 2; 
-    string version = 3;
     repeated Policy policies = 4;
 }
 
