@@ -5,6 +5,8 @@ package predicate
 
 import (
 	"errors"
+	"fmt"
+	"slices"
 
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/formats/predicate/ampel"
@@ -14,6 +16,7 @@ import (
 	"github.com/puerco/ampel/pkg/formats/predicate/openvex"
 	"github.com/puerco/ampel/pkg/formats/predicate/osv"
 	"github.com/puerco/ampel/pkg/formats/predicate/protobom"
+	"github.com/puerco/ampel/pkg/formats/predicate/slsa"
 	"github.com/puerco/ampel/pkg/formats/predicate/spdx"
 	"github.com/puerco/ampel/pkg/formats/predicate/trivy"
 	"github.com/puerco/ampel/pkg/formats/predicate/vulns"
@@ -35,15 +38,65 @@ var Parsers = ParsersList{
 	osv.PredicateType:       osv.New(),
 	openvex.PredicateType:   openvex.New(),
 	openeox.PredicateType:   openeox.New(),
+	slsa.PredicateType10:    slsa.NewParserV10(),
+	slsa.PredicateType10:    slsa.NewParserV11(),
 }
+
+type ParseOption func(*Options)
 
 type Options struct {
-	TypeHints []string
+	// Default to JSON will cause the predicate to be parsed as
+	// plain JSON is no parser can handle it.
+	DefaultToJSON bool
+
+	// TypeHints is an array of types that defines which parser will be tried.
+	// If no TypeHints are defined, ampel will try to parse the predicate with
+	// all loaded parsers.
+	TypeHints []attestation.PredicateType
 }
 
-func (pl *ParsersList) Parse(data []byte) (attestation.Predicate, error) {
+func WithDefaulToJSON(sino bool) ParseOption {
+	return func(o *Options) {
+		o.DefaultToJSON = sino
+	}
+}
+
+func WithTypeHints(hints []attestation.PredicateType) ParseOption {
+	return func(o *Options) {
+		o.TypeHints = hints
+	}
+}
+
+func (pl *ParsersList) GetTypeParsers(predicateTypes []attestation.PredicateType) *ParsersList {
+	ret := ParsersList{}
+	for t, p := range *pl {
+		if slices.Contains(predicateTypes, t) {
+			ret[t] = p
+		}
+	}
+	return &ret
+}
+
+var defaultOpts = Options{
+	DefaultToJSON: true,
+	TypeHints:     []attestation.PredicateType{},
+}
+
+// Parse gets a byte slice with a predicate and tries to parse ir with the loaded
+// parsers.
+func (pl *ParsersList) Parse(data []byte, optFn ...ParseOption) (attestation.Predicate, error) {
+	opts := defaultOpts
+	for _, o := range optFn {
+		o(&opts)
+	}
+	var ps = pl
+	if len(opts.TypeHints) > 0 {
+		ps = pl.GetTypeParsers(opts.TypeHints)
+		logrus.Infof("loaded %d parsers after applying type hints", len(*ps))
+	}
+
 	var errs = []error{}
-	for f, p := range *pl {
+	for f, p := range *ps {
 		logrus.Debugf("Checking if predicate is %s", f)
 		pred, err := p.Parse(data)
 		if err == nil {
@@ -63,6 +116,11 @@ func (pl *ParsersList) Parse(data []byte) (attestation.Predicate, error) {
 
 	if len(errs) > 0 {
 		return nil, errors.Join(errs...)
+	}
+
+	// by now we default to JSON unless the options say don't
+	if !opts.DefaultToJSON {
+		return nil, fmt.Errorf("unkown predictate type")
 	}
 
 	// Finally try the vanilla JSON parser
