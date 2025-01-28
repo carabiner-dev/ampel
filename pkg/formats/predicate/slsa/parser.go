@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/puerco/ampel/pkg/attestation"
+	v02 "github.com/puerco/ampel/pkg/formats/predicate/slsa/provenance/v02"
 	v10 "github.com/puerco/ampel/pkg/formats/predicate/slsa/provenance/v10"
 	v11 "github.com/puerco/ampel/pkg/formats/predicate/slsa/provenance/v11"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -68,6 +69,24 @@ func parseProvenanceV11(data []byte) (attestation.Predicate, error) {
 	}
 	return &Predicate{
 		Type:   PredicateType11,
+		Parsed: &provenance,
+		Data:   data,
+	}, nil
+}
+
+func parseProvenanceV02(data []byte) (attestation.Predicate, error) {
+	var provenance = v02.Provenance{}
+	if err := protojson.Unmarshal(data, &provenance); err != nil {
+		// Transform the error to our wrong type error
+		if strings.Contains(err.Error(), "proto:") &&
+			strings.Contains(err.Error(), "syntax error") &&
+			strings.Contains(err.Error(), "invalid value") {
+			return nil, attestation.ErrNotCorrectFormat
+		}
+		return nil, fmt.Errorf("error parsing v11 provenance predicate: %s", err)
+	}
+	return &Predicate{
+		Type:   PredicateType02,
 		Parsed: &provenance,
 		Data:   data,
 	}, nil

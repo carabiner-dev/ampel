@@ -1,14 +1,9 @@
 syntax = "proto3";
 option go_package = "github.com/puerco/ampel/pkg/formats/predicate/slsa/provenance/v02";
 
-package slsa.v1;
+package slsa.v02;
 
 import "google/protobuf/struct.proto";
-import "google/protobuf/timestamp.proto";
-
-// NOTE: While file uses snake_case as per the Protocol Buffers Style Guide, the
-// provenance is always serialized using JSON with lowerCamelCase. Protobuf
-// tooling performs this case conversion automatically.
 
 message Provenance {
     Builder builder = 1;
