@@ -5,7 +5,7 @@ package spdx
 
 import (
 	"bytes"
-	"errors"
+	"strings"
 
 	"github.com/protobom/protobom/pkg/formats"
 	"github.com/puerco/ampel/pkg/attestation"
@@ -30,7 +30,7 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 	format, err := sniffer.SniffReader(r)
 	if err != nil {
 		// TODO(puerco): Swap this to a new error type
-		if errors.Is(err, errors.New("unknown SBOM format")) {
+		if strings.Contains(err.Error(), "unknown SBOM format") {
 			return nil, attestation.ErrNotCorrectFormat
 		}
 		return nil, err

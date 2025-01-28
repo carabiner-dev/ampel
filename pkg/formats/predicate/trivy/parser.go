@@ -28,6 +28,10 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 	if err := json.Unmarshal(data, report); err != nil {
 		return nil, fmt.Errorf("unmarshalling trivy report: %w", err)
 	}
+
+	if report.SchemaVersion == 0 && report.CreatedAt == nil {
+		return nil, attestation.ErrNotCorrectFormat
+	}
 	return &Predicate{
 		Parsed: report,
 		Data:   data,

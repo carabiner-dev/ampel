@@ -31,6 +31,9 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parsing VEX predicate: %w", err)
 	}
+	if doc.Context == "" {
+		return nil, attestation.ErrNotCorrectFormat
+	}
 	return &Predicate{
 		Parsed: doc,
 		Data:   data,
