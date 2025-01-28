@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	PredicateType02 = attestation.PredicateType("https://slsa.dev/provenance/v0.2")
 	PredicateType10 = attestation.PredicateType("https://slsa.dev/provenance/v1")
 	PredicateType11 = attestation.PredicateType("https://slsa.dev/provenance/v1.1")
 )

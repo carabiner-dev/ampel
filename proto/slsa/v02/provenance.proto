@@ -1,0 +1,69 @@
+syntax = "proto3";
+option go_package = "github.com/puerco/ampel/pkg/formats/predicate/slsa/provenance/v02";
+
+package slsa.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// NOTE: While file uses snake_case as per the Protocol Buffers Style Guide, the
+// provenance is always serialized using JSON with lowerCamelCase. Protobuf
+// tooling performs this case conversion automatically.
+
+message Provenance {
+    Builder builder = 1;
+    string build_type = 2;
+    Invocation invocation = 3;
+    BuildConfig build_config = 4;
+    Metadata metadata = 5;
+    repeated ResourceDescriptor materials = 6;
+}
+
+message Invocation {
+    ConfigSource config_source = 1;
+    repeated string parameters = 2;
+    google.protobuf.Struct environment = 3;
+}
+
+message ConfigSource {
+    string uri = 1;
+    map<string,string> digest = 2;
+    string  entryPoint = 3;
+}
+
+message Builder {
+    string id = 1;
+}
+
+message BuildConfig {
+    int32 version = 1;
+    repeated Step steps = 2;
+}
+
+message Step {
+    string workingDir = 1;
+    repeated string command = 2;
+    repeated string env = 3;
+}
+
+message Metadata {
+    string buildInvocationID = 1;
+    Completeness completeness = 2;
+    bool reproducible = 3;
+
+    message Completeness {
+        bool parameters = 1;
+        bool environment = 2;
+        bool materials = 3;
+    }
+}
+
+message ResourceDescriptor {
+    string uri = 1;
+    map<string, string> digest = 2;
+    string name = 3;
+    string download_location = 4;
+    string media_type = 5;
+    bytes content = 6;
+    google.protobuf.Struct annotations = 7;
+}

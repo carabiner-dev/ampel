@@ -17,6 +17,11 @@ import (
 // Single version parsers
 type ParserV10 struct{}
 type ParserV11 struct{}
+type ParserV02 struct{}
+
+func NewParserV02() *ParserV02 {
+	return &ParserV02{}
+}
 
 func NewParserV10() *ParserV10 {
 	return &ParserV10{}
@@ -34,12 +39,20 @@ func (_ *ParserV11) Parse(data []byte) (attestation.Predicate, error) {
 	return parseProvenanceV11(data)
 }
 
+func (_ *ParserV02) Parse(data []byte) (attestation.Predicate, error) {
+	return parseProvenanceV02(data)
+}
+
 func (_ *ParserV10) SupportsType(types ...string) bool {
 	return slices.Contains(types, string(PredicateType10))
 }
 
 func (_ *ParserV11) SupportsType(types ...string) bool {
 	return slices.Contains(types, string(PredicateType11))
+}
+
+func (_ *ParserV02) SupportsType(types ...string) bool {
+	return slices.Contains(types, string(PredicateType02))
 }
 
 func parseProvenanceV11(data []byte) (attestation.Predicate, error) {

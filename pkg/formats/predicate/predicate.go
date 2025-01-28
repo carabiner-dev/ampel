@@ -40,6 +40,7 @@ var Parsers = ParsersList{
 	openeox.PredicateType:   openeox.New(),
 	slsa.PredicateType10:    slsa.NewParserV10(),
 	slsa.PredicateType10:    slsa.NewParserV11(),
+	slsa.PredicateType02:    slsa.NewParserV02(),
 }
 
 type ParseOption func(*Options)
