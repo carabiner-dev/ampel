@@ -7,9 +7,12 @@ set -e
 
 TMP_DIR=$(mktemp -d )
 
-git clone --depth=1 git@github.com:slsa-framework/slsa.git "$TMP_DIR"
+git clone --depth=1 https://github.com/slsa-framework/slsa.git "$TMP_DIR"
 
-cp "${TMP_DIR}/docs/spec/v1.0/schema/provenance.proto" proto/slsa/provenance-v1.0.proto
-cp "${TMP_DIR}/docs/spec/v1.1/schema/provenance.proto" proto/slsa/provenance-v1.1.proto
+cp "${TMP_DIR}/docs/spec/v1.0/schema/provenance.proto" proto/slsa/v10/provenance.proto
+cp "${TMP_DIR}/docs/spec/v1.1/schema/provenance.proto" proto/slsa/v11/provenance.proto
+
+sed -ie 's/syntax = "proto3";/syntax = "proto3";\noption go_package = "github.com\/puerco\/ampel\/pkg\/formats\/predicate\/slsa\/provenance\/v10";/' proto/slsa/v10/provenance.proto
+sed -ie 's/syntax = "proto3";/syntax = "proto3";\noption go_package = "github.com\/puerco\/ampel\/pkg\/formats\/predicate\/slsa\/provenance\/v11";/' proto/slsa/v11/provenance.proto
 
 rm -rf "$TMP_DIR"

@@ -26,4 +26,5 @@ plugins:
 
 inputs:
   - directory: proto/v1
-
+  - directory: proto/slsa/v10
+  - directory: proto/slsa/v11
