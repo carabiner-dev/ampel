@@ -55,6 +55,12 @@ func (p *Parser) Parse(b []byte) (attestation.Statement, error) {
 		return nil, fmt.Errorf("parsing predicate: %w", err)
 	}
 
+	if stmt.GetPredicateType() != "" {
+		if err := pred.SetType(stmt.GetPredicateType()); err != nil {
+			return nil, fmt.Errorf("setting predicate type: %w", err)
+		}
+	}
+
 	stmt.Predicate = pred
 
 	return &stmt, nil
