@@ -22,12 +22,12 @@ var _ attestation.PredicateParser = (*Parser)(nil)
 // Parse generates a generic JSON predicate object from any JSON it gets.
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 	pred := &generic.Predicate{
-		Type:   PredicateType,
-		Parsed: map[string]any{},
+		Type: PredicateType,
+		Data: data,
 	}
 	parsedData := DataMap{}
 	if err := gojson.Unmarshal(pred.Data, &parsedData); err != nil {
-		return nil, fmt.Errorf("parsing json data: %w", err)
+		return nil, fmt.Errorf("parsing raw json data: %w", err)
 	}
 	pred.Parsed = parsedData
 	return pred, nil

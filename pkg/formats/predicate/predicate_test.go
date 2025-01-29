@@ -19,6 +19,7 @@ func TestParse(t *testing.T) {
 		{"generic-json-fallback", []byte(`{"hello":"world", "isIt": true, "int": 32}`), nil, false},
 		{"generic-json-err", []byte(`{"hello":"world", "isIt": true, "int": 32}`), []ParseOption{WithDefaulToJSON(false)}, true},
 	} {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			pred, err := Parsers.Parse(tc.data, tc.options...)
