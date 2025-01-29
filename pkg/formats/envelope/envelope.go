@@ -11,6 +11,7 @@ import (
 
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/formats/envelope/bare"
+	"github.com/puerco/ampel/pkg/formats/envelope/bundle"
 	"github.com/puerco/ampel/pkg/formats/envelope/dsse"
 	"github.com/sirupsen/logrus"
 )
@@ -18,16 +19,18 @@ import (
 type Format string
 
 const (
-	FormatDSSE Format = "dsse"
-	FormatBare Format = "bare"
+	FormatDSSE   Format = "dsse"
+	FormatBare   Format = "bare"
+	FormatBundle Format = "bundle"
 )
 
 // ParserList wraps a map listing the loaded parsers to expose convenience methods
 type ParserList map[Format]attestation.EnvelopeParser
 
 var Parsers = ParserList{
-	FormatDSSE: &dsse.Parser{},
-	FormatBare: &bare.Parser{},
+	FormatDSSE:   &dsse.Parser{},
+	FormatBare:   &bare.Parser{},
+	FormatBundle: &bundle.Parser{},
 }
 
 // Parse takes a reader and parses
