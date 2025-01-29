@@ -12,6 +12,7 @@ import (
 	"github.com/protobom/protobom/pkg/reader"
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/formats/predicate/cyclonedx"
+	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 	"github.com/puerco/ampel/pkg/formats/predicate/protobom"
 	"github.com/puerco/ampel/pkg/formats/predicate/spdx"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -62,7 +63,8 @@ func (p *Transformer) Mutate(preds []attestation.Predicate) ([]attestation.Predi
 	}
 	// Reset the predicates
 	return []attestation.Predicate{
-		&protobom.Predicate{
+		&generic.Predicate{
+			Type:   protobom.PredicateType,
 			Data:   bdata,
 			Parsed: doc,
 		},

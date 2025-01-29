@@ -4,40 +4,21 @@
 package ampel
 
 import (
-	"encoding/json"
 	"fmt"
 	"slices"
 
 	api "github.com/puerco/ampel/pkg/api/v1"
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
 var PredicateType = attestation.PredicateType("https://carabiner.dev/predicate/v0.0.1")
 
-func NewPredicate() *Predicate {
-	return &Predicate{}
-}
-
-type Predicate struct {
-	Data   []byte `json:"-"`
-	Parsed *api.ResultSet
-}
-
-func (p *Predicate) MarshalJSON() ([]byte, error) {
-	return json.Marshal(p.Parsed)
-}
-
-func (*Predicate) GetType() attestation.PredicateType {
-	return PredicateType
-}
-
-func (p *Predicate) GetData() []byte {
-	return p.Data
-}
-
-func (p *Predicate) GetParsed() any {
-	return p.Parsed
+func NewPredicate() *generic.Predicate {
+	return &generic.Predicate{
+		Type: PredicateType,
+	}
 }
 
 func New() *Parser {
@@ -52,10 +33,10 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 	if err := protojson.Unmarshal(data, set); err != nil {
 		return nil, fmt.Errorf("unmarshaling predicate data: %w", err)
 	}
-	return &Predicate{
-		Data:   data,
-		Parsed: set,
-	}, nil
+	pred := NewPredicate()
+	pred.Data = data
+	pred.Parsed = set
+	return pred, nil
 }
 
 func (*Parser) SupportsType(predTypes ...string) bool {

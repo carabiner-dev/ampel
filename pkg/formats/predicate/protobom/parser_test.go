@@ -8,7 +8,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/protobom/protobom/pkg/sbom"
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 	"github.com/stretchr/testify/require"
 )
 
@@ -39,11 +41,11 @@ func TestParse(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.NotNil(t, pred)
-			protopred, ok := pred.(*Predicate)
+			protopred, ok := pred.(*generic.Predicate)
 			require.True(t, ok)
 			require.True(t, len(protopred.Data) > 0)
-			require.Equal(t, tc.expectRoot, len(protopred.Parsed.NodeList.RootElements))
-			require.Equal(t, tc.expectNodes, len(protopred.Parsed.NodeList.Nodes))
+			require.Equal(t, tc.expectRoot, len(protopred.Parsed.(*sbom.Document).NodeList.RootElements))
+			require.Equal(t, tc.expectNodes, len(protopred.Parsed.(*sbom.Document).NodeList.Nodes))
 		})
 	}
 }

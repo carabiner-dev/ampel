@@ -9,6 +9,7 @@ import (
 	"slices"
 
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 )
 
 type Parser struct{}
@@ -32,20 +33,8 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 	if report.SchemaVersion == 0 && report.CreatedAt == nil {
 		return nil, attestation.ErrNotCorrectFormat
 	}
-	return &Predicate{
+	return &generic.Predicate{
 		Parsed: report,
 		Data:   data,
 	}, nil
-}
-
-func (*Predicate) GetType() attestation.PredicateType {
-	return PredicateType
-}
-
-func (p *Predicate) GetData() []byte {
-	return p.Data
-}
-
-func (p *Predicate) GetParsed() any {
-	return p.Parsed
 }

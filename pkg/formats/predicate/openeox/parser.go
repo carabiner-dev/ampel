@@ -9,7 +9,10 @@ import (
 	"slices"
 
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 )
+
+var PredicateType = attestation.PredicateType("https://openeox.org/schema-0.2.0.json")
 
 type Parser struct{}
 
@@ -32,7 +35,8 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 		return nil, attestation.ErrNotCorrectFormat
 	}
 
-	return &Predicate{
+	return &generic.Predicate{
+		Type:   PredicateType,
 		Parsed: eox,
 		Data:   data,
 	}, nil

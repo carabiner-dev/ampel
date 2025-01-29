@@ -9,6 +9,8 @@ import (
 	"github.com/puerco/ampel/pkg/attestation"
 )
 
+const PredicateType attestation.PredicateType = "application/protobom"
+
 type Parser struct{}
 
 // Ensure this parser implements the interface

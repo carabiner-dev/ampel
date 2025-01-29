@@ -10,6 +10,7 @@ import (
 	openvex "github.com/openvex/go-vex/pkg/vex"
 
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 )
 
 type Parser struct{}
@@ -34,7 +35,8 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 	if doc.Context == "" {
 		return nil, attestation.ErrNotCorrectFormat
 	}
-	return &Predicate{
+	return &generic.Predicate{
+		Type:   PredicateType,
 		Parsed: doc,
 		Data:   data,
 	}, nil

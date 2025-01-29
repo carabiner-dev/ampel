@@ -9,8 +9,8 @@ import (
 
 	v02 "github.com/in-toto/attestation/go/predicates/vulns/v02"
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 	"github.com/puerco/ampel/pkg/formats/predicate/trivy"
-	"github.com/puerco/ampel/pkg/formats/predicate/vulns"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -27,10 +27,10 @@ type Transformer struct {
 
 func (t *Transformer) Mutate(preds []attestation.Predicate) ([]attestation.Predicate, error) {
 	var newPreds = []attestation.Predicate{}
-	for _, p := range preds {
-		switch p.GetType() {
+	for _, original := range preds {
+		switch original.GetType() {
 		case trivy.PredicateType:
-			newPred, err := t.TrivyToOSV(p.(*trivy.Predicate))
+			newPred, err := t.TrivyToOSV(original)
 			if err != nil {
 				return nil, fmt.Errorf("converting trivy predicate to OSV: %w", err)
 			}
@@ -40,30 +40,30 @@ func (t *Transformer) Mutate(preds []attestation.Predicate) ([]attestation.Predi
 	return newPreds, nil
 }
 
-func trivyToVulnsV2(original *trivy.Predicate) (*vulns.PredicateV2, error) {
+func trivyToVulnsV2(original attestation.Predicate) (attestation.Predicate, error) {
 	if original == nil {
 		return nil, errors.New("original predicate undefined")
 	}
-	ret := &vulns.PredicateV2{
-		Parsed: &v02.Vulns{
-			Scanner: &v02.Scanner{
-				Uri:      "",
-				Version:  new(string),
-				Database: &v02.VulnDatabase{},
-				Result:   []*v02.Result{},
-			},
-			ScanMetadata: &v02.ScanMetadata{
-				ScanStartedOn:  timestamppb.New(*original.Parsed.CreatedAt),
-				ScanFinishedOn: timestamppb.New(*original.Parsed.CreatedAt),
-			},
+
+	oParsed, ok := original.GetParsed().(*trivy.TrivyReport)
+	if !ok {
+		return nil, fmt.Errorf("unable to parse predicate payload as v02.Vulns")
+	}
+
+	newReport := &v02.Vulns{
+		Scanner: &v02.Scanner{
+			Uri:      "",
+			Version:  new(string),
+			Database: &v02.VulnDatabase{},
+			Result:   []*v02.Result{},
+		},
+		ScanMetadata: &v02.ScanMetadata{
+			ScanStartedOn:  timestamppb.New(*oParsed.CreatedAt),
+			ScanFinishedOn: timestamppb.New(*oParsed.CreatedAt),
 		},
 	}
 
-	if original.Parsed.Results == nil {
-		return ret, nil
-	}
-
-	for _, result := range original.Parsed.Results {
+	for _, result := range oParsed.Results {
 		for _, vuln := range result.Vulnerabilities {
 			newResult := &v02.Result{
 				Id:          vuln.VulnerabilityID,
@@ -75,9 +75,13 @@ func trivyToVulnsV2(original *trivy.Predicate) (*vulns.PredicateV2, error) {
 				Score:  "",
 			})
 
-			ret.Parsed.Scanner.Result = append(ret.Parsed.Scanner.Result, newResult)
+			newReport.Scanner.Result = append(newReport.Scanner.Result, newResult)
 		}
 	}
 
-	return ret, nil
+	return &generic.Predicate{
+		Type:   trivy.PredicateType,
+		Parsed: newReport,
+		Data:   []byte{},
+	}, nil
 }

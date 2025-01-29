@@ -9,6 +9,8 @@ import (
 	"time"
 
 	posv "github.com/carabiner-dev/osv/go/osv"
+	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 	"github.com/puerco/ampel/pkg/formats/predicate/osv"
 	"github.com/puerco/ampel/pkg/formats/predicate/trivy"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -16,32 +18,40 @@ import (
 )
 
 // trivyToOSV converts a trivy v2 output to an OSV feed
-func (t *Transformer) TrivyToOSV(original *trivy.Predicate) (*osv.Predicate, error) {
+func (t *Transformer) TrivyToOSV(original attestation.Predicate) (attestation.Predicate, error) {
 	if original == nil {
 		return nil, errors.New("original predicate undefined")
 	}
 
-	createdat := time.Now()
-	if original.Parsed.CreatedAt != nil {
-		createdat = *original.Parsed.CreatedAt
+	if original.GetType() != trivy.PredicateType {
+		return nil, fmt.Errorf("conversion not supported")
 	}
 
-	ret := &osv.Predicate{
-		Parsed: &posv.Results{
-			Date: timestamppb.New(createdat),
-			Results: []*posv.Result{
-				{
-					Source: &posv.Result_Source{
-						Path: original.Parsed.ArtifactName,
-						Type: original.Parsed.ArtifactType,
-					},
-					Packages: []*posv.Result_Package{
-						{
-							Package: &posv.Result_Package_Info{
-								Name: original.Parsed.ArtifactName,
-							},
-							Vulnerabilities: []*posv.Record{},
+	parsed, ok := original.GetParsed().(*trivy.TrivyReport)
+	if !ok {
+		return nil, fmt.Errorf("casting original trivy to ISV")
+	}
+
+	createdat := time.Now()
+	//parsed.createdat :=
+	if parsed.CreatedAt != nil {
+		createdat = *parsed.CreatedAt
+	}
+
+	osvResults := &posv.Results{
+		Date: timestamppb.New(createdat),
+		Results: []*posv.Result{
+			{
+				Source: &posv.Result_Source{
+					Path: parsed.ArtifactName,
+					Type: parsed.ArtifactType,
+				},
+				Packages: []*posv.Result_Package{
+					{
+						Package: &posv.Result_Package_Info{
+							Name: parsed.ArtifactName,
 						},
+						Vulnerabilities: []*posv.Record{},
 					},
 				},
 			},
@@ -50,7 +60,7 @@ func (t *Transformer) TrivyToOSV(original *trivy.Predicate) (*osv.Predicate, err
 
 	results := map[string][]*posv.Record{}
 
-	for _, result := range original.Parsed.Results {
+	for _, result := range parsed.Results {
 		for _, vuln := range result.Vulnerabilities {
 			// Check if we have a collection for this one
 			rec := &posv.Record{
@@ -147,8 +157,11 @@ func (t *Transformer) TrivyToOSV(original *trivy.Predicate) (*osv.Predicate, err
 			Vulnerabilities: []*posv.Record{},
 		}
 		pkg.Vulnerabilities = append(pkg.Vulnerabilities, records...)
-		ret.Parsed.Results[0].Packages = append(ret.Parsed.Results[0].Packages, pkg)
+		osvResults.Results[0].Packages = append(osvResults.Results[0].Packages, pkg)
 	}
 
-	return ret, nil
+	return &generic.Predicate{
+		Type:   osv.PredicateType,
+		Parsed: osvResults,
+	}, nil
 }

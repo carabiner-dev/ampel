@@ -16,6 +16,7 @@ type Statement interface {
 
 type Predicate interface {
 	GetType() PredicateType
+	SetType(PredicateType) error
 	GetParsed() any
 	GetData() []byte
 }

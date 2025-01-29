@@ -8,8 +8,6 @@ import (
 	"github.com/puerco/ampel/pkg/attestation"
 )
 
-const PredicateType attestation.PredicateType = "application/protobom"
-
 type Predicate struct {
 	Data   []byte
 	Parsed *sbom.Document

@@ -9,7 +9,10 @@ import (
 
 	protoOSV "github.com/carabiner-dev/osv/go/osv"
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 )
+
+var PredicateType = attestation.PredicateType("https://ossf.github.io/osv-schema/results@v1.6.7")
 
 type Parser struct{}
 
@@ -36,7 +39,8 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 		return nil, attestation.ErrNotCorrectFormat
 	}
 
-	return &Predicate{
+	return &generic.Predicate{
+		Type:   PredicateType,
 		Parsed: results,
 		Data:   data,
 	}, nil

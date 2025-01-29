@@ -8,17 +8,22 @@ import (
 	"fmt"
 
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 )
 
+const PredicateType attestation.PredicateType = "text/json"
+
 type Parser struct{}
+type DataMap map[string]any
 
 // Ensure this parser implements the interface
 var _ attestation.PredicateParser = (*Parser)(nil)
 
 // Parse generates a generic JSON predicate object from any JSON it gets.
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
-	pred := &Predicate{
-		Data: data,
+	pred := &generic.Predicate{
+		Type:   PredicateType,
+		Parsed: map[string]any{},
 	}
 	parsedData := DataMap{}
 	if err := gojson.Unmarshal(pred.Data, &parsedData); err != nil {
@@ -34,11 +39,11 @@ func (p *Parser) SupportsType(testTypes ...string) bool {
 	return true
 }
 
-type OptionFunc func(*Predicate) error
+type OptionFunc func(*generic.Predicate) error
 
 func WithJson(data []byte) OptionFunc {
-	return func(pred *Predicate) error {
-		// Parse into a generica structure
+	return func(pred *generic.Predicate) error {
+		// Parse into a generic structure
 		var parsed = DataMap{}
 		if err := gojson.Unmarshal(data, &parsed); err != nil {
 			return fmt.Errorf("parsing predicate json: %w", err)
@@ -51,14 +56,14 @@ func WithJson(data []byte) OptionFunc {
 }
 
 func WithType(pt attestation.PredicateType) OptionFunc {
-	return func(pred *Predicate) error {
+	return func(pred *generic.Predicate) error {
 		pred.Type = pt
 		return nil
 	}
 }
 
-func New(optsFn ...OptionFunc) (*Predicate, error) {
-	var pred = &Predicate{
+func New(optsFn ...OptionFunc) (*generic.Predicate, error) {
+	var pred = &generic.Predicate{
 		Type: PredicateType,
 	}
 	for _, of := range optsFn {

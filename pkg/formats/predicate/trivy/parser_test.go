@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,14 +18,16 @@ func TestParse(t *testing.T) {
 		path        string
 		data        []byte
 		mustErr     bool
-		verifyParse func(*testing.T, *Predicate)
+		verifyParse func(*testing.T, *generic.Predicate)
 	}{
-		{"normal", "testdata/trivy.json", []byte{}, false, func(t *testing.T, pred *Predicate) {
+		{"normal", "testdata/trivy.json", []byte{}, false, func(t *testing.T, pred *generic.Predicate) {
 			require.NotNil(t, pred.Parsed)
-			require.Equal(t, "/home/urbano/projects/release", pred.Parsed.ArtifactName)
-			require.Equal(t, "filesystem", pred.Parsed.ArtifactType)
-			require.Len(t, pred.Parsed.Results, 3)
-			require.Len(t, pred.Parsed.Results[0].Vulnerabilities, 5)
+			parsed, ok := pred.Parsed.(*TrivyReport)
+			require.True(t, ok)
+			require.Equal(t, "/home/urbano/projects/release", parsed.ArtifactName)
+			require.Equal(t, "filesystem", parsed.ArtifactType)
+			require.Len(t, parsed.Results, 3)
+			require.Len(t, parsed.Results[0].Vulnerabilities, 5)
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -42,7 +45,7 @@ func TestParse(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.NotNil(t, pred)
-			tpred, ok := pred.(*Predicate)
+			tpred, ok := pred.(*generic.Predicate)
 			require.True(t, ok)
 			tc.verifyParse(t, tpred)
 		})

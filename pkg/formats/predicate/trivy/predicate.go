@@ -11,11 +11,6 @@ import (
 
 var PredicateType = attestation.PredicateType("https://trivy.dev/report")
 
-type Predicate struct {
-	Parsed *TrivyReport
-	Data   []byte
-}
-
 type TrivyReport struct {
 	SchemaVersion int
 	CreatedAt     *time.Time

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,9 +22,9 @@ func TestParse(t *testing.T) {
 		data         []byte
 		mustErr      bool
 		checkError   error
-		validatePred func(*testing.T, *Predicate)
+		validatePred func(*testing.T, *generic.Predicate)
 	}{
-		{"normal", "testdata/sample-eox.json", nil, false, nil, func(t *testing.T, p *Predicate) {
+		{"normal", "testdata/sample-eox.json", nil, false, nil, func(t *testing.T, p *generic.Predicate) {
 			t.Helper()
 			require.NotNil(t, p.Parsed)
 			require.NotNil(t, p.Data)

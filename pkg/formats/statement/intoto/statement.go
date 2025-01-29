@@ -81,7 +81,7 @@ func (s *Statement) GetSubjects() []attestation.Subject {
 }
 
 func (s *Statement) GetPredicateType() attestation.PredicateType {
-	return s.Predicate.GetType()
+	return attestation.PredicateType(s.PredicateType)
 }
 
 // ToJson returns a byte slice with the predicate in JSON

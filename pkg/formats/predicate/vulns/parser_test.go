@@ -8,6 +8,7 @@ import (
 	"os"
 	"testing"
 
+	v02 "github.com/in-toto/attestation/go/predicates/vulns/v02"
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/stretchr/testify/require"
 )
@@ -20,21 +21,22 @@ func TestParseV2(t *testing.T) {
 		data              []byte
 		mustErr           bool
 		errType           error
-		validatePredicate func(*testing.T, *PredicateV2)
+		validatePredicate func(*testing.T, attestation.Predicate)
 	}{
-		{"v2", "testdata/vulns-v02.json", []byte{}, false, nil, func(t *testing.T, p *PredicateV2) {
+		{"v2", "testdata/vulns-v02.json", []byte{}, false, nil, func(t *testing.T, p attestation.Predicate) {
 			t.Helper()
-			require.NotNil(t, p.Parsed)
-			require.NotNil(t, p.Parsed.Scanner)
-			require.NotNil(t, p.Parsed.Scanner.Database)
-			require.NotNil(t, p.Parsed.Scanner.Result)
-			require.NotNil(t, p.Parsed.ScanMetadata)
-			require.Equal(t, p.Parsed.Scanner.Uri, "pkg:github/aquasecurity/trivy@244fd47e07d1004f0aed9")
-			require.Equal(t, p.Parsed.Scanner.Version, "0.19.2")
-			require.Equal(t, p.Parsed.Scanner.Database.Uri, "pkg:github/aquasecurity/trivy-db/commit/4c76bb580b2736d67751410fa4ab66d2b6b9b27d")
-			require.Len(t, p.Parsed.Scanner.Result, 1)
-			require.Equal(t, p.Parsed.Scanner.Result[0].Id, "CVE-123")
-			require.Len(t, p.Parsed.Scanner.Result[0].Severity, 2)
+			parsed, ok := p.GetParsed().(*v02.Vulns)
+			require.True(t, ok)
+			require.NotNil(t, parsed.Scanner)
+			require.NotNil(t, parsed.Scanner.Database)
+			require.NotNil(t, parsed.Scanner.Result)
+			require.NotNil(t, parsed.ScanMetadata)
+			require.Equal(t, parsed.Scanner.Uri, "pkg:github/aquasecurity/trivy@244fd47e07d1004f0aed9")
+			require.Equal(t, parsed.Scanner.Version, "0.19.2")
+			require.Equal(t, parsed.Scanner.Database.Uri, "pkg:github/aquasecurity/trivy-db/commit/4c76bb580b2736d67751410fa4ab66d2b6b9b27d")
+			require.Len(t, parsed.Scanner.Result, 1)
+			require.Equal(t, parsed.Scanner.Result[0].Id, "CVE-123")
+			require.Len(t, parsed.Scanner.Result[0].Severity, 2)
 		}},
 		{"other-json", "", []byte(`{name: "John Doe", "Today": 1, "IsItTrue": false}`), true, attestation.ErrNotCorrectFormat, nil},
 	} {

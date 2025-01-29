@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 	"github.com/puerco/ampel/pkg/formats/predicate/json"
 	"github.com/stretchr/testify/require"
 )
@@ -36,9 +37,11 @@ func TestParse(t *testing.T) {
 			require.NotNil(t, res)
 			require.NotNil(t, res.GetPredicate())
 			pred := res.GetPredicate()
-			jsonPred, ok := pred.(*json.Predicate)
+			genericPred, ok := pred.(*generic.Predicate)
 			require.True(t, ok)
-			require.Equal(t, "https://github.com/Attestations/GitHubActionsWorkflow@v1", jsonPred.Parsed["buildType"])
+			parsed, ok := genericPred.GetParsed().(*json.DataMap)
+			require.True(t, ok)
+			require.Equal(t, "https://github.com/Attestations/GitHubActionsWorkflow@v1", (*parsed)["buildType"])
 			require.Len(t, res.GetSubjects(), 10)
 		})
 	}

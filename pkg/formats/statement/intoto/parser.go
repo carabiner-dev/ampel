@@ -4,13 +4,15 @@
 package intoto
 
 import (
-	"encoding/json"
+	"encoding/base64"
 	"fmt"
 	"strings"
 
 	v1 "github.com/in-toto/attestation/go/v1"
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/formats/predicate"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type Parser struct{}
@@ -25,7 +27,7 @@ func (p *Parser) Parse(b []byte) (attestation.Statement, error) {
 	}
 
 	// Decode the statement data
-	if err := json.Unmarshal(b, &stmt); err != nil {
+	if err := protojson.Unmarshal(b, &stmt); err != nil {
 		if strings.Contains(err.Error(), "json: unknown field") {
 			return nil, attestation.ErrNotCorrectFormat
 		}
@@ -41,7 +43,14 @@ func (p *Parser) Parse(b []byte) (attestation.Statement, error) {
 	if err != nil {
 		return nil, fmt.Errorf("marshaling predicate data to JSON: %w", err)
 	}
-	pred, err := predicate.Parsers.Parse(pdata)
+	parseOpts := []predicate.ParseOption{}
+	if stmt.GetPredicateType() != "" {
+		logrus.Infof("contraining predicate parser to %s", stmt.GetPredicateType())
+		parseOpts = append(parseOpts, predicate.WithTypeHints([]attestation.PredicateType{
+			stmt.GetPredicateType(),
+		}))
+	}
+	pred, err := predicate.Parsers.Parse(pdata, parseOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("parsing predicate: %w", err)
 	}
@@ -49,4 +58,12 @@ func (p *Parser) Parse(b []byte) (attestation.Statement, error) {
 	stmt.Predicate = pred
 
 	return &stmt, nil
+}
+
+func (p *Parser) ParseBase64(b []byte) (attestation.Statement, error) {
+	res, err := base64.RawStdEncoding.DecodeString(string(b))
+	if err != nil {
+		return nil, fmt.Errorf("decoding base64 data: %w", err)
+	}
+	return p.Parse(res)
 }

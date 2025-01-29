@@ -10,8 +10,12 @@ import (
 
 	v02 "github.com/in-toto/attestation/go/predicates/vulns/v02"
 	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 	"google.golang.org/protobuf/encoding/protojson"
 )
+
+var PredicateTypeV2 = attestation.PredicateType("https://in-toto.io/attestation/vulns/v0.2")
+var PredicateType = PredicateTypeV2
 
 // Parser is the vulnerability parser
 type Parser struct{}
@@ -36,7 +40,7 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 	return pred, nil
 }
 
-func parseV2(data []byte) (*PredicateV2, error) {
+func parseV2(data []byte) (*generic.Predicate, error) {
 	v2 := v02.Vulns{}
 	if err := protojson.Unmarshal(data, &v2); err != nil {
 		// Transform the error to our wrong type error
@@ -45,8 +49,10 @@ func parseV2(data []byte) (*PredicateV2, error) {
 		}
 		return nil, fmt.Errorf("error parsing v02 vuln predicate: %s", err)
 	}
-	pred := &PredicateV2{
+	pred := &generic.Predicate{
+		Type:   PredicateTypeV2,
 		Parsed: &v2,
+		Data:   data,
 	}
 	return pred, nil
 }
