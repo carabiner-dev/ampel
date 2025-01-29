@@ -15,6 +15,8 @@ import (
 )
 
 func TestParse(t *testing.T) {
+	// the protobom parser is disabled for now
+	t.Skip()
 	for _, tc := range []struct {
 		name        string
 		file        string

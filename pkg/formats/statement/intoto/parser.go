@@ -28,7 +28,7 @@ func (p *Parser) Parse(b []byte) (attestation.Statement, error) {
 
 	// Decode the statement data
 	if err := protojson.Unmarshal(b, &stmt); err != nil {
-		if strings.Contains(err.Error(), "json: unknown field") {
+		if strings.Contains(err.Error(), "unknown field") {
 			return nil, attestation.ErrNotCorrectFormat
 		}
 		return nil, fmt.Errorf("decoding statement json: %w", err)

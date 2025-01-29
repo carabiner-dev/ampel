@@ -34,6 +34,7 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 		return nil, attestation.ErrNotCorrectFormat
 	}
 	return &generic.Predicate{
+		Type:   PredicateType,
 		Parsed: report,
 		Data:   data,
 	}, nil
