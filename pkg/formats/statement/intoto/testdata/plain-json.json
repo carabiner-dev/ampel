@@ -1,0 +1,17 @@
+{
+  "_type": "https://in-toto.io/Statement/v0.1",
+  "predicateType": "text/json",
+  "subject": [
+    {
+        "name": "vexctl-linux-ppc64le",
+        "digest": {
+            "SHA256": "18331ad597f222af1a7c54b584ac9555438c60ac45d912dd061540062eca8646"
+        }
+    }
+  ],
+  "predicate": {
+    "I": "am",
+    "just": "50413",
+    "random": ["piece", "of"]
+  }
+}
