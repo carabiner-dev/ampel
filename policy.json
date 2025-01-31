@@ -11,6 +11,11 @@
                 "runtime": "cel@v0",
                 "assert_mode": "OR"
             },
+            "controls": [
+                {
+                    "class": "", "id": "",
+                }
+            ],
             "identities": [
                 {
                     "type": "exact",

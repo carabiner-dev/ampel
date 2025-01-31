@@ -28,10 +28,19 @@ message Policy {
     repeated Tenet tenets = 8;
 }
 
+// Meta contains information about the policy itself
 message Meta {
     string runtime = 1;
     string description = 2;
     string assert_mode = 3;
+    repeated Control controls = 4; 
+}
+
+// Control is a mapping tying the policy to an OSCAL control
+message Control {
+    string class = 1;
+    string id = 2;
+    string title = 3;
 }
 
 message Identity {
