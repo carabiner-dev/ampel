@@ -156,7 +156,15 @@ func (di defaultIplementation) Transform(opts *VerificationOptions, transformers
 	return predicates, nil
 }
 
-func (di *defaultIplementation) CheckIdentities(*VerificationOptions, *api.Policy, []attestation.Envelope) error {
+func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, _ *api.Policy, envelopes []attestation.Envelope) error {
+	// First, verify the signatures on the envelopes
+	for _, e := range envelopes {
+		vr, err := e.VerifySignature()
+		if err != nil {
+			return fmt.Errorf("verifying attestation signature: %s", err)
+		}
+		logrus.Infof("verification results: %+v", vr)
+	}
 	return nil
 }
 
