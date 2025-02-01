@@ -19,6 +19,10 @@ import (
 
 type Parser struct{}
 
+func New() *Parser {
+	return &Parser{}
+}
+
 // ParseStream reads an open stream and returns a parsed envelope
 func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {
 	env := &Envelope{}

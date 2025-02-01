@@ -19,18 +19,17 @@ import (
 type Format string
 
 const (
-	FormatDSSE   Format = "dsse"
-	FormatBare   Format = "bare"
-	FormatBundle Format = "bundle"
+	FormatDSSE     Format = "dsse"
+	FormatBare     Format = "bare"
+	FormatBundleV3 Format = "application/vnd.dev.sigstore.bundle.v0.3+json"
 )
 
 // ParserList wraps a map listing the loaded parsers to expose convenience methods
 type ParserList map[Format]attestation.EnvelopeParser
 
 var Parsers = ParserList{
-	FormatDSSE:   &dsse.Parser{},
-	FormatBare:   &bare.Parser{},
-	FormatBundle: &bundle.Parser{},
+	FormatDSSE:     &dsse.Parser{},
+	FormatBundleV3: &bundle.Parser{},
 }
 
 // Parse takes a reader and parses
@@ -50,5 +49,13 @@ func (list *ParserList) Parse(r io.Reader) ([]attestation.Envelope, error) {
 			return nil, err
 		}
 	}
+
+	// If we're here, then we treat the file as a bare attestation
+	env, err := bare.New().ParseStream(bytes.NewReader(data))
+	if err == nil {
+		logrus.Infof("Parsing statement as bare JSON")
+		return env, nil
+	}
+
 	return nil, attestation.ErrNotCorrectFormat
 }
