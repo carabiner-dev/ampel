@@ -92,7 +92,8 @@ func (e *Envelope) VerifySignature() (*attestation.SignatureVerification, error)
 			if _, err := asn1.Unmarshal(e.Value, &s); err != nil {
 				//return nil, fmt.Errorf("malformed certificate extension %s: %w", e.Value, err)
 			}
-			data.Identity = string(e.Value[3:])
+			// This is a weird ASN decode bug coming from the sigstore cert
+			data.Identity = string(e.Value[4:])
 		default:
 			// logrus.Infof("%s: %s", e.Id.String(), s)
 		}
