@@ -50,6 +50,7 @@ func (dce *defaulCelEvaluator) CreateEnvironment(*options.EvaluatorOptions) (*ce
 	envOpts := []cel.EnvOption{
 		cel.Variable(VarNamePredicates, cel.MapType(cel.IntType, cel.AnyType)),
 		cel.Variable(VarNameContext, cel.AnyType),
+		cel.Variable(VarNameOutputs, cel.AnyType),
 		ext.Bindings(),
 		ext.Strings(),
 		ext.Encoders(),
@@ -118,7 +119,6 @@ func (dce *defaulCelEvaluator) EvaluateOutputs(
 	if vars == nil {
 		return nil, fmt.Errorf("variable set undefined")
 	}
-
 	for id, ast := range outputAsts {
 		program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
 		if err != nil {

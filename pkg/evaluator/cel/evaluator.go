@@ -17,6 +17,7 @@ import (
 const (
 	VarNamePredicates = "predicates"
 	VarNameContext    = "context"
+	VarNameOutputs    = "outputs"
 )
 
 // New creates a new CEL evaluator with the default options
@@ -69,6 +70,9 @@ func (e *Evaluator) ExecTenet(
 	if err != nil {
 		return nil, fmt.Errorf("evaluating outputs: %w", err)
 	}
+
+	// Add the outputs to the variables
+	(*vars)["outputs"] = outputMap
 
 	// Evaluate the asts and compile the results into a resultset
 	result, err := e.impl.Evaluate(e.Environment, ast, vars)
