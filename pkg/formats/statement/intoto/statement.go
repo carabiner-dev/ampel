@@ -22,6 +22,7 @@ type StatementOption func(*Statement)
 func WithPredicate(pred attestation.Predicate) StatementOption {
 	return func(stmnt *Statement) {
 		stmnt.Predicate = pred
+		stmnt.PredicateType = pred.GetType()
 	}
 }
 
@@ -41,8 +42,8 @@ func NewStatement(opts ...StatementOption) *Statement {
 }
 
 type Statement struct {
-	// Type      string `protobuf:"bytes,1,opt,name=type,json=_type,proto3" json:"type,omitempty"`
-	Predicate attestation.Predicate `json:"predicate"`
+	PredicateType attestation.PredicateType `json:"predicateType"`
+	Predicate     attestation.Predicate     `json:"predicate"`
 	gointoto.Statement
 }
 
@@ -81,7 +82,7 @@ func (s *Statement) GetSubjects() []attestation.Subject {
 }
 
 func (s *Statement) GetPredicateType() attestation.PredicateType {
-	return attestation.PredicateType(s.PredicateType)
+	return s.PredicateType
 }
 
 // ToJson returns a byte slice with the predicate in JSON

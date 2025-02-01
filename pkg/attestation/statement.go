@@ -4,7 +4,6 @@
 package attestation
 
 type PredicateType string
-type Type string
 
 // Statement wraps the attestation types in an interface to access its contents
 type Statement interface {
