@@ -12,6 +12,7 @@ import (
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/evaluator"
 	"github.com/puerco/ampel/pkg/transformer"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // AmpelImplementation
@@ -21,7 +22,7 @@ type AmpelImplementation interface {
 	BuildEvaluators(*VerificationOptions, *api.Policy) (map[evaluator.Class]evaluator.Evaluator, error)
 	BuildTransformers(*VerificationOptions, *api.Policy) (map[transformer.Class]transformer.Transformer, error)
 	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *api.Policy, []attestation.Predicate) ([]attestation.Predicate, error)
-	CheckIdentities(*VerificationOptions, *api.Policy, []attestation.Envelope) error
+	CheckIdentities(*VerificationOptions, *api.Policy, []attestation.Envelope) (bool, error)
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
 	AssertResult(*api.Policy, *api.Result) error
 	AttestResult(context.Context, *VerificationOptions, attestation.Subject, *api.Result) error
@@ -65,8 +66,19 @@ func (ampel *Ampel) Verify(
 	// Check identities to see if the attestations can be admitted
 	// TODO(puerco)
 	// Option: Unmatched identities cause a:fail or b:ignore
-	if err := ampel.impl.CheckIdentities(opts, policy, atts); err != nil {
+	allow, err := ampel.impl.CheckIdentities(opts, policy, atts)
+	if err != nil {
 		return nil, fmt.Errorf("admission failed: %w", err)
+	}
+
+	if !allow {
+		return &api.Result{
+			Status:      "FAIL",
+			DateStart:   timestamppb.Now(),
+			DateEnd:     timestamppb.Now(),
+			Policy:      &api.PolicyRef{},
+			EvalResults: []*api.EvalResult{},
+		}, nil
 	}
 
 	// Filter attestations to those applicable to the subject

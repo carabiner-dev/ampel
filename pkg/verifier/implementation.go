@@ -156,16 +156,34 @@ func (di defaultIplementation) Transform(opts *VerificationOptions, transformers
 	return predicates, nil
 }
 
-func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, _ *api.Policy, envelopes []attestation.Envelope) error {
+func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, policy *api.Policy, envelopes []attestation.Envelope) (bool, error) {
+	var verifications = []*attestation.SignatureVerification{}
 	// First, verify the signatures on the envelopes
 	for _, e := range envelopes {
 		vr, err := e.VerifySignature()
 		if err != nil {
-			return fmt.Errorf("verifying attestation signature: %s", err)
+			return false, fmt.Errorf("verifying attestation signature: %s", err)
 		}
-		logrus.Infof("verification results: %+v", vr)
+
+		if !identityAllowed(policy.Identities, vr) {
+			logrus.Infof("Identity %+v not allowed by policy %+v", vr.SigstoreCertData, policy.Identities)
+			return false, nil
+		}
+		verifications = append(verifications, vr)
 	}
-	return nil
+
+	return true, nil
+}
+
+func identityAllowed(ids []*api.Identity, vr *attestation.SignatureVerification) bool {
+	for i := range ids {
+		logrus.Infof("Checking %q vs %q", ids[i].Identity, vr.SigstoreCertData.Identity)
+		if ids[i].Identity == vr.SigstoreCertData.Identity &&
+			ids[i].Issuer == vr.SigstoreCertData.Issuer {
+			return true
+		}
+	}
+	return false
 }
 
 func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, subject attestation.Subject, envs []attestation.Envelope) ([]attestation.Predicate, error) {
