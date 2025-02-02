@@ -177,8 +177,7 @@ func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, policy *
 
 func identityAllowed(ids []*api.Identity, vr *attestation.SignatureVerification) bool {
 	for i := range ids {
-		logrus.Infof("Checking %q vs %q", ids[i].Identity, vr.SigstoreCertData.Identity)
-		if ids[i].Identity == vr.SigstoreCertData.Identity &&
+		if ids[i].Identity == vr.SigstoreCertData.SubjectAlternativeName &&
 			ids[i].Issuer == vr.SigstoreCertData.Issuer {
 			return true
 		}

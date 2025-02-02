@@ -5,7 +5,6 @@ package bundle
 
 import (
 	"crypto/x509"
-	"encoding/asn1"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -13,6 +12,7 @@ import (
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/formats/statement/intoto"
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
+	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"github.com/sirupsen/logrus"
 )
 
@@ -75,36 +75,18 @@ func (e *Envelope) VerifySignature() (*attestation.SignatureVerification, error)
 		return nil, fmt.Errorf("decoding pem block from cert: %s", err)
 	}
 
-	data := &attestation.SigstoreCertData{
-		Identity: cert.Subject.CommonName,
-	}
-	// cert.Issuer must be sigstore
-	for _, e := range cert.Extensions {
-		switch e.Id.String() {
-		case "1.3.6.1.4.1.57264.1.1", "1.3.6.1.4.1.57264.1.8":
-			var s string
-			if _, err := asn1.Unmarshal(e.Value, &s); err != nil {
-				//return nil, fmt.Errorf("malformed certificate extension %s: %w", e.Id.String(), err)
-			}
-			data.Issuer = s
-		case "2.5.29.17":
-			var s string
-			if _, err := asn1.Unmarshal(e.Value, &s); err != nil {
-				//return nil, fmt.Errorf("malformed certificate extension %s: %w", e.Value, err)
-			}
-			// This is a weird ASN decode bug coming from the sigstore cert
-			data.Identity = string(e.Value[4:])
-		default:
-			// logrus.Infof("%s: %s", e.Id.String(), s)
-		}
+	summary, err := certificate.SummarizeCertificate(cert)
+	if err != nil {
+		return nil, fmt.Errorf("summarizing cert: %w", err)
 	}
 
 	logrus.Debug("Parsed sigstore cert data:")
-	logrus.Debugf("  Cert issuer:   %s", data.Issuer)
-	logrus.Debugf("  Cert identity: %s", data.Identity)
+	logrus.Debugf("  OIDC issuer:  %s", summary.Issuer)
+	logrus.Debugf("  Cert SAN:     %s", summary.SubjectAlternativeName)
+	logrus.Debugf("  Cert Issuer:  %s", summary.CertificateIssuer)
 
 	logrus.Warn("SIGNATURE VALIDATION IS MOCKED, DO NOT USE YET")
 	return &attestation.SignatureVerification{
-		SigstoreCertData: data,
+		SigstoreCertData: summary,
 	}, nil
 }
