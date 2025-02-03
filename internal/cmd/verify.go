@@ -7,8 +7,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/fatih/color"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
 
 	"github.com/puerco/ampel/pkg/attestation"
@@ -21,6 +23,7 @@ type verifyOptions struct {
 	verifier.VerificationOptions
 	PolicyFile   string
 	SubjectFiles []string
+	Format       string
 }
 
 // AddFlags adds the flags
@@ -43,6 +46,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 
 	cmd.PersistentFlags().StringVar(
 		&o.ResultsAttestationPath, "results-path", o.ResultsAttestationPath, "path to the evaluation results attestation",
+	)
+
+	cmd.PersistentFlags().StringVarP(
+		&o.Format, "format", "f", o.Format, "output format",
 	)
 }
 
@@ -135,7 +142,7 @@ using a collector.
 			if err != nil {
 				return fmt.Errorf("parsing policy: %w", err)
 			}
-			fmt.Printf("policy: %+v\n", p)
+			// fmt.Printf("policy: %+v\n", p)
 
 			// Run the ampel verifier
 			ampel, err := verifier.New()
@@ -148,7 +155,21 @@ using a collector.
 				return fmt.Errorf("runnig subject verification: %w", err)
 			}
 
-			fmt.Printf("Results:\n%+v\n", results)
+			if opts.Format == "controls" {
+				t := table.NewWriter()
+				t.SetOutputMirror(os.Stdout)
+				t.AppendHeader(table.Row{"Class", "Control", "Status"})
+				rows := []table.Row{}
+				for _, r := range results.EvalResults {
+					for _, c := range r.Controls {
+						rows = append(rows, table.Row{c.Class, c.Id, results.Status})
+					}
+				}
+				t.AppendRows(rows)
+				t.Render()
+			} else {
+				fmt.Printf("Results:\n%+v\n", results)
+			}
 
 			return nil
 		},

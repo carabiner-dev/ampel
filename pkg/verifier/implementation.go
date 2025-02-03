@@ -216,6 +216,7 @@ func (di *defaultIplementation) VerifySubject(
 			errs = append(errs, fmt.Errorf("executing tenet #%d: %w", i, err))
 			continue
 		}
+		evalres.Controls = p.Meta.Controls
 		logrus.Infof("Tenet #%d eval: %+v", i, evalres)
 		rs.EvalResults = append(rs.EvalResults, evalres)
 	}

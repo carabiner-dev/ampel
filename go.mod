@@ -8,6 +8,7 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/google/cel-go v0.22.1
 	github.com/in-toto/attestation v1.1.1-0.20250116170412-11ca4fce9b7a
+	github.com/jedib0t/go-pretty/v6 v6.6.5
 	github.com/openvex/go-vex v0.2.5
 	github.com/protobom/protobom v0.5.0
 	github.com/sigstore/protobuf-specs v0.3.3
@@ -21,6 +22,8 @@ require (
 require (
 	github.com/go-jose/go-jose/v4 v4.0.2 // indirect
 	github.com/letsencrypt/boulder v0.0.0-20240620165639-de9c06129bec // indirect
+	github.com/mattn/go-runewidth v0.0.15 // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.9.0 // indirect
 	github.com/sigstore/sigstore v1.8.12 // indirect
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 // indirect
