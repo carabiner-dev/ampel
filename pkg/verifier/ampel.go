@@ -9,11 +9,12 @@ import (
 	api "github.com/puerco/ampel/pkg/api/v1"
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/evaluator"
+	"github.com/puerco/ampel/pkg/oscal"
 	"github.com/puerco/ampel/pkg/transformer"
 )
 
 // AmpelImplementation
-type AmpelImplementation interface {
+type AmpelVerifier interface {
 	GatherAttestations(context.Context, *VerificationOptions, attestation.Subject) ([]attestation.Envelope, error)
 	ParseAttestations(context.Context, []string) ([]attestation.Envelope, error)
 	BuildEvaluators(*VerificationOptions, *api.Policy) (map[evaluator.Class]evaluator.Evaluator, error)
@@ -26,13 +27,22 @@ type AmpelImplementation interface {
 	VerifySubject(context.Context, *VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.Result, error)
 }
 
+type AmpelStatusChecker interface {
+	GatherResults(context.Context, *StatusOptions, attestation.Subject) ([]attestation.Envelope, error)
+	ParseAttestedResults(context.Context, *StatusOptions, []attestation.Envelope) ([]attestation.Predicate, error)
+	CheckIdentities(*StatusOptions, []attestation.Envelope) (bool, error)
+	ComputeComplianceStatus(*oscal.Catalog, []attestation.Predicate) (*Status, error)
+}
+
 func New() (*Ampel, error) {
 	return &Ampel{
-		impl: &defaultIplementation{},
+		impl:    &defaultIplementation{},
+		checker: &defaultStatusChecker{},
 	}, nil
 }
 
 // Ampel is the attestation verifier
 type Ampel struct {
-	impl AmpelImplementation
+	impl    AmpelVerifier
+	checker AmpelStatusChecker
 }
