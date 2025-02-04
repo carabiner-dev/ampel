@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-var PredicateType = attestation.PredicateType("https://carabiner.dev/predicate/v0.0.1")
+var PredicateType = attestation.PredicateType("https://carabiner.dev/ampel/results/v0.0.1")
 
 func NewPredicate() *generic.Predicate {
 	return &generic.Predicate{

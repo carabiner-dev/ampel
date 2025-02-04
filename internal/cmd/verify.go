@@ -119,12 +119,6 @@ using a collector.
 			// Supress output from here as options are correct
 			c.SilenceUsage = true
 
-			// data, err := protojson.Marshal(&ctx)
-			// if err != nil {
-			// 	return err
-			// }
-			// fmt.Printf("Policy:\n" + string(data) + "\n")
-
 			// Generate the atestation subjects from the files
 			var subjects = []attestation.Subject{}
 			for _, path := range opts.SubjectFiles {
@@ -150,7 +144,7 @@ using a collector.
 				return fmt.Errorf("creating verifier")
 			}
 
-			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, p.Policies[0], subjects[0])
+			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, p, subjects[0])
 			if err != nil {
 				return fmt.Errorf("runnig subject verification: %w", err)
 			}
@@ -160,9 +154,9 @@ using a collector.
 				t.SetOutputMirror(os.Stdout)
 				t.AppendHeader(table.Row{"Class", "Control", "Status"})
 				rows := []table.Row{}
-				for _, r := range results.EvalResults {
+				for _, r := range results.Results {
 					for _, c := range r.Controls {
-						rows = append(rows, table.Row{c.Class, c.Id, results.Status})
+						rows = append(rows, table.Row{c.Class, c.Id, r.Status})
 					}
 				}
 				t.AppendRows(rows)

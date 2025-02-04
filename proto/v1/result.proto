@@ -18,6 +18,7 @@ message Result {
     // repeated Output output = 3;
     PolicyRef policy = 4;
     repeated EvalResult eval_results = 5;
+    repeated Control controls = 6;
 }
 
 message EvalResult {
@@ -26,7 +27,6 @@ message EvalResult {
     google.protobuf.Timestamp date = 3;
     google.protobuf.Struct output = 4;
     repeated StatementRef statements = 5;
-    repeated Control controls = 6;
 }
 
 message PolicyRef {

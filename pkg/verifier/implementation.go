@@ -18,6 +18,7 @@ import (
 	"github.com/puerco/ampel/pkg/formats/statement/intoto"
 	"github.com/puerco/ampel/pkg/transformer"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type defaultIplementation struct{}
@@ -199,7 +200,13 @@ func (di *defaultIplementation) VerifySubject(
 	ctx context.Context, opts *VerificationOptions, evaluators map[evaluator.Class]evaluator.Evaluator,
 	p *api.Policy, subject attestation.Subject, predicates []attestation.Predicate,
 ) (*api.Result, error) {
-	var rs = &api.Result{}
+	var rs = &api.Result{
+		DateStart: timestamppb.Now(),
+		Policy: &api.PolicyRef{
+			Id: p.Id,
+		},
+		Controls: p.Meta.Controls,
+	}
 
 	evalOpts := &options.EvaluatorOptions{
 		Context: p.Context,
@@ -216,10 +223,12 @@ func (di *defaultIplementation) VerifySubject(
 			errs = append(errs, fmt.Errorf("executing tenet #%d: %w", i, err))
 			continue
 		}
-		evalres.Controls = p.Meta.Controls
 		logrus.Infof("Tenet #%d eval: %+v", i, evalres)
 		rs.EvalResults = append(rs.EvalResults, evalres)
 	}
+
+	// Stamp the end date
+	rs.DateEnd = timestamppb.Now()
 
 	return rs, errors.Join(errs...)
 }
@@ -247,6 +256,7 @@ func (di *defaultIplementation) AttestResult(
 
 	// Create the statement
 	stmt := intoto.NewStatement()
+	stmt.PredicateType = ampelPred.PredicateType
 	stmt.AddSubject(subject)
 	stmt.Predicate = pred
 

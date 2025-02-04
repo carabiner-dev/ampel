@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	api "github.com/puerco/ampel/pkg/api/v1"
+	v1 "github.com/puerco/ampel/pkg/api/v1"
 	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/puerco/ampel/pkg/evaluator"
 	"github.com/puerco/ampel/pkg/transformer"
@@ -40,8 +41,34 @@ type Ampel struct {
 	impl AmpelImplementation
 }
 
-// Verify checks a number of subjects against a policy using the available evidence
+// Verify checks a subject against a policy using the available evidence
 func (ampel *Ampel) Verify(
+	ctx context.Context, opts *VerificationOptions, policy any, subject attestation.Subject,
+) (*api.ResultSet, error) {
+	switch v := policy.(type) {
+	case *api.Policy:
+		res, err := ampel.VerifySubjectWithPolicy(ctx, opts, v, subject)
+		if err != nil {
+			return nil, err
+		}
+		return &v1.ResultSet{Results: []*v1.Result{res}}, nil
+	case *api.PolicySet:
+		var rs = &v1.ResultSet{}
+		for i, p := range v.Policies {
+			res, err := ampel.VerifySubjectWithPolicy(ctx, opts, p, subject)
+			if err != nil {
+				return nil, fmt.Errorf("evaluating policy #%d: %w", i, err)
+			}
+			rs.Results = append(rs.Results, res)
+		}
+		return rs, nil
+	default:
+		return nil, fmt.Errorf("did not get a poicy or policy set")
+	}
+}
+
+// VerifySubjectWithPolicy verifies a subject against a single policy
+func (ampel *Ampel) VerifySubjectWithPolicy(
 	ctx context.Context, opts *VerificationOptions, policy *api.Policy, subject attestation.Subject,
 ) (*api.Result, error) {
 	// Fetch applicable evidence
@@ -110,15 +137,15 @@ func (ampel *Ampel) Verify(
 		return nil, fmt.Errorf("verifying subject: %w", err)
 	}
 
+	// Assert the status from the evaluation results
+	if err := ampel.impl.AssertResult(policy, result); err != nil {
+		return nil, fmt.Errorf("asserting results: %w", err)
+	}
+
 	// Generate the results attestation. If the attestation is disabled in the
 	// options, this is a NOOP.
 	if err := ampel.impl.AttestResult(ctx, opts, subject, result); err != nil {
 		return nil, fmt.Errorf("attesting results: %w", err)
-	}
-
-	// Assert the results
-	if err := ampel.impl.AssertResult(policy, result); err != nil {
-		return nil, fmt.Errorf("asserting results: %w", err)
 	}
 
 	// Generate outputs
