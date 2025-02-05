@@ -177,6 +177,10 @@ func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, policy *
 }
 
 func identityAllowed(ids []*api.Identity, vr *attestation.SignatureVerification) bool {
+	if vr == nil {
+		logrus.Warn("DEMO WARNING: ALLOWING UNSIGNED STATEMENTS")
+		return true
+	}
 	for i := range ids {
 		if ids[i].Identity == vr.SigstoreCertData.SubjectAlternativeName &&
 			ids[i].Issuer == vr.SigstoreCertData.Issuer {
