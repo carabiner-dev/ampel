@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/puerco/ampel/pkg/attestation"
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
@@ -24,18 +23,16 @@ func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {
 		Bundle: sigstore.Bundle{},
 	}
 
-	// Parse
+	// Readd all data to mem :/
 	data, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("parsing stream: %w", err)
 	}
 
-	if err := protojson.Unmarshal(data, env); err != nil {
-		if strings.Contains(err.Error(), "unknown field") {
-			return nil, attestation.ErrNotCorrectFormat
-		}
-		return nil, fmt.Errorf("unmarshaling envelope: %w", err)
+	if err := protojson.Unmarshal(data, &env.Bundle); err != nil {
+		return nil, fmt.Errorf("unmarshalling bundle: %w", err)
 	}
+
 	return []attestation.Envelope{env}, nil
 }
 

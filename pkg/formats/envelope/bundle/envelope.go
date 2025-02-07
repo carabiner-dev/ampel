@@ -5,8 +5,6 @@ package bundle
 
 import (
 	"crypto/x509"
-	"encoding/pem"
-	"errors"
 	"fmt"
 
 	"github.com/puerco/ampel/pkg/attestation"
@@ -53,29 +51,21 @@ func (e *Envelope) GetSignatures() []attestation.Signature {
 }
 
 func (e *Envelope) VerifySignature() (*attestation.SignatureVerification, error) {
-	if e.VerificationMaterial == nil {
-		return nil, errors.New("bundle does not have verification material")
-	}
-	if e.VerificationMaterial.GetX509CertificateChain() == nil {
-		return nil, errors.New("bundle does not include the certificate chain")
+	if e.Bundle.GetVerificationMaterial() == nil {
+		return nil, fmt.Errorf("no verification material found in bundle")
 	}
 
-	certs := e.GetVerificationMaterial().GetX509CertificateChain().GetCertificates()
-	if certs == nil || len(certs) == 0 {
-		return nil, errors.New("certificate chain does not include certs")
+	cert := e.Bundle.GetVerificationMaterial().GetCertificate()
+	if cert == nil {
+		return nil, fmt.Errorf("no certificate found in bundle")
 	}
 
-	// Decode the base64 encoded cert
-	//logrus.Debugf("CERT:\n%s\n", string(certs[0].RawBytes))
-
-	// Decode the cert to access its fields
-	pemb, _ := pem.Decode(certs[0].RawBytes)
-	cert, err := x509.ParseCertificate(pemb.Bytes)
+	x509cert, err := x509.ParseCertificate(cert.GetRawBytes())
 	if err != nil {
-		return nil, fmt.Errorf("decoding pem block from cert: %s", err)
+		return nil, fmt.Errorf("parsing cert: %w", err)
 	}
 
-	summary, err := certificate.SummarizeCertificate(cert)
+	summary, err := certificate.SummarizeCertificate(x509cert)
 	if err != nil {
 		return nil, fmt.Errorf("summarizing cert: %w", err)
 	}
