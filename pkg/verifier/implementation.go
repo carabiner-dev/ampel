@@ -158,7 +158,14 @@ func (di defaultIplementation) Transform(opts *VerificationOptions, transformers
 }
 
 func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, policy *api.Policy, envelopes []attestation.Envelope) (bool, error) {
+	// If there are no identities defined, return here
+	if len(policy.Identities) == 0 {
+		logrus.Warn("No identities defined in policy. Not checking.")
+		return true, nil
+	}
+
 	var verifications = []*attestation.SignatureVerification{}
+
 	// First, verify the signatures on the envelopes
 	for _, e := range envelopes {
 		vr, err := e.VerifySignature()
