@@ -39,6 +39,11 @@ func (p *Parser) Parse(b []byte) (attestation.Statement, error) {
 		return nil, attestation.ErrNotCorrectFormat
 	}
 
+	if stmt.Statement.PredicateType != "" {
+		stmt.PredicateType = attestation.PredicateType(stmt.Statement.PredicateType)
+		stmt.Statement.PredicateType = ""
+	}
+
 	pdata, err := stmt.Statement.Predicate.MarshalJSON()
 	if err != nil {
 		return nil, fmt.Errorf("marshaling predicate data to JSON: %w", err)
