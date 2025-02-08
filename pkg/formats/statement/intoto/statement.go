@@ -42,7 +42,7 @@ func NewStatement(opts ...StatementOption) *Statement {
 }
 
 type Statement struct {
-	PredicateType attestation.PredicateType `json:"predicateType"`
+	PredicateType attestation.PredicateType `json:"predicateType" protobuf:"bytes,3,opt,name=predicate_type,json=predicateType,proto3"`
 	Predicate     attestation.Predicate     `json:"predicate"`
 	gointoto.Statement
 }
