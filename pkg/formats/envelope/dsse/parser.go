@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/formats/statement"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/statement"
 )
 
 // Parser for attestations wrapped in DSSE envelopes

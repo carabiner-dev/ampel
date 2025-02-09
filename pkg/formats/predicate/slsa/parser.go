@@ -8,11 +8,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/formats/predicate/generic"
-	v02 "github.com/puerco/ampel/pkg/formats/predicate/slsa/provenance/v02"
-	v10 "github.com/puerco/ampel/pkg/formats/predicate/slsa/provenance/v10"
-	v11 "github.com/puerco/ampel/pkg/formats/predicate/slsa/provenance/v11"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
+	v02 "github.com/carabiner-dev/ampel/pkg/formats/predicate/slsa/provenance/v02"
+	v10 "github.com/carabiner-dev/ampel/pkg/formats/predicate/slsa/provenance/v10"
+	v11 "github.com/carabiner-dev/ampel/pkg/formats/predicate/slsa/provenance/v11"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 

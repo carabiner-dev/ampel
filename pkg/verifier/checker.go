@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/oscal"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/oscal"
 )
 
 type defaultStatusChecker struct {

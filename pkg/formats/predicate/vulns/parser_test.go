@@ -8,8 +8,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/carabiner-dev/ampel/pkg/attestation"
 	v02 "github.com/in-toto/attestation/go/predicates/vulns/v02"
-	"github.com/puerco/ampel/pkg/attestation"
 	"github.com/stretchr/testify/require"
 )
 

@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate"
 	gointoto "github.com/in-toto/attestation/go/v1"
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/formats/predicate"
 )
 
 // var _ attestation.Subject = (*Subject)(nil)

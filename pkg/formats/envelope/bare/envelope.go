@@ -4,7 +4,7 @@
 package bare
 
 import (
-	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/sirupsen/logrus"
 )
 

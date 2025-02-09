@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package = "github.com/puerco/ampel/pkg/formats/predicate/slsa/provenance/v11";
+option go_package = "github.com/carabiner-dev/ampel/pkg/formats/predicate/slsa/provenance/v11";
 
 package slsa.v11;
 

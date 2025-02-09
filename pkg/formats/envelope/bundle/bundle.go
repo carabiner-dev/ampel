@@ -10,7 +10,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 )

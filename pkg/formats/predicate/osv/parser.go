@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	protoOSV "github.com/carabiner-dev/osv/go/osv"
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 )
 
 var PredicateType = attestation.PredicateType("https://ossf.github.io/osv-schema/results@v1.6.7")

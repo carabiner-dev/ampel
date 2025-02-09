@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/formats/predicate/generic"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 )
 
 type Parser struct{}

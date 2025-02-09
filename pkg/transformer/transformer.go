@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/transformer/protobom"
-	"github.com/puerco/ampel/pkg/transformer/vulnreport"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/transformer/protobom"
+	"github.com/carabiner-dev/ampel/pkg/transformer/vulnreport"
 	"github.com/sirupsen/logrus"
 )
 

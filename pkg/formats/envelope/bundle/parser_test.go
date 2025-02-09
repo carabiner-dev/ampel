@@ -3,7 +3,7 @@ package bundle
 import (
 	"testing"
 
-	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/stretchr/testify/require"
 )
 

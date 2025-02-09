@@ -8,7 +8,7 @@ package generic
 import (
 	"encoding/json"
 
-	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 type Predicate struct {

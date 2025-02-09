@@ -4,8 +4,8 @@
 package dsse
 
 import (
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/formats/statement"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/statement"
 	sigstoreProtoDSSE "github.com/sigstore/protobuf-specs/gen/pb-go/dsse"
 )
 

@@ -7,10 +7,10 @@ import (
 	"context"
 	"fmt"
 
-	api "github.com/puerco/ampel/pkg/api/v1"
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/evaluator/cel"
-	"github.com/puerco/ampel/pkg/evaluator/options"
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/cel"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
 
 // Ensure the known evaluators satisfy the interface

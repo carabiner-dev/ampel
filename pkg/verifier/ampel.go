@@ -6,11 +6,11 @@ package verifier
 import (
 	"context"
 
-	api "github.com/puerco/ampel/pkg/api/v1"
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/evaluator"
-	"github.com/puerco/ampel/pkg/oscal"
-	"github.com/puerco/ampel/pkg/transformer"
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/evaluator"
+	"github.com/carabiner-dev/ampel/pkg/oscal"
+	"github.com/carabiner-dev/ampel/pkg/transformer"
 )
 
 // AmpelImplementation

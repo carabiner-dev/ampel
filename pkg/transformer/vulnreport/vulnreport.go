@@ -7,10 +7,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/trivy"
 	v02 "github.com/in-toto/attestation/go/predicates/vulns/v02"
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/formats/predicate/generic"
-	"github.com/puerco/ampel/pkg/formats/predicate/trivy"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	api "github.com/puerco/ampel/pkg/api/v1"
-	v1 "github.com/puerco/ampel/pkg/api/v1"
-	"github.com/puerco/ampel/pkg/attestation"
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
+	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

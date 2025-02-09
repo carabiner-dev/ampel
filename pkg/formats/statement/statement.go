@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/formats/statement/intoto"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
 	"github.com/sirupsen/logrus"
 )
 

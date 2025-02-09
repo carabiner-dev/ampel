@@ -16,7 +16,7 @@ import (
 
 	gointoto "github.com/in-toto/attestation/go/v1"
 
-	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 func NewFileReader() *FileReader {

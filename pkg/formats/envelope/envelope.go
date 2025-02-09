@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/formats/envelope/bare"
-	"github.com/puerco/ampel/pkg/formats/envelope/bundle"
-	"github.com/puerco/ampel/pkg/formats/envelope/dsse"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/envelope/bare"
+	"github.com/carabiner-dev/ampel/pkg/formats/envelope/bundle"
+	"github.com/carabiner-dev/ampel/pkg/formats/envelope/dsse"
 	"github.com/sirupsen/logrus"
 )
 

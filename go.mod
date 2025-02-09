@@ -1,4 +1,4 @@
-module github.com/puerco/ampel
+module github.com/carabiner-dev/ampel
 
 go 1.23.4
 

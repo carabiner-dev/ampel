@@ -8,7 +8,7 @@ managed:
   enabled: true
   override:
     # - file_option: go_package
-    #   value: github.com/puerco/ampel/pkg/api/v1
+    #   value: github.com/carabiner-dev/ampel/pkg/api/v1
     #   path: proto/v1
     # - file_option: go_package
     #   path: proto/osv/v1.6.7.proto
@@ -16,13 +16,13 @@ managed:
 plugins:
   - protoc_builtin: go
     out: .
-    #opt: module=github.com/puerco/ampel/pkg/api/v1
+    #opt: module=github.com/carabiner-dev/ampel/pkg/api/v1
     opt: 
       - paths=import
-      - module=github.com/puerco/ampel
+      - module=github.com/carabiner-dev/ampel
   # - protoc_builtin: go
   #   out: pkg/osv/v1_6_7
-  #   opt: module=github.com/puerco/ampel/pkg/osv/v1_6_7
+  #   opt: module=github.com/carabiner-dev/ampel/pkg/osv/v1_6_7
 
 inputs:
   - directory: proto/v1

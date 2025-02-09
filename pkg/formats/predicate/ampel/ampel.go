@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"slices"
 
-	api "github.com/puerco/ampel/pkg/api/v1"
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/formats/predicate/generic"
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 

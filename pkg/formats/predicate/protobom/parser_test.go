@@ -8,9 +8,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	"github.com/protobom/protobom/pkg/sbom"
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/formats/predicate/generic"
 	"github.com/stretchr/testify/require"
 )
 

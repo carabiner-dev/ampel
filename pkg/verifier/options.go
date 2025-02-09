@@ -4,10 +4,10 @@
 package verifier
 
 import (
-	api "github.com/puerco/ampel/pkg/api/v1"
-	"github.com/puerco/ampel/pkg/collector"
-	"github.com/puerco/ampel/pkg/evaluator"
-	"github.com/puerco/ampel/pkg/evaluator/options"
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
+	"github.com/carabiner-dev/ampel/pkg/collector"
+	"github.com/carabiner-dev/ampel/pkg/evaluator"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
 
 type VerificationOptions struct {

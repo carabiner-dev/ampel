@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/puerco/ampel/internal/cmd"
+	"github.com/carabiner-dev/ampel/internal/cmd"
 )
 
 func main() {

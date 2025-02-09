@@ -13,10 +13,10 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
 
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/policy"
-	"github.com/puerco/ampel/pkg/subject"
-	"github.com/puerco/ampel/pkg/verifier"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/policy"
+	"github.com/carabiner-dev/ampel/pkg/subject"
+	"github.com/carabiner-dev/ampel/pkg/verifier"
 )
 
 type verifyOptions struct {

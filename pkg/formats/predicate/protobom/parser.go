@@ -6,7 +6,7 @@ package protobom
 import (
 	"slices"
 
-	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 const PredicateType attestation.PredicateType = "application/protobom"

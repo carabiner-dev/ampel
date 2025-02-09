@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	v1 "github.com/puerco/ampel/pkg/api/v1"
+	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 

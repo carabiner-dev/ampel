@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"io/fs"
 
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/collector/filter"
-	"github.com/puerco/ampel/pkg/formats/envelope"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/collector/filter"
+	"github.com/carabiner-dev/ampel/pkg/formats/envelope"
 )
 
 func New(iofs fs.FS) *Collector {

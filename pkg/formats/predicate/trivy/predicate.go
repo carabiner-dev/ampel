@@ -6,7 +6,7 @@ package trivy
 import (
 	"time"
 
-	"github.com/puerco/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 var PredicateType = attestation.PredicateType("https://trivy.dev/report")

@@ -6,7 +6,7 @@ package ampel.v1;
 
 import "google/protobuf/struct.proto";
 
-option go_package = "github.com/puerco/ampel/pkg/api/v1";
+option go_package = "github.com/carabiner-dev/ampel/pkg/api/v1";
 
 // import "google/protobuf/timestamp.proto";
 

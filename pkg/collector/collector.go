@@ -4,9 +4,9 @@
 package collector
 
 import (
-	v1 "github.com/puerco/ampel/pkg/api/v1"
-	"github.com/puerco/ampel/pkg/attestation"
-	"github.com/puerco/ampel/pkg/collector/filter"
+	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/collector/filter"
 )
 
 type Repository interface {

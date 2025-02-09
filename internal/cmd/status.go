@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/puerco/ampel/pkg/verifier"
+	"github.com/carabiner-dev/ampel/pkg/verifier"
 	"github.com/spf13/cobra"
 )
 

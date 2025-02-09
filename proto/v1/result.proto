@@ -9,7 +9,7 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 import "policy.proto";
 
-option go_package = "github.com/puerco/ampel/pkg/api/v1";
+option go_package = "github.com/carabiner-dev/ampel/pkg/api/v1";
 
 message Result {
     string status = 1;
