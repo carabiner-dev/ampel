@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
@@ -30,6 +31,9 @@ func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {
 	}
 
 	if err := protojson.Unmarshal(data, &env.Bundle); err != nil {
+		if strings.Contains(err.Error(), "unknown field") {
+			return nil, attestation.ErrNotCorrectFormat
+		}
 		return nil, fmt.Errorf("unmarshalling bundle: %w", err)
 	}
 
