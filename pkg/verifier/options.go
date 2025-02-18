@@ -5,7 +5,7 @@ package verifier
 
 import (
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/collector"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
@@ -15,7 +15,7 @@ type VerificationOptions struct {
 	options.EvaluatorOptions
 
 	// Collectors is a collection of configured attestation fetchers
-	Collectors []collector.AttestationFetcher
+	Collectors []attestation.Fetcher
 
 	// AttestationFiles are additional attestations passed manually
 	AttestationFiles []string
