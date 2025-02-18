@@ -4,52 +4,6 @@
 package attestation
 
 type Repository interface{}
-type RepoFilter func([]Repository) []Repository
-
-// FilterFetchers returns the repositories that support fetching
-var FilterFetchers = func(repos []Repository) []Repository {
-	repos = []Repository{}
-	for _, r := range repos {
-		if _, ok := r.(Fetcher); ok {
-			repos = append(repos, r)
-		}
-	}
-	return repos
-}
-
-// FilterFetchers returns the repositories that support fetching
-var FilterStorers = func(repos []Repository) []Repository {
-	repos = []Repository{}
-	for _, r := range repos {
-		if _, ok := r.(Storer); ok {
-			repos = append(repos, r)
-		}
-	}
-	return repos
-}
-
-// FilterRepositories takes a list of configured repositories and returns those
-// that match a capability filter.
-func FilterRepositories(repos []Repository, filters ...RepoFilter) []Repository {
-	res := []Repository{}
-	if len(filters) == 0 {
-		return res
-	}
-
-	filteredRepos := map[Repository]struct{}{}
-
-	for _, f := range filters {
-		fr := f(repos)
-		for _, r := range fr {
-			filteredRepos[r] = struct{}{}
-		}
-	}
-
-	for r := range filteredRepos {
-		res = append(res, r)
-	}
-	return res
-}
 
 // AttestationFetcher is the the trait that repositories that can fetch
 // attestations must implement
