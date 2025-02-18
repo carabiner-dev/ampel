@@ -1,6 +1,6 @@
 module github.com/carabiner-dev/ampel
 
-go 1.23.4
+go 1.24.0
 
 require (
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
