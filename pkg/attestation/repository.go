@@ -3,18 +3,20 @@
 
 package attestation
 
+import "context"
+
 type Repository interface{}
 
 // AttestationFetcher is the the trait that repositories that can fetch
 // attestations must implement
 type Fetcher interface {
-	Fetch(...FetchOptionsFunc) ([]Envelope, error)
-	FetchAttestationsBySubject([]Subject, ...FetchOptionsFunc) ([]Envelope, error)
-	FetchAttestationsByPredicateType(PredicateType, ...FetchOptionsFunc) ([]Envelope, error)
+	Fetch(context.Context, FetchOptions) ([]Envelope, error)
+	FetchAttestationsBySubject(context.Context, FetchOptions, []Subject) ([]Envelope, error)
+	FetchAttestationsByPredicateType(context.Context, FetchOptions, PredicateType) ([]Envelope, error)
 }
 
 type Storer interface {
-	Store([]Envelope) error
+	Store(context.Context, StoreOptions, []Envelope) error
 }
 
 // StoreOptions control how attestations are retrieved from a Fetcher. All
