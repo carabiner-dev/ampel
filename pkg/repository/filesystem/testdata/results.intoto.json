@@ -1,0 +1,59 @@
+{
+  "predicateType": "https://carabiner.dev/ampel/results/v0.0.1",
+  "predicate": {
+    "results": [
+      {
+        "status": "FAILED",
+        "date_start": {
+          "seconds": 1739295285,
+          "nanos": 177741766
+        },
+        "date_end": {
+          "seconds": 1739295285,
+          "nanos": 182046714
+        },
+        "policy": {
+          "id": "AC-07"
+        },
+        "eval_results": [
+          {
+            "status": "PASSED",
+            "date": {
+              "seconds": 1739295285,
+              "nanos": 179440500
+            },
+            "output": {}
+          },
+          {
+            "status": "FAILED",
+            "date": {
+              "seconds": 1739295285,
+              "nanos": 182004668
+            },
+            "output": {
+              "critical": 3,
+              "high": 3
+            }
+          }
+        ],
+        "controls": [
+          {
+            "class": "OSPS",
+            "id": "OSPS-VM-02"
+          }
+        ]
+      }
+    ]
+  },
+  "type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "examples/vulns/artifact",
+      "digest": {
+        "sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha512": "0baa11b12a4442ee79f4d3775ef3b571f26958577fa68c1a4062682b8f52e42194043e824af5bb89628d5c341968eea4363eb54778f22e34b35752092416151c"
+      }
+    }
+  ]
+}
