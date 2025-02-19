@@ -9,6 +9,7 @@ require (
 	github.com/google/cel-go v0.22.1
 	github.com/in-toto/attestation v1.1.1-0.20250116170412-11ca4fce9b7a
 	github.com/jedib0t/go-pretty/v6 v6.6.5
+	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481
 	github.com/openvex/go-vex v0.2.5
 	github.com/protobom/protobom v0.5.0
 	github.com/sigstore/protobuf-specs v0.3.3
