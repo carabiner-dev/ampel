@@ -18,7 +18,7 @@ var _ attestation.Fetcher = (*fakeFetcher)(nil)
 type fakeFetcher struct {
 	fetchFunc                func(context.Context, attestation.FetchOptions) ([]attestation.Envelope, error)
 	fetchBySubjectFunc       func(context.Context, attestation.FetchOptions, []attestation.Subject) ([]attestation.Envelope, error)
-	fetchByPredicateTypeFunc func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error)
+	fetchByPredicateTypeFunc func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error)
 }
 
 func (ff *fakeFetcher) Fetch(ctx context.Context, fo attestation.FetchOptions) ([]attestation.Envelope, error) {
@@ -29,8 +29,8 @@ func (ff *fakeFetcher) FetchBySubject(ctx context.Context, fo attestation.FetchO
 	return ff.fetchBySubjectFunc(ctx, fo, subs)
 }
 
-func (ff *fakeFetcher) FetchByPredicateType(ctx context.Context, fo attestation.FetchOptions, tp attestation.PredicateType) ([]attestation.Envelope, error) {
-	return ff.fetchByPredicateTypeFunc(ctx, fo, tp)
+func (ff *fakeFetcher) FetchByPredicateType(ctx context.Context, fo attestation.FetchOptions, pt []attestation.PredicateType) ([]attestation.Envelope, error) {
+	return ff.fetchByPredicateTypeFunc(ctx, fo, pt)
 }
 
 func TestFetch(t *testing.T) {
@@ -238,14 +238,14 @@ func TestFetchAttestationsByPredicateType(t *testing.T) {
 
 	for _, tc := range []struct {
 		name    string
-		fn      []func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error)
+		fn      []func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error)
 		expect  int
 		mustErr bool
 	}{
 		{
 			name: "single-repo-single-return",
-			fn: []func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error){
-				func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error) {
+			fn: []func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error){
+				func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error) {
 					return []attestation.Envelope{
 						&bare.Envelope{},
 					}, nil
@@ -255,13 +255,13 @@ func TestFetchAttestationsByPredicateType(t *testing.T) {
 		},
 		{
 			name: "dual-repo-single-return",
-			fn: []func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error){
-				func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error) {
+			fn: []func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error){
+				func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error) {
 					return []attestation.Envelope{
 						&bare.Envelope{},
 					}, nil
 				},
-				func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error) {
+				func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error) {
 					return []attestation.Envelope{}, nil
 				},
 			},
@@ -269,8 +269,8 @@ func TestFetchAttestationsByPredicateType(t *testing.T) {
 		},
 		{
 			name: "single-repo-dual-return",
-			fn: []func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error){
-				func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error) {
+			fn: []func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error){
+				func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error) {
 					return []attestation.Envelope{
 						&bare.Envelope{}, &bare.Envelope{},
 					}, nil
@@ -280,13 +280,13 @@ func TestFetchAttestationsByPredicateType(t *testing.T) {
 		},
 		{
 			name: "dual-repo-dual-return",
-			fn: []func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error){
-				func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error) {
+			fn: []func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error){
+				func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error) {
 					return []attestation.Envelope{
 						&bare.Envelope{},
 					}, nil
 				},
-				func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error) {
+				func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error) {
 					return []attestation.Envelope{
 						&bare.Envelope{},
 					}, nil
@@ -296,13 +296,13 @@ func TestFetchAttestationsByPredicateType(t *testing.T) {
 		},
 		{
 			name: "dual-repo-one-errs",
-			fn: []func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error){
-				func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error) {
+			fn: []func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error){
+				func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error) {
 					return []attestation.Envelope{
 						&bare.Envelope{},
 					}, nil
 				},
-				func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error) {
+				func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error) {
 					return nil, errors.New("synth error")
 				},
 			},
@@ -320,7 +320,7 @@ func TestFetchAttestationsByPredicateType(t *testing.T) {
 				agent.Repositories = append(agent.Repositories, ff)
 			}
 
-			res, err := agent.FetchAttestationsByPredicateType(context.Background(), attestation.PredicateType("test"))
+			res, err := agent.FetchAttestationsByPredicateType(context.Background(), []attestation.PredicateType{"test"})
 			if tc.mustErr {
 				require.Error(t, err)
 				return

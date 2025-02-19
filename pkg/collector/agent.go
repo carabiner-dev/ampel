@@ -125,7 +125,7 @@ func (agent *Agent) FetchAttestationsBySubject(ctx context.Context, subjects []a
 
 // FetchAttestationsByPredicateType requests all attestations of a particular type
 // from the configured repositories.
-func (agent *Agent) FetchAttestationsByPredicateType(ctx context.Context, pt attestation.PredicateType, optFn ...FetchOptionsFunc) ([]attestation.Envelope, error) {
+func (agent *Agent) FetchAttestationsByPredicateType(ctx context.Context, pt []attestation.PredicateType, optFn ...FetchOptionsFunc) ([]attestation.Envelope, error) {
 	var mutex = sync.Mutex{}
 	var ret = []attestation.Envelope{}
 

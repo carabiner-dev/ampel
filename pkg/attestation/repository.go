@@ -20,7 +20,7 @@ type Repository interface{}
 type Fetcher interface {
 	Fetch(context.Context, FetchOptions) ([]Envelope, error)
 	FetchBySubject(context.Context, FetchOptions, []Subject) ([]Envelope, error)
-	FetchByPredicateType(context.Context, FetchOptions, PredicateType) ([]Envelope, error)
+	FetchByPredicateType(context.Context, FetchOptions, []PredicateType) ([]Envelope, error)
 }
 
 type Storer interface {

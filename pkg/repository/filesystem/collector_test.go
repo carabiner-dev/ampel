@@ -69,7 +69,7 @@ func TestFetchFetchByPredicateType(t *testing.T) {
 			atts, err := collector.FetchByPredicateType(
 				context.Background(),
 				tc.opts,
-				attestation.PredicateType(tc.pt),
+				[]attestation.PredicateType{attestation.PredicateType(tc.pt)},
 			)
 			require.NoError(t, err)
 			require.Len(t, atts, tc.expect)

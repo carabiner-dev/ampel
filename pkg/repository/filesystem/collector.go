@@ -87,11 +87,13 @@ func (c *Collector) Fetch(ctx context.Context, opts attestation.FetchOptions) ([
 func (c *Collector) FetchBySubject(ctx context.Context, opts attestation.FetchOptions, subj []attestation.Subject) ([]attestation.Envelope, error) {
 	return nil, attestation.ErrFetcherMethodNotImplemented
 }
-func (c *Collector) FetchByPredicateType(ctx context.Context, opts attestation.FetchOptions, pt attestation.PredicateType) ([]attestation.Envelope, error) {
+func (c *Collector) FetchByPredicateType(ctx context.Context, opts attestation.FetchOptions, pts []attestation.PredicateType) ([]attestation.Envelope, error) {
 	filter := filters.PredicateTypeMatcher{
-		PredicateTypes: map[attestation.PredicateType]struct{}{
-			pt: {},
-		},
+		PredicateTypes: map[attestation.PredicateType]struct{}{},
+	}
+
+	for _, pt := range pts {
+		filter.PredicateTypes[pt] = struct{}{}
 	}
 
 	if opts.Query == nil {
