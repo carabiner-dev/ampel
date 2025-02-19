@@ -16,21 +16,21 @@ import (
 var _ attestation.Fetcher = (*fakeFetcher)(nil)
 
 type fakeFetcher struct {
-	fetchFunc                            func(context.Context, attestation.FetchOptions) ([]attestation.Envelope, error)
-	fetchAttestationsBySubjectFunc       func(context.Context, attestation.FetchOptions, []attestation.Subject) ([]attestation.Envelope, error)
-	fetchAttestationsByPredicateTypeFunc func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error)
+	fetchFunc                func(context.Context, attestation.FetchOptions) ([]attestation.Envelope, error)
+	fetchBySubjectFunc       func(context.Context, attestation.FetchOptions, []attestation.Subject) ([]attestation.Envelope, error)
+	fetchByPredicateTypeFunc func(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error)
 }
 
 func (ff *fakeFetcher) Fetch(ctx context.Context, fo attestation.FetchOptions) ([]attestation.Envelope, error) {
 	return ff.fetchFunc(ctx, fo)
 }
 
-func (ff *fakeFetcher) FetchAttestationsBySubject(ctx context.Context, fo attestation.FetchOptions, subs []attestation.Subject) ([]attestation.Envelope, error) {
-	return ff.fetchAttestationsBySubjectFunc(ctx, fo, subs)
+func (ff *fakeFetcher) FetchBySubject(ctx context.Context, fo attestation.FetchOptions, subs []attestation.Subject) ([]attestation.Envelope, error) {
+	return ff.fetchBySubjectFunc(ctx, fo, subs)
 }
 
-func (ff *fakeFetcher) FetchAttestationsByPredicateType(ctx context.Context, fo attestation.FetchOptions, tp attestation.PredicateType) ([]attestation.Envelope, error) {
-	return ff.fetchAttestationsByPredicateTypeFunc(ctx, fo, tp)
+func (ff *fakeFetcher) FetchByPredicateType(ctx context.Context, fo attestation.FetchOptions, tp attestation.PredicateType) ([]attestation.Envelope, error) {
+	return ff.fetchByPredicateTypeFunc(ctx, fo, tp)
 }
 
 func TestFetch(t *testing.T) {
@@ -214,7 +214,7 @@ func TestFetchAttestationsBySubject(t *testing.T) {
 			var agent = New()
 			for _, fn := range tc.fn {
 				ff := &fakeFetcher{
-					fetchAttestationsBySubjectFunc: fn,
+					fetchBySubjectFunc: fn,
 				}
 				agent.Repositories = append(agent.Repositories, ff)
 			}
@@ -315,7 +315,7 @@ func TestFetchAttestationsByPredicateType(t *testing.T) {
 			var agent = New()
 			for _, fn := range tc.fn {
 				ff := &fakeFetcher{
-					fetchAttestationsByPredicateTypeFunc: fn,
+					fetchByPredicateTypeFunc: fn,
 				}
 				agent.Repositories = append(agent.Repositories, ff)
 			}

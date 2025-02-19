@@ -84,10 +84,10 @@ func (c *Collector) Fetch(ctx context.Context, opts attestation.FetchOptions) ([
 	return ret, nil
 }
 
-func (c *Collector) FetchAttestationsBySubject(ctx context.Context, opts attestation.FetchOptions, subj []attestation.Subject) ([]attestation.Envelope, error) {
+func (c *Collector) FetchBySubject(ctx context.Context, opts attestation.FetchOptions, subj []attestation.Subject) ([]attestation.Envelope, error) {
 	return nil, attestation.ErrFetcherMethodNotImplemented
 }
-func (c *Collector) FetchAttestationsByPredicateType(ctx context.Context, opts attestation.FetchOptions, pt attestation.PredicateType) ([]attestation.Envelope, error) {
+func (c *Collector) FetchByPredicateType(ctx context.Context, opts attestation.FetchOptions, pt attestation.PredicateType) ([]attestation.Envelope, error) {
 	filter := filters.PredicateTypeMatcher{
 		PredicateTypes: map[attestation.PredicateType]struct{}{
 			pt: {},

@@ -19,8 +19,8 @@ type Repository interface{}
 // attestations must implement
 type Fetcher interface {
 	Fetch(context.Context, FetchOptions) ([]Envelope, error)
-	FetchAttestationsBySubject(context.Context, FetchOptions, []Subject) ([]Envelope, error)
-	FetchAttestationsByPredicateType(context.Context, FetchOptions, PredicateType) ([]Envelope, error)
+	FetchBySubject(context.Context, FetchOptions, []Subject) ([]Envelope, error)
+	FetchByPredicateType(context.Context, FetchOptions, PredicateType) ([]Envelope, error)
 }
 
 type Storer interface {

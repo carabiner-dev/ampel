@@ -106,7 +106,7 @@ func (agent *Agent) FetchAttestationsBySubject(ctx context.Context, subjects []a
 	for _, r := range repos {
 		r := r
 		go func() {
-			atts, err := r.FetchAttestationsBySubject(ctx, opts, subjects)
+			atts, err := r.FetchBySubject(ctx, opts, subjects)
 			if err != nil {
 				t.Done(err)
 				return
@@ -146,7 +146,7 @@ func (agent *Agent) FetchAttestationsByPredicateType(ctx context.Context, pt att
 		r := r
 		go func() {
 			// Call the repo driver's fetch method
-			atts, err := r.FetchAttestationsByPredicateType(ctx, opts, pt)
+			atts, err := r.FetchByPredicateType(ctx, opts, pt)
 			if err != nil {
 				t.Done(err)
 				return
