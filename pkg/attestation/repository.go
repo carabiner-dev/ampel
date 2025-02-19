@@ -3,7 +3,15 @@
 
 package attestation
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+var (
+	ErrFetcherMethodNotImplemented = errors.New("fetching method not implemented")
+	ErrStorerMethodNotImplemented  = errors.New("storing method not implemented")
+)
 
 type Repository interface{}
 
@@ -28,16 +36,3 @@ type FetchOptions struct {
 // StoreOptions control how attestations are stored in the storer. All repositories
 // implementing the Storer interface are expected to honor StoreOptions.
 type StoreOptions struct{}
-
-// FetchOptionsFunc are functions to define options when fetching
-type FetchOptionsFunc func(*FetchOptions)
-
-// WithQuery passes a query to the options set
-func WithQuery(q *Query) FetchOptionsFunc {
-	return func(opts *FetchOptions) {
-		opts.Query = q
-	}
-}
-
-// StoreOptionsFunc are functions to define options when fetching
-type StoreOptionsFunc func(*StoreOptions)

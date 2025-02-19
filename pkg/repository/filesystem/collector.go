@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/filters"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope"
 )
 
@@ -83,9 +84,23 @@ func (c *Collector) Fetch(ctx context.Context, opts attestation.FetchOptions) ([
 	return ret, nil
 }
 
-func (c *Collector) FetchAttestationsBySubject(context.Context, attestation.FetchOptions, []attestation.Subject) ([]attestation.Envelope, error) {
+func (c *Collector) FetchAttestationsBySubject(ctx context.Context, opts attestation.FetchOptions, subj []attestation.Subject) ([]attestation.Envelope, error) {
 	return nil, attestation.ErrFetcherMethodNotImplemented
 }
-func (c *Collector) FetchAttestationsByPredicateType(context.Context, attestation.FetchOptions, attestation.PredicateType) ([]attestation.Envelope, error) {
-	return nil, attestation.ErrFetcherMethodNotImplemented
+func (c *Collector) FetchAttestationsByPredicateType(ctx context.Context, opts attestation.FetchOptions, pt attestation.PredicateType) ([]attestation.Envelope, error) {
+	filter := filters.PredicateTypeMatcher{
+		PredicateTypes: map[attestation.PredicateType]struct{}{
+			pt: {},
+		},
+	}
+
+	if opts.Query == nil {
+		opts.Query = &attestation.Query{
+			Filters: []attestation.Filter{&filter},
+		}
+	} else {
+		opts.Query.Filters = append(opts.Query.Filters, &filter)
+	}
+
+	return c.Fetch(ctx, opts)
 }
