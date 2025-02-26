@@ -183,6 +183,7 @@ func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, policy *
 	return true, nil
 }
 
+// identityAllowed is a temporary stub function to gatye the allowed identitites
 func identityAllowed(ids []*api.Identity, vr *attestation.SignatureVerification) bool {
 	if vr == nil {
 		logrus.Warn("DEMO WARNING: ALLOWING UNSIGNED STATEMENTS")

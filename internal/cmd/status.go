@@ -52,8 +52,8 @@ func addStatus(parentCmd *cobra.Command) {
 %s
 
 Ampel status returns the compliance status of an artifact based
-on historical policy evaluations. Evaluations are matched against
-an OSCAL catalog or profile.
+on a record of policy evaluations. Evaluations are matched against
+an OSCAL catalog or profile. 
 `, AmpelBanner("Amazing Multipurpose Policy Engine and L")),
 		Use:               "verify",
 		SilenceUsage:      false,
