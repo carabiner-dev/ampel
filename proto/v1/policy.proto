@@ -77,6 +77,7 @@ message Tenet {
     PredicateSpec predicates = 4;
     map <string, Output> outputs = 5;
     Error error = 6;
+    string title = 7;
 
     message Error {
         string message = 1;
