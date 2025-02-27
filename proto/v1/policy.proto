@@ -26,6 +26,7 @@ message Policy {
     PredicateSpec predicates = 6;
     repeated Transformer transformers = 7;
     repeated Tenet tenets = 8;
+    bool enforced = 9;
 }
 
 // Meta contains information about the policy itself
@@ -78,6 +79,7 @@ message Tenet {
     map <string, Output> outputs = 5;
     Error error = 6;
     string title = 7;
+    bool enforced = 8;
 
     message Error {
         string message = 1;
