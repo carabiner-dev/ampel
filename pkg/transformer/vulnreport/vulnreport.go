@@ -52,12 +52,12 @@ func trivyToVulnsV2(original attestation.Predicate) (attestation.Predicate, erro
 
 	newReport := &v02.Vulns{
 		Scanner: &v02.Scanner{
-			Uri:      "",
-			Version:  new(string),
-			Database: &v02.VulnDatabase{},
-			Result:   []*v02.Result{},
+			Uri:     "",
+			Version: new(string),
+			Db:      &v02.VulnDatabase{},
+			Result:  []*v02.Result{},
 		},
-		ScanMetadata: &v02.ScanMetadata{
+		Metadata: &v02.ScanMetadata{
 			ScanStartedOn:  timestamppb.New(*oParsed.CreatedAt),
 			ScanFinishedOn: timestamppb.New(*oParsed.CreatedAt),
 		},
