@@ -8,10 +8,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/fatih/color"
+	v1 "github.com/in-toto/attestation/go/v1"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
+	"sigs.k8s.io/release-utils/util"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/policy"
@@ -19,17 +22,37 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/verifier"
 )
 
+var (
+	hashRegexStr = `^(\bsha1\b|\bsha256\b|\bsha512\b|\bsha3\b|\bgitCommit\b):([a-f0-9]+)$`
+	hashRegex    *regexp.Regexp
+)
+
 type verifyOptions struct {
 	verifier.VerificationOptions
-	PolicyFile   string
-	SubjectFiles []string
-	Format       string
+	PolicyFile       string
+	Format           string
+	SubjectAlgorithm string
+	SubjectHashes    []string
+	SubjectPaths     []string
+	SubjectValues    []string
 }
 
 // AddFlags adds the flags
 func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringSliceVarP(
-		&o.SubjectFiles, "subject", "s", []string{}, "list of files to vertify",
+		&o.SubjectValues, "subject", "s", []string{}, "list of hashes (algo:value) or paths to files to add as subjects ",
+	)
+
+	cmd.PersistentFlags().StringSliceVar(
+		&o.SubjectHashes, "hash-value", []string{}, "algorithm used to hash the subjects",
+	)
+
+	cmd.PersistentFlags().StringVar(
+		&o.SubjectAlgorithm, "hash-algo", "sha256", "algorithm used to hash the subjects",
+	)
+
+	cmd.PersistentFlags().StringSliceVar(
+		&o.SubjectPaths, "subject-file", []string{}, "path to files to use as subjects",
 	)
 
 	cmd.PersistentFlags().StringVarP(
@@ -53,10 +76,27 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	)
 }
 
+func (o *verifyOptions) SubjectValuesToDigests() []map[string]string {
+	if hashRegex == nil {
+		hashRegex = regexp.MustCompile(hashRegexStr)
+	}
+	ret := []map[string]string{}
+	for _, v := range o.SubjectValues {
+		pts := hashRegex.FindStringSubmatch(v)
+		if pts == nil {
+			continue
+		}
+		ret = append(ret, map[string]string{
+			pts[1]: pts[2],
+		})
+	}
+	return ret
+}
+
 func (o *verifyOptions) Validate() error {
 	var errs = []error{}
-	if len(o.SubjectFiles) == 0 {
-		errs = append(errs, errors.New("no subject files specified"))
+	if len(o.SubjectHashes) == 0 && len(o.SubjectPaths) == 0 && len(o.SubjectValuesToDigests()) == 0 {
+		errs = append(errs, errors.New("no subjects specified"))
 	}
 
 	if o.PolicyFile == "" {
@@ -68,8 +108,6 @@ func (o *verifyOptions) Validate() error {
 func addVerify(parentCmd *cobra.Command) {
 	opts := verifyOptions{
 		VerificationOptions: verifier.NewVerificationOptions(),
-		PolicyFile:          "",
-		SubjectFiles:        []string{},
 	}
 	evalCmd := &cobra.Command{
 		Short: "check artifacts against a policy",
@@ -110,6 +148,27 @@ using a collector.
 		SilenceUsage:      false,
 		SilenceErrors:     false,
 		PersistentPreRunE: initLogging,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if hashRegex == nil {
+				hashRegex = regexp.MustCompile(hashRegexStr)
+			}
+			// Transfer the files to the paths array
+			vals := []string{}
+			for _, v := range opts.SubjectValues {
+				if util.Exists(v) {
+					opts.SubjectPaths = append(opts.SubjectPaths, v)
+					continue
+				}
+				res := hashRegex.FindStringSubmatch(v)
+				if res == nil {
+					return fmt.Errorf("invalid subject: %q", v)
+				}
+				vals = append(vals, v)
+			}
+
+			opts.SubjectValues = vals
+			return nil
+		},
 		RunE: func(c *cobra.Command, args []string) error {
 			// Validate options
 			if err := opts.Validate(); err != nil {
@@ -121,12 +180,19 @@ using a collector.
 
 			// Generate the atestation subjects from the files
 			var subjects = []attestation.Subject{}
-			for _, path := range opts.SubjectFiles {
+			for _, path := range opts.SubjectPaths {
 				sub, err := subject.FromPath(path)
 				if err != nil {
 					return fmt.Errorf("generating subject from %q: %w", path, err)
 				}
 				subjects = append(subjects, sub)
+			}
+
+			for _, h := range opts.SubjectValuesToDigests() {
+				subjects = append(subjects, &v1.ResourceDescriptor{
+					Digest: h,
+				})
+
 			}
 			fmt.Printf("%+v", subjects)
 
