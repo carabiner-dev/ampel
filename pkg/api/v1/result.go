@@ -7,6 +7,12 @@ import (
 	"encoding/json"
 )
 
+const (
+	StatusFAIL     = "FAIL"
+	StatusPASS     = "PASS"
+	StatusSOFTFAIL = "SOFTFAIL"
+)
+
 func (r *Result) MarshalJSON() ([]byte, error) {
 	type Alias Result
 	var start, end string

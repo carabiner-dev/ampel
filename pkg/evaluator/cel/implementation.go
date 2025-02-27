@@ -177,9 +177,9 @@ func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *m
 		return nil, fmt.Errorf("eval error: tenet must evaluate to boolean")
 	}
 
-	st := "FAILED"
+	st := api.StatusFAIL
 	if evalResult {
-		st = "PASSED"
+		st = api.StatusPASS
 	}
 
 	// Convert cel result to an api.Result

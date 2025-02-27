@@ -62,20 +62,20 @@ func (di *defaultIplementation) AssertResult(policy *api.Policy, result *api.Res
 	switch policy.GetMeta().GetAssertMode() {
 	case "OR", "":
 		for _, er := range result.EvalResults {
-			if er.Status == "PASSED" {
-				result.Status = "PASSED"
+			if er.Status == api.StatusPASS {
+				result.Status = api.StatusPASS
 				return nil
 			}
 		}
-		result.Status = "FAILED"
+		result.Status = api.StatusFAIL
 	case "AND":
 		for _, er := range result.EvalResults {
-			if er.Status == "FAILED" {
-				result.Status = "FAILED"
+			if er.Status == api.StatusFAIL {
+				result.Status = api.StatusFAIL
 				return nil
 			}
 		}
-		result.Status = "PASSED"
+		result.Status = api.StatusPASS
 	default:
 		return fmt.Errorf("invalid policy assertion mode")
 	}
