@@ -80,3 +80,13 @@ func (e *Envelope) VerifySignature() (*attestation.SignatureVerification, error)
 		SigstoreCertData: summary,
 	}, nil
 }
+
+func (e *Envelope) UnmarshalJSON(data []byte) error {
+	p := Parser{}
+
+	if err := p.unmarshalTo(e, data); err != nil {
+		return fmt.Errorf("parsing bundle: %w", err)
+	}
+
+	return nil
+}
