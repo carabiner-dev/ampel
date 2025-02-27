@@ -2,7 +2,7 @@
   "scanner": {
     "uri": "pkg:github/aquasecurity/trivy@244fd47e07d1004f0aed9",
     "version": "0.19.2",
-    "database": {
+    "db": {
       "uri": "pkg:github/aquasecurity/trivy-db/commit/4c76bb580b2736d67751410fa4ab66d2b6b9b27d",
       "version": "v1-2021080612",
       "lastUpdate": "2021-08-06T17:45:50.52Z"
@@ -17,7 +17,7 @@
       }
     ]
   },
-  "scan_metadata": {
+  "metadata": {
     "scanStartedOn": "2021-08-06T17:45:50.52Z",
     "scanFinishedOn": "2021-08-06T17:50:50.52Z"
   }
