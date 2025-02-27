@@ -3,7 +3,7 @@ module github.com/carabiner-dev/ampel
 go 1.24.0
 
 require (
-	github.com/carabiner-dev/github v0.0.0-20250210222226-442fdacc1d16
+	github.com/carabiner-dev/github v0.1.1
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/fatih/color v1.18.0
