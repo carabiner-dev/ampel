@@ -30,6 +30,7 @@ type Storer interface {
 // StoreOptions control how attestations are retrieved from a Fetcher. All
 // repositories implementing the Fetcher interface are expected to honor FetchOptions.
 type FetchOptions struct {
+	Limit int
 	Query *Query
 }
 
