@@ -15,7 +15,7 @@ require (
 	github.com/protobom/protobom v0.5.0
 	github.com/sigstore/protobuf-specs v0.3.3
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/cobra v1.8.1
+	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/protobuf v1.36.4
 	sigs.k8s.io/release-utils v0.8.4
@@ -59,7 +59,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/sigstore/sigstore-go v0.7.0
 	github.com/spdx/tools-golang v0.5.5 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8 // indirect
 	golang.org/x/sys v0.29.0 // indirect
