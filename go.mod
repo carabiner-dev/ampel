@@ -8,7 +8,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/fatih/color v1.18.0
 	github.com/google/cel-go v0.22.1
-	github.com/in-toto/attestation v1.1.1-0.20250116170412-11ca4fce9b7a
+	github.com/in-toto/attestation v1.1.2-0.20250128181946-c0b4d86cf712
 	github.com/jedib0t/go-pretty/v6 v6.6.5
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481
 	github.com/openvex/go-vex v0.2.5
@@ -17,7 +17,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
-	google.golang.org/protobuf v1.36.3
+	google.golang.org/protobuf v1.36.4
 	sigs.k8s.io/release-utils v0.8.4
 )
 
