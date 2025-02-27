@@ -11,7 +11,9 @@ import (
 
 var _ attestation.Fetcher = (*Collector)(nil)
 
-func New() *Collector
+func New() *Collector {
+	return &Collector{}
+}
 
 type Options struct {
 }
