@@ -235,7 +235,13 @@ func (di *defaultIplementation) VerifySubject(
 			errs = append(errs, fmt.Errorf("executing tenet #%d: %w", i, err))
 			continue
 		}
-		logrus.Infof("Tenet #%d eval: %+v", i, evalres)
+		logrus.Debugf("Tenet #%d eval: %+v", i, evalres)
+
+		// Carry over the error from the policy if the evaluator didn't add one
+		if evalres.Status != api.StatusPASS && evalres.Error == nil {
+			evalres.Error = tenet.Error
+		}
+
 		rs.EvalResults = append(rs.EvalResults, evalres)
 	}
 
