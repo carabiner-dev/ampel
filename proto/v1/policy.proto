@@ -61,6 +61,11 @@ message Context {
     }    
 }
 
+message Error {
+    string message = 1;
+    string guidance = 2;
+}
+
 // Este hay que arreglarlo
 message Transformer {
     string id = 1;
@@ -80,11 +85,6 @@ message Tenet {
     Error error = 6;
     string title = 7;
     bool enforced = 8;
-
-    message Error {
-        string message = 1;
-        string guidance = 2;
-    }
 }
 
 message Output {
