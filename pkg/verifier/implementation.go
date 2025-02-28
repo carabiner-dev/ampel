@@ -40,7 +40,7 @@ func (di *defaultIplementation) ParseAttestations(ctx context.Context, paths []s
 			continue
 		}
 
-		logrus.Infof("parsing %s (%d envelope drivers loaded)", path, len(envelope.Parsers))
+		logrus.Debugf("parsing %s (%d envelope drivers loaded)", path, len(envelope.Parsers))
 		env, err := envelope.Parsers.Parse(f)
 		if err != nil {
 			errs = append(errs, err)
@@ -133,7 +133,7 @@ func (di *defaultIplementation) BuildTransformers(opts *VerificationOptions, pol
 		}
 		transformers[transformer.Class(classString.Id)] = t
 	}
-	logrus.Infof("Loaded %d transformers defined in the policy", len(transformers))
+	logrus.Debugf("Loaded %d transformers defined in the policy", len(transformers))
 	return transformers, nil
 }
 
@@ -153,7 +153,7 @@ func (di defaultIplementation) Transform(opts *VerificationOptions, transformers
 	for _, s := range predicates {
 		ts = append(ts, string(s.GetType()))
 	}
-	logrus.Infof("Predicate types after tranform: %v", ts)
+	logrus.Debugf("Predicate types after transform: %v", ts)
 	return predicates, nil
 }
 
@@ -217,7 +217,7 @@ func (di *defaultIplementation) VerifySubject(
 		Policy: &api.PolicyRef{
 			Id: p.Id,
 		},
-		Controls: p.Meta.Controls,
+		Meta: p.Meta,
 	}
 
 	evalOpts := &options.EvaluatorOptions{
@@ -264,7 +264,7 @@ func (di *defaultIplementation) AttestResult(
 		return fmt.Errorf("unable to attest results, set is nil")
 	}
 
-	logrus.Infof("writing evaluation attestation to %s", opts.ResultsAttestationPath)
+	logrus.Debugf("writing evaluation attestation to %s", opts.ResultsAttestationPath)
 
 	// Create the predicate file
 	pred := ampelPred.NewPredicate()
