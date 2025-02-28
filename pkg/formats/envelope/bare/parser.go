@@ -14,7 +14,6 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
-	"github.com/sirupsen/logrus"
 )
 
 type Parser struct{}
@@ -39,7 +38,6 @@ func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {
 	// json data is an attestation.
 	s, err := statement.Parsers.Parse(data)
 	if err == nil {
-		logrus.Infof("founda statement %+v", s)
 		env.Statement = s
 		return []attestation.Envelope{env}, nil
 	}

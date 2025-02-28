@@ -12,7 +12,6 @@ import (
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/ext"
 	"github.com/sirupsen/logrus"
@@ -148,7 +147,7 @@ func (dce *defaulCelEvaluator) EvaluateOutputs(
 		return nil, fmt.Errorf("unmarshaling data: %w", err)
 	}
 
-	spew.Dump(ret)
+	// spew.Dump(ret)
 
 	(*vars)["outputs"] = ret
 	return ret, nil

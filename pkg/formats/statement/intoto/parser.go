@@ -50,7 +50,7 @@ func (p *Parser) Parse(b []byte) (attestation.Statement, error) {
 	}
 	parseOpts := []predicate.ParseOption{}
 	if stmt.GetPredicateType() != "" {
-		logrus.Infof("contraining predicate parser to %s", stmt.GetPredicateType())
+		logrus.Debugf("constraining predicate parser to attestation type: %s", stmt.GetPredicateType())
 		parseOpts = append(parseOpts, predicate.WithTypeHints([]attestation.PredicateType{
 			stmt.GetPredicateType(),
 		}))

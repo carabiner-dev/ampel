@@ -93,7 +93,7 @@ func (pl *ParsersList) Parse(data []byte, optFn ...ParseOption) (attestation.Pre
 	var ps = pl
 	if len(opts.TypeHints) > 0 {
 		ps = pl.GetTypeParsers(opts.TypeHints)
-		logrus.Infof("loaded %d parsers after applying type hints", len(*ps))
+		logrus.Debugf("loaded %d parsers after applying type hints", len(*ps))
 	}
 
 	var errs = []error{}
@@ -130,6 +130,6 @@ func (pl *ParsersList) Parse(data []byte, optFn ...ParseOption) (attestation.Pre
 	if err != nil {
 		return nil, err
 	}
-	logrus.Warning("Treating predicate as generic JSON type")
+	logrus.Debug("Predicate parsed as generic JSON type")
 	return pred, nil
 }

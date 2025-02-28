@@ -13,7 +13,6 @@ import (
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -53,7 +52,6 @@ func (p *Parser) Parse(data []byte) ([]attestation.Envelope, error) {
 func (p *Parser) unmarshalTo(env *Envelope, data []byte) error {
 	if err := protojson.Unmarshal(data, &env.Bundle); err != nil {
 		if strings.Contains(err.Error(), "unknown field") {
-			logrus.Infof("%+v", err)
 			return attestation.ErrNotCorrectFormat
 		}
 		return fmt.Errorf("unmarshalling bundle: %w", err)
