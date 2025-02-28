@@ -218,6 +218,11 @@ func (di *defaultIplementation) VerifySubject(
 			Id: p.Id,
 		},
 		Meta: p.Meta,
+		Subject: &api.ResourceDescriptor{
+			Name:   subject.GetName(),
+			Uri:    subject.GetUri(),
+			Digest: subject.GetDigest(),
+		},
 	}
 
 	evalOpts := &options.EvaluatorOptions{
