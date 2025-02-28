@@ -8,6 +8,7 @@ package ampel.v1;
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 import "policy.proto";
+import "intoto.proto";
 
 option go_package = "github.com/carabiner-dev/ampel/pkg/api/v1";
 
@@ -18,7 +19,8 @@ message Result {
     // repeated Output output = 3;
     PolicyRef policy = 4;
     repeated EvalResult eval_results = 5;
-    repeated Control controls = 6;
+    Meta meta = 6;
+    ResourceDescriptor subject = 7;
 }
 
 message EvalResult {
