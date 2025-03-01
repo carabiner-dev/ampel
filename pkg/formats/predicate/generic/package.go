@@ -25,6 +25,15 @@ func (p *Predicate) SetType(pt attestation.PredicateType) error {
 }
 func (p *Predicate) GetParsed() any  { return p.Parsed }
 func (p *Predicate) GetData() []byte { return p.Data }
+
+// MarshalJSON implements the JSON marshaler interface. It reuses any pre
+// parsed data already stored in the predicate.
 func (p *Predicate) MarshalJSON() ([]byte, error) {
+	// If the predicate was already marshalled, reuse the output
+	if p.Data != nil {
+		return p.Data, nil
+	}
+
+	// Otherwise, marshal the value
 	return json.Marshal(p.Parsed)
 }
