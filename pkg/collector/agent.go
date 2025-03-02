@@ -43,6 +43,15 @@ type Agent struct {
 	Repositories []attestation.Repository
 }
 
+func (agent *Agent) AddRepositoryFromString(init string) error {
+	repo, err := RepositoryFromString(init)
+	if err != nil {
+		return fmt.Errorf("building repo: %w", err)
+	}
+	agent.Repositories = append(agent.Repositories, repo)
+	return nil
+}
+
 // Fetch is a general attestation fetcher. It is intended to return attestations
 // in the preferred order of the driver without any optimization whatsoever.
 func (agent *Agent) Fetch(ctx context.Context, optFn ...FetchOptionsFunc) ([]attestation.Envelope, error) {

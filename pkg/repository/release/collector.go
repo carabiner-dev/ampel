@@ -14,7 +14,7 @@ var _ attestation.Fetcher = (*Collector)(nil)
 var TypeMoniker = "release"
 
 // Implement the factory function
-var Build = func(istr string) (*Collector, error) {
+var Build = func(istr string) (attestation.Repository, error) {
 	return New()
 }
 

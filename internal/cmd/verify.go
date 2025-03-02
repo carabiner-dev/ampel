@@ -17,6 +17,7 @@ import (
 	"sigs.k8s.io/release-utils/util"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/collector"
 	"github.com/carabiner-dev/ampel/pkg/policy"
 	"github.com/carabiner-dev/ampel/pkg/subject"
 	"github.com/carabiner-dev/ampel/pkg/verifier"
@@ -32,6 +33,7 @@ type verifyOptions struct {
 	PolicyFile       string
 	Format           string
 	SubjectAlgorithm string
+	Collectors       []string
 	SubjectHashes    []string
 	SubjectPaths     []string
 	SubjectValues    []string
@@ -73,6 +75,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 
 	cmd.PersistentFlags().StringVarP(
 		&o.Format, "format", "f", o.Format, "output format",
+	)
+
+	cmd.PersistentFlags().StringSliceVarP(
+		&o.Collectors, "collector", "c", []string{}, "attestation collectors to initialize",
 	)
 }
 
@@ -194,7 +200,6 @@ using a collector.
 				})
 
 			}
-			fmt.Printf("%+v", subjects)
 
 			// Parse the polcy file
 			parser := policy.NewParser()
@@ -204,10 +209,14 @@ using a collector.
 			}
 			// fmt.Printf("policy: %+v\n", p)
 
+			// Load the built in repository types
+			if err := collector.LoadDefaultRepositoryTypes(); err != nil {
+				return fmt.Errorf("loading repository collector types: %w", err)
+			}
 			// Run the ampel verifier
-			ampel, err := verifier.New()
+			ampel, err := verifier.New(verifier.WithCollectors(opts.Collectors))
 			if err != nil {
-				return fmt.Errorf("creating verifier")
+				return fmt.Errorf("creating verifier: %w", err)
 			}
 
 			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, p, subjects[0])
@@ -220,11 +229,11 @@ using a collector.
 				t.SetOutputMirror(os.Stdout)
 				t.AppendHeader(table.Row{"Class", "Control", "Status"})
 				rows := []table.Row{}
-				for _, r := range results.Results {
-					for _, c := range r.Controls {
-						rows = append(rows, table.Row{c.Class, c.Id, r.Status})
-					}
-				}
+				// for _, r := range results.Results {
+				// 	for _, c := range r.Controls {
+				// 		rows = append(rows, table.Row{c.Class, c.Id, r.Status})
+				// 	}
+				// }
 				t.AppendRows(rows)
 				t.Render()
 			} else {

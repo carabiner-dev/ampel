@@ -23,7 +23,7 @@ import (
 var TypeMoniker = "fs"
 
 // Implement the factory function
-var Build = func(istr string) (*Collector, error) {
+var Build = func(istr string) (attestation.Repository, error) {
 	return New(WithInitString(istr))
 }
 

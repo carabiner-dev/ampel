@@ -8,6 +8,7 @@ import (
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/collector"
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
 	"github.com/carabiner-dev/ampel/pkg/oscal"
 	"github.com/carabiner-dev/ampel/pkg/transformer"
@@ -34,15 +35,46 @@ type AmpelStatusChecker interface {
 	ComputeComplianceStatus(*oscal.Catalog, []attestation.Predicate) (*Status, error)
 }
 
-func New() (*Ampel, error) {
-	return &Ampel{
-		impl:    &defaultIplementation{},
-		checker: &defaultStatusChecker{},
-	}, nil
+func New(opts ...fnOpt) (*Ampel, error) {
+	ampel := &Ampel{
+		impl:      &defaultIplementation{},
+		checker:   &defaultStatusChecker{},
+		Collector: collector.New(),
+	}
+
+	for _, opFn := range opts {
+		if err := opFn(ampel); err != nil {
+			return nil, err
+		}
+	}
+	return ampel, nil
+}
+
+type fnOpt func(*Ampel) error
+
+var WithCollector = func(init string) fnOpt {
+	return func(ampel *Ampel) error {
+		if err := ampel.Collector.AddRepositoryFromString(init); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+var WithCollectors = func(init []string) fnOpt {
+	return func(ampel *Ampel) error {
+		for _, s := range init {
+			if err := ampel.Collector.AddRepositoryFromString(s); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 }
 
 // Ampel is the attestation verifier
 type Ampel struct {
-	impl    AmpelVerifier
-	checker AmpelStatusChecker
+	impl      AmpelVerifier
+	checker   AmpelStatusChecker
+	Collector *collector.Agent
 }
