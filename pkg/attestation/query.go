@@ -45,3 +45,15 @@ func (fs FilterSet) Matches(att Envelope) bool {
 	}
 	return true
 }
+
+// FilterList runs a list of attestations through the configured filters and
+// returns a new list with those that match.
+func (fs FilterSet) FilterList(in []Envelope) []Envelope {
+	out := []Envelope{}
+	for _, env := range in {
+		if fs.Matches(env) {
+			out = append(out, env)
+		}
+	}
+	return out
+}
