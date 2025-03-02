@@ -42,7 +42,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	ctx context.Context, opts *VerificationOptions, policy *api.Policy, subject attestation.Subject,
 ) (*api.Result, error) {
 	// Fetch applicable evidence
-	atts, err := ampel.impl.GatherAttestations(ctx, opts, subject)
+	atts, err := ampel.impl.GatherAttestations(ctx, opts, ampel.Collector, policy, subject)
 	if err != nil {
 		return nil, fmt.Errorf("gathering evidence: %w", err)
 	}
