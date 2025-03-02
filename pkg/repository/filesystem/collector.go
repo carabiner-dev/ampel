@@ -19,11 +19,25 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope"
 )
 
-func New(iofs fs.FS) *Collector {
-	return &Collector{
+func New(opts ...fnOpts) (*Collector, error) {
+	c := &Collector{
 		Extensions:       []string{"json", "jsonl", "spdx", "cdx", "bundle"},
 		IgnoreOtherFiles: true,
-		FS:               iofs,
+	}
+	for _, f := range opts {
+		if err := f(c); err != nil {
+			return nil, err
+		}
+	}
+	return c, nil
+}
+
+type fnOpts func(*Collector) error
+
+var WithFS = func(iofs fs.FS) fnOpts {
+	return func(c *Collector) error {
+		c.FS = iofs
+		return nil
 	}
 }
 
@@ -34,6 +48,11 @@ type Collector struct {
 	Extensions       []string
 	IgnoreOtherFiles bool
 	FS               fs.FS
+}
+
+// Init is the stub to initialize the collector with a new string
+func (c *Collector) Init(string) error {
+	return nil
 }
 
 // Fetch queries the repository and retrieves any attestations matching the query

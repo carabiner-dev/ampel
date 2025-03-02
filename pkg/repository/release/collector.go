@@ -11,8 +11,13 @@ import (
 
 var _ attestation.Fetcher = (*Collector)(nil)
 
-func New() *Collector {
-	return &Collector{}
+func New() (*Collector, error) {
+	return &Collector{}, nil
+}
+
+// Init is the stub to initialize the collector with a new string
+func (c *Collector) Init(string) error {
+	return nil
 }
 
 type Options struct {

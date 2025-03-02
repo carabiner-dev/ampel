@@ -38,6 +38,11 @@ type Collector struct {
 	Options Options
 }
 
+// Init is the stub to initialize the collector with a new string
+func Init(string) error {
+	return nil
+}
+
 // readAttestations
 func (c *Collector) readAttestations(paths []string, filters *attestation.FilterSet) ([]attestation.Envelope, error) {
 	t := throttler.New(c.Options.MaxParallel, len(paths))

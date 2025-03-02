@@ -69,6 +69,11 @@ func New(funcs ...optFn) (*Collector, error) {
 	}, nil
 }
 
+// Init is the stub to initialize the collector with a new string
+func (c *Collector) Init(string) error {
+	return nil
+}
+
 type attResponse struct {
 	Attestations []struct {
 		Bundle       *bundle.Envelope `json:"bundle"`

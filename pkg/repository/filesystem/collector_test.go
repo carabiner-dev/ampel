@@ -28,7 +28,8 @@ func TestFetch(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			collector := New(os.DirFS("testdata"))
+			collector, err := New(WithFS(os.DirFS("testdata")))
+			require.NoError(t, err)
 			collector.IgnoreOtherFiles = tc.ignoreOther
 			if tc.exts != nil {
 				collector.Extensions = tc.exts
@@ -64,7 +65,8 @@ func TestFetchFetchByPredicateType(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			collector := New(os.DirFS("testdata"))
+			collector, err := New(WithFS(os.DirFS("testdata")))
+			require.NoError(t, err)
 
 			atts, err := collector.FetchByPredicateType(
 				context.Background(),
