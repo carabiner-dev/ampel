@@ -132,7 +132,7 @@ func TestSubjectHashMatcher(t *testing.T) {
 				HashSets: tc.hashsets,
 			}
 
-			require.Equal(t, tc.expect, matcher.Match(tc.getSUT(t)))
+			require.Equal(t, tc.expect, matcher.Matches(tc.getSUT(t)))
 		})
 	}
 }

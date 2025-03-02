@@ -12,7 +12,7 @@ type SubjectHashMatcher struct {
 	HashSets []map[string]string
 }
 
-func (sm *SubjectHashMatcher) Match(att attestation.Envelope) bool {
+func (sm *SubjectHashMatcher) Matches(att attestation.Envelope) bool {
 	if att.GetStatement() == nil {
 		return false
 	}

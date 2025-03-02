@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/filters"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope"
 	"github.com/nozzle/throttler"
 )
@@ -24,6 +25,8 @@ var TypeMoniker = "jsonl"
 var Build = func(istr string) (attestation.Repository, error) {
 	return New(WithPath(istr))
 }
+
+var _ attestation.Fetcher = (*Collector)(nil)
 
 func New(funcs ...optFn) (*Collector, error) {
 	// Apply the functional options
@@ -99,8 +102,22 @@ func (c *Collector) Fetch(ctx context.Context, opts attestation.FetchOptions) ([
 	return nil, attestation.ErrFetcherMethodNotImplemented
 }
 
+// FetchBySubject calls the attestation reader with a filter preconfigured
+// with subject hashes.
 func (c *Collector) FetchBySubject(ctx context.Context, opts attestation.FetchOptions, subj []attestation.Subject) ([]attestation.Envelope, error) {
-	return nil, attestation.ErrFetcherMethodNotImplemented
+	matcher := &filters.SubjectHashMatcher{
+		HashSets: []map[string]string{},
+	}
+
+	for _, s := range subj {
+		matcher.HashSets = append(matcher.HashSets, s.GetDigest())
+	}
+
+	atts, err := c.readAttestations(c.Options.Paths, &attestation.FilterSet{matcher})
+	if err != nil {
+		return nil, fmt.Errorf("reading attestation: %w", err)
+	}
+	return atts, err
 }
 
 func (c *Collector) FetchByPredicateType(ctx context.Context, opts attestation.FetchOptions, pts []attestation.PredicateType) ([]attestation.Envelope, error) {
