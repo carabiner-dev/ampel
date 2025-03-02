@@ -21,10 +21,11 @@ type TableBuilder struct {
 // TableDecorator is an object that renders the format specific
 // decoration of the tabular reports.
 type TableDecorator interface {
-	AmpelBanner(legend string) string
-	SubjectToString(subject *api.ResourceDescriptor) string
-	ErrorToString(err *api.Error) string
-	StatusToDot(status string) string
+	AmpelBanner(string) string
+	SubjectToString(*api.ResourceDescriptor) string
+	AssessmentToString(*api.Assessment) string
+	ErrorToString(*api.Error) string
+	StatusToDot(string) string
 	ControlsToString(result *api.Result, checkID, def string) string
 	TenetsToString(result *api.Result) string
 	Bold(string) string
@@ -53,11 +54,18 @@ func (tb *TableBuilder) ResultsTable(result *api.Result) (table.Writer, error) {
 	t.AppendSeparator()
 
 	for i, er := range result.EvalResults {
+		cell := ""
+		if er.GetAssessment() != nil {
+			cell = tb.Decorator.AssessmentToString(er.GetAssessment())
+		}
+		if er.Status != api.StatusPASS {
+			cell = tb.Decorator.ErrorToString(er.Error)
+		}
 		t.AppendRow(
 			table.Row{
 				tb.Decorator.ControlsToString(result, er.Id, fmt.Sprintf("%d", i)),
 				fmt.Sprintf("%s %s", tb.Decorator.StatusToDot(er.Status), er.Status),
-				tb.Decorator.ErrorToString(er.Error),
+				cell,
 			},
 		)
 	}

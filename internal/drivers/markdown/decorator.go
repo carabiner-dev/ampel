@@ -13,6 +13,10 @@ import (
 // Decorator implements the tabnle decorator interface to style the output
 type Decorator struct{}
 
+func (d *Decorator) AssessmentToString(a *api.Assessment) string {
+	return fmt.Sprintf("✔️ _%s_", a.GetMessage())
+}
+
 func (d *Decorator) AmpelBanner(legend string) string {
 	if legend != "" {
 		legend = ": " + legend

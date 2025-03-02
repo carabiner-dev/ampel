@@ -22,6 +22,10 @@ var g = color.New(color.FgGreen, color.BgBlack).SprintFunc()
 var w1 = color.New(color.FgHiWhite, color.BgBlack).SprintFunc()
 var w2 = color.New(color.Faint, color.FgWhite, color.BgBlack).SprintFunc()
 
+func (d *Decorator) AssessmentToString(a *api.Assessment) string {
+	return w2("✔ " + a.GetMessage())
+}
+
 func (d *Decorator) AmpelBanner(legend string) string {
 	if legend != "" {
 		legend = w2(": " + legend)
