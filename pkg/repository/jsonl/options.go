@@ -16,6 +16,10 @@ type Options struct {
 	Paths       []string
 }
 
+var defaultOptions = Options{
+	MaxParallel: 2,
+}
+
 func (o *Options) Validate() error {
 	errs := []error{}
 	for _, p := range o.Paths {

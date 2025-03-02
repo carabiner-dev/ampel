@@ -30,7 +30,7 @@ var _ attestation.Fetcher = (*Collector)(nil)
 
 func New(funcs ...optFn) (*Collector, error) {
 	// Apply the functional options
-	opts := Options{}
+	opts := defaultOptions
 	for _, fn := range funcs {
 		fn(&opts)
 	}
@@ -87,11 +87,11 @@ func parseFile(path string, filters *attestation.FilterSet) ([]attestation.Envel
 			continue
 		}
 		reader := strings.NewReader(scanner.Text())
-		envelope, err := envelope.Parsers.Parse(reader)
+		envelopes, err := envelope.Parsers.Parse(reader)
 		if err != nil {
 			return nil, fmt.Errorf("parsing attestation %d in %q: %w", i, path, err)
 		}
-		ret = append(ret, envelope...)
+		ret = append(ret, filters.FilterList(envelopes)...)
 		i++
 	}
 	return ret, nil
