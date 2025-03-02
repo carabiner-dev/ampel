@@ -30,6 +30,7 @@ message EvalResult {
     google.protobuf.Struct output = 4;
     repeated StatementRef statements = 5;
     Error error = 6;
+    Assessment assessment = 7;
 }
 
 message PolicyRef {

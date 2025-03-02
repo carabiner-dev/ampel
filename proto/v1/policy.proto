@@ -85,6 +85,11 @@ message Tenet {
     Error error = 6;
     string title = 7;
     bool enforced = 8;
+    Assessment assessment = 9;
+}
+
+message Assessment {
+    string message = 1; 
 }
 
 message Output {
