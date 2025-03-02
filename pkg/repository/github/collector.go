@@ -20,6 +20,13 @@ import (
 	gh "github.com/carabiner-dev/github"
 )
 
+var TypeMoniker = "github"
+
+// Implement the factory function
+var Build = func(istr string) (*Collector, error) {
+	return New(WithRepo(istr))
+}
+
 type Collector struct {
 	Options Options
 	client  *gh.Client
@@ -67,11 +74,6 @@ func New(funcs ...optFn) (*Collector, error) {
 	return &Collector{
 		client: c,
 	}, nil
-}
-
-// Init is the stub to initialize the collector with a new string
-func (c *Collector) Init(string) error {
-	return nil
 }
 
 type attResponse struct {

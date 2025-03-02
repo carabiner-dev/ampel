@@ -18,6 +18,13 @@ import (
 	"github.com/nozzle/throttler"
 )
 
+var TypeMoniker = "jsonl"
+
+// Implement the factory function
+var Build = func(istr string) (*Collector, error) {
+	return New(WithPath(istr))
+}
+
 func New(funcs ...optFn) (*Collector, error) {
 	// Apply the functional options
 	opts := Options{}
@@ -36,11 +43,6 @@ func New(funcs ...optFn) (*Collector, error) {
 
 type Collector struct {
 	Options Options
-}
-
-// Init is the stub to initialize the collector with a new string
-func Init(string) error {
-	return nil
 }
 
 // readAttestations

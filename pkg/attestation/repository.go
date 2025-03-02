@@ -13,9 +13,7 @@ var (
 	ErrStorerMethodNotImplemented  = errors.New("storing method not implemented")
 )
 
-type Repository interface {
-	Init(string) error
-}
+type Repository interface{}
 
 // AttestationFetcher is the the trait that repositories that can fetch
 // attestations must implement

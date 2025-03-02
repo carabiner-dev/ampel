@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -18,6 +19,13 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/filters"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope"
 )
+
+var TypeMoniker = "fs"
+
+// Implement the factory function
+var Build = func(istr string) (*Collector, error) {
+	return New(WithInitString(istr))
+}
 
 func New(opts ...fnOpts) (*Collector, error) {
 	c := &Collector{
@@ -34,6 +42,13 @@ func New(opts ...fnOpts) (*Collector, error) {
 
 type fnOpts func(*Collector) error
 
+var WithInitString = func(s string) fnOpts {
+	return func(c *Collector) error {
+		c.FS = os.DirFS(s)
+		return nil
+	}
+}
+
 var WithFS = func(iofs fs.FS) fnOpts {
 	return func(c *Collector) error {
 		c.FS = iofs
@@ -48,11 +63,6 @@ type Collector struct {
 	Extensions       []string
 	IgnoreOtherFiles bool
 	FS               fs.FS
-}
-
-// Init is the stub to initialize the collector with a new string
-func (c *Collector) Init(string) error {
-	return nil
 }
 
 // Fetch queries the repository and retrieves any attestations matching the query

@@ -11,6 +11,13 @@ import (
 
 var _ attestation.Fetcher = (*Collector)(nil)
 
+var TypeMoniker = "release"
+
+// Implement the factory function
+var Build = func(istr string) (*Collector, error) {
+	return New()
+}
+
 func New() (*Collector, error) {
 	return &Collector{}, nil
 }
