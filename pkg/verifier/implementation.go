@@ -251,6 +251,11 @@ func (di *defaultIplementation) VerifySubject(
 			evalres.Error = tenet.Error
 		}
 
+		// Carry over the assessment from the policy of not set by the engine
+		if evalres.Status == api.StatusPASS && evalres.Assessment == nil {
+			evalres.Assessment = tenet.Assessment
+		}
+
 		rs.EvalResults = append(rs.EvalResults, evalres)
 	}
 
