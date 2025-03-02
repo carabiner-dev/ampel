@@ -11,6 +11,7 @@ import (
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/collector"
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope"
@@ -23,9 +24,12 @@ import (
 
 type defaultIplementation struct{}
 
-func (di *defaultIplementation) GatherAttestations(vtx context.Context, opts *VerificationOptions, subject attestation.Subject) ([]attestation.Envelope, error) {
-	// TODO: Implement
-	return []attestation.Envelope{}, nil
+func (di *defaultIplementation) GatherAttestations(ctx context.Context, opts *VerificationOptions, agent *collector.Agent, policy *api.Policy, subject attestation.Subject) ([]attestation.Envelope, error) {
+	res, err := agent.FetchAttestationsBySubject(ctx, []attestation.Subject{subject})
+	if err != nil {
+		return nil, fmt.Errorf("collecting attestations: %w", err)
+	}
+	return res, nil
 }
 
 // ParseAttestations parses additional attestations defined to support the

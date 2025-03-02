@@ -16,7 +16,7 @@ import (
 
 // AmpelImplementation
 type AmpelVerifier interface {
-	GatherAttestations(context.Context, *VerificationOptions, attestation.Subject) ([]attestation.Envelope, error)
+	GatherAttestations(context.Context, *VerificationOptions, *collector.Agent, *api.Policy, attestation.Subject) ([]attestation.Envelope, error)
 	ParseAttestations(context.Context, []string) ([]attestation.Envelope, error)
 	BuildEvaluators(*VerificationOptions, *api.Policy) (map[evaluator.Class]evaluator.Evaluator, error)
 	BuildTransformers(*VerificationOptions, *api.Policy) (map[transformer.Class]transformer.Transformer, error)
