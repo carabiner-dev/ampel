@@ -8,11 +8,11 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/google/cel-go v0.24.1
 	github.com/in-toto/attestation v1.1.2-0.20250128181946-c0b4d86cf712
-	github.com/jedib0t/go-pretty/v6 v6.6.6
+	github.com/jedib0t/go-pretty/v6 v6.6.7
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481
 	github.com/openvex/go-vex v0.2.5
-	github.com/protobom/protobom v0.5.1
+	github.com/protobom/protobom v0.5.2
 	github.com/sigstore/protobuf-specs v0.4.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
@@ -51,7 +51,7 @@ require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
