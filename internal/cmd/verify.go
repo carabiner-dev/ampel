@@ -12,10 +12,10 @@ import (
 
 	"github.com/fatih/color"
 	v1 "github.com/in-toto/attestation/go/v1"
-	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/release-utils/util"
 
+	"github.com/carabiner-dev/ampel/internal/render"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/collector"
 	"github.com/carabiner-dev/ampel/pkg/policy"
@@ -74,7 +74,7 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	)
 
 	cmd.PersistentFlags().StringVarP(
-		&o.Format, "format", "f", o.Format, "output format",
+		&o.Format, "format", "f", "tty", "output format",
 	)
 
 	cmd.PersistentFlags().StringSliceVarP(
@@ -107,6 +107,14 @@ func (o *verifyOptions) Validate() error {
 
 	if o.PolicyFile == "" {
 		errs = append(errs, errors.New("a polciy file must be defined"))
+	}
+
+	if o.Format == "" {
+		errs = append(errs, errors.New("no format defined"))
+	} else {
+		if err := render.GetDriverBytType(o.Format); err != nil {
+			errs = append(errs, errors.New("invalid format"))
+		}
 	}
 	return errors.Join(errs...)
 }
@@ -224,21 +232,12 @@ using a collector.
 				return fmt.Errorf("runnig subject verification: %w", err)
 			}
 
-			if opts.Format == "controls" {
-				t := table.NewWriter()
-				t.SetOutputMirror(os.Stdout)
-				t.AppendHeader(table.Row{"Class", "Control", "Status"})
-				rows := []table.Row{}
-				// for _, r := range results.Results {
-				// 	for _, c := range r.Controls {
-				// 		rows = append(rows, table.Row{c.Class, c.Id, r.Status})
-				// 	}
-				// }
-				t.AppendRows(rows)
-				t.Render()
-			} else {
-				fmt.Printf("Results:\n%+v\n", results)
+			eng := render.NewEngine()
+			if err := eng.SetDriver(opts.Format); err != nil {
+				return err
 			}
+
+			eng.RenderResultSet(os.Stdout, results)
 
 			return nil
 		},
