@@ -27,7 +27,12 @@ type defaultIplementation struct{}
 func (di *defaultIplementation) GatherAttestations(ctx context.Context, opts *VerificationOptions, agent *collector.Agent, policy *api.Policy, subject attestation.Subject) ([]attestation.Envelope, error) {
 	res, err := agent.FetchAttestationsBySubject(ctx, []attestation.Subject{subject})
 	if err != nil {
-		return nil, fmt.Errorf("collecting attestations: %w", err)
+		if !errors.Is(err, collector.ErrNoFetcherConfigured) {
+			return nil, fmt.Errorf("collecting attestations: %w", err)
+		} else {
+			logrus.Warn(err)
+			return []attestation.Envelope{}, nil
+		}
 	}
 	return res, nil
 }
