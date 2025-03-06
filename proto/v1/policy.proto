@@ -4,22 +4,26 @@
 syntax = "proto3";
 package ampel.v1;
 
+import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 
 option go_package = "github.com/carabiner-dev/ampel/pkg/api/v1";
 
-// import "google/protobuf/timestamp.proto";
-
 message PolicySet {
-    string version = 3;
     string id = 1; 
-    string runtime = 2; 
-    repeated Policy policies = 4;
+    PolicySetMeta metadata = 2; 
+    repeated Policy policies = 3;
+}
+
+message PolicySetMeta {
+    string runtime = 1;
+    string description = 2;
+    google.protobuf.Timestamp expiration = 3;
 }
 
 message Policy {
     string id = 1;
-    string version = 2;
+    // int32 version = 2;
     Meta meta = 3;
     Context context = 4;
     repeated Identity identities = 5;
@@ -27,6 +31,7 @@ message Policy {
     repeated Transformer transformers = 7;
     repeated Tenet tenets = 8;
     bool enforced = 9;
+    optional google.protobuf.Timestamp expiration = 10;
 }
 
 // Meta contains information about the policy itself
