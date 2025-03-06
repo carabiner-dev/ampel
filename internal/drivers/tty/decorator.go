@@ -89,10 +89,10 @@ func (d *Decorator) ControlsToString(result *api.Result, checkID, def string) st
 		if checkID != "" {
 			ret += "." + checkID
 		} else if def != "" {
-			ret += fmt.Sprintf(" (%s)", def)
+			ret += fmt.Sprintf(" (%s)\n", def)
 		}
 	}
-	return ret
+	return strings.TrimSpace(ret)
 }
 
 func (d *Decorator) TenetsToString(result *api.Result) string {
