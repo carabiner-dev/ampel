@@ -13,6 +13,7 @@ message PolicySet {
     string id = 1; 
     PolicySetMeta metadata = 2; 
     repeated Policy policies = 3;
+    repeated Identity identities = 4;
 }
 
 message PolicySetMeta {
@@ -27,11 +28,11 @@ message Policy {
     Meta meta = 3;
     Context context = 4;
     repeated Identity identities = 5;
-    PredicateSpec predicates = 6;
-    repeated Transformer transformers = 7;
-    repeated Tenet tenets = 8;
-    bool enforced = 9;
-    optional google.protobuf.Timestamp expiration = 10;
+    PredicateSpec predicates = 8;
+    repeated Transformer transformers = 9;
+    repeated Tenet tenets = 10;
+    bool enforced = 11;
+    optional google.protobuf.Timestamp expiration = 12;
 }
 
 // Meta contains information about the policy itself
@@ -42,6 +43,12 @@ message Meta {
     repeated Control controls = 4; 
 }
 
+message Identity {
+    optional IdentitySigstore sigstore = 1;
+    optional IdentityKey key = 2;
+    optional IdentityRef ref = 3;
+}
+
 // Control is a mapping tying the policy to an OSCAL control
 message Control {
     string class = 1;
@@ -49,10 +56,23 @@ message Control {
     string title = 3;
 }
 
-message Identity {
-    string type = 1; // exact | regexp
+// IdentitySigstore represents the identity of a fulcio cert.
+message IdentitySigstore {
+    optional string mode = 1; // exact | regexp
     string issuer = 2; // https://accounts.google.com
     string identity = 3; //  "identity": "puerco@gmail.com"
+}
+
+// IdentityKey registers the data of s key used to sign the attestations
+message IdentityKey {
+    string id = 1;   // Key ID
+    string type = 2; // Identity type
+    string data = 3; // Public key data
+}
+
+// IdentityRef represents an external identity
+message IdentityRef {
+    string id = 1;
 }
 
 message Context {
