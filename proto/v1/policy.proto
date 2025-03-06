@@ -78,6 +78,7 @@ message Transformer {
 
 message PredicateSpec {
     repeated string types = 1;
+    int32 limit = 2;
 }
 
 // Tenet
