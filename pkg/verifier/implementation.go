@@ -199,9 +199,15 @@ func identityAllowed(ids []*api.Identity, vr *attestation.SignatureVerification)
 		return true
 	}
 	for i := range ids {
-		if ids[i].Identity == vr.SigstoreCertData.SubjectAlternativeName &&
-			ids[i].Issuer == vr.SigstoreCertData.Issuer {
-			return true
+		switch {
+		case ids[i].Sigstore != nil:
+			if ids[i].Sigstore.Identity == vr.SigstoreCertData.SubjectAlternativeName &&
+				ids[i].Sigstore.Issuer == vr.SigstoreCertData.Issuer {
+				return true
+			}
+		default:
+			// Method not impleented
+			logrus.Error("identity type not implemented")
 		}
 	}
 	return false
