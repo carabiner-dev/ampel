@@ -43,6 +43,11 @@ type Evaluator struct {
 	impl        CelEvaluatorImplementation
 }
 
+// RegisterPlugin registers a plugin expanding the CEL API available at eval time
+func (e *Evaluator) RegisterPlugin(api.Plugin) error {
+	return nil
+}
+
 func (e *Evaluator) ExecChainedSelector(
 	ctx context.Context, opts *options.EvaluatorOptions, chained *api.ChainedPredicate, predicate attestation.Predicate,
 ) (attestation.Subject, error) {

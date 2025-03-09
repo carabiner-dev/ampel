@@ -10,6 +10,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/collector"
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/oscal"
 	"github.com/carabiner-dev/ampel/pkg/transformer"
 )
@@ -18,15 +19,15 @@ import (
 type AmpelVerifier interface {
 	GatherAttestations(context.Context, *VerificationOptions, *collector.Agent, *api.Policy, attestation.Subject) ([]attestation.Envelope, error)
 	ParseAttestations(context.Context, []string) ([]attestation.Envelope, error)
-	BuildEvaluators(*VerificationOptions, *api.Policy) (map[evaluator.Class]evaluator.Evaluator, error)
+	BuildEvaluators(*VerificationOptions, *api.Policy) (map[class.Class]evaluator.Evaluator, error)
 	BuildTransformers(*VerificationOptions, *api.Policy) (map[transformer.Class]transformer.Transformer, error)
 	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *api.Policy, []attestation.Predicate) ([]attestation.Predicate, error)
 	CheckIdentities(*VerificationOptions, []*api.Identity, []attestation.Envelope) (bool, error)
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
 	AssertResult(*api.Policy, *api.Result) error
 	AttestResult(context.Context, *VerificationOptions, attestation.Subject, *api.Result) error
-	VerifySubject(context.Context, *VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.Result, error)
-	ProcessChainedSubject(context.Context, *VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *collector.Agent, *api.Policy, attestation.Subject, []attestation.Envelope) (attestation.Subject, error)
+	VerifySubject(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.Result, error)
+	ProcessChainedSubject(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *api.Policy, attestation.Subject, []attestation.Envelope) (attestation.Subject, error)
 }
 
 type AmpelStatusChecker interface {

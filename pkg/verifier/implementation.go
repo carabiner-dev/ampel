@@ -13,6 +13,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/collector"
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 	"github.com/carabiner-dev/ampel/pkg/filters"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope"
@@ -94,11 +95,11 @@ func (di *defaultIplementation) AssertResult(policy *api.Policy, result *api.Res
 }
 
 // BuildEvaluators checks a policy and build the required evaluators to run the tenets
-func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *api.Policy) (map[evaluator.Class]evaluator.Evaluator, error) {
-	evaluators := map[evaluator.Class]evaluator.Evaluator{}
+func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *api.Policy) (map[class.Class]evaluator.Evaluator, error) {
+	evaluators := map[class.Class]evaluator.Evaluator{}
 	factory := evaluator.Factory{}
 	// First, build the default evaluator
-	def := evaluator.Class(p.GetMeta().Runtime)
+	def := class.Class(p.GetMeta().Runtime)
 	// TODO(puerco): Move this to defaultOptions
 	if p.GetMeta().Runtime == "" {
 		def = opts.DefaultEvaluator
@@ -110,25 +111,25 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 		return nil, fmt.Errorf("unable to build default runtime")
 	}
 	logrus.Debugf("Registered default evaluator of class %s", def)
-	evaluators[evaluator.Class("default")] = e
+	evaluators[class.Class("default")] = e
 	if p.GetMeta().Runtime != "" {
-		evaluators[evaluator.Class(p.GetMeta().Runtime)] = e
+		evaluators[class.Class(p.GetMeta().Runtime)] = e
 	}
 
 	if p.GetChain() != nil && p.GetChain().GetPredicate() != nil {
-		if class := p.GetChain().GetPredicate().GetRuntime(); class != "" {
+		if classString := p.GetChain().GetPredicate().GetRuntime(); classString != "" {
 			e, err := factory.Get(&opts.EvaluatorOptions, def)
 			if err != nil {
 				return nil, fmt.Errorf("unable to build chained subject runtime")
 			}
-			logrus.Debugf("registered evaluator of class %s for chained predicate", class)
-			evaluators[evaluator.Class(class)] = e
+			logrus.Debugf("registered evaluator of class %s for chained predicate", classString)
+			evaluators[class.Class(classString)] = e
 		}
 	}
 
 	for _, t := range p.Tenets {
 		if t.Runtime != "" {
-			cl := evaluator.Class(t.Runtime)
+			cl := class.Class(t.Runtime)
 			if _, ok := evaluators[cl]; ok {
 				continue
 			}
@@ -236,7 +237,7 @@ func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, su
 
 // SelectChainedSubject returns a new subkect from an ingested attestatom
 func (di defaultIplementation) ProcessChainedSubject(
-	ctx context.Context, opts *VerificationOptions, evaluators map[evaluator.Class]evaluator.Evaluator,
+	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
 	agent *collector.Agent, policy *api.Policy, subject attestation.Subject,
 	attestations []attestation.Envelope,
 ) (attestation.Subject, error) {
@@ -302,9 +303,9 @@ func (di defaultIplementation) ProcessChainedSubject(
 	}
 
 	// TODO(puerco): Options here should come from the verifier options
-	key := evaluator.Class(classString)
+	key := class.Class(classString)
 	if key == "" {
-		key = evaluator.Class("default")
+		key = class.Class("default")
 	}
 	if _, ok := evaluators[key]; !ok {
 		return nil, fmt.Errorf("no evaluator built for %s", key)
@@ -320,7 +321,7 @@ func (di defaultIplementation) ProcessChainedSubject(
 // VerifySubject performs the core verification of attested data. This step runs after
 // all gathering, parsing, transforming and verification is performed.
 func (di *defaultIplementation) VerifySubject(
-	ctx context.Context, opts *VerificationOptions, evaluators map[evaluator.Class]evaluator.Evaluator,
+	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
 	p *api.Policy, subject attestation.Subject, predicates []attestation.Predicate,
 ) (*api.Result, error) {
 	var rs = &api.Result{
@@ -342,9 +343,9 @@ func (di *defaultIplementation) VerifySubject(
 
 	var errs = []error{}
 	for i, tenet := range p.Tenets {
-		key := evaluator.Class(tenet.Runtime)
+		key := class.Class(tenet.Runtime)
 		if key == "" {
-			key = evaluator.Class("default")
+			key = class.Class("default")
 		}
 		evalres, err := evaluators[key].ExecTenet(ctx, evalOpts, tenet, predicates)
 		if err != nil {

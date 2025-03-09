@@ -10,6 +10,7 @@ import (
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/cel"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
 
@@ -18,7 +19,7 @@ var _ Evaluator = (*cel.Evaluator)(nil)
 
 type Factory struct{}
 
-func (f *Factory) Get(opts *options.EvaluatorOptions, c Class) (Evaluator, error) {
+func (f *Factory) Get(opts *options.EvaluatorOptions, c class.Class) (Evaluator, error) {
 	switch c.Name() {
 	case "cel":
 		return cel.New(opts)
