@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	VarNamePredicate  = "predicate"
 	VarNamePredicates = "predicates"
 	VarNameContext    = "context"
 	VarNameOutputs    = "outputs"
@@ -40,6 +41,25 @@ func New(opts *options.EvaluatorOptions) (*Evaluator, error) {
 type Evaluator struct {
 	Environment *cel.Env
 	impl        CelEvaluatorImplementation
+}
+
+func (e *Evaluator) ExecChainedSelector(
+	ctx context.Context, opts *options.EvaluatorOptions, chained *api.ChainedPredicate, predicate attestation.Predicate,
+) (attestation.Subject, error) {
+	ast, err := e.impl.CompileCode(e.Environment, chained.Selector)
+	if err != nil {
+		return nil, fmt.Errorf("compiling selector program: %w", err)
+	}
+
+	vars, err := e.impl.BuildSelectorVariables(opts, chained, predicate)
+	if err != nil {
+		return nil, fmt.Errorf("building selectyr variable set: %w", err)
+	}
+	subject, err := e.impl.EvaluateChainedSelector(e.Environment, ast, vars)
+	if err != nil {
+		return nil, fmt.Errorf("evaluating outputs: %w", err)
+	}
+	return subject, nil
 }
 
 // Exec executes each tenet and returns the combined results

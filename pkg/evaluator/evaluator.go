@@ -30,4 +30,5 @@ func (f *Factory) Get(opts *options.EvaluatorOptions, c Class) (Evaluator, error
 // Evaluator
 type Evaluator interface {
 	ExecTenet(context.Context, *options.EvaluatorOptions, *api.Tenet, []attestation.Predicate) (*api.EvalResult, error)
+	ExecChainedSelector(context.Context, *options.EvaluatorOptions, *api.ChainedPredicate, attestation.Predicate) (attestation.Subject, error)
 }

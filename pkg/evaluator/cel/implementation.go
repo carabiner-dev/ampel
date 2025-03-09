@@ -5,15 +5,20 @@ package cel
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"reflect"
 	"slices"
+	"strings"
 	"time"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/ext"
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -26,6 +31,8 @@ type CelEvaluatorImplementation interface {
 	EvaluateOutputs(*cel.Env, map[string]*cel.Ast, *map[string]any) (map[string]any, error)
 	Evaluate(*cel.Env, *cel.Ast, *map[string]any) (*api.EvalResult, error)
 	Assert(*api.ResultSet) bool
+	BuildSelectorVariables(*options.EvaluatorOptions, *api.ChainedPredicate, attestation.Predicate) (*map[string]interface{}, error)
+	EvaluateChainedSelector(*cel.Env, *cel.Ast, *map[string]any) (attestation.Subject, error)
 }
 
 type defaulCelEvaluator struct{}
@@ -48,6 +55,7 @@ func (dce *defaulCelEvaluator) CompileCode(env *cel.Env, code string) (*cel.Ast,
 func (dce *defaulCelEvaluator) CreateEnvironment(*options.EvaluatorOptions) (*cel.Env, error) {
 	envOpts := []cel.EnvOption{
 		cel.Variable(VarNamePredicates, cel.MapType(cel.IntType, cel.AnyType)),
+		cel.Variable(VarNamePredicate, cel.AnyType),
 		cel.Variable(VarNameContext, cel.AnyType),
 		cel.Variable(VarNameOutputs, cel.AnyType),
 		ext.Bindings(),
@@ -130,8 +138,6 @@ func (dce *defaulCelEvaluator) EvaluateOutputs(
 			return nil, fmt.Errorf("evaluation error: %w", err)
 		}
 
-		//structpb.Value.UnmarshalJSON
-
 		evalResult[id] = result.Value()
 	}
 
@@ -152,6 +158,75 @@ func (dce *defaulCelEvaluator) EvaluateOutputs(
 	(*vars)["outputs"] = ret
 	return ret, nil
 }
+
+// EvaluateChainedSelector
+func (dce *defaulCelEvaluator) EvaluateChainedSelector(
+	env *cel.Env, ast *cel.Ast, vars *map[string]any,
+) (attestation.Subject, error) {
+	if env == nil {
+		return nil, fmt.Errorf("CEL environment not set")
+	}
+	if vars == nil {
+		return nil, fmt.Errorf("variable set undefined")
+	}
+
+	program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
+	if err != nil {
+		return nil, fmt.Errorf("generating program from AST: %w", err)
+	}
+
+	// First evaluate the tenet.
+	result, _, err := program.Eval(*vars)
+	if err != nil {
+		return nil, fmt.Errorf("evaluation error: %w", err)
+	}
+
+	switch v := result.Value().(type) {
+	case string:
+		algo, val, ok := strings.Cut(v, ":")
+		if !ok {
+			return nil, fmt.Errorf("string returned not formatted as algorithm:value")
+		}
+		if _, ok := intoto.HashAlgorithms[strings.ToLower(algo)]; !ok {
+			return nil, fmt.Errorf("invalid hash algorithm returned from selector (%q)", v)
+		}
+		return &intoto.ResourceDescriptor{
+			Digest: map[string]string{
+				strings.ToLower(algo): val,
+			},
+		}, nil
+	case map[ref.Val]ref.Val, *structpb.Struct:
+		res, err := result.ConvertToNative(reflect.TypeOf(&intoto.ResourceDescriptor{}))
+		if err != nil {
+			return nil, fmt.Errorf("converting eval result to Subject: %w", err)
+		}
+		subj, ok := res.(*intoto.ResourceDescriptor)
+		if !ok {
+			return nil, errors.New("selectror must return a string or cel.Subject struct")
+		}
+		return subj, nil
+	default:
+		return nil, fmt.Errorf("predicate selector must return string (got %T)", result.Value())
+	}
+}
+
+// typ := reflect.StructOf([]reflect.StructField{
+// 	{
+// 		Name: "name",
+// 		Type: reflect.TypeOf(""),
+// 		//Tag:  `json:"name"`,
+// 	},
+// 	{
+// 		Name: "url",
+// 		Type: reflect.TypeOf(""),
+// 		//Tag:  `json:"url"`,
+// 	},
+// 	{
+// 		Name: "digest",
+// 		Type: reflect.MapOf(reflect.TypeOf(""), reflect.TypeOf("")),
+// 		///Tag:  `json:"digest"`,
+// 	},
+// })
 
 // Evaluate the precompiled ASTs
 func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *map[string]any) (*api.EvalResult, error) {
@@ -192,4 +267,42 @@ func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *m
 
 func (dce *defaulCelEvaluator) Assert(*api.ResultSet) bool {
 	return false
+}
+
+// BuildSelectorVariables
+func (dce *defaulCelEvaluator) BuildSelectorVariables(
+	opts *options.EvaluatorOptions, _ *api.ChainedPredicate, predicate attestation.Predicate,
+) (*map[string]interface{}, error) {
+	ret := map[string]any{}
+
+	// Collected predicates
+	preds := []*structpb.Value{}
+	d := map[string]any{}
+	if err := json.Unmarshal(predicate.GetData(), &d); err != nil {
+		return nil, fmt.Errorf("unmarshaling predicate data: %w", err)
+	}
+	val, err := structpb.NewValue(map[string]any{
+		"predicate_type": string(predicate.GetType()),
+		"data":           d,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("serializing predicate: %w", err)
+	}
+	preds = append(preds, val)
+
+	ret[VarNamePredicates] = preds
+	ret[VarNamePredicate] = val
+
+	// Add the context to the runtime environment
+	var contextData = map[string]any{}
+	if opts.Context != nil {
+		contextData = opts.Context.ToMap()
+	}
+
+	s, err := structpb.NewStruct(contextData)
+	if err != nil {
+		return nil, fmt.Errorf("structuring context data: %w", err)
+	}
+	ret[VarNameContext] = s
+	return &ret, nil
 }
