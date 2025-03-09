@@ -27,12 +27,20 @@ message Policy {
     // int32 version = 2;
     Meta meta = 3;
     Context context = 4;
+    optional ChainedSubject chain = 2;
     repeated Identity identities = 5;
     PredicateSpec predicates = 8;
     repeated Transformer transformers = 9;
     repeated Tenet tenets = 10;
     bool enforced = 11;
     optional google.protobuf.Timestamp expiration = 12;
+}
+
+message ChainedSubject {
+    oneof source {
+        ChainedOutput output = 1;
+        ChainedPredicate predicate = 2;
+    };
 }
 
 // Meta contains information about the policy itself
@@ -112,6 +120,18 @@ message Tenet {
     string title = 7;
     bool enforced = 8;
     Assessment assessment = 9;
+}
+
+message ChainedOutput {
+    string policy = 1;
+    string tenet = 2; 
+}
+
+message ChainedPredicate {
+    string type = 1;
+    string selector = 2;
+    string runtime = 3;
+    repeated Identity identities = 5;
 }
 
 message Assessment {
