@@ -79,6 +79,9 @@ func parseFile(path string, filters *attestation.FilterSet) ([]attestation.Envel
 	if err != nil {
 		return nil, fmt.Errorf("opening %q: %w", path, err)
 	}
+	if filters == nil {
+		filters = &attestation.FilterSet{}
+	}
 	ret := []attestation.Envelope{}
 	scanner := bufio.NewScanner(f)
 	i := 0
