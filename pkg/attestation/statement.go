@@ -11,6 +11,7 @@ type Statement interface {
 	GetPredicate() Predicate
 	GetPredicateType() PredicateType
 	GetType() string
+	GetVerifications() []*SignatureVerification
 }
 
 type Predicate interface {
@@ -18,6 +19,7 @@ type Predicate interface {
 	SetType(PredicateType) error
 	GetParsed() any
 	GetData() []byte
+	GetVerifications() []*SignatureVerification
 }
 
 // Subject abstracts a piece of software covered by an attestation

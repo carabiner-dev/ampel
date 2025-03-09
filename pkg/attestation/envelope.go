@@ -11,5 +11,6 @@ type Envelope interface {
 	GetStatement() Statement
 	GetSignatures() []Signature
 	GetCertificate() Certificate
-	VerifySignature() (*SignatureVerification, error)
+	GetVerifications() []*SignatureVerification
+	Verify() error
 }
