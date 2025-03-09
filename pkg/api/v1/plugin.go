@@ -22,13 +22,13 @@ var (
 )
 
 var Capabilities = map[Capability]reflect.Type{
-	CapabilityPredicateParser:          reflect.TypeOf((*PredicateParser)(nil)),
-	CapabilityEnvelopeParser:           reflect.TypeOf((*EnvelopeParser)(nil)),
-	CapabilityStatementParser:          reflect.TypeOf((*StatementParser)(nil)),
-	CapabilityPredicateTransformer:     reflect.TypeOf((*PredicateTransformer)(nil)),
-	CapabilitySignatureVerifier:        reflect.TypeOf((*SignatureVerifier)(nil)),
-	CapabilityEvalEngineFunctionPlugin: reflect.TypeOf((*EvalEngineFunctionPlugin)(nil)),
-	CapabilityEvalEngineDataPlugin:     reflect.TypeOf((*EvalEngineDataPlugin)(nil)),
+	CapabilityPredicateParser:          reflect.TypeOf((*PredicateParser)(nil)).Elem(),
+	CapabilityEnvelopeParser:           reflect.TypeOf((*EnvelopeParser)(nil)).Elem(),
+	CapabilityStatementParser:          reflect.TypeOf((*StatementParser)(nil)).Elem(),
+	CapabilityPredicateTransformer:     reflect.TypeOf((*PredicateTransformer)(nil)).Elem(),
+	CapabilitySignatureVerifier:        reflect.TypeOf((*SignatureVerifier)(nil)).Elem(),
+	CapabilityEvalEngineFunctionPlugin: reflect.TypeOf((*EvalEngineFunctionPlugin)(nil)).Elem(),
+	CapabilityEvalEngineDataPlugin:     reflect.TypeOf((*EvalEngineDataPlugin)(nil)).Elem(),
 }
 
 type Plugin interface {
