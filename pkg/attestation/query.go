@@ -3,6 +3,12 @@
 
 package attestation
 
+func NewQuery() *Query {
+	return &Query{
+		Filters: FilterSet{},
+	}
+}
+
 // Query controls the evaluation of a group of filters.
 type Query struct {
 	Filters FilterSet
