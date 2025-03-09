@@ -21,11 +21,12 @@ type AmpelVerifier interface {
 	BuildEvaluators(*VerificationOptions, *api.Policy) (map[evaluator.Class]evaluator.Evaluator, error)
 	BuildTransformers(*VerificationOptions, *api.Policy) (map[transformer.Class]transformer.Transformer, error)
 	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *api.Policy, []attestation.Predicate) ([]attestation.Predicate, error)
-	CheckIdentities(*VerificationOptions, *api.Policy, []attestation.Envelope) (bool, error)
+	CheckIdentities(*VerificationOptions, []*api.Identity, []attestation.Envelope) (bool, error)
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
 	AssertResult(*api.Policy, *api.Result) error
 	AttestResult(context.Context, *VerificationOptions, attestation.Subject, *api.Result) error
 	VerifySubject(context.Context, *VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.Result, error)
+	ProcessChainedSubject(context.Context, *VerificationOptions, map[evaluator.Class]evaluator.Evaluator, *collector.Agent, *api.Policy, attestation.Subject, []attestation.Envelope) (attestation.Subject, error)
 }
 
 type AmpelStatusChecker interface {

@@ -41,16 +41,28 @@ func (ampel *Ampel) Verify(
 func (ampel *Ampel) VerifySubjectWithPolicy(
 	ctx context.Context, opts *VerificationOptions, policy *api.Policy, subject attestation.Subject,
 ) (*api.Result, error) {
-	// Fetch applicable evidence
-	atts, err := ampel.impl.GatherAttestations(ctx, opts, ampel.Collector, policy, subject)
+	// Build the required evaluators
+	evaluators, err := ampel.impl.BuildEvaluators(opts, policy)
 	if err != nil {
-		return nil, fmt.Errorf("gathering evidence: %w", err)
+		return nil, fmt.Errorf("building evaluators: %w", err)
 	}
 
 	// Parse any extra files defined in the options
-	moreatts, err := ampel.impl.ParseAttestations(ctx, opts.AttestationFiles)
+	atts, err := ampel.impl.ParseAttestations(ctx, opts.AttestationFiles)
 	if err != nil {
 		return nil, fmt.Errorf("parsing files: %w", err)
+	}
+
+	// Process chained subjects:
+	subject, err = ampel.impl.ProcessChainedSubject(ctx, opts, evaluators, ampel.Collector, policy, subject, atts)
+	if err != nil {
+		return nil, fmt.Errorf("processing chained subject: %w", err)
+	}
+
+	// Fetch applicable evidence
+	moreatts, err := ampel.impl.GatherAttestations(ctx, opts, ampel.Collector, policy, subject)
+	if err != nil {
+		return nil, fmt.Errorf("gathering evidence: %w", err)
 	}
 	atts = append(atts, moreatts...)
 
@@ -63,7 +75,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	// Check identities to see if the attestations can be admitted
 	// TODO(puerco)
 	// Option: Unmatched identities cause a:fail or b:ignore
-	allow, err := ampel.impl.CheckIdentities(opts, policy, atts)
+	allow, err := ampel.impl.CheckIdentities(opts, policy.Identities, atts)
 	if err != nil {
 		return nil, fmt.Errorf("admission failed: %w", err)
 	}
@@ -93,12 +105,6 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	preds, err = ampel.impl.Transform(opts, transformers, policy, preds)
 	if err != nil {
 		return nil, fmt.Errorf("applying transformations: %w", err)
-	}
-
-	// Build the required evaluators
-	evaluators, err := ampel.impl.BuildEvaluators(opts, policy)
-	if err != nil {
-		return nil, fmt.Errorf("building evaluators: %w", err)
 	}
 
 	// Eval Policy

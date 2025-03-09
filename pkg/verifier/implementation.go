@@ -14,6 +14,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/collector"
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
+	"github.com/carabiner-dev/ampel/pkg/filters"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope"
 	ampelPred "github.com/carabiner-dev/ampel/pkg/formats/predicate/ampel"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
@@ -25,6 +26,7 @@ import (
 type defaultIplementation struct{}
 
 func (di *defaultIplementation) GatherAttestations(ctx context.Context, opts *VerificationOptions, agent *collector.Agent, policy *api.Policy, subject attestation.Subject) ([]attestation.Envelope, error) {
+	// TODO: Filter by types and by tenet chains
 	res, err := agent.FetchAttestationsBySubject(ctx, []attestation.Subject{subject})
 	if err != nil {
 		if !errors.Is(err, collector.ErrNoFetcherConfigured) {
@@ -100,6 +102,7 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 	// TODO(puerco): Move this to defaultOptions
 	if p.GetMeta().Runtime == "" {
 		def = opts.DefaultEvaluator
+	} else {
 	}
 
 	e, err := factory.Get(&opts.EvaluatorOptions, def)
@@ -108,6 +111,20 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 	}
 	logrus.Debugf("Registered default evaluator of class %s", def)
 	evaluators[evaluator.Class("default")] = e
+	if p.GetMeta().Runtime != "" {
+		evaluators[evaluator.Class(p.GetMeta().Runtime)] = e
+	}
+
+	if p.GetChain() != nil && p.GetChain().GetPredicate() != nil {
+		if class := p.GetChain().GetPredicate().GetRuntime(); class != "" {
+			e, err := factory.Get(&opts.EvaluatorOptions, def)
+			if err != nil {
+				return nil, fmt.Errorf("unable to build chained subject runtime")
+			}
+			logrus.Debugf("registered evaluator of class %s for chained predicate", class)
+			evaluators[evaluator.Class(class)] = e
+		}
+	}
 
 	for _, t := range p.Tenets {
 		if t.Runtime != "" {
@@ -166,27 +183,23 @@ func (di defaultIplementation) Transform(opts *VerificationOptions, transformers
 	return predicates, nil
 }
 
-func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, policy *api.Policy, envelopes []attestation.Envelope) (bool, error) {
+func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identities []*api.Identity, envelopes []attestation.Envelope) (bool, error) {
 	// If there are no identities defined, return here
-	if len(policy.Identities) == 0 {
+	if len(identities) == 0 {
 		logrus.Warn("No identities defined in policy. Not checking.")
 		return true, nil
 	}
 
-	var verifications = []*attestation.SignatureVerification{}
-
 	// First, verify the signatures on the envelopes
 	for _, e := range envelopes {
-		vr, err := e.VerifySignature()
-		if err != nil {
+		if err := e.Verify(); err != nil {
 			return false, fmt.Errorf("verifying attestation signature: %s", err)
 		}
 
-		if !identityAllowed(policy.Identities, vr) {
-			logrus.Infof("Identity %+v not allowed by policy %+v", vr.SigstoreCertData, policy.Identities)
-			return false, nil
-		}
-		verifications = append(verifications, vr)
+		// if !identityAllowed(identities, vr) {
+		// 	logrus.Infof("Identity %+v not allowed by policy %+v", vr.SigstoreCertData, identities)
+		// 	return false, nil
+		// }
 	}
 
 	return true, nil
@@ -219,6 +232,89 @@ func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, su
 		preds = append(preds, env.GetStatement().GetPredicate())
 	}
 	return preds, nil
+}
+
+// SelectChainedSubject returns a new subkect from an ingested attestatom
+func (di defaultIplementation) ProcessChainedSubject(
+	ctx context.Context, opts *VerificationOptions, evaluators map[evaluator.Class]evaluator.Evaluator,
+	agent *collector.Agent, policy *api.Policy, subject attestation.Subject,
+	attestations []attestation.Envelope,
+) (attestation.Subject, error) {
+	if policy.GetChain() == nil {
+		return subject, nil
+	}
+
+	if policy.Chain.GetOutput() != nil {
+		return nil, fmt.Errorf("chained subjects from outputs are not yet implemented")
+	}
+
+	// Build an attestation query for the type we need
+	q := attestation.NewQuery().WithFilter(
+		&filters.PredicateTypeMatcher{
+			PredicateTypes: map[attestation.PredicateType]struct{}{
+				attestation.PredicateType(policy.Chain.GetPredicate().GetType()): {},
+			},
+		},
+	)
+
+	if len(attestations) > 0 {
+		attestations = q.Run(attestations)
+	}
+
+	// Only fetch more atts if needed:
+	if len(attestations) == 0 {
+		moreatts, err := agent.FetchAttestationsBySubject(
+			ctx, []attestation.Subject{subject}, collector.WithQuery(q),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("collecting attestations: %w", err)
+		}
+		attestations = append(attestations, moreatts...)
+	}
+
+	if len(attestations) == 0 {
+		return nil, fmt.Errorf("no attestations available to read the chained subject")
+	}
+
+	for _, a := range attestations {
+		if err := a.Verify(); err != nil {
+			return nil, fmt.Errorf("verifying chained attestation: %w", err)
+		}
+	}
+	var pass bool
+	var err error
+	if policy.Chain.GetPredicate().GetIdentities() != nil {
+		pass, err = di.CheckIdentities(opts, policy.Chain.GetPredicate().GetIdentities(), attestations)
+	} else {
+		pass, err = di.CheckIdentities(opts, policy.GetIdentities(), attestations)
+	}
+	if !pass {
+		return nil, fmt.Errorf("unable to validate chained attestation identity")
+	}
+
+	// TODO: Mueve a metodos en policy.go
+	classString := policy.Chain.GetPredicate().GetRuntime()
+	if classString == "" && policy.GetMeta() != nil {
+		classString = policy.GetMeta().GetRuntime()
+	}
+	if classString == "" {
+		classString = string(opts.DefaultEvaluator)
+	}
+
+	// TODO(puerco): Options here should come from the verifier options
+	key := evaluator.Class(classString)
+	if key == "" {
+		key = evaluator.Class("default")
+	}
+	if _, ok := evaluators[key]; !ok {
+		return nil, fmt.Errorf("no evaluator built for %s", key)
+	}
+	subject, err = evaluators[key].ExecChainedSelector(ctx, &opts.EvaluatorOptions, policy.Chain.GetPredicate(), attestations[0].GetStatement().GetPredicate())
+	if err != nil {
+		return nil, fmt.Errorf("evaluating chained subject code: %w", err)
+	}
+
+	return subject, nil
 }
 
 // VerifySubject performs the core verification of attested data. This step runs after
