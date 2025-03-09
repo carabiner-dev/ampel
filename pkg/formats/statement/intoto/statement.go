@@ -102,3 +102,11 @@ func (s *Statement) WriteJson(w io.Writer) error {
 	}
 	return nil
 }
+
+// GetVerifications returns the verifications from the underlying predicate
+func (s *Statement) GetVerifications() []*attestation.SignatureVerification {
+	if s.GetPredicate() == nil {
+		return nil
+	}
+	return s.GetPredicate().GetVerifications()
+}

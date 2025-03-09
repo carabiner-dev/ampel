@@ -18,8 +18,13 @@ func (env *Envelope) GetStatement() attestation.Statement {
 	return env.Statement
 }
 
-func (env *Envelope) GetSignatures() []attestation.Signature {
+func (_ *Envelope) GetSignatures() []attestation.Signature {
 	return []attestation.Signature{}
+}
+
+// GetVerifications returns always empty as they are by definition unsigned
+func (_ *Envelope) GetVerifications() []*attestation.SignatureVerification {
+	return []*attestation.SignatureVerification{}
 }
 
 func (env *Envelope) GetCertificate() attestation.Certificate {
@@ -28,7 +33,7 @@ func (env *Envelope) GetCertificate() attestation.Certificate {
 
 // VerifySignature in bare envelopes never fails but it also always returns
 // nil as its signature verification
-func (env *Envelope) VerifySignature() (*attestation.SignatureVerification, error) {
+func (env *Envelope) Verify() error {
 	logrus.Debug("Bare envelope mock verification. Returning nil.")
-	return nil, nil
+	return nil
 }

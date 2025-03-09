@@ -12,8 +12,9 @@ import (
 var _ attestation.Envelope = (*Envelope)(nil)
 
 type Envelope struct {
-	Signatures []attestation.Signature
-	Statement  attestation.Statement
+	Signatures    []attestation.Signature
+	Statement     attestation.Statement
+	Verifications []*attestation.SignatureVerification
 	sigstoreProtoDSSE.Envelope
 }
 
@@ -28,8 +29,18 @@ func (env *Envelope) GetSignatures() []attestation.Signature {
 func (env *Envelope) GetCertificate() attestation.Certificate {
 	return nil
 }
-func (env *Envelope) VerifySignature() (*attestation.SignatureVerification, error) {
-	return nil, nil
+
+// TODO(puerco): Implement
+func (env *Envelope) Verify() error {
+	return nil
+}
+
+// GetVerifications returns the envelop signtature verifications
+func (env *Envelope) GetVerifications() []*attestation.SignatureVerification {
+	if env.GetStatement() == nil {
+		return nil
+	}
+	return env.GetStatement().GetVerifications()
 }
 
 // Signature is a clone of the dsse signature struct that can be copied around

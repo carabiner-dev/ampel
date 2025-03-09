@@ -16,8 +16,9 @@ import (
 
 type Envelope struct {
 	sigstore.Bundle
-	Signatures []attestation.Signature
-	Statement  attestation.Statement
+	Signatures    []attestation.Signature
+	Statement     attestation.Statement
+	Verifications []*attestation.SignatureVerification
 }
 
 func (e *Envelope) GetStatement() attestation.Statement {
@@ -50,24 +51,33 @@ func (e *Envelope) GetSignatures() []attestation.Signature {
 	return nil
 }
 
-func (e *Envelope) VerifySignature() (*attestation.SignatureVerification, error) {
+// GetVerifications returns the signtature verifications stored in the
+// predicate (via the statement)
+func (env *Envelope) GetVerifications() []*attestation.SignatureVerification {
+	if env.GetStatement() == nil {
+		return nil
+	}
+	return env.GetStatement().GetVerifications()
+}
+
+func (e *Envelope) Verify() error {
 	if e.Bundle.GetVerificationMaterial() == nil {
-		return nil, fmt.Errorf("no verification material found in bundle")
+		return fmt.Errorf("no verification material found in bundle")
 	}
 
 	cert := e.Bundle.GetVerificationMaterial().GetCertificate()
 	if cert == nil {
-		return nil, fmt.Errorf("no certificate found in bundle")
+		return fmt.Errorf("no certificate found in bundle")
 	}
 
 	x509cert, err := x509.ParseCertificate(cert.GetRawBytes())
 	if err != nil {
-		return nil, fmt.Errorf("parsing cert: %w", err)
+		return fmt.Errorf("parsing cert: %w", err)
 	}
 
 	summary, err := certificate.SummarizeCertificate(x509cert)
 	if err != nil {
-		return nil, fmt.Errorf("summarizing cert: %w", err)
+		return fmt.Errorf("summarizing cert: %w", err)
 	}
 
 	logrus.Debug("Parsed sigstore cert data:")
@@ -76,9 +86,11 @@ func (e *Envelope) VerifySignature() (*attestation.SignatureVerification, error)
 	logrus.Debugf("  Cert Issuer:  %s", summary.CertificateIssuer)
 
 	logrus.Warn("SIGNATURE VALIDATION IS MOCKED, DO NOT USE YET")
-	return &attestation.SignatureVerification{
-		SigstoreCertData: summary,
-	}, nil
+
+	// ver := &attestation.SignatureVerification{
+	// 	SigstoreCertData: summary,
+	// }
+	return nil
 }
 
 func (e *Envelope) UnmarshalJSON(data []byte) error {

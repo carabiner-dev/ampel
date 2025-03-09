@@ -12,9 +12,10 @@ import (
 )
 
 type Predicate struct {
-	Type   attestation.PredicateType `json:"_type"`
-	Parsed any
-	Data   []byte `json:"-"`
+	Type          attestation.PredicateType `json:"_type"`
+	Parsed        any
+	Data          []byte                               `json:"-"`
+	Verifications []*attestation.SignatureVerification `json:"-"`
 }
 
 func (p *Predicate) GetType() attestation.PredicateType { return p.Type }
@@ -25,6 +26,11 @@ func (p *Predicate) SetType(pt attestation.PredicateType) error {
 }
 func (p *Predicate) GetParsed() any  { return p.Parsed }
 func (p *Predicate) GetData() []byte { return p.Data }
+
+// GetVerifications returns the signature verifications from the predicate
+func (p *Predicate) GetVerifications() []*attestation.SignatureVerification {
+	return p.Verifications
+}
 
 // MarshalJSON implements the JSON marshaler interface. It reuses any pre
 // parsed data already stored in the predicate.
