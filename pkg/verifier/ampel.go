@@ -5,6 +5,7 @@ package verifier
 
 import (
 	"context"
+	"io"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
@@ -26,6 +27,10 @@ type AmpelVerifier interface {
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
 	AssertResult(*api.Policy, *api.Result) error
 	AttestResult(context.Context, *VerificationOptions, attestation.Subject, *api.Result) error
+
+	// AttestResultToWriter takes an evaluation result and writes an attestation to the supplied io.Writer
+	AttestResultToWriter(io.Writer, attestation.Subject, *api.Result) error
+
 	VerifySubject(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.Result, error)
 	// ProcessChainedSubjects proceses the chain of attestations to find the ultimate
 	// subject a policy is supposed to operate on

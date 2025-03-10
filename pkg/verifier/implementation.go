@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
@@ -397,11 +398,26 @@ func (di *defaultIplementation) AttestResult(
 		return nil
 	}
 
+	logrus.Debugf("writing evaluation attestation to %s", opts.ResultsAttestationPath)
+
+	// Open the file in the options
+	f, err := os.Create(opts.ResultsAttestationPath)
+	if err != nil {
+		return fmt.Errorf("opening results attestation file: %w", err)
+	}
+
+	// Write the statement to json
+	return di.AttestResultToWriter(f, subject, result)
+}
+
+// AttestResults writes an attestation captring the evaluation
+// results set.
+func (di *defaultIplementation) AttestResultToWriter(
+	w io.Writer, subject attestation.Subject, result *api.Result,
+) error {
 	if result == nil {
 		return fmt.Errorf("unable to attest results, set is nil")
 	}
-
-	logrus.Debugf("writing evaluation attestation to %s", opts.ResultsAttestationPath)
 
 	// Create the predicate file
 	pred := ampelPred.NewPredicate()
@@ -415,12 +431,6 @@ func (di *defaultIplementation) AttestResult(
 	stmt.AddSubject(subject)
 	stmt.Predicate = pred
 
-	// Open the file in the options
-	f, err := os.Create(opts.ResultsAttestationPath)
-	if err != nil {
-		return fmt.Errorf("opening results attestation file: %w", err)
-	}
-
 	// Write the statement to json
-	return stmt.WriteJson(f)
+	return stmt.WriteJson(w)
 }

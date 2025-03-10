@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
@@ -131,4 +132,9 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 
 	// Generate outputs
 	return result, nil
+}
+
+// AttestResult writes an attestation capturing an evaluation result
+func (ampel *Ampel) AttestResult(w io.Writer, subject attestation.Subject, result *v1.Result) error {
+	return ampel.impl.AttestResultToWriter(w, subject, result)
 }
