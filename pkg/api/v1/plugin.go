@@ -12,23 +12,21 @@ import (
 type Capability string
 
 var (
-	CapabilityPredicateParser          = Capability("PredicateParser")
-	CapabilityEnvelopeParser           = Capability("EnvelopeParser")
-	CapabilityStatementParser          = Capability("StatementParser")
-	CapabilityPredicateTransformer     = Capability("PredicateTransformer")
-	CapabilitySignatureVerifier        = Capability("SignatureVerifier")
-	CapabilityEvalEngineFunctionPlugin = Capability("EvalEngineFunctionPlugin")
-	CapabilityEvalEngineDataPlugin     = Capability("EvalEngineDataPlugin")
+	CapabilityPredicateParser      = Capability("PredicateParser")
+	CapabilityEnvelopeParser       = Capability("EnvelopeParser")
+	CapabilityStatementParser      = Capability("StatementParser")
+	CapabilityPredicateTransformer = Capability("PredicateTransformer")
+	CapabilitySignatureVerifier    = Capability("SignatureVerifier")
+	CapabilityEvalEnginePlugin     = Capability("EvalEnginePlugin")
 )
 
 var Capabilities = map[Capability]reflect.Type{
-	CapabilityPredicateParser:          reflect.TypeOf((*PredicateParser)(nil)).Elem(),
-	CapabilityEnvelopeParser:           reflect.TypeOf((*EnvelopeParser)(nil)).Elem(),
-	CapabilityStatementParser:          reflect.TypeOf((*StatementParser)(nil)).Elem(),
-	CapabilityPredicateTransformer:     reflect.TypeOf((*PredicateTransformer)(nil)).Elem(),
-	CapabilitySignatureVerifier:        reflect.TypeOf((*SignatureVerifier)(nil)).Elem(),
-	CapabilityEvalEngineFunctionPlugin: reflect.TypeOf((*EvalEngineFunctionPlugin)(nil)).Elem(),
-	CapabilityEvalEngineDataPlugin:     reflect.TypeOf((*EvalEngineDataPlugin)(nil)).Elem(),
+	CapabilityPredicateParser:      reflect.TypeOf((*PredicateParser)(nil)).Elem(),
+	CapabilityEnvelopeParser:       reflect.TypeOf((*EnvelopeParser)(nil)).Elem(),
+	CapabilityStatementParser:      reflect.TypeOf((*StatementParser)(nil)).Elem(),
+	CapabilityPredicateTransformer: reflect.TypeOf((*PredicateTransformer)(nil)).Elem(),
+	CapabilitySignatureVerifier:    reflect.TypeOf((*SignatureVerifier)(nil)).Elem(),
+	CapabilityEvalEnginePlugin:     reflect.TypeOf((*EvalEnginePlugin)(nil)).Elem(),
 }
 
 type Plugin interface {
@@ -49,9 +47,6 @@ type StatementParser interface{}
 type PredicateTransformer interface{}
 type SignatureVerifier interface{}
 
-type EvalEngineFunctionPlugin interface {
-	CanRegisterFunctionsFor(class.Class) bool
-}
-type EvalEngineDataPlugin interface {
-	CanRegisterDataFor(class.Class) bool
+type EvalEnginePlugin interface {
+	CanRegisterFor(class.Class) bool
 }
