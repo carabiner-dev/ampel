@@ -11,6 +11,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/github"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/hasher"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/url"
 	"github.com/google/cel-go/cel"
@@ -58,7 +59,10 @@ func NewWithOptions(opts *options.EvaluatorOptions) (*Evaluator, error) {
 			return nil, fmt.Errorf("registering hasher: %w", err)
 		}
 		if err := eval.RegisterPlugin(url.New()); err != nil {
-			return nil, fmt.Errorf("registering hasher: %w", err)
+			return nil, fmt.Errorf("registering url: %w", err)
+		}
+		if err := eval.RegisterPlugin(github.New()); err != nil {
+			return nil, fmt.Errorf("registering github: %w", err)
 		}
 	}
 
