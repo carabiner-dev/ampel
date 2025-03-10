@@ -20,6 +20,8 @@ type Predicate interface {
 	GetParsed() any
 	GetData() []byte
 	GetVerifications() []*SignatureVerification
+	GetSource() Subject
+	SetSource(Subject)
 }
 
 // Subject abstracts a piece of software covered by an attestation
