@@ -35,7 +35,7 @@ func TestEvaluateChainedSelector(t *testing.T) {
 	} {
 		ev := &defaulCelEvaluator{}
 
-		env, err := ev.CreateEnvironment(nil)
+		env, err := ev.CreateEnvironment(nil, nil)
 		require.NoError(t, err)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -52,7 +52,7 @@ func TestEvaluateChainedSelector(t *testing.T) {
 			ast, err := ev.CompileCode(env, tc.code)
 			require.NoError(t, err)
 
-			vars, err := ev.BuildSelectorVariables(&options.EvaluatorOptions{}, []Plugin{}, nil, pred)
+			vars, err := ev.BuildSelectorVariables(&options.EvaluatorOptions{}, nil, nil, pred)
 			require.NoError(t, err)
 
 			res, err := ev.EvaluateChainedSelector(env, ast, vars)

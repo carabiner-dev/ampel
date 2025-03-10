@@ -15,6 +15,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/hasher"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/url"
 	"github.com/google/cel-go/cel"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -40,39 +41,43 @@ func New(funcs ...options.OptFunc) (*Evaluator, error) {
 }
 
 func NewWithOptions(opts *options.EvaluatorOptions) (*Evaluator, error) {
-	impl := &defaulCelEvaluator{}
-
-	// Create the evaluation enviroment
-	env, err := impl.CreateEnvironment(opts)
-	if err != nil {
-		return nil, fmt.Errorf("creating CEL environment: %w", err)
-	}
-
 	eval := &Evaluator{
-		Environment: env,
-		Plugins:     []Plugin{},
-		impl:        &defaulCelEvaluator{},
+		Plugins: map[string]Plugin{},
+		impl:    &defaulCelEvaluator{},
 	}
-
-	if opts.LoadDefaultPlugins {
-		if err := eval.RegisterPlugin(hasher.New()); err != nil {
-			return nil, fmt.Errorf("registering hasher: %w", err)
-		}
-		if err := eval.RegisterPlugin(url.New()); err != nil {
-			return nil, fmt.Errorf("registering url: %w", err)
-		}
-		if err := eval.RegisterPlugin(github.New()); err != nil {
-			return nil, fmt.Errorf("registering github: %w", err)
-		}
+	if err := eval.rebuildEnvironment(opts); err != nil {
+		return nil, err
 	}
-
 	return eval, nil
+}
+
+// rebuildEnvironment builds the environment with the current settings
+func (e *Evaluator) rebuildEnvironment(opts *options.EvaluatorOptions) error {
+	if opts.LoadDefaultPlugins {
+		if err := e.RegisterPlugin(hasher.New()); err != nil {
+			return fmt.Errorf("registering hasher: %w", err)
+		}
+		if err := e.RegisterPlugin(url.New()); err != nil {
+			return fmt.Errorf("registering url: %w", err)
+		}
+		if err := e.RegisterPlugin(github.New()); err != nil {
+			return fmt.Errorf("registering github: %w", err)
+		}
+	}
+
+	// Create the env
+	env, err := e.impl.CreateEnvironment(opts, e.Plugins)
+	if err != nil {
+		return fmt.Errorf("creating environment: %w", err)
+	}
+	e.Environment = env
+	return nil
 }
 
 // Evaluator implements the evaluator.Evaluator interface to evaluate CEL code
 type Evaluator struct {
 	Environment *cel.Env
-	Plugins     []Plugin
+	Plugins     map[string]Plugin
 	impl        CelEvaluatorImplementation
 }
 
@@ -105,7 +110,7 @@ func (e *Evaluator) RegisterPlugin(plugin api.Plugin) error {
 		if !ok {
 			return fmt.Errorf("plugin declares compatibility with %s but does not implement cel.Plugin", Class)
 		}
-		e.Plugins = append(e.Plugins, dp)
+		e.Plugins[fmt.Sprintf("%T", dp)] = dp
 	}
 
 	return nil
@@ -114,19 +119,21 @@ func (e *Evaluator) RegisterPlugin(plugin api.Plugin) error {
 func (e *Evaluator) ExecChainedSelector(
 	ctx context.Context, opts *options.EvaluatorOptions, chained *api.ChainedPredicate, predicate attestation.Predicate,
 ) (attestation.Subject, error) {
+	vars, err := e.impl.BuildSelectorVariables(opts, e.Plugins, chained, predicate)
+	if err != nil {
+		return nil, fmt.Errorf("building selector variable set: %w", err)
+	}
+
 	ast, err := e.impl.CompileCode(e.Environment, chained.Selector)
 	if err != nil {
 		return nil, fmt.Errorf("compiling selector program: %w", err)
 	}
 
-	vars, err := e.impl.BuildSelectorVariables(opts, e.Plugins, chained, predicate)
-	if err != nil {
-		return nil, fmt.Errorf("building selectyr variable set: %w", err)
-	}
 	subject, err := e.impl.EvaluateChainedSelector(e.Environment, ast, vars)
 	if err != nil {
-		return nil, fmt.Errorf("evaluating outputs: %w", err)
+		return nil, fmt.Errorf("evaluating chained subject: %w", err)
 	}
+	logrus.Infof("chained subject: %+v", subject)
 	return subject, nil
 }
 

@@ -274,7 +274,7 @@ func (di defaultIplementation) ProcessChainedSubject(
 	}
 
 	if len(attestations) == 0 {
-		return nil, fmt.Errorf("no attestations available to read the chained subject")
+		return nil, fmt.Errorf("no matching attestations to read the chained subject")
 	}
 
 	for _, a := range attestations {

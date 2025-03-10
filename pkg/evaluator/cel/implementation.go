@@ -27,12 +27,12 @@ import (
 
 type CelEvaluatorImplementation interface {
 	CompileCode(*cel.Env, string) (*cel.Ast, error)
-	CreateEnvironment(*options.EvaluatorOptions) (*cel.Env, error)
-	BuildVariables(*options.EvaluatorOptions, []Plugin, *api.Tenet, []attestation.Predicate) (*map[string]interface{}, error)
+	CreateEnvironment(*options.EvaluatorOptions, map[string]Plugin) (*cel.Env, error)
+	BuildVariables(*options.EvaluatorOptions, map[string]Plugin, *api.Tenet, []attestation.Predicate) (*map[string]interface{}, error)
 	EvaluateOutputs(*cel.Env, map[string]*cel.Ast, *map[string]any) (map[string]any, error)
 	Evaluate(*cel.Env, *cel.Ast, *map[string]any) (*api.EvalResult, error)
 	Assert(*api.ResultSet) bool
-	BuildSelectorVariables(*options.EvaluatorOptions, []Plugin, *api.ChainedPredicate, attestation.Predicate) (*map[string]interface{}, error)
+	BuildSelectorVariables(*options.EvaluatorOptions, map[string]Plugin, *api.ChainedPredicate, attestation.Predicate) (*map[string]interface{}, error)
 	EvaluateChainedSelector(*cel.Env, *cel.Ast, *map[string]any) (attestation.Subject, error)
 }
 
@@ -53,7 +53,7 @@ func (dce *defaulCelEvaluator) CompileCode(env *cel.Env, code string) (*cel.Ast,
 }
 
 // CreateEnvironment
-func (dce *defaulCelEvaluator) CreateEnvironment(*options.EvaluatorOptions) (*cel.Env, error) {
+func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, plugins map[string]Plugin) (*cel.Env, error) {
 	envOpts := []cel.EnvOption{
 		cel.Variable(VarNamePredicates, cel.MapType(cel.IntType, cel.AnyType)),
 		cel.Variable(VarNamePredicate, cel.AnyType),
@@ -62,6 +62,10 @@ func (dce *defaulCelEvaluator) CreateEnvironment(*options.EvaluatorOptions) (*ce
 		ext.Bindings(),
 		ext.Strings(),
 		ext.Encoders(),
+	}
+
+	for _, plugin := range plugins {
+		envOpts = append(envOpts, plugin.Library())
 	}
 
 	env, err := cel.NewEnv(
@@ -76,7 +80,7 @@ func (dce *defaulCelEvaluator) CreateEnvironment(*options.EvaluatorOptions) (*ce
 
 // BuildVariables builds the set of variables that will be exposed in the
 // CEL runtime.
-func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, plugins []Plugin, tenet *api.Tenet, predicates []attestation.Predicate) (*map[string]any, error) {
+func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, plugins map[string]Plugin, tenet *api.Tenet, predicates []attestation.Predicate) (*map[string]any, error) {
 	ret := map[string]any{}
 
 	// Collected predicates
@@ -114,8 +118,10 @@ func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, pl
 	}
 	ret[VarNameContext] = s
 
+	logrus.Infof("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
 	for _, p := range plugins {
 		for name, val := range p.VarValues() {
+			logrus.Infof("Registered variable: %s: %+v", name, val)
 			ret[name] = val
 		}
 	}
@@ -213,7 +219,7 @@ func (dce *defaulCelEvaluator) EvaluateChainedSelector(
 		}
 		return subj, nil
 	default:
-		return nil, fmt.Errorf("predicate selector must return string (got %T)", result.Value())
+		return nil, fmt.Errorf("predicate selector must return string or resource descr (got %T)", result.Value())
 	}
 }
 
@@ -260,7 +266,7 @@ func (dce *defaulCelEvaluator) Assert(*api.ResultSet) bool {
 
 // BuildSelectorVariables
 func (dce *defaulCelEvaluator) BuildSelectorVariables(
-	opts *options.EvaluatorOptions, plugins []Plugin, _ *api.ChainedPredicate, predicate attestation.Predicate,
+	opts *options.EvaluatorOptions, plugins map[string]Plugin, _ *api.ChainedPredicate, predicate attestation.Predicate,
 ) (*map[string]interface{}, error) {
 	ret := map[string]any{}
 
@@ -294,6 +300,7 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 	}
 	ret[VarNameContext] = s
 
+	logrus.Infof("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
 	for _, p := range plugins {
 		maps.Copy(ret, p.VarValues())
 	}
