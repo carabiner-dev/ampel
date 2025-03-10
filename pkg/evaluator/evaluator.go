@@ -21,8 +21,8 @@ type Factory struct{}
 
 func (f *Factory) Get(opts *options.EvaluatorOptions, c class.Class) (Evaluator, error) {
 	switch c.Name() {
-	case "cel":
-		return cel.New(opts)
+	case cel.Class.Name():
+		return cel.NewWithOptions(opts)
 	default:
 		return nil, fmt.Errorf("no evaluator defined for class %q", c.Name())
 	}

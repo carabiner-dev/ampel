@@ -8,5 +8,27 @@ import (
 )
 
 type EvaluatorOptions struct {
-	Context *api.Context
+	Context            *api.Context
+	LoadDefaultPlugins bool
+}
+
+var Default = EvaluatorOptions{
+	Context:            nil,
+	LoadDefaultPlugins: true,
+}
+
+type OptFunc func(*EvaluatorOptions) error
+
+func WithDefaultPlugins(sino bool) OptFunc {
+	return func(eo *EvaluatorOptions) error {
+		eo.LoadDefaultPlugins = sino
+		return nil
+	}
+}
+
+func WithContext(c *api.Context) OptFunc {
+	return func(eo *EvaluatorOptions) error {
+		eo.Context = c
+		return nil
+	}
 }

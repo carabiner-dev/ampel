@@ -4,7 +4,6 @@
 package verifier
 
 import (
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
@@ -32,13 +31,11 @@ type VerificationOptions struct {
 }
 
 var DefaultVerificationOptions = VerificationOptions{
-	EvaluatorOptions: options.EvaluatorOptions{
-		Context: &api.Context{},
-	},
+	EvaluatorOptions: options.Default,
 
 	// DefaultEvaluator the the default eval enfine is the lowest version
 	// of CEL available
-	DefaultEvaluator: class.Class("cel@v1.0.0"),
+	DefaultEvaluator: class.Class("cel@v0"),
 
 	// ResultsAttestationPath path to the results attestation
 	ResultsAttestationPath: "results.intoto.json",

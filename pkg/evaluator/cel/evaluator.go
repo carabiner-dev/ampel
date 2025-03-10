@@ -11,6 +11,8 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/hasher"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/url"
 	"github.com/google/cel-go/cel"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -25,7 +27,18 @@ const (
 )
 
 // New creates a new CEL evaluator with the default options
-func New(opts *options.EvaluatorOptions) (*Evaluator, error) {
+func New(funcs ...options.OptFunc) (*Evaluator, error) {
+	opts := options.Default
+	for _, fn := range funcs {
+		if err := fn(&opts); err != nil {
+			return nil, err
+		}
+	}
+
+	return NewWithOptions(&opts)
+}
+
+func NewWithOptions(opts *options.EvaluatorOptions) (*Evaluator, error) {
 	impl := &defaulCelEvaluator{}
 
 	// Create the evaluation enviroment
@@ -36,11 +49,17 @@ func New(opts *options.EvaluatorOptions) (*Evaluator, error) {
 
 	eval := &Evaluator{
 		Environment: env,
-		Plugins: struct {
-			Data      []DataPlugin
-			Functions []FunctionPlugin
-		}{},
-		impl: &defaulCelEvaluator{},
+		Plugins:     []Plugin{},
+		impl:        &defaulCelEvaluator{},
+	}
+
+	if opts.LoadDefaultPlugins {
+		if err := eval.RegisterPlugin(hasher.New()); err != nil {
+			return nil, fmt.Errorf("registering hasher: %w", err)
+		}
+		if err := eval.RegisterPlugin(url.New()); err != nil {
+			return nil, fmt.Errorf("registering hasher: %w", err)
+		}
 	}
 
 	return eval, nil
@@ -49,62 +68,42 @@ func New(opts *options.EvaluatorOptions) (*Evaluator, error) {
 // Evaluator implements the evaluator.Evaluator interface to evaluate CEL code
 type Evaluator struct {
 	Environment *cel.Env
-	Plugins     struct {
-		Data      []DataPlugin
-		Functions []FunctionPlugin
-	}
-	impl CelEvaluatorImplementation
+	Plugins     []Plugin
+	impl        CelEvaluatorImplementation
 }
 
-type DataPlugin interface {
+type Plugin interface {
 	// CanRegisterDataFor implements the plugin api function that flags if
 	// the plugin is compatible with a class of evaluator
-	CanRegisterDataFor(class.Class) bool
+	CanRegisterFor(class.Class) bool
 
-	// EnvVariables return the data (as cel.Variable) that will be registered
-	// in the evaluation environment
-	EnvVariables() ([]cel.EnvOption, error)
-}
+	// EnvVariables returns the data (as a cel.Variable list) that will be
+	// registered as global variables in the evaluation environment
+	Library() cel.EnvOption
 
-type FunctionPlugin interface {
-	CanRegisterFunctionsFor(class.Class) bool
+	// VarValues returns the values of the variables handled by the plugin
+	VarValues() map[string]any
 }
 
 // RegisterPlugin registers a plugin expanding the CEL API available at eval time
 func (e *Evaluator) RegisterPlugin(plugin api.Plugin) error {
 	// Register the plugin in the data collection
-	if api.PluginHasCapability(api.CapabilityEvalEngineDataPlugin, plugin) {
-		if p, ok := plugin.(api.EvalEngineDataPlugin); ok {
-			if !p.CanRegisterDataFor(Class) {
+	if api.PluginHasCapability(api.CapabilityEvalEnginePlugin, plugin) {
+		if p, ok := plugin.(api.EvalEnginePlugin); ok {
+			if !p.CanRegisterFor(Class) {
 				return nil
-			} else {
-				return fmt.Errorf("unable to cast plugin to EvalEngineDataPlugin")
 			}
+		} else {
+			return fmt.Errorf("unable to cast plugin to api.EvalEngineDataPlugin")
 		}
 
-		dp, ok := plugin.(DataPlugin)
+		dp, ok := plugin.(Plugin)
 		if !ok {
-			return fmt.Errorf("plugin declares compatibility with %s but does not implement cel.DataPlugin", Class)
+			return fmt.Errorf("plugin declares compatibility with %s but does not implement cel.Plugin", Class)
 		}
-		e.Plugins.Data = append(e.Plugins.Data, dp)
+		e.Plugins = append(e.Plugins, dp)
 	}
 
-	// Register the plugin in the functions collection
-	if api.PluginHasCapability(api.CapabilityEvalEngineFunctionPlugin, plugin) {
-		if p, ok := plugin.(api.EvalEngineFunctionPlugin); ok {
-			if !p.CanRegisterFunctionsFor(Class) {
-				return nil
-			} else {
-				return fmt.Errorf("unable to cast plugin to EvalEngineFunctionPlugin")
-			}
-		}
-
-		fp, ok := plugin.(FunctionPlugin)
-		if !ok {
-			return fmt.Errorf("plugin declares compatibility with %s but does not implement cel.FunctionPlugin", Class)
-		}
-		e.Plugins.Functions = append(e.Plugins.Functions, fp)
-	}
 	return nil
 }
 
@@ -116,7 +115,7 @@ func (e *Evaluator) ExecChainedSelector(
 		return nil, fmt.Errorf("compiling selector program: %w", err)
 	}
 
-	vars, err := e.impl.BuildSelectorVariables(opts, chained, predicate)
+	vars, err := e.impl.BuildSelectorVariables(opts, e.Plugins, chained, predicate)
 	if err != nil {
 		return nil, fmt.Errorf("building selectyr variable set: %w", err)
 	}
@@ -146,7 +145,7 @@ func (e *Evaluator) ExecTenet(
 		outputAsts[id] = oast
 	}
 
-	vars, err := e.impl.BuildVariables(opts, tenet, predicates)
+	vars, err := e.impl.BuildVariables(opts, e.Plugins, tenet, predicates)
 	if err != nil {
 		return nil, fmt.Errorf("building variables for eval environment: %w", err)
 	}

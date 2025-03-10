@@ -108,7 +108,7 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 
 	e, err := factory.Get(&opts.EvaluatorOptions, def)
 	if err != nil {
-		return nil, fmt.Errorf("unable to build default runtime")
+		return nil, fmt.Errorf("unable to build default runtime: %w", err)
 	}
 	logrus.Debugf("Registered default evaluator of class %s", def)
 	evaluators[class.Class("default")] = e

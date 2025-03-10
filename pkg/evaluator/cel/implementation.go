@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"reflect"
 	"slices"
 	"strings"
@@ -27,11 +28,11 @@ import (
 type CelEvaluatorImplementation interface {
 	CompileCode(*cel.Env, string) (*cel.Ast, error)
 	CreateEnvironment(*options.EvaluatorOptions) (*cel.Env, error)
-	BuildVariables(*options.EvaluatorOptions, *api.Tenet, []attestation.Predicate) (*map[string]interface{}, error)
+	BuildVariables(*options.EvaluatorOptions, []Plugin, *api.Tenet, []attestation.Predicate) (*map[string]interface{}, error)
 	EvaluateOutputs(*cel.Env, map[string]*cel.Ast, *map[string]any) (map[string]any, error)
 	Evaluate(*cel.Env, *cel.Ast, *map[string]any) (*api.EvalResult, error)
 	Assert(*api.ResultSet) bool
-	BuildSelectorVariables(*options.EvaluatorOptions, *api.ChainedPredicate, attestation.Predicate) (*map[string]interface{}, error)
+	BuildSelectorVariables(*options.EvaluatorOptions, []Plugin, *api.ChainedPredicate, attestation.Predicate) (*map[string]interface{}, error)
 	EvaluateChainedSelector(*cel.Env, *cel.Ast, *map[string]any) (attestation.Subject, error)
 }
 
@@ -75,7 +76,7 @@ func (dce *defaulCelEvaluator) CreateEnvironment(*options.EvaluatorOptions) (*ce
 
 // BuildVariables builds the set of variables that will be exposed in the
 // CEL runtime.
-func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, tenet *api.Tenet, predicates []attestation.Predicate) (*map[string]any, error) {
+func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, plugins []Plugin, tenet *api.Tenet, predicates []attestation.Predicate) (*map[string]any, error) {
 	ret := map[string]any{}
 
 	// Collected predicates
@@ -112,6 +113,12 @@ func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, te
 		return nil, fmt.Errorf("structuring context data: %w", err)
 	}
 	ret[VarNameContext] = s
+
+	for _, p := range plugins {
+		for name, val := range p.VarValues() {
+			ret[name] = val
+		}
+	}
 	return &ret, nil
 }
 
@@ -210,24 +217,6 @@ func (dce *defaulCelEvaluator) EvaluateChainedSelector(
 	}
 }
 
-// typ := reflect.StructOf([]reflect.StructField{
-// 	{
-// 		Name: "name",
-// 		Type: reflect.TypeOf(""),
-// 		//Tag:  `json:"name"`,
-// 	},
-// 	{
-// 		Name: "url",
-// 		Type: reflect.TypeOf(""),
-// 		//Tag:  `json:"url"`,
-// 	},
-// 	{
-// 		Name: "digest",
-// 		Type: reflect.MapOf(reflect.TypeOf(""), reflect.TypeOf("")),
-// 		///Tag:  `json:"digest"`,
-// 	},
-// })
-
 // Evaluate the precompiled ASTs
 func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *map[string]any) (*api.EvalResult, error) {
 	program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
@@ -271,7 +260,7 @@ func (dce *defaulCelEvaluator) Assert(*api.ResultSet) bool {
 
 // BuildSelectorVariables
 func (dce *defaulCelEvaluator) BuildSelectorVariables(
-	opts *options.EvaluatorOptions, _ *api.ChainedPredicate, predicate attestation.Predicate,
+	opts *options.EvaluatorOptions, plugins []Plugin, _ *api.ChainedPredicate, predicate attestation.Predicate,
 ) (*map[string]interface{}, error) {
 	ret := map[string]any{}
 
@@ -304,5 +293,10 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 		return nil, fmt.Errorf("structuring context data: %w", err)
 	}
 	ret[VarNameContext] = s
+
+	for _, p := range plugins {
+		maps.Copy(ret, p.VarValues())
+	}
+
 	return &ret, nil
 }
