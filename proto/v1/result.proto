@@ -20,7 +20,19 @@ message Result {
     PolicyRef policy = 4;
     repeated EvalResult eval_results = 5;
     Meta meta = 6;
-    ResourceDescriptor subject = 7;
+    repeated ChainedSubject chain = 7;
+    ResourceDescriptor subject = 8;
+}
+
+message ChainedSubject {
+    ResourceDescriptor source = 1;
+    ResourceDescriptor destination = 2;
+    ChainedSubjectLink link = 3;
+}
+
+message ChainedSubjectLink {
+    string type = 1;
+    ResourceDescriptor attestation = 2;
 }
 
 message EvalResult {
