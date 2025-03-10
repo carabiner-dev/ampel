@@ -116,8 +116,8 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 		evaluators[class.Class(p.GetMeta().Runtime)] = e
 	}
 
-	if p.GetChain() != nil && p.GetChain().GetPredicate() != nil {
-		if classString := p.GetChain().GetPredicate().GetRuntime(); classString != "" {
+	for _, link := range p.GetChain() {
+		if classString := link.GetPredicate().GetRuntime(); classString != "" {
 			e, err := factory.Get(&opts.EvaluatorOptions, def)
 			if err != nil {
 				return nil, fmt.Errorf("unable to build chained subject runtime")
@@ -241,80 +241,81 @@ func (di defaultIplementation) ProcessChainedSubject(
 	agent *collector.Agent, policy *api.Policy, subject attestation.Subject,
 	attestations []attestation.Envelope,
 ) (attestation.Subject, error) {
+	// If there are no chained subjects, return the original
 	if policy.GetChain() == nil {
 		return subject, nil
 	}
 
-	if policy.Chain.GetOutput() != nil {
-		return nil, fmt.Errorf("chained subjects from outputs are not yet implemented")
-	}
+	for _, link := range policy.GetChain() {
 
-	// Build an attestation query for the type we need
-	q := attestation.NewQuery().WithFilter(
-		&filters.PredicateTypeMatcher{
-			PredicateTypes: map[attestation.PredicateType]struct{}{
-				attestation.PredicateType(policy.Chain.GetPredicate().GetType()): {},
+		// Build an attestation query for the type we need
+		q := attestation.NewQuery().WithFilter(
+			&filters.PredicateTypeMatcher{
+				PredicateTypes: map[attestation.PredicateType]struct{}{
+					attestation.PredicateType(link.GetPredicate().GetType()): {},
+				},
 			},
-		},
-	)
-
-	if len(attestations) > 0 {
-		attestations = q.Run(attestations)
-	}
-
-	// Only fetch more atts if needed:
-	if len(attestations) == 0 {
-		moreatts, err := agent.FetchAttestationsBySubject(
-			ctx, []attestation.Subject{subject}, collector.WithQuery(q),
 		)
+
+		if len(attestations) > 0 {
+			attestations = q.Run(attestations)
+		}
+
+		// Only fetch more atts if needed:
+		if len(attestations) == 0 {
+			moreatts, err := agent.FetchAttestationsBySubject(
+				ctx, []attestation.Subject{subject}, collector.WithQuery(q),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("collecting attestations: %w", err)
+			}
+			attestations = append(attestations, moreatts...)
+		}
+
+		if len(attestations) == 0 {
+			return nil, fmt.Errorf("no matching attestations to read the chained subject")
+		}
+
+		for _, a := range attestations {
+			if err := a.Verify(); err != nil {
+				return nil, fmt.Errorf("verifying chained attestation: %w", err)
+			}
+		}
+		var pass bool
+		var err error
+		if link.GetPredicate().GetIdentities() != nil {
+			pass, err = di.CheckIdentities(opts, link.GetPredicate().GetIdentities(), attestations)
+		} else {
+			pass, err = di.CheckIdentities(opts, policy.GetIdentities(), attestations)
+		}
+		if !pass {
+			return nil, fmt.Errorf("unable to validate chained attestation identity")
+		}
+
+		// TODO: Mueve a metodos en policy.go
+		classString := link.GetPredicate().GetRuntime()
+		if classString == "" && policy.GetMeta() != nil {
+			classString = policy.GetMeta().GetRuntime()
+		}
+		if classString == "" {
+			classString = string(opts.DefaultEvaluator)
+		}
+
+		// TODO(puerco): Options here should come from the verifier options
+		key := class.Class(classString)
+		if key == "" {
+			key = class.Class("default")
+		}
+		if _, ok := evaluators[key]; !ok {
+			return nil, fmt.Errorf("no evaluator built for %s", key)
+		}
+		subject, err = evaluators[key].ExecChainedSelector(ctx, &opts.EvaluatorOptions, link.GetPredicate(), attestations[0].GetStatement().GetPredicate())
 		if err != nil {
-			return nil, fmt.Errorf("collecting attestations: %w", err)
+			return nil, fmt.Errorf("evaluating chained subject code: %w", err)
 		}
-		attestations = append(attestations, moreatts...)
-	}
 
-	if len(attestations) == 0 {
-		return nil, fmt.Errorf("no matching attestations to read the chained subject")
+		// Add to link history
 	}
-
-	for _, a := range attestations {
-		if err := a.Verify(); err != nil {
-			return nil, fmt.Errorf("verifying chained attestation: %w", err)
-		}
-	}
-	var pass bool
-	var err error
-	if policy.Chain.GetPredicate().GetIdentities() != nil {
-		pass, err = di.CheckIdentities(opts, policy.Chain.GetPredicate().GetIdentities(), attestations)
-	} else {
-		pass, err = di.CheckIdentities(opts, policy.GetIdentities(), attestations)
-	}
-	if !pass {
-		return nil, fmt.Errorf("unable to validate chained attestation identity")
-	}
-
-	// TODO: Mueve a metodos en policy.go
-	classString := policy.Chain.GetPredicate().GetRuntime()
-	if classString == "" && policy.GetMeta() != nil {
-		classString = policy.GetMeta().GetRuntime()
-	}
-	if classString == "" {
-		classString = string(opts.DefaultEvaluator)
-	}
-
-	// TODO(puerco): Options here should come from the verifier options
-	key := class.Class(classString)
-	if key == "" {
-		key = class.Class("default")
-	}
-	if _, ok := evaluators[key]; !ok {
-		return nil, fmt.Errorf("no evaluator built for %s", key)
-	}
-	subject, err = evaluators[key].ExecChainedSelector(ctx, &opts.EvaluatorOptions, policy.Chain.GetPredicate(), attestations[0].GetStatement().GetPredicate())
-	if err != nil {
-		return nil, fmt.Errorf("evaluating chained subject code: %w", err)
-	}
-
 	return subject, nil
 }
 

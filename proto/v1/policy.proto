@@ -27,7 +27,7 @@ message Policy {
     // int32 version = 2;
     Meta meta = 3;
     Context context = 4;
-    optional ChainedSubject chain = 2;
+    repeated ChainLink chain = 2;
     repeated Identity identities = 5;
     PredicateSpec predicates = 8;
     repeated Transformer transformers = 9;
@@ -36,10 +36,10 @@ message Policy {
     optional google.protobuf.Timestamp expiration = 12;
 }
 
-message ChainedSubject {
+message ChainLink {
     oneof source {
-        ChainedOutput output = 1;
-        ChainedPredicate predicate = 2;
+        ChainedPredicate predicate = 1;
+        // ChainedOutput output = 2;
     };
 }
 
