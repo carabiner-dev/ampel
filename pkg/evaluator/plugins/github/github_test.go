@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func TestParseRepo(t *testing.T) {
@@ -82,7 +83,11 @@ func TestUriToOrg(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tc.expected, result.Value())
+
+			res := result.Value().(*structpb.Struct)
+			require.Equal(t, tc.expected["name"], res.Fields["name"].GetStringValue())
+			require.Equal(t, tc.expected["uri"], res.Fields["uri"].GetStringValue())
+			require.Equal(t, tc.expected["digest"].(map[string]string)["sha256"], res.Fields["digest"].GetStructValue().Fields["sha256"].GetStringValue())
 		})
 	}
 }
@@ -119,7 +124,11 @@ func TestUriToRepo(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tc.expected, result.Value())
+
+			res := result.Value().(*structpb.Struct)
+			require.Equal(t, tc.expected["name"], res.Fields["name"].GetStringValue())
+			require.Equal(t, tc.expected["uri"], res.Fields["uri"].GetStringValue())
+			require.Equal(t, tc.expected["digest"].(map[string]string)["sha256"], res.Fields["digest"].GetStructValue().Fields["sha256"].GetStringValue())
 		})
 	}
 }

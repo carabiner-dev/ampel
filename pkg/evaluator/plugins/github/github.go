@@ -11,6 +11,8 @@ import (
 	"reflect"
 	"strings"
 
+	"google.golang.org/protobuf/types/known/structpb"
+
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
@@ -98,20 +100,24 @@ var uriToRepoDescriptor = func(_ ref.Val, rhs ref.Val) ref.Val {
 		h.Write([]byte(name))
 		digest := fmt.Sprintf("%x", h.Sum(nil))
 
-		ret := map[string]any{
-			"digest": map[string]string{
-				"sha256": digest,
-			},
+		mapa := map[string]any{
 			"name": name,
 			"uri":  fmt.Sprintf("https://%s", name),
+			"digest": map[string]any{
+				"sha256": digest,
+			},
 		}
 
 		reg, err := types.NewRegistry()
 		if err != nil {
 			return types.NewErrFromString(err.Error())
 		}
+		s, err := structpb.NewStruct(mapa)
+		if err != nil {
+			return types.NewErrFromString(err.Error())
+		}
 
-		return types.NewStringInterfaceMap(reg, ret)
+		return types.NewJSONStruct(reg, s)
 	default:
 		return types.NewErrFromString("unsupported type for repo parse")
 	}
@@ -133,8 +139,8 @@ var uriToOrgDescriptor = func(_ ref.Val, rhs ref.Val) ref.Val {
 		h.Write([]byte(name))
 		digest := fmt.Sprintf("%x", h.Sum(nil))
 
-		ret := map[string]any{
-			"digest": map[string]string{
+		mapa := map[string]any{
+			"digest": map[string]any{
 				"sha256": digest,
 			},
 			"name": name,
@@ -145,8 +151,13 @@ var uriToOrgDescriptor = func(_ ref.Val, rhs ref.Val) ref.Val {
 		if err != nil {
 			return types.NewErrFromString(err.Error())
 		}
+		s, err := structpb.NewStruct(mapa)
+		if err != nil {
+			return types.NewErrFromString(err.Error())
+		}
 
-		return types.NewStringInterfaceMap(reg, ret)
+		return types.NewJSONStruct(reg, s)
+
 	default:
 		return types.NewErrFromString("unsupported type for repo parse")
 	}
