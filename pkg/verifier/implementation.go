@@ -236,18 +236,18 @@ func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, su
 }
 
 // SelectChainedSubject returns a new subkect from an ingested attestatom
-func (di defaultIplementation) ProcessChainedSubject(
+func (di defaultIplementation) ProcessChainedSubjects(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
 	agent *collector.Agent, policy *api.Policy, subject attestation.Subject,
 	attestations []attestation.Envelope,
-) (attestation.Subject, error) {
+) (attestation.Subject, []*api.ChainedSubject, error) {
+	chain := []*api.ChainedSubject{}
 	// If there are no chained subjects, return the original
 	if policy.GetChain() == nil {
-		return subject, nil
+		return subject, chain, nil
 	}
 
-	for _, link := range policy.GetChain() {
-
+	for i, link := range policy.GetChain() {
 		// Build an attestation query for the type we need
 		q := attestation.NewQuery().WithFilter(
 			&filters.PredicateTypeMatcher{
@@ -261,24 +261,24 @@ func (di defaultIplementation) ProcessChainedSubject(
 			attestations = q.Run(attestations)
 		}
 
-		// Only fetch more atts if needed:
+		// Only fetch more attestations from the configured sources if needed:
 		if len(attestations) == 0 {
 			moreatts, err := agent.FetchAttestationsBySubject(
 				ctx, []attestation.Subject{subject}, collector.WithQuery(q),
 			)
 			if err != nil {
-				return nil, fmt.Errorf("collecting attestations: %w", err)
+				return nil, nil, fmt.Errorf("collecting attestations: %w", err)
 			}
 			attestations = append(attestations, moreatts...)
 		}
 
 		if len(attestations) == 0 {
-			return nil, fmt.Errorf("no matching attestations to read the chained subject")
+			return nil, nil, fmt.Errorf("no matching attestations to read the chained subject #%d", i)
 		}
 
 		for _, a := range attestations {
 			if err := a.Verify(); err != nil {
-				return nil, fmt.Errorf("verifying chained attestation: %w", err)
+				return nil, nil, fmt.Errorf("verifying chained attestation: %w", err)
 			}
 		}
 		var pass bool
@@ -289,7 +289,7 @@ func (di defaultIplementation) ProcessChainedSubject(
 			pass, err = di.CheckIdentities(opts, policy.GetIdentities(), attestations)
 		}
 		if !pass {
-			return nil, fmt.Errorf("unable to validate chained attestation identity")
+			return nil, nil, fmt.Errorf("unable to validate chained attestation identity")
 		}
 
 		// TODO: Mueve a metodos en policy.go
@@ -307,16 +307,30 @@ func (di defaultIplementation) ProcessChainedSubject(
 			key = class.Class("default")
 		}
 		if _, ok := evaluators[key]; !ok {
-			return nil, fmt.Errorf("no evaluator built for %s", key)
+			return nil, nil, fmt.Errorf("no evaluator built for %s", key)
 		}
-		subject, err = evaluators[key].ExecChainedSelector(ctx, &opts.EvaluatorOptions, link.GetPredicate(), attestations[0].GetStatement().GetPredicate())
+
+		// Execute the selector
+		newsubject, err := evaluators[key].ExecChainedSelector(
+			ctx, &opts.EvaluatorOptions, link.GetPredicate(),
+			attestations[0].GetStatement().GetPredicate(),
+		)
 		if err != nil {
-			return nil, fmt.Errorf("evaluating chained subject code: %w", err)
+			return nil, nil, fmt.Errorf("evaluating chained subject code: %w", err)
 		}
 
 		// Add to link history
+		chain = append(chain, &api.ChainedSubject{
+			Source:      api.NewResourceDescriptor().FromSubject(subject),
+			Destination: api.NewResourceDescriptor().FromSubject(newsubject),
+			Link: &api.ChainedSubjectLink{
+				Type:        attestations[0].GetStatement().GetType(),
+				Attestation: api.NewResourceDescriptor().FromSubject(attestations[0].GetStatement().GetPredicate().GetSource()),
+			},
+		})
+		subject = newsubject
 	}
-	return subject, nil
+	return subject, chain, nil
 }
 
 // VerifySubject performs the core verification of attested data. This step runs after

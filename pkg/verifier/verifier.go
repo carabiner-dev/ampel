@@ -54,7 +54,9 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	}
 
 	// Process chained subjects:
-	subject, err = ampel.impl.ProcessChainedSubject(ctx, opts, evaluators, ampel.Collector, policy, subject, atts)
+	var chain []*api.ChainedSubject
+	originalSubject := subject
+	subject, chain, err = ampel.impl.ProcessChainedSubjects(ctx, opts, evaluators, ampel.Collector, policy, subject, atts)
 	if err != nil {
 		return nil, fmt.Errorf("processing chained subject: %w", err)
 	}
@@ -87,6 +89,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 			DateEnd:     timestamppb.Now(),
 			Policy:      &api.PolicyRef{},
 			EvalResults: []*api.EvalResult{},
+			Chain:       chain,
 		}, nil
 	}
 
@@ -113,6 +116,8 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("verifying subject: %w", err)
 	}
 
+	result.Chain = chain
+
 	// Assert the status from the evaluation results
 	if err := ampel.impl.AssertResult(policy, result); err != nil {
 		return nil, fmt.Errorf("asserting results: %w", err)
@@ -120,7 +125,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 
 	// Generate the results attestation. If the attestation is disabled in the
 	// options, this is a NOOP.
-	if err := ampel.impl.AttestResult(ctx, opts, subject, result); err != nil {
+	if err := ampel.impl.AttestResult(ctx, opts, originalSubject, result); err != nil {
 		return nil, fmt.Errorf("attesting results: %w", err)
 	}
 

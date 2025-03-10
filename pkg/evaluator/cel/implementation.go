@@ -118,12 +118,9 @@ func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, pl
 	}
 	ret[VarNameContext] = s
 
-	logrus.Infof("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
+	logrus.Debugf("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
 	for _, p := range plugins {
-		for name, val := range p.VarValues() {
-			logrus.Infof("Registered variable: %s: %+v", name, val)
-			ret[name] = val
-		}
+		maps.Copy(ret, p.VarValues())
 	}
 	return &ret, nil
 }
@@ -300,7 +297,7 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 	}
 	ret[VarNameContext] = s
 
-	logrus.Infof("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
+	logrus.Debugf("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
 	for _, p := range plugins {
 		maps.Copy(ret, p.VarValues())
 	}

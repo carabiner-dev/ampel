@@ -27,7 +27,9 @@ type AmpelVerifier interface {
 	AssertResult(*api.Policy, *api.Result) error
 	AttestResult(context.Context, *VerificationOptions, attestation.Subject, *api.Result) error
 	VerifySubject(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.Result, error)
-	ProcessChainedSubject(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *api.Policy, attestation.Subject, []attestation.Envelope) (attestation.Subject, error)
+	// ProcessChainedSubjects proceses the chain of attestations to find the ultimate
+	// subject a policy is supposed to operate on
+	ProcessChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *api.Policy, attestation.Subject, []attestation.Envelope) (attestation.Subject, []*api.ChainedSubject, error)
 }
 
 type AmpelStatusChecker interface {
