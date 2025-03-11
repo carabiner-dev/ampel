@@ -8,6 +8,7 @@ import (
 	"io"
 	"sync"
 
+	"github.com/carabiner-dev/ampel/internal/drivers/attester"
 	"github.com/carabiner-dev/ampel/internal/drivers/html"
 	"github.com/carabiner-dev/ampel/internal/drivers/markdown"
 	"github.com/carabiner-dev/ampel/internal/drivers/tty"
@@ -24,6 +25,7 @@ func LoadDefaultDrivers() {
 	drivers["tty"] = tty.New()
 	drivers["markdown"] = markdown.New()
 	drivers["html"] = html.New()
+	drivers["attestation"] = attester.New()
 	drMtx.Unlock()
 }
 

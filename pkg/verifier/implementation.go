@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
+	"strings"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
@@ -392,7 +394,7 @@ func (di *defaultIplementation) VerifySubject(
 // AttestResults writes an attestation captring the evaluation
 // results set.
 func (di *defaultIplementation) AttestResult(
-	ctx context.Context, opts *VerificationOptions, subject attestation.Subject, result *api.Result,
+	ctx context.Context, opts *VerificationOptions, result *api.Result,
 ) error {
 	if !opts.AttestResults {
 		return nil
@@ -407,16 +409,23 @@ func (di *defaultIplementation) AttestResult(
 	}
 
 	// Write the statement to json
-	return di.AttestResultToWriter(f, subject, result)
+	return di.AttestResultToWriter(f, result)
 }
 
 // AttestResults writes an attestation captring the evaluation
 // results set.
 func (di *defaultIplementation) AttestResultToWriter(
-	w io.Writer, subject attestation.Subject, result *api.Result,
+	w io.Writer, result *api.Result,
 ) error {
 	if result == nil {
 		return fmt.Errorf("unable to attest results, set is nil")
+	}
+
+	subject := result.Subject
+	if result.Chain != nil {
+		if len(result.Chain) > 0 {
+			subject = result.Chain[0].Source
+		}
 	}
 
 	// Create the predicate file
@@ -429,6 +438,69 @@ func (di *defaultIplementation) AttestResultToWriter(
 	stmt := intoto.NewStatement()
 	stmt.PredicateType = ampelPred.PredicateType
 	stmt.AddSubject(subject)
+	stmt.Predicate = pred
+
+	// Write the statement to json
+	return stmt.WriteJson(w)
+}
+
+func stringifyDigests(subject attestation.Subject) string {
+	s := []string{}
+	for algo, val := range subject.GetDigest() {
+		s = append(s, fmt.Sprintf("%s:%s", algo, val))
+	}
+
+	slices.Sort(s)
+	return strings.Join(s, "/")
+}
+
+// AttestResults writes an attestation captring the evaluation
+// results set.
+func (di *defaultIplementation) AttestResultSetToWriter(
+	w io.Writer, resultset *api.ResultSet,
+) error {
+	if resultset == nil {
+		return fmt.Errorf("unable to attest results, set is nil")
+	}
+
+	// TODO(puerco): This should probably be a method of the results set
+	seen := []string{}
+
+	// Create the statement
+	stmt := intoto.NewStatement()
+
+	for _, result := range resultset.Results {
+		subject := result.Subject
+		if result.Chain != nil {
+			if len(result.Chain) > 0 {
+				subject = result.Chain[0].Source
+			}
+		}
+
+		// If we already saw it, next:
+		if slices.Contains(seen, stringifyDigests(subject)) {
+			continue
+		}
+
+		// If we havent check if we have a matching pred
+		seen = append(seen, stringifyDigests(subject))
+		haveMatching := false
+		for _, s := range stmt.Subject {
+			if attestation.SubjectsMatch(s, subject) {
+				haveMatching = true
+				break
+			}
+		}
+		if !haveMatching {
+			stmt.AddSubject(subject)
+		}
+	}
+
+	// Create the predicate file
+	pred := ampelPred.NewPredicate()
+	pred.Parsed = resultset
+
+	stmt.PredicateType = ampelPred.PredicateType
 	stmt.Predicate = pred
 
 	// Write the statement to json

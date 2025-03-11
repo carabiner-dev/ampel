@@ -22,9 +22,9 @@ func (ampel *Ampel) Verify(
 		if err != nil {
 			return nil, err
 		}
-		return &v1.ResultSet{Results: []*v1.Result{res}}, nil
+		return &api.ResultSet{Results: []*v1.Result{res}}, nil
 	case *api.PolicySet:
-		var rs = &v1.ResultSet{}
+		var rs = &api.ResultSet{}
 		for i, p := range v.Policies {
 			res, err := ampel.VerifySubjectWithPolicy(ctx, opts, p, subject)
 			if err != nil {
@@ -56,7 +56,6 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 
 	// Process chained subjects:
 	var chain []*api.ChainedSubject
-	originalSubject := subject
 	subject, chain, err = ampel.impl.ProcessChainedSubjects(ctx, opts, evaluators, ampel.Collector, policy, subject, atts)
 	if err != nil {
 		return nil, fmt.Errorf("processing chained subject: %w", err)
@@ -126,7 +125,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 
 	// Generate the results attestation. If the attestation is disabled in the
 	// options, this is a NOOP.
-	if err := ampel.impl.AttestResult(ctx, opts, originalSubject, result); err != nil {
+	if err := ampel.impl.AttestResult(ctx, opts, result); err != nil {
 		return nil, fmt.Errorf("attesting results: %w", err)
 	}
 
@@ -135,6 +134,11 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 }
 
 // AttestResult writes an attestation capturing an evaluation result
-func (ampel *Ampel) AttestResult(w io.Writer, subject attestation.Subject, result *v1.Result) error {
-	return ampel.impl.AttestResultToWriter(w, subject, result)
+func (ampel *Ampel) AttestResult(w io.Writer, result *api.Result) error {
+	return ampel.impl.AttestResultToWriter(w, result)
+}
+
+// AttestResult writes an attestation capturing an evaluation result
+func (ampel *Ampel) AttestResultSet(w io.Writer, resultset *api.ResultSet) error {
+	return ampel.impl.AttestResultSetToWriter(w, resultset)
 }

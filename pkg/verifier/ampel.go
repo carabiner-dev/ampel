@@ -26,10 +26,13 @@ type AmpelVerifier interface {
 	CheckIdentities(*VerificationOptions, []*api.Identity, []attestation.Envelope) (bool, error)
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
 	AssertResult(*api.Policy, *api.Result) error
-	AttestResult(context.Context, *VerificationOptions, attestation.Subject, *api.Result) error
+	AttestResult(context.Context, *VerificationOptions, *api.Result) error
 
 	// AttestResultToWriter takes an evaluation result and writes an attestation to the supplied io.Writer
-	AttestResultToWriter(io.Writer, attestation.Subject, *api.Result) error
+	AttestResultToWriter(io.Writer, *api.Result) error
+
+	// AttestResultSetToWriter takes an policy resultset and writes an attestation to the supplied io.Writer
+	AttestResultSetToWriter(io.Writer, *api.ResultSet) error
 
 	VerifySubject(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.Result, error)
 	// ProcessChainedSubjects proceses the chain of attestations to find the ultimate
