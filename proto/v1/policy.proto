@@ -111,7 +111,7 @@ message PredicateSpec {
 
 // Tenet
 message Tenet {
-    int32 ID = 1;
+    string id = 1;
     string runtime = 2;
     string code = 3;
     PredicateSpec predicates = 4;
