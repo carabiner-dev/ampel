@@ -12,6 +12,25 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+func TestVariableLoad(t *testing.T) {
+	t.Parallel()
+	u := New()
+	env, err := cel.NewEnv(
+		u.Library(),
+	)
+	require.NoError(t, err)
+
+	ast, iss := env.Compile("github")
+	require.NoError(t, iss.Err())
+
+	program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
+	require.NoError(t, err)
+
+	_, _, err = program.Eval(u.VarValues())
+	require.NoError(t, err)
+
+}
+
 func TestParseRepo(t *testing.T) {
 	t.Parallel()
 	u := New()

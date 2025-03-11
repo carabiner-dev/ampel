@@ -37,7 +37,7 @@ func (ut *GitHubUtil) Functions() []cel.EnvOption {
 			"orgDescriptorFromURI",
 			cel.MemberOverload(
 				"github_orgDescriptorFromURI",
-				[]*cel.Type{GitHubType, cel.StringType}, cel.MapType(cel.StringType, cel.AnyType),
+				[]*cel.Type{GitHubType, cel.AnyType}, cel.MapType(cel.StringType, cel.AnyType),
 				cel.BinaryBinding(uriToOrgDescriptor),
 			),
 		),
@@ -93,6 +93,13 @@ func parseRepoURI(uri string) (map[string]string, error) {
 }
 
 var uriToRepoDescriptor = func(_ ref.Val, rhs ref.Val) ref.Val {
+	if v, ok := rhs.Value().([]ref.Val); ok {
+		if len(v) == 0 {
+			return types.String("")
+		}
+		rhs = v[0]
+	}
+
 	switch v := rhs.Value().(type) {
 	case string:
 		parts, err := parseRepoURI(v)
@@ -132,6 +139,13 @@ var uriToRepoDescriptor = func(_ ref.Val, rhs ref.Val) ref.Val {
 }
 
 var uriToOrgDescriptor = func(_ ref.Val, rhs ref.Val) ref.Val {
+	if v, ok := rhs.Value().([]ref.Val); ok {
+		if len(v) == 0 {
+			return types.String("")
+		}
+		rhs = v[0]
+	}
+
 	switch v := rhs.Value().(type) {
 	case string:
 		parts, err := parseRepoURI(v)
@@ -167,7 +181,7 @@ var uriToOrgDescriptor = func(_ ref.Val, rhs ref.Val) ref.Val {
 		return types.NewJSONStruct(reg, s)
 
 	default:
-		return types.NewErrFromString("unsupported type for repo parse")
+		return types.NewErrFromString(fmt.Sprintf("unsupported type for repo parse %T", rhs.Value()))
 	}
 }
 
@@ -176,7 +190,15 @@ var uriToBranchDescriptor = func(args ...ref.Val) ref.Val {
 		return types.NewErrFromString("missing arguments for branch descriptor")
 	}
 
-	repoUri, ok := args[1].Value().(string)
+	uri := args[1]
+	if v, ok := uri.Value().([]ref.Val); ok {
+		if len(v) == 0 {
+			return types.String("")
+		}
+		uri = v[0]
+	}
+
+	repoUri, ok := uri.Value().(string)
 	if !ok {
 		return types.NewErrFromString("unsupported type for repository uri")
 	}
@@ -249,7 +271,7 @@ func (ut *GitHubUtil) ConvertToType(typeVal ref.Type) ref.Val {
 		return GitHubType
 
 	default:
-		return types.NewErr("type conversion not allowed for protobom")
+		return types.NewErr("type conversion not allowed for github utility")
 	}
 }
 
