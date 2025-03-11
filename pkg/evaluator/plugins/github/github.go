@@ -49,6 +49,14 @@ func (ut *GitHubUtil) Functions() []cel.EnvOption {
 				cel.BinaryBinding(uriToRepoDescriptor),
 			),
 		),
+		cel.Function(
+			"branchDescriptorFromURI",
+			cel.MemberOverload(
+				"github_branchDescriptorFromURI",
+				[]*cel.Type{GitHubType, cel.StringType, cel.StringType}, cel.MapType(cel.StringType, cel.AnyType),
+				cel.FunctionBinding(uriToBranchDescriptor),
+			),
+		),
 	}
 }
 
@@ -161,6 +169,58 @@ var uriToOrgDescriptor = func(_ ref.Val, rhs ref.Val) ref.Val {
 	default:
 		return types.NewErrFromString("unsupported type for repo parse")
 	}
+}
+
+var uriToBranchDescriptor = func(args ...ref.Val) ref.Val {
+	if len(args) != 3 {
+		return types.NewErrFromString("missing arguments for branch descriptor")
+	}
+
+	repoUri, ok := args[1].Value().(string)
+	if !ok {
+		return types.NewErrFromString("unsupported type for repository uri")
+	}
+
+	branch, ok := args[2].Value().(string)
+	if !ok {
+		return types.NewErrFromString("branch name is not a string")
+	}
+
+	if branch == "" {
+		return types.NewErrFromString("branch name not set")
+	}
+
+	parts, err := parseRepoURI(repoUri)
+	if err != nil {
+		return types.NewErrFromString(err.Error())
+	}
+	if parts["repo"] == "" {
+		return types.NewErrFromString("unable to create descriptor, no repo name defined in URL")
+	}
+	name := fmt.Sprintf("%s/%s/%s@%s", parts["host"], parts["org"], parts["repo"], branch)
+
+	h := sha256.New()
+	h.Write([]byte(name))
+	digest := fmt.Sprintf("%x", h.Sum(nil))
+
+	mapa := map[string]any{
+		"name": name,
+		"uri":  fmt.Sprintf("git+https://%s", name),
+		"digest": map[string]any{
+			"sha256": digest,
+		},
+	}
+
+	reg, err := types.NewRegistry()
+	if err != nil {
+		return types.NewErrFromString(err.Error())
+	}
+	s, err := structpb.NewStruct(mapa)
+	if err != nil {
+		return types.NewErrFromString(err.Error())
+	}
+
+	return types.NewJSONStruct(reg, s)
 }
 
 var parseRepo = func(_ ref.Val, rhs ref.Val) ref.Val {

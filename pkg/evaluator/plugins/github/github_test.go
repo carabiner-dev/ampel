@@ -132,3 +132,46 @@ func TestUriToRepo(t *testing.T) {
 		})
 	}
 }
+
+func TestUriToBranch(t *testing.T) {
+	t.Parallel()
+	u := New()
+	env, err := cel.NewEnv(
+		u.Library(),
+	)
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		name     string
+		url      string
+		branch   string
+		expected map[string]any
+		mustErr  bool
+	}{
+		{"normal", "https://github.com/carabiner-dev/repo", "main", map[string]any{"name": "github.com/carabiner-dev/repo@main", "uri": "git+https://github.com/carabiner-dev/repo@main", "digest": map[string]string{"sha256": "68cd20e59b7e60c9bf7513f8970aba41e813916215526cbdd55742cd0898169b"}}, false},
+		{"no-scheme", "github.com/carabiner-dev/repo", "main", map[string]any{"name": "github.com/carabiner-dev/repo@main", "uri": "git+https://github.com/carabiner-dev/repo@main", "digest": map[string]string{"sha256": "68cd20e59b7e60c9bf7513f8970aba41e813916215526cbdd55742cd0898169b"}}, false},
+		{"no-branch", "github.com/carabiner-dev/", "", nil, true},
+		{"no-repo", "github.com/carabiner-dev/", "main", nil, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			ast, iss := env.Compile(fmt.Sprintf("github.branchDescriptorFromURI(\"%s\", \"%s\")", tc.url, tc.branch))
+			require.NoError(t, iss.Err())
+
+			program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
+			require.NoError(t, err)
+
+			result, _, err := program.Eval(u.VarValues())
+			if tc.mustErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			res := result.Value().(*structpb.Struct)
+			require.Equal(t, tc.expected["name"], res.Fields["name"].GetStringValue())
+			require.Equal(t, tc.expected["uri"], res.Fields["uri"].GetStringValue())
+			require.Equal(t, tc.expected["digest"].(map[string]string)["sha256"], res.Fields["digest"].GetStructValue().Fields["sha256"].GetStringValue())
+		})
+	}
+}
