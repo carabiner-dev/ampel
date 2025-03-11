@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/fatih/color"
-	v1 "github.com/in-toto/attestation/go/v1"
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/spf13/cobra"
-	"sigs.k8s.io/release-utils/util"
 
 	"github.com/carabiner-dev/ampel/internal/render"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
@@ -34,27 +34,13 @@ type verifyOptions struct {
 	Format           string
 	SubjectAlgorithm string
 	Collectors       []string
-	SubjectHashes    []string
-	SubjectPaths     []string
-	SubjectValues    []string
+	Subject          string
 }
 
 // AddFlags adds the flags
 func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringSliceVarP(
-		&o.SubjectValues, "subject", "s", []string{}, "list of hashes (algo:value) or paths to files to add as subjects ",
-	)
-
-	cmd.PersistentFlags().StringSliceVar(
-		&o.SubjectHashes, "hash-value", []string{}, "algorithm used to hash the subjects",
-	)
-
-	cmd.PersistentFlags().StringVar(
-		&o.SubjectAlgorithm, "hash-algo", "sha256", "algorithm used to hash the subjects",
-	)
-
-	cmd.PersistentFlags().StringSliceVar(
-		&o.SubjectPaths, "subject-file", []string{}, "path to files to use as subjects",
+	cmd.PersistentFlags().StringVarP(
+		&o.Subject, "subject", "s", "", "a hashes (algo:value) or paths to files to add as subjects ",
 	)
 
 	cmd.PersistentFlags().StringVarP(
@@ -82,27 +68,34 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	)
 }
 
-func (o *verifyOptions) SubjectValuesToDigests() []map[string]string {
+// SubjectStringToDescr parses the subkect string read from the command line
+// and returns a resource descriptor, either by synhesizing it from the specified
+// hash or by hashing a file.
+func (o *verifyOptions) SubjectStringToDescr() (attestation.Subject, error) {
 	if hashRegex == nil {
 		hashRegex = regexp.MustCompile(hashRegexStr)
 	}
-	ret := []map[string]string{}
-	for _, v := range o.SubjectValues {
-		pts := hashRegex.FindStringSubmatch(v)
-		if pts == nil {
-			continue
+
+	// If the string matches algo:hexValue then we never try to look
+	// for a file. Never.
+	pts := hashRegex.FindStringSubmatch(o.Subject)
+	if pts != nil {
+		algo := strings.ToLower(pts[0])
+		if _, ok := intoto.HashAlgorithms[algo]; !ok {
+			return nil, errors.New("invalid hash algorithm in subject")
 		}
-		ret = append(ret, map[string]string{
-			pts[1]: pts[2],
-		})
+		return &intoto.ResourceDescriptor{
+			Digest: map[string]string{algo: pts[1]},
+		}, nil
 	}
-	return ret
+
+	return subject.FromPath(o.Subject)
 }
 
 func (o *verifyOptions) Validate() error {
 	var errs = []error{}
-	if len(o.SubjectHashes) == 0 && len(o.SubjectPaths) == 0 && len(o.SubjectValuesToDigests()) == 0 {
-		errs = append(errs, errors.New("no subjects specified"))
+	if o.Subject == "" {
+		errs = append(errs, errors.New("no subject specified"))
 	}
 
 	if o.PolicyFile == "" {
@@ -166,21 +159,15 @@ using a collector.
 			if hashRegex == nil {
 				hashRegex = regexp.MustCompile(hashRegexStr)
 			}
-			// Transfer the files to the paths array
-			vals := []string{}
-			for _, v := range opts.SubjectValues {
-				if util.Exists(v) {
-					opts.SubjectPaths = append(opts.SubjectPaths, v)
-					continue
-				}
-				res := hashRegex.FindStringSubmatch(v)
-				if res == nil {
-					return fmt.Errorf("invalid subject: %q", v)
-				}
-				vals = append(vals, v)
+
+			if len(args) > 0 && opts.Subject != "" {
+				return fmt.Errorf("subject specified twice (-s and arg)")
 			}
 
-			opts.SubjectValues = vals
+			if len(args) > 0 {
+				opts.Subject = args[0]
+			}
+
 			return nil
 		},
 		RunE: func(c *cobra.Command, args []string) error {
@@ -192,21 +179,10 @@ using a collector.
 			// Supress output from here as options are correct
 			c.SilenceUsage = true
 
-			// Generate the atestation subjects from the files
-			var subjects = []attestation.Subject{}
-			for _, path := range opts.SubjectPaths {
-				sub, err := subject.FromPath(path)
-				if err != nil {
-					return fmt.Errorf("generating subject from %q: %w", path, err)
-				}
-				subjects = append(subjects, sub)
-			}
-
-			for _, h := range opts.SubjectValuesToDigests() {
-				subjects = append(subjects, &v1.ResourceDescriptor{
-					Digest: h,
-				})
-
+			// Read the subject from the specified string:
+			subject, err := opts.SubjectStringToDescr()
+			if err != nil {
+				return fmt.Errorf("resolving subject string: %w", err)
 			}
 
 			// Parse the polcy file
@@ -215,7 +191,6 @@ using a collector.
 			if err != nil {
 				return fmt.Errorf("parsing policy: %w", err)
 			}
-			// fmt.Printf("policy: %+v\n", p)
 
 			// Load the built in repository types
 			if err := collector.LoadDefaultRepositoryTypes(); err != nil {
@@ -227,7 +202,7 @@ using a collector.
 				return fmt.Errorf("creating verifier: %w", err)
 			}
 
-			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, p, subjects[0])
+			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, p, subject)
 			if err != nil {
 				return fmt.Errorf("runnig subject verification: %w", err)
 			}
@@ -237,7 +212,9 @@ using a collector.
 				return err
 			}
 
-			eng.RenderResultSet(os.Stdout, results)
+			if err := eng.RenderResultSet(os.Stdout, results); err != nil {
+				return fmt.Errorf("rendering results: %w", err)
+			}
 
 			return nil
 		},
