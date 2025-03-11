@@ -30,3 +30,24 @@ type Subject interface {
 	GetUri() string
 	GetDigest() map[string]string
 }
+
+func SubjectsMatch(s1, s2 Subject) bool {
+	hashes1 := s1.GetDigest()
+	hashes2 := s1.GetDigest()
+	if len(hashes1) == 0 {
+		return false
+	}
+
+	// To match, all common algos in s1 and s2 must match and there has
+	// to be at least one common algorithm hash.
+	matches := 0
+	for algo, val1 := range hashes1 {
+		if val2, ok := hashes2[algo]; ok {
+			matches++
+			if val1 != val2 {
+				return false
+			}
+		}
+	}
+	return matches > 1
+}
