@@ -11,10 +11,14 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 )
 
-type Plugin struct{}
+type Plugin struct {
+	Hasher *Hasher
+}
 
 func New() *Plugin {
-	return &Plugin{}
+	return &Plugin{
+		Hasher: &Hasher{},
+	}
 }
 
 func (h *Plugin) Capabilities() []api.Capability {
@@ -28,7 +32,7 @@ func (h *Plugin) CanRegisterFor(c class.Class) bool {
 }
 
 func (h *Plugin) Library() cel.EnvOption {
-	return cel.Lib(&Hasher{})
+	return cel.Lib(h.Hasher)
 }
 
 func (h *Plugin) VarValues() map[string]any {
@@ -39,6 +43,6 @@ func (h *Plugin) VarValues() map[string]any {
 
 	return map[string]any{
 		"hashAlgorithms": algos,
-		"hasher":         Hasher{},
+		"hasher":         h.Hasher,
 	}
 }

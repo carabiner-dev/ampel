@@ -9,10 +9,14 @@ import (
 	"github.com/google/cel-go/cel"
 )
 
-type Plugin struct{}
+type Plugin struct {
+	Tool *UrlTool
+}
 
 func New() *Plugin {
-	return &Plugin{}
+	return &Plugin{
+		Tool: &UrlTool{},
+	}
 }
 
 func (h *Plugin) Capabilities() []api.Capability {
@@ -26,11 +30,11 @@ func (h *Plugin) CanRegisterFor(c class.Class) bool {
 }
 
 func (h *Plugin) Library() cel.EnvOption {
-	return cel.Lib(&UrlTool{})
+	return cel.Lib(h.Tool)
 }
 
 func (h *Plugin) VarValues() map[string]any {
 	return map[string]any{
-		"url": UrlTool{},
+		"url": h.Tool,
 	}
 }

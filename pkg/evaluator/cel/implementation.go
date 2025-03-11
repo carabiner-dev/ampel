@@ -275,7 +275,7 @@ func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *m
 	if err != nil {
 		return nil, fmt.Errorf("generating program from AST: %w", err)
 	}
-	// logrus.Debugf("variables: %+v", variables)
+
 	if variables == nil {
 		return nil, fmt.Errorf("variable set undefined")
 	}
