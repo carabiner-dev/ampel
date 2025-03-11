@@ -183,25 +183,15 @@ func (e *Evaluator) ExecTenet(
 	if err != nil {
 		return nil, fmt.Errorf("evaluating ASTs: %w", err)
 	}
+	// TODO(puerco) This should not happen here, Evaluate should init the result
+	// with the tenet data
+	result.Id = tenet.Id
 
 	outStruct, err := structpb.NewStruct(outputMap)
 	if err != nil {
 		return nil, fmt.Errorf("converting outputs to struct: %w", err)
 	}
 	result.Output = outStruct
-	// result.Output = []*api.Output{}
-	// for _, o := range tenet.Outputs {
-	// 	val, err := structpb.NewValue(outputMap[o.Id])
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("generating value from +%v: %w", outputMap[o.Id], err)
-	// 	}
-	// 	result.Output = append(result.Output, &api.Output{
-	// 		Id:    o.Id,
-	// 		Type:  o.Type,
-	// 		Code:  o.Code,
-	// 		Value: val,
-	// 	})
-	// }
 
 	return result, err
 }

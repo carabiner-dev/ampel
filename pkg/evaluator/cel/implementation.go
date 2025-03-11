@@ -159,7 +159,7 @@ func (dce *defaulCelEvaluator) EnsurePredicates(tenet *api.Tenet, vars *map[stri
 
 	if predFail {
 		return &api.EvalResult{
-			// Id:         "",
+			Id:         tenet.Id,
 			Status:     api.StatusFAIL,
 			Date:       timestamppb.Now(),
 			Output:     &structpb.Struct{},
