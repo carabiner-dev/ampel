@@ -29,6 +29,7 @@ type CelEvaluatorImplementation interface {
 	CompileCode(*cel.Env, string) (*cel.Ast, error)
 	CreateEnvironment(*options.EvaluatorOptions, map[string]Plugin) (*cel.Env, error)
 	BuildVariables(*options.EvaluatorOptions, map[string]Plugin, *api.Tenet, []attestation.Predicate) (*map[string]interface{}, error)
+	EnsurePredicates(*api.Tenet, *map[string]interface{}) (*api.EvalResult, error)
 	EvaluateOutputs(*cel.Env, map[string]*cel.Ast, *map[string]any) (map[string]any, error)
 	Evaluate(*cel.Env, *cel.Ast, *map[string]any) (*api.EvalResult, error)
 	Assert(*api.ResultSet) bool
@@ -106,6 +107,9 @@ func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, pl
 		preds = append(preds, val)
 	}
 	ret[VarNamePredicates] = preds
+	if len(preds) > 0 {
+		ret[VarNamePredicate] = preds[0]
+	}
 
 	// Context
 	var contextData = map[string]any{}
@@ -123,6 +127,51 @@ func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, pl
 		maps.Copy(ret, p.VarValues())
 	}
 	return &ret, nil
+}
+
+// EnsurePredicates ensures variable processing produced at least one predicate
+// for the tenet to evaluate agains.
+func (dce *defaulCelEvaluator) EnsurePredicates(tenet *api.Tenet, vars *map[string]interface{}) (*api.EvalResult, error) {
+	// Fiorst, check if the tenet needs them
+	if tenet.Predicates == nil {
+		return nil, nil
+	}
+
+	if len(tenet.Predicates.Types) == 0 {
+		return nil, nil
+	}
+
+	predFail := false
+
+	// Short cirtcuit here if there are no suitable predicates
+	predLlist, ok := (*vars)[VarNamePredicates]
+	if !ok {
+		predFail = true
+	} else {
+		l, ok := predLlist.([]*structpb.Value)
+		if !ok {
+			predFail = true
+		}
+		if len(l) == 0 {
+			predFail = true
+		}
+	}
+
+	if predFail {
+		return &api.EvalResult{
+			// Id:         "",
+			Status:     api.StatusFAIL,
+			Date:       timestamppb.Now(),
+			Output:     &structpb.Struct{},
+			Statements: []*api.StatementRef{},
+			Error: &api.Error{
+				Message:  "No suitable predicates found",
+				Guidance: "None of the loaded attestations match the tenet requirements",
+			},
+		}, nil
+	}
+
+	return nil, nil
 }
 
 // EvaluateOutputs

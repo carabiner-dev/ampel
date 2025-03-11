@@ -161,6 +161,15 @@ func (e *Evaluator) ExecTenet(
 		return nil, fmt.Errorf("building variables for eval environment: %w", err)
 	}
 
+	// If the tenet requires predicates, ensure the variables array has them
+	status, err := e.impl.EnsurePredicates(tenet, vars)
+	if err != nil {
+		return nil, fmt.Errorf("ensuring predicates are loaded: %w", err)
+	}
+	if status != nil {
+		return status, nil
+	}
+
 	outputMap, err := e.impl.EvaluateOutputs(e.Environment, outputAsts, vars)
 	if err != nil {
 		return nil, fmt.Errorf("evaluating outputs: %w", err)
