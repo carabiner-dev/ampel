@@ -31,6 +31,7 @@ func New(opts ...fnOpts) (*Collector, error) {
 	c := &Collector{
 		Extensions:       []string{"json", "jsonl", "spdx", "cdx", "bundle"},
 		IgnoreOtherFiles: true,
+		Path:             ".",
 	}
 	for _, f := range opts {
 		if err := f(c); err != nil {
@@ -56,12 +57,23 @@ var WithFS = func(iofs fs.FS) fnOpts {
 	}
 }
 
+var WithPath = func(path string) fnOpts {
+	return func(c *Collector) error {
+		c.Path = strings.TrimPrefix(path, "/")
+		if c.Path == "" {
+			c.Path = "."
+		}
+		return nil
+	}
+}
+
 var _ attestation.Fetcher = (*Collector)(nil)
 
 // Collector is the filesystem collector
 type Collector struct {
 	Extensions       []string
 	IgnoreOtherFiles bool
+	Path             string
 	FS               fs.FS
 }
 
@@ -74,12 +86,13 @@ func (c *Collector) Fetch(ctx context.Context, opts attestation.FetchOptions) ([
 	ret := []attestation.Envelope{}
 
 	// Walk the filesystem and read any attestations
-	if err := fs.WalkDir(c.FS, ".", func(path string, d fs.DirEntry, err error) error {
+	if err := fs.WalkDir(c.FS, c.Path, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("scanning at %s: %w", path, err)
+		}
+
 		if d.IsDir() {
 			return nil
-		}
-		if err != nil {
-			return err
 		}
 
 		if c.IgnoreOtherFiles {
@@ -108,7 +121,7 @@ func (c *Collector) Fetch(ctx context.Context, opts attestation.FetchOptions) ([
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("scanning filesystem: %w", err)
+		return nil, fmt.Errorf("scanning filesystem at %s: %w", c.Path, err)
 	}
 	return ret, nil
 }

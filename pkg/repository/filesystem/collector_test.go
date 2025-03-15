@@ -25,10 +25,18 @@ func TestFetch(t *testing.T) {
 		{"all-default", nil, 2, true, false},
 		{"ext-spdx", []string{"spdx"}, 1, true, false},
 		{"ext-spdx-no-ignore", []string{"spdx"}, 2, false, false},
+		{"subpath", nil, 1, false, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			collector, err := New(WithFS(os.DirFS("testdata")))
+			// This is hardcoded but we only have on subpath test
+			if tc.name == "subpath" {
+				collector, err = New(
+					WithFS(os.DirFS("testdata")),
+					WithPath("subdir"),
+				)
+			}
 			require.NoError(t, err)
 			collector.IgnoreOtherFiles = tc.ignoreOther
 			if tc.exts != nil {
