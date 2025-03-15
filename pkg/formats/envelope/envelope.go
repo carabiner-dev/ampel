@@ -42,7 +42,7 @@ func (list *ParserList) Parse(r io.Reader) ([]attestation.Envelope, error) {
 		logrus.Debugf("Checking if envelope is %s", f)
 		env, err := parser.ParseStream(bytes.NewReader(data))
 		if err == nil {
-			logrus.Infof("Found envelope type: %s ", f)
+			logrus.Debugf("Found envelope type: %s ", f)
 			return env, nil
 		}
 		if !errors.Is(err, attestation.ErrNotCorrectFormat) {
