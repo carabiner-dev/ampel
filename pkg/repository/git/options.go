@@ -34,7 +34,11 @@ func WithLocator(init string) optFn {
 			return fmt.Errorf("parsing url: %w", err)
 		}
 		path, branch, ok := strings.Cut(u.Path, "@")
-		opts.URL = u.Scheme + u.Hostname() + path
+		sch := u.Scheme
+		if sch != "" {
+			sch += "://"
+		}
+		opts.URL = sch + u.Hostname() + path
 		if ok {
 			opts.Ref = branch
 		}
