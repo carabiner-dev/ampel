@@ -112,7 +112,8 @@ func TestFetch(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			var agent = New()
+			agent, err := New()
+			require.NoError(t, err)
 			for _, fn := range tc.fn {
 				ff := &fakeFetcher{
 					fetchFunc: fn,
@@ -211,7 +212,8 @@ func TestFetchAttestationsBySubject(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			var agent = New()
+			agent, err := New()
+			require.NoError(t, err)
 			for _, fn := range tc.fn {
 				ff := &fakeFetcher{
 					fetchBySubjectFunc: fn,
@@ -312,7 +314,8 @@ func TestFetchAttestationsByPredicateType(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			var agent = New()
+			agent, err := New()
+			require.NoError(t, err)
 			for _, fn := range tc.fn {
 				ff := &fakeFetcher{
 					fetchByPredicateTypeFunc: fn,

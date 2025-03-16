@@ -20,8 +20,14 @@ var (
 )
 
 // New returns a new agent with the default options
-func New() *Agent {
-	return NewWithOptions(&defaultOptions)
+func New(funcs ...InitFunction) (*Agent, error) {
+	agent := NewWithOptions(&defaultOptions)
+	for _, fn := range funcs {
+		if err := fn(agent); err != nil {
+			return nil, err
+		}
+	}
+	return agent, nil
 }
 
 // NewWithOptions returns a new agent configured with a specific options set
@@ -48,6 +54,12 @@ func (agent *Agent) AddRepositoryFromString(init string) error {
 	if err != nil {
 		return fmt.Errorf("building repo: %w", err)
 	}
+	agent.Repositories = append(agent.Repositories, repo)
+	return nil
+}
+
+// AddRepsitory adds a new repository to collect attestations
+func (agent *Agent) AddRepsitory(repo attestation.Repository) error {
 	agent.Repositories = append(agent.Repositories, repo)
 	return nil
 }

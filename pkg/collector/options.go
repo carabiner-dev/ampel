@@ -22,6 +22,28 @@ type Options struct {
 	Store           attestation.StoreOptions
 }
 
+type InitFunction func(*Agent) error
+
+func WithRepository(repo attestation.Repository) InitFunction {
+	return func(agent *Agent) error {
+		return agent.AddRepsitory(repo)
+	}
+}
+
+func WithParallelFetches(threads int) InitFunction {
+	return func(agent *Agent) error {
+		agent.Options.ParallelFetches = threads
+		return nil
+	}
+}
+
+func WithParallelStores(threads int) InitFunction {
+	return func(agent *Agent) error {
+		agent.Options.ParallelStores = threads
+		return nil
+	}
+}
+
 // FetchOptionsFunc are functions to define options when fetching
 type FetchOptionsFunc func(*attestation.FetchOptions)
 

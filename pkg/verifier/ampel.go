@@ -48,10 +48,14 @@ type AmpelStatusChecker interface {
 }
 
 func New(opts ...fnOpt) (*Ampel, error) {
+	agent, err := collector.New()
+	if err != nil {
+		return nil, err
+	}
 	ampel := &Ampel{
 		impl:      &defaultIplementation{},
 		checker:   &defaultStatusChecker{},
-		Collector: collector.New(),
+		Collector: agent,
 	}
 
 	for _, opFn := range opts {
