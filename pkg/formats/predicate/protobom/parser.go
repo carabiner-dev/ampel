@@ -7,6 +7,8 @@ import (
 	"slices"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/cyclonedx"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/spdx"
 )
 
 const PredicateType attestation.PredicateType = "application/protobom"
@@ -20,7 +22,10 @@ func New() *Parser {
 	return &Parser{}
 }
 
-var PredicateTypes = []attestation.PredicateType{}
+var PredicateTypes = []attestation.PredicateType{
+	spdx.PredicateType,
+	cyclonedx.PredicateType,
+}
 
 // Parse generates a generic JSON predicate object from any JSON it gets.
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
