@@ -436,7 +436,7 @@ func (di *defaultIplementation) AttestResultToWriter(
 
 	// Create the statement
 	stmt := intoto.NewStatement()
-	stmt.PredicateType = ampelPred.PredicateType
+	stmt.PredicateType = ampelPred.PredicateTypeResults
 	stmt.AddSubject(subject)
 	stmt.Predicate = pred
 
@@ -500,7 +500,7 @@ func (di *defaultIplementation) AttestResultSetToWriter(
 	pred := ampelPred.NewPredicate()
 	pred.Parsed = resultset
 
-	stmt.PredicateType = ampelPred.PredicateType
+	stmt.PredicateType = ampelPred.PredicateTypeResults
 	stmt.Predicate = pred
 
 	// Write the statement to json

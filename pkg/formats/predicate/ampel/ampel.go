@@ -13,11 +13,19 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-var PredicateType = attestation.PredicateType("https://carabiner.dev/ampel/results/v0.0.1")
+var (
+	PredicateTypeResults   = attestation.PredicateType("https://carabiner.dev/ampel/results/v0.0.1")
+	PredicateTypePolicy    = attestation.PredicateType("https://carabiner.dev/ampel/policy/v0.0.1")
+	PredicateTypePolicySet = attestation.PredicateType("https://carabiner.dev/ampel/policyset/v0.0.1")
+
+	PredicateTypes = []attestation.PredicateType{
+		PredicateTypeResults, PredicateTypePolicy, PredicateTypePolicySet,
+	}
+)
 
 func NewPredicate() *generic.Predicate {
 	return &generic.Predicate{
-		Type: PredicateType,
+		Type: PredicateTypeResults,
 	}
 }
 
@@ -29,16 +37,64 @@ type Parser struct{}
 
 // Parse reads a data slice and unmarshals it into an ampel predicate
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
+	att, err := p.ParseResultsPredicate(data)
+	if err == nil {
+		return att, err
+	}
+
+	att, err = p.ParsePolicySetPredicate(data)
+	if err == nil {
+		return att, err
+	}
+
+	att, err = p.ParsePolicyPredicate(data)
+	if err == nil {
+		return att, err
+	}
+	return nil, attestation.ErrNotCorrectFormat
+}
+
+func (p *Parser) ParsePolicySetPredicate(data []byte) (attestation.Predicate, error) {
+	policy := &api.PolicySet{}
+	if err := protojson.Unmarshal(data, policy); err != nil {
+		return nil, fmt.Errorf("unmarshaling predicate data: %w", err)
+	}
+	pred := NewPredicate()
+	pred.Type = PredicateTypePolicySet
+	pred.Data = data
+	pred.Parsed = policy
+	return pred, nil
+}
+
+func (p *Parser) ParsePolicyPredicate(data []byte) (attestation.Predicate, error) {
+	policy := &api.Policy{}
+	if err := protojson.Unmarshal(data, policy); err != nil {
+		return nil, fmt.Errorf("unmarshaling predicate data: %w", err)
+	}
+	pred := NewPredicate()
+	pred.Type = PredicateTypePolicy
+	pred.Data = data
+	pred.Parsed = policy
+	return pred, nil
+}
+
+func (p *Parser) ParseResultsPredicate(data []byte) (attestation.Predicate, error) {
 	set := &api.ResultSet{}
 	if err := protojson.Unmarshal(data, set); err != nil {
 		return nil, fmt.Errorf("unmarshaling predicate data: %w", err)
 	}
 	pred := NewPredicate()
+	pred.Type = PredicateTypeResults
 	pred.Data = data
 	pred.Parsed = set
 	return pred, nil
 }
 
 func (*Parser) SupportsType(predTypes ...attestation.PredicateType) bool {
-	return slices.Contains(predTypes, PredicateType)
+	for _, p := range PredicateTypes {
+		if slices.Contains(predTypes, p) {
+			return true
+		}
+	}
+	return false
 }

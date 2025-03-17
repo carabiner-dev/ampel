@@ -29,18 +29,20 @@ type ParsersList map[attestation.PredicateType]attestation.PredicateParser
 
 // Parsers
 var Parsers = ParsersList{
-	protobom.PredicateType:  protobom.New(),
-	spdx.PredicateType:      spdx.New(),
-	cyclonedx.PredicateType: cyclonedx.New(),
-	ampel.PredicateType:     ampel.New(),
-	vulns.PredicateType:     vulns.New(),
-	trivy.PredicateType:     trivy.New(),
-	osv.PredicateType:       osv.New(),
-	openvex.PredicateType:   openvex.New(),
-	openeox.PredicateType:   openeox.New(),
-	slsa.PredicateType10:    slsa.NewParserV10(),
-	slsa.PredicateType10:    slsa.NewParserV11(),
-	slsa.PredicateType02:    slsa.NewParserV02(),
+	protobom.PredicateType:       protobom.New(),
+	spdx.PredicateType:           spdx.New(),
+	cyclonedx.PredicateType:      cyclonedx.New(),
+	ampel.PredicateTypeResults:   ampel.New(),
+	ampel.PredicateTypePolicy:    ampel.New(),
+	ampel.PredicateTypePolicySet: ampel.New(),
+	vulns.PredicateType:          vulns.New(),
+	trivy.PredicateType:          trivy.New(),
+	osv.PredicateType:            osv.New(),
+	openvex.PredicateType:        openvex.New(),
+	openeox.PredicateType:        openeox.New(),
+	slsa.PredicateType10:         slsa.NewParserV10(),
+	slsa.PredicateType10:         slsa.NewParserV11(),
+	slsa.PredicateType02:         slsa.NewParserV02(),
 }
 
 type ParseOption func(*Options)
