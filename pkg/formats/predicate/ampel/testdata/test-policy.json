@@ -1,0 +1,31 @@
+{
+    "id": "slsa",
+
+    "metadata": {
+        "runtime": "cel@v0"
+    },
+    "policies": [
+        {
+            "id": "has-provenance",
+            "meta": {
+                "description": "Verify the artifact was built in the expected environment",
+                "assert_mode": "AND"
+            },
+            "tenets": [
+                {
+                    "code": "size(predicates) > 0",
+                    "predicates": {
+                        "types": ["https://slsa.dev/provenance/v0.2"]
+                    },
+                    "assessment": {
+                        "message": "Found a signed SLSA provenance attestation"
+                    },
+                    "error": {
+                        "message": "No provenance data found",
+                        "guidance": "Set up the project's build to generate a slsa attestation"
+                    }
+                }
+            ]
+        }
+    ]
+}
