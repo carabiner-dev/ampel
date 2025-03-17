@@ -35,7 +35,7 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 
 // SupportsType always returns true because the json parser
 // is a catchall predicate parser.
-func (p *Parser) SupportsType(testTypes ...string) bool {
+func (p *Parser) SupportsType(testTypes ...attestation.PredicateType) bool {
 	return true
 }
 

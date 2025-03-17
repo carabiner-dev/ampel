@@ -23,8 +23,8 @@ func New() *Parser {
 }
 
 // SupportsType returns true if the OSV parser supports a type
-func (*Parser) SupportsType(predTypes ...string) bool {
-	return slices.Contains(predTypes, string(PredicateType))
+func (*Parser) SupportsType(predTypes ...attestation.PredicateType) bool {
+	return slices.Contains(predTypes, PredicateType)
 }
 
 // Parse parses a byte slice into a OSV predicate

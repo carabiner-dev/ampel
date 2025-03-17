@@ -51,16 +51,16 @@ func (_ *ParserV02) Parse(data []byte) (attestation.Predicate, error) {
 	return parseProvenanceV02(data)
 }
 
-func (_ *ParserV10) SupportsType(types ...string) bool {
-	return slices.Contains(types, string(PredicateType10))
+func (_ *ParserV10) SupportsType(types ...attestation.PredicateType) bool {
+	return slices.Contains(types, PredicateType10)
 }
 
-func (_ *ParserV11) SupportsType(types ...string) bool {
-	return slices.Contains(types, string(PredicateType11))
+func (_ *ParserV11) SupportsType(types ...attestation.PredicateType) bool {
+	return slices.Contains(types, PredicateType11)
 }
 
-func (_ *ParserV02) SupportsType(types ...string) bool {
-	return slices.Contains(types, string(PredicateType02))
+func (_ *ParserV02) SupportsType(types ...attestation.PredicateType) bool {
+	return slices.Contains(types, PredicateType02)
 }
 
 func parseProvenanceV11(data []byte) (attestation.Predicate, error) {

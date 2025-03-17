@@ -71,6 +71,9 @@ func WithTypeHints(hints []attestation.PredicateType) ParseOption {
 func (pl *ParsersList) GetTypeParsers(predicateTypes []attestation.PredicateType) *ParsersList {
 	ret := ParsersList{}
 	for t, p := range *pl {
+		if p.SupportsType(predicateTypes...) {
+
+		}
 		if slices.Contains(predicateTypes, t) {
 			ret[t] = p
 		}

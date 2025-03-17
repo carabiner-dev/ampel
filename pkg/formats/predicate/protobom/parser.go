@@ -20,7 +20,7 @@ func New() *Parser {
 	return &Parser{}
 }
 
-var PredicateTypes = []string{}
+var PredicateTypes = []attestation.PredicateType{}
 
 // Parse generates a generic JSON predicate object from any JSON it gets.
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
@@ -45,7 +45,7 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 	// }, err
 }
 
-func (p *Parser) SupportsType(testTypes ...string) bool {
+func (p *Parser) SupportsType(testTypes ...attestation.PredicateType) bool {
 	for _, pt := range PredicateTypes {
 		if slices.Contains(testTypes, pt) {
 			return true

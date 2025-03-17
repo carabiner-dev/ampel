@@ -24,8 +24,8 @@ func New() *Parser {
 	return &Parser{}
 }
 
-func (*Parser) SupportsType(predTypes ...string) bool {
-	return slices.Contains(predTypes, string(PredicateType))
+func (*Parser) SupportsType(predTypes ...attestation.PredicateType) bool {
+	return slices.Contains(predTypes, PredicateType)
 }
 
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
