@@ -103,10 +103,11 @@ func (pl *ParsersList) Parse(data []byte, optFn ...ParseOption) (attestation.Pre
 	for f, p := range *ps {
 		logrus.Debugf("Checking if predicate is %s", f)
 		// If we have predicate type hints, check if the parser can handle them
-		if !p.SupportsType(opts.TypeHints...) {
+		if len(opts.TypeHints) > 0 && !p.SupportsType(opts.TypeHints...) {
 			logrus.Debug("  ... not supported by parser?!")
 			continue
 		}
+
 		pred, err := p.Parse(data)
 		if err == nil {
 			logrus.Infof("Found predicate of type %s", f)
