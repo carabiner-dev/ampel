@@ -26,7 +26,7 @@ type InitFunction func(*Agent) error
 
 func WithRepository(repo attestation.Repository) InitFunction {
 	return func(agent *Agent) error {
-		return agent.AddRepsitory(repo)
+		return agent.AddRepository(repo)
 	}
 }
 

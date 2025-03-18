@@ -197,7 +197,7 @@ using a collector.
 				return fmt.Errorf("loading repository collector types: %w", err)
 			}
 			// Run the ampel verifier
-			ampel, err := verifier.New(verifier.WithCollectors(opts.Collectors))
+			ampel, err := verifier.New(verifier.WithCollectorInits(opts.Collectors))
 			if err != nil {
 				return fmt.Errorf("creating verifier: %w", err)
 			}

@@ -59,8 +59,8 @@ func (agent *Agent) AddRepositoryFromString(init string) error {
 }
 
 // AddRepsitory adds a new repository to collect attestations
-func (agent *Agent) AddRepsitory(repo attestation.Repository) error {
-	agent.Repositories = append(agent.Repositories, repo)
+func (agent *Agent) AddRepository(repos ...attestation.Repository) error {
+	agent.Repositories = append(agent.Repositories, repos...)
 	return nil
 }
 

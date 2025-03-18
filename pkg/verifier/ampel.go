@@ -68,7 +68,20 @@ func New(opts ...fnOpt) (*Ampel, error) {
 
 type fnOpt func(*Ampel) error
 
-var WithCollector = func(init string) fnOpt {
+var WithCollector = func(repository attestation.Repository) fnOpt {
+	return func(a *Ampel) error {
+		return a.Collector.AddRepository(repository)
+	}
+}
+
+var WithCollectors = func(repos []attestation.Repository) fnOpt {
+	return func(a *Ampel) error {
+		return a.Collector.AddRepository(repos...)
+	}
+}
+
+// WithCollectorInit adds a collector from an init string
+var WithCollectorInit = func(init string) fnOpt {
 	return func(ampel *Ampel) error {
 		if err := ampel.Collector.AddRepositoryFromString(init); err != nil {
 			return err
@@ -77,7 +90,8 @@ var WithCollector = func(init string) fnOpt {
 	}
 }
 
-var WithCollectors = func(init []string) fnOpt {
+// WithCollectorInit adds multiple collectors from a list of init strings
+var WithCollectorInits = func(init []string) fnOpt {
 	return func(ampel *Ampel) error {
 		for _, s := range init {
 			if err := ampel.Collector.AddRepositoryFromString(s); err != nil {
