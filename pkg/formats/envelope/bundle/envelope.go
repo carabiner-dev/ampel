@@ -36,7 +36,7 @@ func (e *Envelope) GetStatement() attestation.Statement {
 	ip := intoto.Parser{}
 	statement, err := ip.Parse(e.GetDsseEnvelope().GetPayload())
 	if err != nil {
-		logrus.Error("error parsing intoto payload: %w", err)
+		logrus.Debugf("error parsing intoto payload: %v", err)
 		return nil
 	}
 	logrus.Debugf("bundled predicate is of type %s", statement.GetPredicateType())

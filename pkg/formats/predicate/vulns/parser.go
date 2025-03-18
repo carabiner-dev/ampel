@@ -46,7 +46,10 @@ func parseV2(data []byte) (*generic.Predicate, error) {
 		// Transform the error to our wrong type error
 		if strings.Contains(err.Error(), "proto:") && strings.Contains(err.Error(), "syntax error") && strings.Contains(err.Error(), "invalid value") {
 			return nil, attestation.ErrNotCorrectFormat
+		} else if strings.Contains(err.Error(), "proto:") && strings.Contains(err.Error(), `unknown field "`) {
+			return nil, attestation.ErrNotCorrectFormat
 		}
+
 		return nil, fmt.Errorf("error parsing v02 vuln predicate: %s", err)
 	}
 	pred := &generic.Predicate{

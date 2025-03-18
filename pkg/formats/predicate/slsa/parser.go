@@ -39,27 +39,27 @@ func NewParserV11() *ParserV11 {
 	return &ParserV11{}
 }
 
-func (_ *ParserV10) Parse(data []byte) (attestation.Predicate, error) {
+func (*ParserV10) Parse(data []byte) (attestation.Predicate, error) {
 	return parseProvenanceV10(data)
 }
 
-func (_ *ParserV11) Parse(data []byte) (attestation.Predicate, error) {
+func (*ParserV11) Parse(data []byte) (attestation.Predicate, error) {
 	return parseProvenanceV11(data)
 }
 
-func (_ *ParserV02) Parse(data []byte) (attestation.Predicate, error) {
+func (*ParserV02) Parse(data []byte) (attestation.Predicate, error) {
 	return parseProvenanceV02(data)
 }
 
-func (_ *ParserV10) SupportsType(types ...attestation.PredicateType) bool {
+func (*ParserV10) SupportsType(types ...attestation.PredicateType) bool {
 	return slices.Contains(types, PredicateType10)
 }
 
-func (_ *ParserV11) SupportsType(types ...attestation.PredicateType) bool {
+func (*ParserV11) SupportsType(types ...attestation.PredicateType) bool {
 	return slices.Contains(types, PredicateType11)
 }
 
-func (_ *ParserV02) SupportsType(types ...attestation.PredicateType) bool {
+func (*ParserV02) SupportsType(types ...attestation.PredicateType) bool {
 	return slices.Contains(types, PredicateType02)
 }
 
@@ -70,6 +70,9 @@ func parseProvenanceV11(data []byte) (attestation.Predicate, error) {
 		if strings.Contains(err.Error(), "proto:") &&
 			strings.Contains(err.Error(), "syntax error") &&
 			strings.Contains(err.Error(), "invalid value") {
+			return nil, attestation.ErrNotCorrectFormat
+		} else if strings.Contains(err.Error(), "proto:") &&
+			strings.Contains(err.Error(), `unknown field "`) {
 			return nil, attestation.ErrNotCorrectFormat
 		}
 		return nil, fmt.Errorf("error parsing v11 provenance predicate: %s", err)
@@ -89,6 +92,9 @@ func parseProvenanceV02(data []byte) (attestation.Predicate, error) {
 			strings.Contains(err.Error(), "syntax error") &&
 			strings.Contains(err.Error(), "invalid value") {
 			return nil, attestation.ErrNotCorrectFormat
+		} else if strings.Contains(err.Error(), "proto:") &&
+			strings.Contains(err.Error(), `unknown field "`) {
+			return nil, attestation.ErrNotCorrectFormat
 		}
 		return nil, fmt.Errorf("error parsing v11 provenance predicate: %s", err)
 	}
@@ -106,6 +112,9 @@ func parseProvenanceV10(data []byte) (attestation.Predicate, error) {
 		if strings.Contains(err.Error(), "proto:") &&
 			strings.Contains(err.Error(), "syntax error") &&
 			strings.Contains(err.Error(), "invalid value") {
+			return nil, attestation.ErrNotCorrectFormat
+		} else if strings.Contains(err.Error(), "proto:") &&
+			strings.Contains(err.Error(), `unknown field "`) {
 			return nil, attestation.ErrNotCorrectFormat
 		}
 		return nil, fmt.Errorf("error parsing v11 provenance predicate: %s", err)
