@@ -15,7 +15,7 @@ cp "${TMP_DIR}/docs/spec/v1.1/schema/provenance.proto" proto/slsa/v11/provenance
 # Rename the proto package names
 sed -ie 's/package slsa.v1;/package slsa.v11;/' proto/slsa/v11/provenance-v1.1.0.proto
 
-sed -ie 's/syntax = "proto3";/syntax = "proto3";\noption go_package = "github.com\/puerco\/ampel\/pkg\/formats\/predicate\/slsa\/provenance\/v10";/' proto/slsa/v10/provenance-v1.0.0.proto
-sed -ie 's/syntax = "proto3";/syntax = "proto3";\noption go_package = "github.com\/puerco\/ampel\/pkg\/formats\/predicate\/slsa\/provenance\/v11";/' proto/slsa/v11/provenance-v1.1.0.proto
+sed -ie 's/syntax = "proto3";/syntax = "proto3";\noption go_package = "github.com\/carabiner-dev\/ampel\/pkg\/formats\/predicate\/slsa\/provenance\/v10";/' proto/slsa/v10/provenance-v1.0.0.proto
+sed -ie 's/syntax = "proto3";/syntax = "proto3";\noption go_package = "github.com\/carabiner-dev\/ampel\/pkg\/formats\/predicate\/slsa\/provenance\/v11";/' proto/slsa/v11/provenance-v1.1.0.proto
 
 rm -rf "$TMP_DIR"
