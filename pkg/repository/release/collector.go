@@ -5,8 +5,12 @@ package release
 
 import (
 	"context"
+	"fmt"
+
+	"github.com/carabiner-dev/ghrfs"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/repository/filesystem"
 )
 
 var _ attestation.Fetcher = (*Collector)(nil)
@@ -18,20 +22,41 @@ var Build = func(istr string) (attestation.Repository, error) {
 	return New()
 }
 
-func New() (*Collector, error) {
-	return &Collector{}, nil
-}
+func New(funcs ...optFn) (*Collector, error) {
+	c := &Collector{
+		Options: defaultOptions,
+	}
+	for _, fn := range funcs {
+		if err := fn(c); err != nil {
+			return nil, err
+		}
+	}
 
-// Init is the stub to initialize the collector with a new string
-func (c *Collector) Init(string) error {
-	return nil
-}
+	if err := c.Options.Validate(); err != nil {
+		return nil, fmt.Errorf("validating options: %w", err)
+	}
 
-type Options struct {
+	fs, err := ghrfs.New(
+		ghrfs.FromURL(
+			fmt.Sprintf("%s/releases/tag/%s", c.Options.RepoURL, c.Options.Tag),
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("creating GHRFS: %w", err)
+	}
+
+	fscollector, err := filesystem.New(filesystem.WithFS(fs))
+	if err != nil {
+		return nil, fmt.Errorf("creating filesystem collector driver: %w", err)
+	}
+	c.Driver = fscollector
+
+	return c, nil
 }
 
 type Collector struct {
-	Driver attestation.Fetcher
+	Options Options
+	Driver  attestation.Fetcher
 }
 
 // Fetch queries the repository and retrieves any attestations matching the query

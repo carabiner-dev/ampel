@@ -3,6 +3,7 @@ module github.com/carabiner-dev/ampel
 go 1.24
 
 require (
+	github.com/carabiner-dev/ghrfs v0.2.0
 	github.com/carabiner-dev/github v0.2.0
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
 	github.com/fatih/color v1.18.0
