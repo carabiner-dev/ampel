@@ -7,7 +7,6 @@ import (
 	"io"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -22,7 +21,7 @@ func (ampel *Ampel) Verify(
 		if err != nil {
 			return nil, err
 		}
-		return &api.ResultSet{Results: []*v1.Result{res}}, nil
+		return &api.ResultSet{Results: []*api.Result{res}}, nil
 	case *api.PolicySet:
 		var rs = &api.ResultSet{}
 		for i, p := range v.Policies {
@@ -33,8 +32,20 @@ func (ampel *Ampel) Verify(
 			rs.Results = append(rs.Results, res)
 		}
 		return rs, nil
+	case []*api.PolicySet:
+		var rs = &api.ResultSet{}
+		for j, ps := range v {
+			for i, p := range ps.Policies {
+				res, err := ampel.VerifySubjectWithPolicy(ctx, opts, p, subject)
+				if err != nil {
+					return nil, fmt.Errorf("evaluating policy #%d/%d: %w", j, i, err)
+				}
+				rs.Results = append(rs.Results, res)
+			}
+		}
+		return rs, nil
 	default:
-		return nil, fmt.Errorf("did not get a poicy or policy set")
+		return nil, fmt.Errorf("did not get a policy or policy set")
 	}
 }
 
