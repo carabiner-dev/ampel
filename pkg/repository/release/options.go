@@ -3,7 +3,11 @@
 
 package release
 
-import "github.com/carabiner-dev/github"
+import (
+	"errors"
+
+	"github.com/carabiner-dev/github"
+)
 
 var defaultOptions = Options{}
 
@@ -33,5 +37,9 @@ func WithTag(tag string) optFn {
 }
 
 func (o *Options) Validate() error {
-	return nil
+	errs := []error{}
+	if o.RepoURL == "" {
+		errs = append(errs, errors.New("no repository URL set"))
+	}
+	return errors.Join(errs...)
 }
