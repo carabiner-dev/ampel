@@ -14,13 +14,14 @@ import (
 	"github.com/fatih/color"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/spf13/cobra"
+	"sigs.k8s.io/release-utils/util"
 
 	"github.com/carabiner-dev/ampel/internal/render"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/collector"
 	"github.com/carabiner-dev/ampel/pkg/policy"
-	"github.com/carabiner-dev/ampel/pkg/subject"
 	"github.com/carabiner-dev/ampel/pkg/verifier"
+	"github.com/carabiner-dev/hasher"
 )
 
 var (
@@ -35,6 +36,7 @@ type verifyOptions struct {
 	SubjectAlgorithm string
 	Collectors       []string
 	Subject          string
+	SubjectFile      string
 }
 
 // AddFlags adds the flags
@@ -66,20 +68,31 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringSliceVarP(
 		&o.Collectors, "collector", "c", []string{}, "attestation collectors to initialize",
 	)
+
+	cmd.PersistentFlags().StringVar(
+		&o.SubjectFile, "subject-file", "", "file to verify",
+	)
 }
 
-// SubjectStringToDescr parses the subkect string read from the command line
+// SubjectDescriptor parses the subkect string read from the command line
 // and returns a resource descriptor, either by synhesizing it from the specified
 // hash or by hashing a file.
-func (o *verifyOptions) SubjectStringToDescr() (attestation.Subject, error) {
-	if hashRegex == nil {
-		hashRegex = regexp.MustCompile(hashRegexStr)
+func (o *verifyOptions) SubjectDescriptor() (attestation.Subject, error) {
+	if o.Subject == "" && o.SubjectFile == "" {
+		return nil, fmt.Errorf("no subject hash or subject file defined")
 	}
+	// If we have a hash, check it and create the descriptor:
+	if o.Subject != "" {
+		if hashRegex == nil {
+			hashRegex = regexp.MustCompile(hashRegexStr)
+		}
 
-	// If the string matches algo:hexValue then we never try to look
-	// for a file. Never.
-	pts := hashRegex.FindStringSubmatch(o.Subject)
-	if pts != nil {
+		// If the string matches algo:hexValue then we never try to look
+		// for a file. Never.
+		pts := hashRegex.FindStringSubmatch(o.Subject)
+		if pts == nil {
+			return nil, fmt.Errorf("unable to parse string as hash")
+		}
 		algo := strings.ToLower(pts[0])
 		if _, ok := intoto.HashAlgorithms[algo]; !ok {
 			return nil, errors.New("invalid hash algorithm in subject")
@@ -87,15 +100,20 @@ func (o *verifyOptions) SubjectStringToDescr() (attestation.Subject, error) {
 		return &intoto.ResourceDescriptor{
 			Digest: map[string]string{algo: pts[1]},
 		}, nil
+
 	}
 
-	return subject.FromPath(o.Subject)
+	hashes, err := hasher.New().HashFiles([]string{o.SubjectFile})
+	if err != nil {
+		return nil, fmt.Errorf("hashing subject file: %w", err)
+	}
+	return hashes.ToResourceDescriptors()[0], nil
 }
 
 func (o *verifyOptions) Validate() error {
 	var errs = []error{}
-	if o.Subject == "" {
-		errs = append(errs, errors.New("no subject specified"))
+	if o.Subject == "" && o.SubjectFile == "" {
+		errs = append(errs, errors.New("no subject or subject-file specified"))
 	}
 
 	if o.PolicyFile == "" {
@@ -109,6 +127,11 @@ func (o *verifyOptions) Validate() error {
 			errs = append(errs, errors.New("invalid format"))
 		}
 	}
+
+	if o.Subject != "" && o.SubjectFile != "" {
+		return fmt.Errorf("you can only specify subject or subject file")
+	}
+
 	return errors.Join(errs...)
 }
 
@@ -160,12 +183,25 @@ using a collector.
 				hashRegex = regexp.MustCompile(hashRegexStr)
 			}
 
-			if len(args) > 0 && opts.Subject != "" {
-				return fmt.Errorf("subject specified twice (-s and arg)")
-			}
-
 			if len(args) > 0 {
-				opts.Subject = args[0]
+				// If arg 0 is a file, use it as the subject file
+				if util.Exists(args[0]) {
+					if opts.SubjectFile != "" {
+						return fmt.Errorf("subject file specified twice (as arg and --subject-file)")
+					} else {
+						opts.SubjectFile = args[0]
+					}
+				} else {
+					//.. otherwize this must be a hash or err
+					if !hashRegex.MatchString(args[0]) {
+						return fmt.Errorf("invalid argument, it must be a hash or a file")
+					}
+					if opts.Subject != "" {
+						return fmt.Errorf("subject hash specified twice (-s and arg)")
+					} else {
+						opts.Subject = args[0]
+					}
+				}
 			}
 
 			return nil
@@ -180,7 +216,7 @@ using a collector.
 			c.SilenceUsage = true
 
 			// Read the subject from the specified string:
-			subject, err := opts.SubjectStringToDescr()
+			subject, err := opts.SubjectDescriptor()
 			if err != nil {
 				return fmt.Errorf("resolving subject string: %w", err)
 			}
