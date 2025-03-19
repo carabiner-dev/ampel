@@ -30,11 +30,11 @@ func (sm *SubjectHashMatcher) Matches(att attestation.Envelope) bool {
 				}
 
 				if hs[subalgo] == subdig {
-					logrus.Infof("%s:%s = %s", subalgo, hs[subalgo], subdig)
+					logrus.Debugf("%s:%s = %s", subalgo, hs[subalgo], subdig)
 					// We have one match
 					match = true
 				} else {
-					logrus.Infof("%s != %s ", hs[subalgo], subdig)
+					logrus.Debugf("%s != %s ", hs[subalgo], subdig)
 					// If the hashset has the algo but
 					continue HASHSETLOOP
 				}

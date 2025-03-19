@@ -112,7 +112,7 @@ func (pl *ParsersList) Parse(data []byte, optFn ...ParseOption) (attestation.Pre
 
 		pred, err := p.Parse(data)
 		if err == nil {
-			logrus.Infof("Found predicate of type %s", f)
+			logrus.Debugf("Found predicate of type %s", f)
 			return pred, nil
 		}
 
