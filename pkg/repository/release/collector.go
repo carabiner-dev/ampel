@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/carabiner-dev/ghrfs"
-	"github.com/sirupsen/logrus"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/repository/filesystem"
@@ -37,7 +36,6 @@ func New(funcs ...optFn) (*Collector, error) {
 		return nil, fmt.Errorf("validating options: %w", err)
 	}
 
-	logrus.Info(fmt.Sprintf("%s/releases/tag/%s", c.Options.RepoURL, c.Options.Tag))
 	fs, err := ghrfs.New(
 		ghrfs.FromURL(
 			fmt.Sprintf("%s/releases/tag/%s", c.Options.RepoURL, c.Options.Tag),

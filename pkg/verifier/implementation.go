@@ -195,7 +195,7 @@ func (di defaultIplementation) Transform(opts *VerificationOptions, transformers
 func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identities []*api.Identity, envelopes []attestation.Envelope) (bool, error) {
 	// If there are no identities defined, return here
 	if len(identities) == 0 {
-		logrus.Warn("No identities defined in policy. Not checking.")
+		logrus.Debug("No identities defined in policy. Not checking.")
 		return true, nil
 	}
 
