@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/carabiner-dev/ghrfs"
+	"github.com/sirupsen/logrus"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/repository/filesystem"
@@ -19,7 +20,7 @@ var TypeMoniker = "release"
 
 // Implement the factory function
 var Build = func(istr string) (attestation.Repository, error) {
-	return New()
+	return New(WithReleaseURL(istr))
 }
 
 func New(funcs ...optFn) (*Collector, error) {
@@ -36,13 +37,14 @@ func New(funcs ...optFn) (*Collector, error) {
 		return nil, fmt.Errorf("validating options: %w", err)
 	}
 
+	logrus.Info(fmt.Sprintf("%s/releases/tag/%s", c.Options.RepoURL, c.Options.Tag))
 	fs, err := ghrfs.New(
 		ghrfs.FromURL(
 			fmt.Sprintf("%s/releases/tag/%s", c.Options.RepoURL, c.Options.Tag),
 		),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("creating GHRFS: %w", err)
+		return nil, fmt.Errorf("creating GHRFS from: %w", err)
 	}
 
 	fscollector, err := filesystem.New(filesystem.WithFS(fs))

@@ -5,17 +5,38 @@ package release
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/carabiner-dev/github"
 )
 
-var defaultOptions = Options{}
+var defaultOptions = Options{
+	Tag: "latest",
+}
 
 type optFn = func(*Collector) error
 
 type Options struct {
 	RepoURL string
 	Tag     string
+}
+
+// WithInitURL is specially crafte
+func WithReleaseURL(locator string) optFn {
+	return func(c *Collector) error {
+		repo, release, _ := strings.Cut(locator, "@")
+
+		url, err := github.RepoFromString(repo)
+		if err != nil {
+			return err
+		}
+		c.Options.RepoURL = url
+
+		if release != "" {
+			c.Options.Tag = release
+		}
+		return nil
+	}
 }
 
 func WithRepo(repo string) optFn {
