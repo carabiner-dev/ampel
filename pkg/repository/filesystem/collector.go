@@ -127,7 +127,23 @@ func (c *Collector) Fetch(ctx context.Context, opts attestation.FetchOptions) ([
 }
 
 func (c *Collector) FetchBySubject(ctx context.Context, opts attestation.FetchOptions, subj []attestation.Subject) ([]attestation.Envelope, error) {
-	return nil, attestation.ErrFetcherMethodNotImplemented
+	sets := []map[string]string{}
+	for _, s := range subj {
+		sets = append(sets, s.GetDigest())
+	}
+	filter := filters.SubjectHashMatcher{
+		HashSets: sets,
+	}
+
+	if opts.Query == nil {
+		opts.Query = &attestation.Query{
+			Filters: []attestation.Filter{&filter},
+		}
+	} else {
+		opts.Query.Filters = append(opts.Query.Filters, &filter)
+	}
+
+	return c.Fetch(ctx, opts)
 }
 func (c *Collector) FetchByPredicateType(ctx context.Context, opts attestation.FetchOptions, pts []attestation.PredicateType) ([]attestation.Envelope, error) {
 	filter := filters.PredicateTypeMatcher{
