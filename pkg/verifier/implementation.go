@@ -103,10 +103,15 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 	factory := evaluator.Factory{}
 	// First, build the default evaluator
 	def := class.Class(p.GetMeta().Runtime)
-	// TODO(puerco): Move this to defaultOptions
+
+	// Compute the default runtime, first from the options received.
+	// If not set, then from the default options set.
 	if p.GetMeta().Runtime == "" {
-		def = opts.DefaultEvaluator
-	} else {
+		if opts.DefaultEvaluator != "" {
+			def = opts.DefaultEvaluator
+		} else {
+			def = DefaultVerificationOptions.DefaultEvaluator
+		}
 	}
 
 	e, err := factory.Get(&opts.EvaluatorOptions, def)
