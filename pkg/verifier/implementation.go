@@ -65,7 +65,6 @@ func (di *defaultIplementation) ParseAttestations(ctx context.Context, paths []s
 		if env == nil {
 			return nil, fmt.Errorf("unable to obtain envelope from: %q", path)
 		}
-
 		res = append(res, env...)
 	}
 	return res, errors.Join(errs...)
@@ -254,8 +253,9 @@ func (di defaultIplementation) ProcessChainedSubjects(
 	if policy.GetChain() == nil {
 		return subject, chain, nil
 	}
-
+	logrus.Debug("Processing evidence chain")
 	for i, link := range policy.GetChain() {
+		logrus.Debugf(" Link needs %s", link.GetPredicate().GetType())
 		// Build an attestation query for the type we need
 		q := attestation.NewQuery().WithFilter(
 			&filters.PredicateTypeMatcher{
@@ -269,7 +269,7 @@ func (di defaultIplementation) ProcessChainedSubjects(
 			attestations = q.Run(attestations)
 		}
 
-		// Only fetch more attestations from the configured sources if needed:
+		// Only fetch more attestations from the configured sources if we need more:
 		if len(attestations) == 0 {
 			moreatts, err := agent.FetchAttestationsBySubject(
 				ctx, []attestation.Subject{subject}, collector.WithQuery(q),
@@ -295,6 +295,9 @@ func (di defaultIplementation) ProcessChainedSubjects(
 			pass, err = di.CheckIdentities(opts, link.GetPredicate().GetIdentities(), attestations)
 		} else {
 			pass, err = di.CheckIdentities(opts, policy.GetIdentities(), attestations)
+		}
+		if err != nil {
+			return nil, nil, fmt.Errorf("error checking attestation identity: %w", err)
 		}
 		if !pass {
 			return nil, nil, fmt.Errorf("unable to validate chained attestation identity")

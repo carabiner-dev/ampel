@@ -115,12 +115,11 @@ func (agent *Agent) FetchAttestationsBySubject(ctx context.Context, subjects []a
 	// Filter the repos to get the fetchers
 	repos := agent.fetcherRepos()
 	if len(repos) == 0 {
-		logrus.Debugf("WARN: No fetcher repos configured")
 		if agent.Options.FailIfNoFetchers {
 			return nil, ErrNoFetcherConfigured
-		} else {
-			return ret, nil
 		}
+		logrus.Debugf("WARN: No fetcher repos configured")
+		return ret, nil
 	}
 
 	opts := agent.Options.Fetch

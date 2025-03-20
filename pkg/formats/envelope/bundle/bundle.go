@@ -46,6 +46,11 @@ func (p *Parser) Parse(data []byte) ([]attestation.Envelope, error) {
 		return nil, err
 	}
 
+	// Ensure we have a valid statement and predicate
+	if _, err := env.GetStatementOrErr(); err != nil {
+		return nil, err
+	}
+
 	return []attestation.Envelope{env}, nil
 }
 

@@ -21,25 +21,38 @@ type Envelope struct {
 	Verifications []*attestation.SignatureVerification
 }
 
-func (e *Envelope) GetStatement() attestation.Statement {
+func (e *Envelope) GetStatementOrErr() (attestation.Statement, error) {
+	if e.Statement != nil {
+		return e.Statement, nil
+	}
 	if e.GetDsseEnvelope() == nil {
-		logrus.Error("no dsse envelope in bundle")
-		return nil
+		return nil, fmt.Errorf("no dsse envelope found in bundle")
 	}
 
 	//  TODO(puerco): Select parser from statement parsers list
 	if e.GetDsseEnvelope().GetPayloadType() != "application/vnd.in-toto+json" {
-		logrus.Error("payload is not an intoto attestation")
-		return nil
+		return nil, fmt.Errorf("payload is not an intoto attestation")
 	}
 
+	// So, for now, this is fixed to the intoto parser
 	ip := intoto.Parser{}
 	statement, err := ip.Parse(e.GetDsseEnvelope().GetPayload())
 	if err != nil {
-		logrus.Debugf("error parsing intoto payload: %v", err)
+		return nil, fmt.Errorf("parsing intoto payload: %w", err)
+	}
+
+	// Store the statement
+	e.Statement = statement
+	logrus.Debugf("Bundled predicate is of type %s", statement.GetPredicateType())
+	return statement, nil
+}
+
+func (e *Envelope) GetStatement() attestation.Statement {
+	statement, err := e.GetStatementOrErr()
+	if err != nil {
+		logrus.Debugf("ERROR: %v", err)
 		return nil
 	}
-	logrus.Debugf("bundled predicate is of type %s", statement.GetPredicateType())
 	return statement
 }
 
