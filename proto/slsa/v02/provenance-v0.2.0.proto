@@ -16,6 +16,8 @@ message Provenance {
 
 message Invocation {
     ConfigSource config_source = 1;
+    // Parameters here is a list of strings, apparently it was a dict
+    // or object in a previous version of this proto.
     repeated string parameters = 2;
     google.protobuf.Struct environment = 3;
 }

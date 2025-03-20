@@ -11,7 +11,7 @@
       },
       "entryPoint": ".github/workflows/release.yml"
     },
-    "parameters": {},
+    "parameters": [],
     "environment": {
       "arch": "X64",
       "github_actor": "ramonpetgrave64",
