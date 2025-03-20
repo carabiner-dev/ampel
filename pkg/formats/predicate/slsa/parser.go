@@ -75,7 +75,7 @@ func parseProvenanceV11(data []byte) (attestation.Predicate, error) {
 			strings.Contains(err.Error(), `unknown field "`) {
 			return nil, attestation.ErrNotCorrectFormat
 		}
-		return nil, fmt.Errorf("error parsing v11 provenance predicate: %s", err)
+		return nil, fmt.Errorf("error parsing SLSA/v1.1 provenance predicate: %s", err)
 	}
 	return &generic.Predicate{
 		Type:   PredicateType11,
@@ -96,7 +96,7 @@ func parseProvenanceV02(data []byte) (attestation.Predicate, error) {
 			strings.Contains(err.Error(), `unknown field "`) {
 			return nil, attestation.ErrNotCorrectFormat
 		}
-		return nil, fmt.Errorf("error parsing v11 provenance predicate: %s", err)
+		return nil, fmt.Errorf("error parsing SLSA/v0.2 provenance predicate: %s", err)
 	}
 	return &generic.Predicate{
 		Type:   PredicateType02,
@@ -117,7 +117,7 @@ func parseProvenanceV10(data []byte) (attestation.Predicate, error) {
 			strings.Contains(err.Error(), `unknown field "`) {
 			return nil, attestation.ErrNotCorrectFormat
 		}
-		return nil, fmt.Errorf("error parsing v11 provenance predicate: %s", err)
+		return nil, fmt.Errorf("error parsing SLSA/v1.0 provenance predicate: %s", err)
 	}
 	return &generic.Predicate{
 		Type:   PredicateType10,
