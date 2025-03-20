@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/nozzle/throttler"
+	"github.com/sirupsen/logrus"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
@@ -114,7 +115,12 @@ func (agent *Agent) FetchAttestationsBySubject(ctx context.Context, subjects []a
 	// Filter the repos to get the fetchers
 	repos := agent.fetcherRepos()
 	if len(repos) == 0 {
-		return nil, ErrNoFetcherConfigured
+		logrus.Debugf("WARN: No fetcher repos configured")
+		if agent.Options.FailIfNoFetchers {
+			return nil, ErrNoFetcherConfigured
+		} else {
+			return ret, nil
+		}
 	}
 
 	opts := agent.Options.Fetch

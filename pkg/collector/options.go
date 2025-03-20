@@ -6,16 +6,21 @@ package collector
 import "github.com/carabiner-dev/ampel/pkg/attestation"
 
 var defaultOptions = Options{
-	UserAgentString: "ampel-collector/v1",
-	ParallelFetches: 4,
-	ParallelStores:  4,
-	Fetch:           attestation.FetchOptions{},
-	Store:           attestation.StoreOptions{},
+	UserAgentString:  "ampel-collector/v1",
+	FailIfNoFetchers: false,
+	ParallelFetches:  4,
+	ParallelStores:   4,
+	Fetch:            attestation.FetchOptions{},
+	Store:            attestation.StoreOptions{},
 }
 
 // Options groups the configuration knob for the collector agent
 type Options struct {
 	UserAgentString string
+
+	// FailIfNoFetchers Return an error when fetching if no repos are configured (instead of just nil)
+	FailIfNoFetchers bool
+
 	ParallelFetches int
 	ParallelStores  int
 	Fetch           attestation.FetchOptions
