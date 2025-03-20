@@ -93,7 +93,7 @@ func (o *verifyOptions) SubjectDescriptor() (attestation.Subject, error) {
 		if pts == nil {
 			return nil, fmt.Errorf("unable to parse string as hash")
 		}
-		algo := strings.ToLower(pts[0])
+		algo := strings.ToLower(pts[1])
 		if _, ok := intoto.HashAlgorithms[algo]; !ok {
 			return nil, errors.New("invalid hash algorithm in subject")
 		}
