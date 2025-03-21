@@ -11,6 +11,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+type PolicyError struct {
+	error
+	Guidance string
+}
+
 // Verify checks a subject against a policy using the available evidence
 func (ampel *Ampel) Verify(
 	ctx context.Context, opts *VerificationOptions, policy any, subject attestation.Subject,
@@ -69,8 +74,13 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	// even when some will be discarded in the next step. Computing the chain
 	// will use the configured repositories if more attestations are required.
 	var chain []*api.ChainedSubject
-	subject, chain, err = ampel.impl.ProcessChainedSubjects(ctx, opts, evaluators, ampel.Collector, policy, subject, atts)
+	subject, chain, policyFail, err := ampel.impl.ProcessChainedSubjects(ctx, opts, evaluators, ampel.Collector, policy, subject, atts)
 	if err != nil {
+		// If policyFail is true, then we don't return an error but rather
+		// a policy fail result based on the error
+		if policyFail {
+			return failPolicyWithError(policy, chain, subject, err), nil
+		}
 		return nil, fmt.Errorf("processing chained subject: %w", err)
 	}
 
@@ -98,14 +108,10 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	}
 
 	if !allow {
-		return &api.Result{
-			Status:      "FAIL",
-			DateStart:   timestamppb.Now(),
-			DateEnd:     timestamppb.Now(),
-			Policy:      &api.PolicyRef{},
-			EvalResults: []*api.EvalResult{},
-			Chain:       chain,
-		}, nil
+		return failPolicyWithError(policy, chain, subject, PolicyError{
+			error:    errors.New("identity validation failed"),
+			Guidance: "Ensure the attestations are signed with the expected identites as defined in the policy.",
+		}), nil
 	}
 
 	// Filter attestations to those applicable to the subject
@@ -156,4 +162,41 @@ func (ampel *Ampel) AttestResult(w io.Writer, result *api.Result) error {
 // AttestResult writes an attestation capturing an evaluation result
 func (ampel *Ampel) AttestResultSet(w io.Writer, resultset *api.ResultSet) error {
 	return ampel.impl.AttestResultSetToWriter(w, resultset)
+}
+
+// failPolicyWithError returns a failed status result for the policicy where all
+// tennets are failed with error err. If err is a `PolicyError` then the result
+// error guidance for the tenets will be read from it.
+func failPolicyWithError(p *api.Policy, chain []*api.ChainedSubject, subject attestation.Subject, err error) *api.Result {
+	res := &api.Result{
+		Status:      api.StatusFAIL,
+		DateStart:   timestamppb.Now(),
+		DateEnd:     timestamppb.Now(),
+		Policy:      &api.PolicyRef{},
+		EvalResults: []*api.EvalResult{},
+		Meta:        p.Meta,
+		Chain:       chain,
+		Subject:     api.NewResourceDescriptor().FromSubject(subject),
+	}
+
+	guidance := ""
+	if pe, ok := err.(PolicyError); ok {
+		guidance = pe.Guidance
+	}
+	for _, t := range p.Tenets {
+		er := &api.EvalResult{
+			Id:         t.Id,
+			Status:     api.StatusFAIL,
+			Date:       timestamppb.Now(),
+			Output:     nil,
+			Statements: nil, // Or do we define it?
+			Error: &api.Error{
+				Message:  err.Error(),
+				Guidance: guidance,
+			},
+			Assessment: nil,
+		}
+		res.EvalResults = append(res.EvalResults, er)
+	}
+	return res
 }

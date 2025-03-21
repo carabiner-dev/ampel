@@ -269,11 +269,11 @@ func (di defaultIplementation) ProcessChainedSubjects(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
 	agent *collector.Agent, policy *api.Policy, subject attestation.Subject,
 	attestations []attestation.Envelope,
-) (attestation.Subject, []*api.ChainedSubject, error) {
+) (attestation.Subject, []*api.ChainedSubject, bool, error) {
 	chain := []*api.ChainedSubject{}
 	// If there are no chained subjects, return the original
 	if policy.GetChain() == nil {
-		return subject, chain, nil
+		return subject, chain, false, nil
 	}
 	logrus.Debug("Processing evidence chain")
 	for i, link := range policy.GetChain() {
@@ -297,18 +297,24 @@ func (di defaultIplementation) ProcessChainedSubjects(
 				ctx, []attestation.Subject{subject}, collector.WithQuery(q),
 			)
 			if err != nil {
-				return nil, nil, fmt.Errorf("collecting attestations: %w", err)
+				return nil, nil, false, fmt.Errorf("collecting attestations: %w", err)
 			}
 			attestations = append(attestations, moreatts...)
 		}
 
 		if len(attestations) == 0 {
-			return nil, nil, fmt.Errorf("no matching attestations to read the chained subject #%d", i)
+			return nil, nil, true, PolicyError{
+				error:    fmt.Errorf("no matching attestations to read the chained subject #%d", i),
+				Guidance: "make sure the collector has access to attestations to satisfy the subject chain as defined in the policy.",
+			}
 		}
 
 		for _, a := range attestations {
 			if err := a.Verify(); err != nil {
-				return nil, nil, fmt.Errorf("verifying chained attestation: %w", err)
+				return nil, nil, true, PolicyError{
+					error:    fmt.Errorf("signature verifying failed in chained subject: %w", err),
+					Guidance: "the signature verification in the loaded attestations failed, try resigning it",
+				}
 			}
 		}
 		var pass bool
@@ -319,10 +325,13 @@ func (di defaultIplementation) ProcessChainedSubjects(
 			pass, err = di.CheckIdentities(opts, policy.GetIdentities(), attestations)
 		}
 		if err != nil {
-			return nil, nil, fmt.Errorf("error checking attestation identity: %w", err)
+			return nil, nil, false, fmt.Errorf("error checking attestation identity: %w", err)
 		}
 		if !pass {
-			return nil, nil, fmt.Errorf("unable to validate chained attestation identity")
+			return nil, nil, true, PolicyError{
+				error:    fmt.Errorf("unable to validate chained attestation identity"),
+				Guidance: "the chained attestaion identity does not match the policy",
+			}
 		}
 
 		// TODO: Mueve a metodos en policy.go
@@ -340,7 +349,7 @@ func (di defaultIplementation) ProcessChainedSubjects(
 			key = class.Class("default")
 		}
 		if _, ok := evaluators[key]; !ok {
-			return nil, nil, fmt.Errorf("no evaluator built for %s", key)
+			return nil, nil, false, fmt.Errorf("no evaluator loaded for class %s", key)
 		}
 
 		// Execute the selector
@@ -349,7 +358,10 @@ func (di defaultIplementation) ProcessChainedSubjects(
 			attestations[0].GetStatement().GetPredicate(),
 		)
 		if err != nil {
-			return nil, nil, fmt.Errorf("evaluating chained subject code: %w", err)
+			// TODO(puerco): The false here instructs ampel to return an error
+			// (not a policy fail) when there is a syntax error in the policy
+			// code (CEL or otherwise). Perhaps this shoul be configured
+			return nil, nil, false, fmt.Errorf("evaluating chained subject code: %w", err)
 		}
 
 		// Add to link history
@@ -363,7 +375,7 @@ func (di defaultIplementation) ProcessChainedSubjects(
 		})
 		subject = newsubject
 	}
-	return subject, chain, nil
+	return subject, chain, false, nil
 }
 
 // VerifySubject performs the core verification of attested data. This step runs after
