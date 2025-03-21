@@ -41,23 +41,28 @@ func (d *Decorator) StatusToDot(status string) string {
 	}
 }
 
-func (d *Decorator) SubjectToString(subject *api.ResourceDescriptor) string {
+func (d *Decorator) SubjectToString(subject *api.ResourceDescriptor, chain []*api.ChainedSubject) string {
+	predata := ""
+	for _, subsubj := range chain {
+		predata += d.SubjectToString(subsubj.Source, nil) + "<br>\n↳ "
+	}
+
 	if subject == nil {
-		return "(N/A)"
+		return predata + "(N/A)"
 	}
 
 	if subject.Name != "" {
-		return subject.Name
+		return predata + subject.Name
 	}
 
 	if subject.Uri != "" {
-		return subject.Uri
+		return predata + subject.Uri
 	}
 
 	for algo, val := range subject.Digest {
-		return fmt.Sprintf("%s:%s", algo, val)
+		return predata + fmt.Sprintf("%s:%s", algo, val)
 	}
-	return ""
+	return predata + ""
 }
 
 func (d *Decorator) ErrorToString(err *api.Error) string {

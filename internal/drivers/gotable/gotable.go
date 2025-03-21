@@ -12,6 +12,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/text"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
+	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
 
 type TableBuilder struct {
@@ -22,7 +23,7 @@ type TableBuilder struct {
 // decoration of the tabular reports.
 type TableDecorator interface {
 	AmpelBanner(string) string
-	SubjectToString(*api.ResourceDescriptor) string
+	SubjectToString(*api.ResourceDescriptor, []*v1.ChainedSubject) string
 	AssessmentToString(*api.Assessment) string
 	ErrorToString(*api.Error) string
 	StatusToDot(string) string
@@ -47,7 +48,7 @@ func (tb *TableBuilder) ResultsTable(result *api.Result) (table.Writer, error) {
 	t.AppendRow(table.Row{"Results Date", "Results Date", result.DateEnd.AsTime().Local()}, rowConfigAutoMerge)
 	t.AppendRow(table.Row{"Execution Time", "Execution Time", result.DateEnd.AsTime().Sub(result.DateStart.AsTime())}, rowConfigAutoMerge)
 	t.AppendRow(table.Row{"Tenets", "Tenets", tb.Decorator.TenetsToString(result)}, rowConfigAutoMerge)
-	t.AppendRow(table.Row{"Subject", "Subject", tb.Decorator.SubjectToString(result.Subject)}, rowConfigAutoMerge)
+	t.AppendRow(table.Row{"Subject", "Subject", tb.Decorator.SubjectToString(result.Subject, result.Chain)}, rowConfigAutoMerge)
 	t.AppendRow(table.Row{"Controls", "Controls", tb.Decorator.ControlsToString(result, "", "")}, rowConfigAutoMerge)
 	t.AppendSeparator()
 	t.AppendRow(table.Row{tb.Decorator.Bold("Check"), tb.Decorator.Bold("Status"), tb.Decorator.Bold("Message")})
