@@ -37,6 +37,16 @@ func (di *defaultIplementation) GatherAttestations(
 	// filtered out as no subject matching is done. This is because we ingest
 	// all of them in case they are needed when computing the chained subjects.
 
+	// ... but first, we need to keep the specified attestations that don't
+	// have a subject. These come from bare json files, such as unsigned SBOMs
+	anons := []attestation.Envelope{}
+	for _, a := range attestations {
+		if a.GetStatement().GetSubjects() == nil || len(a.GetStatement().GetSubjects()) == 0 {
+			logrus.Infof("  anon attestation: %s", a.GetStatement().GetPredicateType())
+			anons = append(anons, a)
+		}
+	}
+
 	// So filter them by subject:
 	attestations = attestation.NewQuery().WithFilter(
 		&filters.SubjectHashMatcher{
@@ -45,6 +55,9 @@ func (di *defaultIplementation) GatherAttestations(
 			},
 		},
 	).Run(attestations)
+
+	// Merge the anons with the newly filtered ones
+	attestations = append(attestations, anons...)
 
 	// TODO: Filter by types and by tenet chains
 	res, err := agent.FetchAttestationsBySubject(ctx, []attestation.Subject{subject})
