@@ -16,9 +16,12 @@ message Provenance {
 
 message Invocation {
     ConfigSource config_source = 1;
-    // Parameters here is a list of strings, apparently it was a dict
-    // or object in a previous version of this proto.
-    repeated string parameters = 2;
+    // Somewhere we picked a version of this proto where parameters was a list 
+    // of strings. That is not correct. Parameters is an object
+    // Refs:
+    //   https://github.com/tektoncd/chains/issues/306
+    //   https://slsa.dev/spec/v0.2/provenance
+    google.protobuf.Struct parameters = 2;
     google.protobuf.Struct environment = 3;
 }
 
