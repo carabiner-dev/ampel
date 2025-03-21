@@ -82,8 +82,9 @@ func (d *Decorator) ErrorToString(err *api.Error) string {
 }
 
 func (d *Decorator) ControlsToString(result *api.Result, checkID, def string) string {
-	ret := ""
+	checks := []string{}
 	for _, c := range result.Meta.Controls {
+		ret := ""
 		ret += c.Class
 		if c.Class != "" {
 			ret += "-"
@@ -93,10 +94,11 @@ func (d *Decorator) ControlsToString(result *api.Result, checkID, def string) st
 		if checkID != "" {
 			ret += "." + checkID
 		} else if def != "" {
-			ret += fmt.Sprintf(" (%s)\n", def)
+			ret = "--"
 		}
+		checks = append(checks, strings.TrimSpace(ret))
 	}
-	return strings.TrimSpace(ret)
+	return strings.Join(checks, "\n")
 }
 
 func (d *Decorator) TenetsToString(result *api.Result) string {
