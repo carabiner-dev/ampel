@@ -29,6 +29,10 @@ import (
 
 type defaultIplementation struct{}
 
+// GatherAttestations assembles the attestations pack required to run the
+// evaluation. It first filters the attestations loaded manually by matching
+// their descriptors against the chained subject and keeping those without
+// a subject.
 func (di *defaultIplementation) GatherAttestations(
 	ctx context.Context, opts *VerificationOptions, agent *collector.Agent,
 	policy *api.Policy, subject attestation.Subject, attestations []attestation.Envelope,
@@ -37,29 +41,18 @@ func (di *defaultIplementation) GatherAttestations(
 	// filtered out as no subject matching is done. This is because we ingest
 	// all of them in case they are needed when computing the chained subjects.
 
-	// ... but first, we need to keep the specified attestations that don't
+	// ... but we also need to keep the specified attestations that don't
 	// have a subject. These come from bare json files, such as unsigned SBOMs
-	anons := []attestation.Envelope{}
-	for _, a := range attestations {
-		if a.GetStatement().GetSubjects() == nil || len(a.GetStatement().GetSubjects()) == 0 {
-			logrus.Infof("  anon attestation: %s", a.GetStatement().GetPredicateType())
-			anons = append(anons, a)
-		}
-	}
-
-	// So filter them by subject:
 	attestations = attestation.NewQuery().WithFilter(
 		&filters.SubjectHashMatcher{
 			HashSets: []map[string]string{
 				subject.GetDigest(),
 			},
 		},
-	).Run(attestations)
+		&filters.SubjectlessMatcher{},
+	).Run(attestations, attestation.WithMode(attestation.QueryModeOr))
 
-	// Merge the anons with the newly filtered ones
-	attestations = append(attestations, anons...)
-
-	// TODO: Filter by types and by tenet chains
+	// Now, query the collector to get all attestations available for the artifact.
 	res, err := agent.FetchAttestationsBySubject(ctx, []attestation.Subject{subject})
 	if err != nil {
 		if !errors.Is(err, collector.ErrNoFetcherConfigured) {
