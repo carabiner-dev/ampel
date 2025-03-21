@@ -29,7 +29,23 @@ import (
 
 type defaultIplementation struct{}
 
-func (di *defaultIplementation) GatherAttestations(ctx context.Context, opts *VerificationOptions, agent *collector.Agent, policy *api.Policy, subject attestation.Subject) ([]attestation.Envelope, error) {
+func (di *defaultIplementation) GatherAttestations(
+	ctx context.Context, opts *VerificationOptions, agent *collector.Agent,
+	policy *api.Policy, subject attestation.Subject, attestations []attestation.Envelope,
+) ([]attestation.Envelope, error) {
+	// First, any predefined attestations (from the command line) need to be
+	// filtered out as no subject matching is done. This is because we ingest
+	// all of them in case they are needed when computing the chained subjects.
+
+	// So filter them by subject:
+	attestations = attestation.NewQuery().WithFilter(
+		&filters.SubjectHashMatcher{
+			HashSets: []map[string]string{
+				subject.GetDigest(),
+			},
+		},
+	).Run(attestations)
+
 	// TODO: Filter by types and by tenet chains
 	res, err := agent.FetchAttestationsBySubject(ctx, []attestation.Subject{subject})
 	if err != nil {
@@ -40,7 +56,7 @@ func (di *defaultIplementation) GatherAttestations(ctx context.Context, opts *Ve
 			return []attestation.Envelope{}, nil
 		}
 	}
-	return res, nil
+	return append(attestations, res...), nil
 }
 
 // ParseAttestations parses additional attestations defined to support the

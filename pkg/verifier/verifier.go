@@ -59,30 +59,34 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("building evaluators: %w", err)
 	}
 
-	// Parse any extra files defined in the options
+	// Parse any extra attestation files defined in the options
 	atts, err := ampel.impl.ParseAttestations(ctx, opts.AttestationFiles)
 	if err != nil {
 		return nil, fmt.Errorf("parsing files: %w", err)
 	}
 
-	// Process chained subjects:
+	// Process chained subjects. These have access to all the read attestations
+	// even when some will be discarded in the next step. Computing the chain
+	// will use the configured repositories if more attestations are required.
 	var chain []*api.ChainedSubject
 	subject, chain, err = ampel.impl.ProcessChainedSubjects(ctx, opts, evaluators, ampel.Collector, policy, subject, atts)
 	if err != nil {
 		return nil, fmt.Errorf("processing chained subject: %w", err)
 	}
 
-	// Fetch applicable evidence
-	moreatts, err := ampel.impl.GatherAttestations(ctx, opts, ampel.Collector, policy, subject)
+	// Now that we have the right subject from the chain, gather all the
+	// required attestations. Note that this will filter out any from the
+	// command line that don't match the the new subject under test as
+	// determined from the chain resolution.
+	atts, err = ampel.impl.GatherAttestations(ctx, opts, ampel.Collector, policy, subject, atts)
 	if err != nil {
 		return nil, fmt.Errorf("gathering evidence: %w", err)
 	}
-	atts = append(atts, moreatts...)
 
 	// Here, the policy may not require attestations (noop) but it's a corner
 	// case, we'll fix it later.
 	if len(atts) == 0 {
-		return nil, errors.New("no evidence found to evaluate policy")
+		return nil, errors.New("no attestations found to evaluate policy")
 	}
 
 	// Check identities to see if the attestations can be admitted
