@@ -82,10 +82,13 @@ func parseRepoURI(uri string) (map[string]string, error) {
 	var repo = ""
 	if len(parts) > 1 {
 		repo = parts[1]
+		// If the original string was a locator, the repo can have
+		// the revision appended. Cut it.
+		repo, _, _ = strings.Cut(repo, "@")
 	}
 
 	return map[string]string{
-		"scheme": parsed.Scheme,
+		"scheme": strings.TrimPrefix(parsed.Scheme, "git+"),
 		"host":   parsed.Hostname(),
 		"org":    parts[0],
 		"repo":   repo,
