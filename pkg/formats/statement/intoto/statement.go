@@ -26,6 +26,12 @@ func WithPredicate(pred attestation.Predicate) StatementOption {
 	}
 }
 
+func WithSubject(subjects ...*gointoto.ResourceDescriptor) StatementOption {
+	return func(stmnt *Statement) {
+		stmnt.Subject = append(stmnt.Subject, subjects...)
+	}
+}
+
 func NewStatement(opts ...StatementOption) *Statement {
 	s := &Statement{
 		Predicate: nil,
