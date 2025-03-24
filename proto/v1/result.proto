@@ -45,10 +45,6 @@ message EvalResult {
     Assessment assessment = 7;
 }
 
-message PolicyRef {
-    string id = 1; 
-}
-
 message StatementRef {
     string id = 1;
 }
