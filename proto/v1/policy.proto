@@ -21,6 +21,7 @@ message PolicySetMeta {
     string runtime = 1;
     string description = 2;
     google.protobuf.Timestamp expiration = 3;
+    int64 version = 4;
 }
 
 message Policy {
@@ -57,6 +58,7 @@ message Meta {
     string description = 2;
     string assert_mode = 3;
     repeated Control controls = 4; 
+    int64 version = 5;
 }
 
 message Identity {
