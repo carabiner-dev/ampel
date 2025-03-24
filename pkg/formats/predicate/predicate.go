@@ -19,6 +19,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/slsa"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/spdx"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/trivy"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/vsa"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/vulns"
 	"github.com/sirupsen/logrus"
 )
@@ -43,6 +44,7 @@ var Parsers = ParsersList{
 	slsa.PredicateType10:         slsa.NewParserV10(),
 	slsa.PredicateType10:         slsa.NewParserV11(),
 	slsa.PredicateType02:         slsa.NewParserV02(),
+	vsa.PredicateType:            vsa.NewParser(),
 }
 
 type ParseOption func(*Options)
