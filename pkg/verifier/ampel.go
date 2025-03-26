@@ -22,7 +22,7 @@ type AmpelVerifier interface {
 	ParseAttestations(context.Context, []string) ([]attestation.Envelope, error)
 	BuildEvaluators(*VerificationOptions, *api.Policy) (map[class.Class]evaluator.Evaluator, error)
 	BuildTransformers(*VerificationOptions, *api.Policy) (map[transformer.Class]transformer.Transformer, error)
-	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *api.Policy, []attestation.Predicate) ([]attestation.Predicate, error)
+	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *api.Policy, attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
 	CheckIdentities(*VerificationOptions, []*api.Identity, []attestation.Envelope) (bool, error)
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
 	AssertResult(*api.Policy, *api.Result) error

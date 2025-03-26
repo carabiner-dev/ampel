@@ -125,8 +125,8 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("building policy transformers: %w", err)
 	}
 
-	// Apply the defined tranformations to the predicates
-	preds, err = ampel.impl.Transform(opts, transformers, policy, preds)
+	// Apply the defined tranformations to the subject and predicates
+	subject, preds, err = ampel.impl.Transform(opts, transformers, policy, subject, preds)
 	if err != nil {
 		return nil, fmt.Errorf("applying transformations: %w", err)
 	}

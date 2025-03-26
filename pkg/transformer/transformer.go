@@ -44,7 +44,7 @@ func (tf *Factory) Get(c Class) (Transformer, error) {
 
 // Transformer is an interface that models a predicate transformer
 type Transformer interface {
-	Mutate([]attestation.Predicate) ([]attestation.Predicate, error)
+	Mutate(attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
 }
 
 type Info struct {
@@ -57,7 +57,7 @@ type Info struct {
 // transformation process.
 type InputRecord struct {
 	Type     attestation.PredicateType
-	Subjects []attestation.Subject
+	Subjects attestation.Subject
 	Hashes   map[string]string
 }
 
