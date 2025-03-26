@@ -36,5 +36,13 @@ func (p *Parser) ParseSet(policySetData []byte) (*v1.PolicySet, error) {
 	if err := protojson.Unmarshal(policySetData, &set); err != nil {
 		return nil, fmt.Errorf("parsing policy source: %w", err)
 	}
+
+	for _, p := range set.Policies {
+		// TODO(puerco): Verify if policy source is enabled in addition to
+		// policy data. it shoud probably be a Verify function in the policy
+		if p.Source != nil {
+			// TODO(puerco): Fetch the externally referenced policy here.
+		}
+	}
 	return &set, nil
 }
