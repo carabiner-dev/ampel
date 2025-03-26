@@ -36,7 +36,7 @@ func TestTrivyToOSV(t *testing.T) {
 			require.NoError(t, err)
 			pred, err := trivy.New().Parse(data)
 			require.NoError(t, err)
-			ret, err := xformer.Mutate([]attestation.Predicate{
+			ret, err := xformer.Mutate(nil, []attestation.Predicate{
 				pred,
 			})
 			if tc.mustErr {

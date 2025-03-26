@@ -34,14 +34,14 @@ var PredicateTypes = []attestation.PredicateType{
 
 // Transformer generates a protobom predicate from any of the supported SBOM
 // formats.
-func (p *Transformer) Mutate(preds []attestation.Predicate) ([]attestation.Predicate, error) {
+func (p *Transformer) Mutate(_ attestation.Subject, preds []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error) {
 	r := reader.New()
 	if len(preds) != 1 {
-		return nil, fmt.Errorf("default tranformation requires exactly one predicate")
+		return nil, nil, fmt.Errorf("default tranformation requires exactly one predicate")
 	}
 
 	if !slices.Contains(PredicateTypes, preds[0].GetType()) {
-		return nil, fmt.Errorf(
+		return nil, nil, fmt.Errorf(
 			"predicate type not supported, must be one of %v (got %s)",
 			PredicateTypes, preds[0].GetType(),
 		)
@@ -53,16 +53,16 @@ func (p *Transformer) Mutate(preds []attestation.Predicate) ([]attestation.Predi
 		// If it's not a supported SBOM format, catch the error and
 		// return the common error to hand off to another predicate parser.
 		if strings.Contains(err.Error(), "unknown SBOM format") {
-			return nil, attestation.ErrNotCorrectFormat
+			return nil, nil, attestation.ErrNotCorrectFormat
 		}
-		return nil, fmt.Errorf("parsing data: %w", err)
+		return nil, nil, fmt.Errorf("parsing data: %w", err)
 	}
 	bdata, err := protojson.Marshal(doc)
 	if err != nil {
-		return nil, fmt.Errorf("marshaling rendered protobom predicate: %w", err)
+		return nil, nil, fmt.Errorf("marshaling rendered protobom predicate: %w", err)
 	}
-	// Reset the predicates
-	return []attestation.Predicate{
+	// Reset the new predicates
+	return nil, []attestation.Predicate{
 		&generic.Predicate{
 			Type:   protobom.PredicateType,
 			Data:   bdata,
@@ -70,12 +70,3 @@ func (p *Transformer) Mutate(preds []attestation.Predicate) ([]attestation.Predi
 		},
 	}, err
 }
-
-// func (p *Parser) SupportsType(testTypes ...string) bool {
-// 	for _, pt := range PredicateTypes {
-// 		if slices.Contains(testTypes, pt) {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }

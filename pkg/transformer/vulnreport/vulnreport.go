@@ -25,19 +25,21 @@ var PredicateTypes = []attestation.PredicateType{
 type Transformer struct {
 }
 
-func (t *Transformer) Mutate(preds []attestation.Predicate) ([]attestation.Predicate, error) {
+func (t *Transformer) Mutate(
+	_ attestation.Subject, preds []attestation.Predicate,
+) (attestation.Subject, []attestation.Predicate, error) {
 	var newPreds = []attestation.Predicate{}
 	for _, original := range preds {
 		switch original.GetType() {
 		case trivy.PredicateType:
 			newPred, err := t.TrivyToOSV(original)
 			if err != nil {
-				return nil, fmt.Errorf("converting trivy predicate to OSV: %w", err)
+				return nil, nil, fmt.Errorf("converting trivy predicate to OSV: %w", err)
 			}
 			newPreds = append(newPreds, newPred)
 		}
 	}
-	return newPreds, nil
+	return nil, newPreds, nil
 }
 
 func trivyToVulnsV2(original attestation.Predicate) (attestation.Predicate, error) {
