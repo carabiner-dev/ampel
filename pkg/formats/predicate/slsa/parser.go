@@ -23,9 +23,11 @@ var (
 )
 
 // Single version parsers
-type ParserV10 struct{}
-type ParserV11 struct{}
-type ParserV02 struct{}
+type (
+	ParserV10 struct{}
+	ParserV11 struct{}
+	ParserV02 struct{}
+)
 
 func NewParserV02() *ParserV02 {
 	return &ParserV02{}
@@ -64,7 +66,7 @@ func (*ParserV02) SupportsType(types ...attestation.PredicateType) bool {
 }
 
 func parseProvenanceV11(data []byte) (attestation.Predicate, error) {
-	var provenance = v11.Provenance{}
+	provenance := v11.Provenance{}
 	if err := protojson.Unmarshal(data, &provenance); err != nil {
 		// Transform the error to our wrong type error
 		if strings.Contains(err.Error(), "proto:") &&
@@ -85,7 +87,7 @@ func parseProvenanceV11(data []byte) (attestation.Predicate, error) {
 }
 
 func parseProvenanceV02(data []byte) (attestation.Predicate, error) {
-	var provenance = v02.Provenance{}
+	provenance := v02.Provenance{}
 	if err := protojson.Unmarshal(data, &provenance); err != nil {
 		// Transform the error to our wrong type error
 		if strings.Contains(err.Error(), "proto:") &&
@@ -106,7 +108,7 @@ func parseProvenanceV02(data []byte) (attestation.Predicate, error) {
 }
 
 func parseProvenanceV10(data []byte) (attestation.Predicate, error) {
-	var provenance = v10.Provenance{}
+	provenance := v10.Provenance{}
 	if err := protojson.Unmarshal(data, &provenance); err != nil {
 		// Transform the error to our wrong type error
 		if strings.Contains(err.Error(), "proto:") &&

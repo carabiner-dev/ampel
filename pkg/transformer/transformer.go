@@ -16,8 +16,10 @@ import (
 )
 
 // Ensure the loaded drivers implement the transformers interface
-var _ Transformer = (*protobom.Transformer)(nil)
-var _ Transformer = (*vulnreport.Transformer)(nil)
+var (
+	_ Transformer = (*protobom.Transformer)(nil)
+	_ Transformer = (*vulnreport.Transformer)(nil)
+)
 
 // Factory returns a list of transformers from
 // a list of string identifiers

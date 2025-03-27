@@ -50,6 +50,7 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 	}
 	return pred, nil
 }
+
 func (p *Parser) SupportsType(predTypes ...attestation.PredicateType) bool {
 	for _, t := range predTypes {
 		if t != PredicateType {

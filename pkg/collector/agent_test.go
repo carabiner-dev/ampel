@@ -121,7 +121,7 @@ func TestFetch(t *testing.T) {
 				agent.Repositories = append(agent.Repositories, ff)
 			}
 
-			res, err := agent.Fetch(context.Background())
+			res, err := agent.Fetch(t.Context())
 			if tc.mustErr {
 				require.Error(t, err)
 				return
@@ -223,7 +223,7 @@ func TestFetchAttestationsBySubject(t *testing.T) {
 
 			subs := []attestation.Subject{}
 
-			res, err := agent.FetchAttestationsBySubject(context.Background(), subs)
+			res, err := agent.FetchAttestationsBySubject(t.Context(), subs)
 			if tc.mustErr {
 				require.Error(t, err)
 				return
@@ -323,7 +323,7 @@ func TestFetchAttestationsByPredicateType(t *testing.T) {
 				agent.Repositories = append(agent.Repositories, ff)
 			}
 
-			res, err := agent.FetchAttestationsByPredicateType(context.Background(), []attestation.PredicateType{"test"})
+			res, err := agent.FetchAttestationsByPredicateType(t.Context(), []attestation.PredicateType{"test"})
 			if tc.mustErr {
 				require.Error(t, err)
 				return

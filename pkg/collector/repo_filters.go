@@ -19,7 +19,7 @@ func (agent *Agent) filterRepositories(filter repoFilter) any {
 // Fetcher trait.
 func (agent *Agent) fetcherRepos() []attestation.Fetcher {
 	res := agent.filterRepositories(func(repos []attestation.Repository) any {
-		var filtered = []attestation.Fetcher{}
+		filtered := []attestation.Fetcher{}
 		for _, r := range repos {
 			if f, ok := r.(attestation.Fetcher); ok {
 				filtered = append(filtered, f)
@@ -34,7 +34,7 @@ func (agent *Agent) fetcherRepos() []attestation.Fetcher {
 // Storer trait.
 func (agent *Agent) storerRepos() []attestation.Storer {
 	res := agent.filterRepositories(func(repos []attestation.Repository) any {
-		var filtered = []attestation.Repository{}
+		filtered := []attestation.Repository{}
 		for _, r := range repos {
 			if _, ok := r.(attestation.Storer); ok {
 				filtered = append(filtered, r)

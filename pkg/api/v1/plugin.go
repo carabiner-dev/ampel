@@ -41,11 +41,13 @@ func PluginHasCapability(capability Capability, plugin Plugin) bool {
 	return pluginType.Implements(Capabilities[capability])
 }
 
-type PredicateParser interface{}
-type EnvelopeParser interface{}
-type StatementParser interface{}
-type PredicateTransformer interface{}
-type SignatureVerifier interface{}
+type (
+	PredicateParser      interface{}
+	EnvelopeParser       interface{}
+	StatementParser      interface{}
+	PredicateTransformer interface{}
+	SignatureVerifier    interface{}
+)
 
 type EvalEnginePlugin interface {
 	CanRegisterFor(class.Class) bool

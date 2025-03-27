@@ -4,7 +4,6 @@
 package intoto
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -31,7 +30,7 @@ func TestParse(t *testing.T) {
 			genericPred, ok := pred.(*generic.Predicate)
 			require.True(t, ok)
 			parsed, ok := genericPred.GetParsed().(*v02.Provenance)
-			require.Truef(t, ok, fmt.Sprintf("%T", genericPred.GetParsed()))
+			require.Truef(t, ok, "%T", genericPred.GetParsed())
 			require.Equal(t, "https://github.com/Attestations/GitHubActionsWorkflow@v1", parsed.BuildType)
 			require.Len(t, s.GetSubjects(), 10)
 		}},
@@ -42,7 +41,7 @@ func TestParse(t *testing.T) {
 			genericPred, ok := pred.(*generic.Predicate)
 			require.True(t, ok)
 			parsed, ok := genericPred.GetParsed().(json.DataMap)
-			require.Truef(t, ok, fmt.Sprintf("%T", genericPred.GetParsed()))
+			require.Truef(t, ok, "%T", genericPred.GetParsed())
 			require.Equal(t, "am", parsed["I"])
 			require.Len(t, s.GetSubjects(), 1)
 		}},

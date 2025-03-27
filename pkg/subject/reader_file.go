@@ -76,8 +76,8 @@ func (fr *FileReader) ReadPath(path string) (attestation.Subject, error) {
 
 // ReadStream creates a resource descriptor from a reader stream
 func (fr *FileReader) ReadStream(r io.Reader) (attestation.Subject, error) {
-	var hashes = map[string]string{}
-	var errs = []error{}
+	hashes := map[string]string{}
+	errs := []error{}
 	for algo, fn := range fr.Options.Hashers {
 		fn.Reset()
 		if _, err := io.Copy(fn, r); err != nil {

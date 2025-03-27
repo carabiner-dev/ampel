@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	var cmdline = cmd.New()
+	cmdline := cmd.New()
 	if err := cmdline.Execute(); err != nil {
 		fmt.Printf("Exec error: %v\n", err)
 	}

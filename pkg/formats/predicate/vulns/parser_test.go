@@ -31,11 +31,11 @@ func TestParseV2(t *testing.T) {
 			require.NotNil(t, parsed.Scanner.Db)
 			require.NotNil(t, parsed.Scanner.Result)
 			require.NotNil(t, parsed.Metadata)
-			require.Equal(t, parsed.Scanner.Uri, "pkg:github/aquasecurity/trivy@244fd47e07d1004f0aed9")
-			require.Equal(t, parsed.Scanner.Version, "0.19.2")
-			require.Equal(t, parsed.Scanner.Db.Uri, "pkg:github/aquasecurity/trivy-db/commit/4c76bb580b2736d67751410fa4ab66d2b6b9b27d")
+			require.Equal(t, "pkg:github/aquasecurity/trivy@244fd47e07d1004f0aed9", parsed.Scanner.Uri)
+			require.Equal(t, "0.19.2", parsed.Scanner.Version)
+			require.Equal(t, "pkg:github/aquasecurity/trivy-db/commit/4c76bb580b2736d67751410fa4ab66d2b6b9b27d", parsed.Scanner.Db.Uri)
 			require.Len(t, parsed.Scanner.Result, 1)
-			require.Equal(t, parsed.Scanner.Result[0].Id, "CVE-123")
+			require.Equal(t, "CVE-123", parsed.Scanner.Result[0].Id)
 			require.Len(t, parsed.Scanner.Result[0].Severity, 2)
 		}},
 		{"other-json", "", []byte(`{name: "John Doe", "Today": 1, "IsItTrue": false}`), true, attestation.ErrNotCorrectFormat, nil},
@@ -58,9 +58,6 @@ func TestParseV2(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.NotNil(t, pred)
-
-			// These are hardcoded for now
-
 		})
 	}
 }

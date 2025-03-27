@@ -6,11 +6,10 @@ import (
 	"os"
 )
 
-type Reader struct {
-}
+type Reader struct{}
 
 func (p *Reader) Parse(path string) (*Catalog, error) {
-	var catalog = &Catalog{}
+	catalog := &Catalog{}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("parsing data: %w", err)

@@ -4,7 +4,6 @@
 package openeox
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -45,13 +44,12 @@ func TestParse(t *testing.T) {
 			if tc.mustErr {
 				require.Error(t, err)
 				if tc.checkError != nil {
-					require.True(t, errors.Is(err, tc.checkError), fmt.Sprintf("error must be %q", tc.checkError))
+					require.ErrorIs(t, err, tc.checkError, fmt.Sprintf("error must be %q", tc.checkError))
 				}
 				return
 			}
 			require.NoError(t, err)
 			require.NotNil(t, pred)
-
 		})
 	}
 }

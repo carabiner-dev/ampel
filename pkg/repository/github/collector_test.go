@@ -4,7 +4,6 @@
 package github
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -13,6 +12,7 @@ import (
 )
 
 func TestFetchFromUrl(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name         string
 		srcData      string
@@ -44,7 +44,7 @@ func TestFetchFromUrl(t *testing.T) {
 
 			// Call the fetch
 			res, _, err := collector.fetchFromUrl(
-				context.Background(),
+				t.Context(),
 				"users/carabiner-dev/attestations/sha256:2775bba8b2170bef2f91b79d4f179fd87724ffee32b4a20b8304856fd3bf4b8f",
 			)
 			if tc.synterr != nil {
@@ -53,9 +53,6 @@ func TestFetchFromUrl(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.Len(t, res, tc.expectedAtts)
-			//fmt.Printf("%+v", res)
-			//t.Fail()
 		})
 	}
-
 }

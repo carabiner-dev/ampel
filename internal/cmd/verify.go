@@ -100,7 +100,6 @@ func (o *verifyOptions) SubjectDescriptor() (attestation.Subject, error) {
 		return &intoto.ResourceDescriptor{
 			Digest: map[string]string{algo: pts[1]},
 		}, nil
-
 	}
 
 	hashes, err := hasher.New().HashFiles([]string{o.SubjectFile})
@@ -111,7 +110,7 @@ func (o *verifyOptions) SubjectDescriptor() (attestation.Subject, error) {
 }
 
 func (o *verifyOptions) Validate() error {
-	var errs = []error{}
+	errs := []error{}
 	if o.Subject == "" && o.SubjectFile == "" {
 		errs = append(errs, errors.New("no subject or subject-file specified"))
 	}

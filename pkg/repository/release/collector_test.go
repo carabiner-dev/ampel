@@ -4,7 +4,6 @@
 package release
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -35,7 +34,7 @@ func TestFetch(t *testing.T) {
 			require.NotNil(t, collector)
 
 			// List the attestations
-			all, err := collector.Fetch(context.Background(), attestation.FetchOptions{})
+			all, err := collector.Fetch(t.Context(), attestation.FetchOptions{})
 			if tc.mustErr {
 				require.Error(t, err)
 				return

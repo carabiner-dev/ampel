@@ -8,8 +8,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/oscal"
 )
 
-type defaultStatusChecker struct {
-}
+type defaultStatusChecker struct{}
 
 type StatusOptions struct {
 	ResultFiles []string

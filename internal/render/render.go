@@ -17,8 +17,10 @@ import (
 
 type driversList map[string]Driver
 
-var drivers = driversList{}
-var drMtx sync.Mutex
+var (
+	drivers = driversList{}
+	drMtx   sync.Mutex
+)
 
 func LoadDefaultDrivers() {
 	drMtx.Lock()

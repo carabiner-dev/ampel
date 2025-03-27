@@ -14,8 +14,10 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-var PredicateTypeV2 = attestation.PredicateType("https://in-toto.io/attestation/vulns/v0.2")
-var PredicateType = PredicateTypeV2
+var (
+	PredicateTypeV2 = attestation.PredicateType("https://in-toto.io/attestation/vulns/v0.2")
+	PredicateType   = PredicateTypeV2
+)
 
 // Parser is the vulnerability parser
 type Parser struct{}

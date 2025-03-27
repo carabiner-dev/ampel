@@ -97,7 +97,7 @@ func (c *Collector) FetchBySubject(ctx context.Context, opts attestation.FetchOp
 	}
 
 	// Build a list of subjects to query
-	var subjects = map[string]string{}
+	subjects := map[string]string{}
 	for _, s := range subj {
 		for algo, value := range s.GetDigest() {
 			algo = strings.ToLower(algo)

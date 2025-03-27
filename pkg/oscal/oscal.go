@@ -2,25 +2,25 @@ package oscal
 
 // Temporary to be switched to go-oscal
 type Catalog struct {
-	UUID     string
-	Metadata Metadata
-	Groups   []Group
+	UUID     string   `json:"uuid"`
+	Metadata Metadata `json:"metadata"`
+	Groups   []Group  `json:"groups"`
 }
 
 type Metadata struct {
-	Title   string
-	Version string
+	Title   string `json:"title"`
+	Version string `json:"version"`
 }
 
 type Group struct {
-	ID       string
-	Class    string
-	Title    string
-	Controls []Control
+	ID       string    `json:"id"`
+	Class    string    `json:"class"`
+	Title    string    `json:"title"`
+	Controls []Control `json:"controls"`
 }
 
 type Control struct {
-	ID    string
-	Class string
-	Title string
+	ID    string `json:"id"`
+	Class string `json:"class"`
+	Title string `json:"title"`
 }

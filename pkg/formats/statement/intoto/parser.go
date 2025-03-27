@@ -34,7 +34,7 @@ func (p *Parser) Parse(b []byte) (attestation.Statement, error) {
 		return nil, fmt.Errorf("decoding statement json: %w", err)
 	}
 
-	// Check if we got somethign meaningful
+	// Check if we got something meaningful
 	if stmt.Predicate == nil && len(stmt.Subject) == 0 {
 		return nil, attestation.ErrNotCorrectFormat
 	}

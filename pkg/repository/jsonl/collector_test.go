@@ -68,23 +68,27 @@ func TestReadAttestations(t *testing.T) {
 func TestNew(t *testing.T) {
 	t.Parallel()
 	t.Run("plain-new", func(t *testing.T) {
+		t.Parallel()
 		c, err := New()
 		require.NoError(t, err)
 		require.NotNil(t, c)
 	})
 	t.Run("with-path", func(t *testing.T) {
+		t.Parallel()
 		c, err := New(WithPath("testdata/single.jsonl"))
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		require.Equal(t, []string{"testdata/single.jsonl"}, c.Options.Paths)
 	})
 	t.Run("with-maxp", func(t *testing.T) {
+		t.Parallel()
 		c, err := New(WithMaxParallel(1000))
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		require.Equal(t, 1000, c.Options.MaxParallel)
 	})
 	t.Run("with-error", func(t *testing.T) {
+		t.Parallel()
 		_, err := New(WithPath("badfile"))
 		require.Error(t, err)
 	})

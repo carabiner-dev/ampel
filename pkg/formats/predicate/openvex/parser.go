@@ -15,8 +15,10 @@ import (
 
 type Parser struct{}
 
-var PredicateType = attestation.PredicateType("https://openvex.dev/ns")
-var _ attestation.PredicateParser = (*Parser)(nil)
+var (
+	PredicateType                             = attestation.PredicateType("https://openvex.dev/ns")
+	_             attestation.PredicateParser = (*Parser)(nil)
+)
 
 func New() *Parser {
 	return &Parser{}

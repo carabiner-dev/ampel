@@ -28,7 +28,6 @@ func TestVariableLoad(t *testing.T) {
 
 	_, _, err = program.Eval(u.VarValues())
 	require.NoError(t, err)
-
 }
 
 func TestParseRepo(t *testing.T) {

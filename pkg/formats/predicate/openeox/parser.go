@@ -25,7 +25,7 @@ func (*Parser) SupportsType(predTypes ...attestation.PredicateType) bool {
 }
 
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
-	var eox = &EOX{}
+	eox := &EOX{}
 	if err := json.Unmarshal(data, eox); err != nil {
 		return nil, fmt.Errorf("parsing EOX data: %w", err)
 	}

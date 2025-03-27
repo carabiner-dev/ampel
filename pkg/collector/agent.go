@@ -68,8 +68,8 @@ func (agent *Agent) AddRepository(repos ...attestation.Repository) error {
 // Fetch is a general attestation fetcher. It is intended to return attestations
 // in the preferred order of the driver without any optimization whatsoever.
 func (agent *Agent) Fetch(ctx context.Context, optFn ...FetchOptionsFunc) ([]attestation.Envelope, error) {
-	var mutex = sync.Mutex{}
-	var ret = []attestation.Envelope{}
+	mutex := sync.Mutex{}
+	ret := []attestation.Envelope{}
 
 	// Filter the repos to get the fetchers
 	repos := agent.fetcherRepos()
@@ -109,8 +109,8 @@ func (agent *Agent) Fetch(ctx context.Context, optFn ...FetchOptionsFunc) ([]att
 // from the configured repositories. It is understood that the repos will return
 // all attestations available about the specified subjects.
 func (agent *Agent) FetchAttestationsBySubject(ctx context.Context, subjects []attestation.Subject, optFn ...FetchOptionsFunc) ([]attestation.Envelope, error) {
-	var mutex = sync.Mutex{}
-	var ret = []attestation.Envelope{}
+	mutex := sync.Mutex{}
+	ret := []attestation.Envelope{}
 
 	// Filter the repos to get the fetchers
 	repos := agent.fetcherRepos()
@@ -152,8 +152,8 @@ func (agent *Agent) FetchAttestationsBySubject(ctx context.Context, subjects []a
 // FetchAttestationsByPredicateType requests all attestations of a particular type
 // from the configured repositories.
 func (agent *Agent) FetchAttestationsByPredicateType(ctx context.Context, pt []attestation.PredicateType, optFn ...FetchOptionsFunc) ([]attestation.Envelope, error) {
-	var mutex = sync.Mutex{}
-	var ret = []attestation.Envelope{}
+	mutex := sync.Mutex{}
+	ret := []attestation.Envelope{}
 
 	// Filter the repos to get the fetchers
 	repos := agent.fetcherRepos()

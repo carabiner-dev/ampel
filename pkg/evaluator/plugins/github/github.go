@@ -79,7 +79,7 @@ func parseRepoURI(uri string) (map[string]string, error) {
 	}
 
 	// URL has no org/repo
-	var repo = ""
+	repo := ""
 	if len(parts) > 1 {
 		repo = parts[1]
 		// If the original string was a locator, the repo can have
@@ -265,7 +265,6 @@ var parseRepo = func(_ ref.Val, rhs ref.Val) ref.Val {
 	default:
 		return types.NewErrFromString("unsupported type for repo parse")
 	}
-
 }
 
 func (ut *GitHubUtil) ConvertToType(typeVal ref.Type) ref.Val {

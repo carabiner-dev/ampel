@@ -70,7 +70,6 @@ var s256 = func(_ ref.Val, rhs ref.Val) ref.Val {
 	default:
 		return types.NewErr("unsupported type for hash")
 	}
-
 }
 
 var s512 = func(_ ref.Val, rhs ref.Val) ref.Val {
@@ -82,7 +81,6 @@ var s512 = func(_ ref.Val, rhs ref.Val) ref.Val {
 	default:
 		return types.NewErr("unsupported type for hash")
 	}
-
 }
 
 var s1 = func(_ ref.Val, rhs ref.Val) ref.Val {
@@ -94,7 +92,6 @@ var s1 = func(_ ref.Val, rhs ref.Val) ref.Val {
 	default:
 		return types.NewErr("unsupported type for hash")
 	}
-
 }
 
 var HasherType = cel.ObjectType("hasher", traits.ReceiverType)

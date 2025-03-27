@@ -25,8 +25,8 @@ type constructorFunc func(*StatementIndex) error
 func WithDocument(doc *vex.VEX) constructorFunc {
 	return func(si *StatementIndex) error {
 		statements := []*vex.Statement{}
-		for _, s := range doc.Statements {
-			statements = append(statements, &s)
+		for i := range doc.Statements {
+			statements = append(statements, &doc.Statements[i])
 		}
 		si.IndexStatements(statements)
 		return nil
@@ -118,7 +118,7 @@ func WithProduct(prod *vex.Product) FilterFunc {
 			}
 
 			for _, id := range ids {
-				for _, s := range si.ProdIndex[string(id)] {
+				for _, s := range si.ProdIndex[id] {
 					ret[s] = struct{}{}
 				}
 			}
@@ -141,7 +141,7 @@ func WithSubcomponent(subc *vex.Subcomponent) FilterFunc {
 			}
 
 			for _, id := range ids {
-				for _, s := range si.SubIndex[string(id)] {
+				for _, s := range si.SubIndex[id] {
 					ret[s] = struct{}{}
 				}
 			}

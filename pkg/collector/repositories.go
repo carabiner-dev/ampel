@@ -16,8 +16,10 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/repository/release"
 )
 
-var repositoryTypes = map[string]RepositoryFactory{}
-var ErrTypeAlreadyRegistered = errors.New("collector type already registered")
+var (
+	repositoryTypes          = map[string]RepositoryFactory{}
+	ErrTypeAlreadyRegistered = errors.New("collector type already registered")
+)
 
 type RepositoryFactory func(string) (attestation.Repository, error)
 

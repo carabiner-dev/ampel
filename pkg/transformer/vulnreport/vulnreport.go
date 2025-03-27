@@ -22,13 +22,12 @@ var PredicateTypes = []attestation.PredicateType{
 }
 
 // Transformer implements the normalizer from scanner to vulnv2
-type Transformer struct {
-}
+type Transformer struct{}
 
 func (t *Transformer) Mutate(
 	_ attestation.Subject, preds []attestation.Predicate,
 ) (attestation.Subject, []attestation.Predicate, error) {
-	var newPreds = []attestation.Predicate{}
+	newPreds := []attestation.Predicate{}
 	for _, original := range preds {
 		switch original.GetType() {
 		case trivy.PredicateType:

@@ -195,7 +195,7 @@ func (di *defaultIplementation) BuildTransformers(opts *VerificationOptions, pol
 
 // Transform takes the predicates and a set of transformers and applies the transformations
 // defined in the policy
-func (di defaultIplementation) Transform(
+func (di *defaultIplementation) Transform(
 	opts *VerificationOptions, transformers map[transformer.Class]transformer.Transformer,
 	policy *api.Policy, subject attestation.Subject, predicates []attestation.Predicate,
 ) (attestation.Subject, []attestation.Predicate, error) {
@@ -272,7 +272,7 @@ func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, su
 }
 
 // SelectChainedSubject returns a new subkect from an ingested attestatom
-func (di defaultIplementation) ProcessChainedSubjects(
+func (di *defaultIplementation) ProcessChainedSubjects(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
 	agent *collector.Agent, policy *api.Policy, subject attestation.Subject,
 	attestations []attestation.Envelope,
@@ -391,7 +391,7 @@ func (di *defaultIplementation) VerifySubject(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
 	p *api.Policy, subject attestation.Subject, predicates []attestation.Predicate,
 ) (*api.Result, error) {
-	var rs = &api.Result{
+	rs := &api.Result{
 		DateStart: timestamppb.Now(),
 		Policy: &api.PolicyRef{
 			Id: p.Id,
@@ -408,7 +408,7 @@ func (di *defaultIplementation) VerifySubject(
 		Context: p.Context,
 	}
 
-	var errs = []error{}
+	errs := []error{}
 	for i, tenet := range p.Tenets {
 		key := class.Class(tenet.Runtime)
 		if key == "" {

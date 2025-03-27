@@ -53,7 +53,6 @@ var parse = func(_ ref.Val, rhs ref.Val) ref.Val {
 	default:
 		return types.NewErrFromString("unsupported type for url parse")
 	}
-
 }
 
 func (ut *UrlTool) ConvertToType(typeVal ref.Type) ref.Val {

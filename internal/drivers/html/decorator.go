@@ -112,7 +112,7 @@ func (d *Decorator) TenetsToString(result *api.Result) string {
 		}
 	}
 
-	var statuses = []string{}
+	statuses := []string{}
 	if pass > 0 {
 		statuses = append(statuses, fmt.Sprintf("%d %s", pass, api.StatusPASS))
 	}

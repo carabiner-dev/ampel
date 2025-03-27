@@ -52,7 +52,7 @@ type Collector struct {
 func (c *Collector) readAttestations(paths []string, filters *attestation.FilterSet) ([]attestation.Envelope, error) {
 	t := throttler.New(c.Options.MaxParallel, len(paths))
 	ret := []attestation.Envelope{}
-	var mtx = sync.Mutex{}
+	mtx := sync.Mutex{}
 	for _, path := range paths {
 		path := path
 		go func() {

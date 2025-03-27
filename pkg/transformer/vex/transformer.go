@@ -25,8 +25,7 @@ import (
 )
 
 // Transformer implements the VEX interface
-type Transformer struct {
-}
+type Transformer struct{}
 
 // Mutate applies the VEX documents in the input to the received
 // vulnerability reports.
@@ -64,7 +63,7 @@ func osvPackageToPurl(pkg *osv.Result_Package_Info) string {
 }
 
 func normalizeVulnIds(record *osv.Record) (openvex.VulnerabilityID, []openvex.VulnerabilityID) {
-	var id = openvex.VulnerabilityID(record.GetId())
+	id := openvex.VulnerabilityID(record.GetId())
 	alias := []openvex.VulnerabilityID{id}
 	for _, i := range record.Aliases {
 		if strings.HasPrefix(i, "CVE-") {
@@ -146,7 +145,7 @@ func (t *Transformer) ApplyVEX(
 			for _, v := range p.Vulnerabilities {
 				id, aliases := normalizeVulnIds(v)
 				ovuln := openvex.Vulnerability{
-					Name:    openvex.VulnerabilityID(id),
+					Name:    id,
 					Aliases: aliases,
 				}
 
@@ -254,62 +253,4 @@ func extractStatements(preds []attestation.Predicate) []*openvex.Statement {
 		}
 	}
 	return ret
-}
-
-func filterStatements(subject attestation.Subject, preds []attestation.Predicate) ([]*openvex.Statement, error) {
-	indexed := map[int64][]*openvex.Statement{}
-	times := []int64{}
-	for _, pred := range preds {
-		doc, ok := pred.GetParsed().(openvex.VEX)
-		if !(ok) {
-			continue
-		}
-
-		// Capture the doc date as its the time the statements
-		// default when they don't have a defined timestamp
-		docTime := doc.Timestamp
-		if doc.LastUpdated != nil {
-			docTime = doc.LastUpdated
-		}
-
-		// Cycle the VEX statements to index them by date
-		for _, s := range doc.Statements {
-			// Check if the vex product matches the subject
-			match := false
-			for _, hash := range subject.GetDigest() {
-				if s.MatchesProduct(hash, "") {
-					match = true
-					break
-				}
-				// We can also match identifiers and name but since
-				// we are dealing with attestatons, most will have
-				// hashes, implement later if needed.
-			}
-			if !match {
-				continue
-			}
-
-			// Compute the effecrtive time
-			d := docTime
-			// First, pick the date
-			if s.Timestamp != nil {
-				d = s.Timestamp
-			}
-			if s.LastUpdated != nil {
-				d = s.LastUpdated
-			}
-
-			if _, ok := indexed[d.Unix()]; !ok {
-				indexed[d.Unix()] = []*openvex.Statement{}
-				times = append(times, d.Unix())
-			}
-			indexed[d.Unix()] = append(indexed[d.Unix()], &s)
-		}
-	}
-	slices.Sort(times)
-	ret := []*openvex.Statement{}
-	for _, t := range times {
-		ret = append(ret, indexed[t]...)
-	}
-	return ret, nil
 }

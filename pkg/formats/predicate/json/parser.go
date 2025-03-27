@@ -13,8 +13,10 @@ import (
 
 const PredicateType attestation.PredicateType = "text/json"
 
-type Parser struct{}
-type DataMap map[string]any
+type (
+	Parser  struct{}
+	DataMap map[string]any
+)
 
 // Ensure this parser implements the interface
 var _ attestation.PredicateParser = (*Parser)(nil)
@@ -44,7 +46,7 @@ type OptionFunc func(*generic.Predicate) error
 func WithJson(data []byte) OptionFunc {
 	return func(pred *generic.Predicate) error {
 		// Parse into a generic structure
-		var parsed = DataMap{}
+		parsed := DataMap{}
 		if err := gojson.Unmarshal(data, &parsed); err != nil {
 			return fmt.Errorf("parsing predicate json: %w", err)
 		}
@@ -63,7 +65,7 @@ func WithType(pt attestation.PredicateType) OptionFunc {
 }
 
 func New(optsFn ...OptionFunc) (*generic.Predicate, error) {
-	var pred = &generic.Predicate{
+	pred := &generic.Predicate{
 		Type: PredicateType,
 	}
 	for _, of := range optsFn {

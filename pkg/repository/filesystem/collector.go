@@ -145,6 +145,7 @@ func (c *Collector) FetchBySubject(ctx context.Context, opts attestation.FetchOp
 
 	return c.Fetch(ctx, opts)
 }
+
 func (c *Collector) FetchByPredicateType(ctx context.Context, opts attestation.FetchOptions, pts []attestation.PredicateType) ([]attestation.Envelope, error) {
 	filter := filters.PredicateTypeMatcher{
 		PredicateTypes: map[attestation.PredicateType]struct{}{},

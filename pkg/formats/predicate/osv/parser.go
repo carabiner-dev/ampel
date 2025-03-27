@@ -29,7 +29,7 @@ func (*Parser) SupportsType(predTypes ...attestation.PredicateType) bool {
 
 // Parse parses a byte slice into a OSV predicate
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
-	var parser = protoOSV.NewParser()
+	parser := protoOSV.NewParser()
 	results, err := parser.ParseResults(data)
 	if err != nil {
 		return nil, fmt.Errorf("parsing results into predicate: %w", err)

@@ -76,7 +76,6 @@ func (pl *ParsersList) GetTypeParsers(predicateTypes []attestation.PredicateType
 	ret := ParsersList{}
 	for t, p := range *pl {
 		if p.SupportsType(predicateTypes...) {
-
 		}
 		if slices.Contains(predicateTypes, t) {
 			ret[t] = p
@@ -97,13 +96,13 @@ func (pl *ParsersList) Parse(data []byte, optFn ...ParseOption) (attestation.Pre
 	for _, o := range optFn {
 		o(&opts)
 	}
-	var ps = pl
+	ps := pl
 	if len(opts.TypeHints) > 0 {
 		ps = pl.GetTypeParsers(opts.TypeHints)
 		logrus.Debugf("loaded %d parsers after applying type hints", len(*ps))
 	}
 
-	var errs = []error{}
+	errs := []error{}
 	for f, p := range *ps {
 		logrus.Debugf("Checking if predicate is %s", f)
 		// If we have predicate type hints, check if the parser can handle them

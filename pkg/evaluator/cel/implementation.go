@@ -112,7 +112,7 @@ func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, pl
 	}
 
 	// Context
-	var contextData = map[string]any{}
+	contextData := map[string]any{}
 	if opts.Context != nil {
 		contextData = opts.Context.ToMap()
 	}
@@ -178,7 +178,7 @@ func (dce *defaulCelEvaluator) EnsurePredicates(tenet *api.Tenet, vars *map[stri
 func (dce *defaulCelEvaluator) EvaluateOutputs(
 	env *cel.Env, outputAsts map[string]*cel.Ast, vars *map[string]any,
 ) (map[string]any, error) {
-	var evalResult = map[string]any{}
+	evalResult := map[string]any{}
 	if env == nil {
 		return nil, fmt.Errorf("CEL environment not set")
 	}
@@ -335,7 +335,7 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 	ret[VarNamePredicate] = val
 
 	// Add the context to the runtime environment
-	var contextData = map[string]any{}
+	contextData := map[string]any{}
 	if opts.Context != nil {
 		contextData = opts.Context.ToMap()
 	}

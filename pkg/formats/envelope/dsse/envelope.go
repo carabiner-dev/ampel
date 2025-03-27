@@ -23,9 +23,11 @@ func (env *Envelope) GetStatement() attestation.Statement {
 	s, _ := statement.Parsers.Parse(env.Payload)
 	return s
 }
+
 func (env *Envelope) GetSignatures() []attestation.Signature {
 	return env.Signatures
 }
+
 func (env *Envelope) GetCertificate() attestation.Certificate {
 	return nil
 }

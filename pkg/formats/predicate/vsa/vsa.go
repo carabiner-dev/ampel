@@ -23,7 +23,7 @@ func NewParser() *Parser {
 type Parser struct{}
 
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
-	var provenance = vsa.VerificationSummary{}
+	provenance := vsa.VerificationSummary{}
 	if err := protojson.Unmarshal(data, &provenance); err != nil {
 		// Transform the error to our wrong type error
 		if strings.Contains(err.Error(), "proto:") &&

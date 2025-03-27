@@ -15,8 +15,7 @@ func NewParser() *Parser {
 	return &Parser{}
 }
 
-type Parser struct {
-}
+type Parser struct{}
 
 // ParseFile parses a policy file
 func (p *Parser) ParseFile(path string) (*v1.PolicySet, error) {
@@ -30,7 +29,7 @@ func (p *Parser) ParseFile(path string) (*v1.PolicySet, error) {
 }
 
 func (p *Parser) ParseSet(policySetData []byte) (*v1.PolicySet, error) {
-	var set = v1.PolicySet{}
+	set := v1.PolicySet{}
 	// dec := json.NewDecoder(bytes.NewReader(policySetData))
 
 	if err := protojson.Unmarshal(policySetData, &set); err != nil {

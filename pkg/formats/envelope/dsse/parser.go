@@ -13,8 +13,7 @@ import (
 )
 
 // Parser for attestations wrapped in DSSE envelopes
-type Parser struct {
-}
+type Parser struct{}
 
 // ParseFile parses a file and returns all envelopes in it.
 func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {

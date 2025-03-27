@@ -28,7 +28,7 @@ func (ampel *Ampel) Verify(
 		}
 		return &api.ResultSet{Results: []*api.Result{res}}, nil
 	case *api.PolicySet:
-		var rs = &api.ResultSet{}
+		rs := &api.ResultSet{}
 		for i, p := range v.Policies {
 			res, err := ampel.VerifySubjectWithPolicy(ctx, opts, p, subject)
 			if err != nil {
@@ -38,7 +38,7 @@ func (ampel *Ampel) Verify(
 		}
 		return rs, nil
 	case []*api.PolicySet:
-		var rs = &api.ResultSet{}
+		rs := &api.ResultSet{}
 		for j, ps := range v {
 			for i, p := range ps.Policies {
 				res, err := ampel.VerifySubjectWithPolicy(ctx, opts, p, subject)

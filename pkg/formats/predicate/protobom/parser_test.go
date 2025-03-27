@@ -4,7 +4,6 @@
 package protobom
 
 import (
-	"errors"
 	"os"
 	"testing"
 
@@ -37,7 +36,7 @@ func TestParse(t *testing.T) {
 			if tc.mustErr {
 				require.Error(t, err)
 				if tc.badFormat {
-					require.True(t, errors.Is(err, attestation.ErrNotCorrectFormat))
+					require.ErrorIs(t, err, attestation.ErrNotCorrectFormat)
 				}
 				return
 			}
@@ -45,7 +44,7 @@ func TestParse(t *testing.T) {
 			require.NotNil(t, pred)
 			protopred, ok := pred.(*generic.Predicate)
 			require.True(t, ok)
-			require.True(t, len(protopred.Data) > 0)
+			require.Positive(t, len(protopred.Data))
 			require.Equal(t, tc.expectRoot, len(protopred.Parsed.(*sbom.Document).NodeList.RootElements))
 			require.Equal(t, tc.expectNodes, len(protopred.Parsed.(*sbom.Document).NodeList.Nodes))
 		})

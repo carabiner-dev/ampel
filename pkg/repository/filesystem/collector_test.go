@@ -4,7 +4,6 @@
 package filesystem
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -42,7 +41,7 @@ func TestFetch(t *testing.T) {
 			if tc.exts != nil {
 				collector.Extensions = tc.exts
 			}
-			atts, err := collector.Fetch(context.Background(), attestation.FetchOptions{})
+			atts, err := collector.Fetch(t.Context(), attestation.FetchOptions{})
 			require.NoError(t, err)
 			require.Len(t, atts, tc.expect)
 		})
@@ -77,9 +76,7 @@ func TestFetchFetchByPredicateType(t *testing.T) {
 			require.NoError(t, err)
 
 			atts, err := collector.FetchByPredicateType(
-				context.Background(),
-				tc.opts,
-				[]attestation.PredicateType{attestation.PredicateType(tc.pt)},
+				t.Context(), tc.opts, []attestation.PredicateType{attestation.PredicateType(tc.pt)},
 			)
 			require.NoError(t, err)
 			require.Len(t, atts, tc.expect)

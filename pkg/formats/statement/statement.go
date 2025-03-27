@@ -30,7 +30,7 @@ func (pl *ParserList) Parse(data []byte) (attestation.Statement, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("empty statement data when attempting to parse")
 	}
-	var errs = []error{}
+	errs := []error{}
 	for f, p := range *pl {
 		logrus.Debugf("Checking if statement is %s", f)
 		pres, err := p.Parse(data)

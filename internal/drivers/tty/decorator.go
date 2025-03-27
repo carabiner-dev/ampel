@@ -16,11 +16,13 @@ import (
 type Decorator struct{}
 
 // Color functions
-var r = color.New(color.FgRed, color.BgBlack).SprintFunc()
-var y = color.New(color.FgYellow, color.BgBlack).SprintFunc()
-var g = color.New(color.FgGreen, color.BgBlack).SprintFunc()
-var w1 = color.New(color.FgHiWhite, color.BgBlack).SprintFunc()
-var w2 = color.New(color.Faint, color.FgWhite, color.BgBlack).SprintFunc()
+var (
+	r  = color.New(color.FgRed, color.BgBlack).SprintFunc()
+	y  = color.New(color.FgYellow, color.BgBlack).SprintFunc()
+	g  = color.New(color.FgGreen, color.BgBlack).SprintFunc()
+	w1 = color.New(color.FgHiWhite, color.BgBlack).SprintFunc()
+	w2 = color.New(color.Faint, color.FgWhite, color.BgBlack).SprintFunc()
+)
 
 func (d *Decorator) AssessmentToString(a *api.Assessment) string {
 	return w2("✔ " + a.GetMessage())
@@ -115,7 +117,7 @@ func (d *Decorator) TenetsToString(result *api.Result) string {
 		}
 	}
 
-	var statuses = []string{}
+	statuses := []string{}
 	if pass > 0 {
 		statuses = append(statuses, fmt.Sprintf("%d %s", pass, api.StatusPASS))
 	}

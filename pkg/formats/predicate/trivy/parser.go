@@ -25,7 +25,7 @@ func (*Parser) SupportsType(predTypes ...attestation.PredicateType) bool {
 }
 
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
-	var report = &TrivyReport{}
+	report := &TrivyReport{}
 	if err := json.Unmarshal(data, report); err != nil {
 		return nil, fmt.Errorf("unmarshalling trivy report: %w", err)
 	}

@@ -4,7 +4,6 @@
 package git
 
 import (
-	"context"
 	"path/filepath"
 	"testing"
 
@@ -44,7 +43,7 @@ func TestClone(t *testing.T) {
 			require.NoError(t, err)
 
 			// Check if the methods work
-			res, err := c.Fetch(context.Background(), attestation.FetchOptions{})
+			res, err := c.Fetch(t.Context(), attestation.FetchOptions{})
 			require.NoError(t, err, err)
 			require.Len(t, res, tc.expectedNum)
 		})

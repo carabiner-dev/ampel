@@ -38,7 +38,7 @@ func (p *Parser) ParseFile(path string) ([]attestation.Envelope, error) {
 }
 
 func (p *Parser) Parse(data []byte) ([]attestation.Envelope, error) {
-	var env = &Envelope{
+	env := &Envelope{
 		Bundle: sigstore.Bundle{},
 	}
 
