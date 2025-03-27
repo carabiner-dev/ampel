@@ -36,6 +36,20 @@ func TestParse(t *testing.T) {
 
 			require.Equal(t, "GHSA-r9px-m959-cxf4", parsed.Results[0].Packages[0].Vulnerabilities[0].Id)
 		}},
+		{"scanner-2", "testdata/osv-scan-2.0.0.json", []byte{}, false, func(t *testing.T, pred attestation.Predicate) {
+			t.Helper()
+			require.NotNil(t, pred.GetParsed())
+			parsed, ok := pred.GetParsed().(*protoOSV.Results)
+			require.True(t, ok)
+			require.NotNil(t, parsed.Results)
+
+			require.Len(t, parsed.Results, 1)
+			require.Len(t, parsed.Results[0].Packages, 2)
+			require.Len(t, parsed.Results[0].Packages[0].Vulnerabilities, 2)
+			require.Len(t, parsed.Results[0].Packages[0].Vulnerabilities[0].Affected, 3)
+
+			require.Equal(t, "GHSA-c6gw-w398-hv78", parsed.Results[0].Packages[0].Vulnerabilities[0].Id)
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
