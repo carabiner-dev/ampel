@@ -4,11 +4,40 @@
 package index
 
 import (
+	"slices"
+
 	"github.com/openvex/go-vex/pkg/vex"
+	"github.com/sirupsen/logrus"
 )
 
-func New() (*StatementIndex, error) {
-	return &StatementIndex{}, nil
+func New(funcs ...constructorFunc) (*StatementIndex, error) {
+	si := &StatementIndex{}
+	for _, fn := range funcs {
+		if err := fn(si); err != nil {
+			return nil, err
+		}
+	}
+	return si, nil
+}
+
+type constructorFunc func(*StatementIndex) error
+
+func WithDocument(doc *vex.VEX) constructorFunc {
+	return func(si *StatementIndex) error {
+		statements := []*vex.Statement{}
+		for _, s := range doc.Statements {
+			statements = append(statements, &s)
+		}
+		si.IndexStatements(statements)
+		return nil
+	}
+}
+
+func WithStatements(statements []*vex.Statement) constructorFunc {
+	return func(si *StatementIndex) error {
+		si.IndexStatements(statements)
+		return nil
+	}
 }
 
 type StatementIndex struct {
@@ -22,7 +51,7 @@ func (si *StatementIndex) IndexStatements(statements []*vex.Statement) {
 	si.VulnIndex = map[string][]*vex.Statement{}
 	si.ProdIndex = map[string][]*vex.Statement{}
 	si.SubIndex = map[string][]*vex.Statement{}
-
+	logrus.Infof("Indexer: Indexing %d statements", len(statements))
 	for _, s := range statements {
 		for _, p := range s.Products {
 			for _, id := range p.Identifiers {
@@ -129,7 +158,17 @@ func unionIndexResults(results []map[*vex.Statement]struct{}) []*vex.Statement {
 	}
 	preret := map[*vex.Statement]struct{}{}
 	// Since we're looking for statements in all results, we can just
-	// check one of the lists against the others
+	// cycle the shortest list against the others
+	slices.SortFunc(results, func(a, b map[*vex.Statement]struct{}) int {
+		if len(a) == len(b) {
+			return 0
+		}
+		if len(a) < len(b) {
+			return -1
+		}
+		return 1
+	})
+
 	var found bool
 	for s := range results[0] {
 		// if this is present in all lists, we're in
