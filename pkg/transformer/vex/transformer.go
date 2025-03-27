@@ -7,9 +7,14 @@
 package vex
 
 import (
+	"fmt"
 	"slices"
+	"strings"
 
 	gointoto "github.com/in-toto/attestation/go/v1"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/carabiner-dev/ampel/internal/index"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
@@ -42,6 +47,39 @@ func hashToHash(intotoHash string) string {
 	}
 }
 
+// This converts an ecosystem package to a purl. For the full list
+// of officially supported ecosystems see the file in this bucket:
+// https://osv-vulnerabilities.storage.googleapis.com/ecosystems.txt
+func osvPackageToPurl(pkg *osv.Result_Package_Info) string {
+	var ptype, version, namespacename string
+	switch pkg.GetEcosystem() {
+	case "Go":
+		ptype = "golang"
+		version = pkg.GetVersion()
+		namespacename = pkg.GetName()
+	default:
+		return ""
+	}
+	return fmt.Sprintf("pkg:%s/%s@%s", ptype, namespacename, version)
+}
+
+func normalizeVulnIds(record *osv.Record) (openvex.VulnerabilityID, []openvex.VulnerabilityID) {
+	var id = openvex.VulnerabilityID(record.GetId())
+	alias := []openvex.VulnerabilityID{id}
+	for _, i := range record.Aliases {
+		if strings.HasPrefix(i, "CVE-") {
+			id = openvex.VulnerabilityID(i)
+		}
+		if !slices.Contains(alias, openvex.VulnerabilityID(i)) {
+			alias = append(alias, openvex.VulnerabilityID(i))
+		}
+	}
+
+	slices.Sort(alias)
+
+	return id, alias
+}
+
 // ApplyVEX applies a group of OpenVEX predicates to the vuln report
 // and returns the vexed report
 func (t *Transformer) ApplyVEX(
@@ -49,10 +87,9 @@ func (t *Transformer) ApplyVEX(
 ) (attestation.Predicate, error) {
 	// Filter the applicable statements
 	statements := extractStatements(vexes)
+	logrus.Infof("Filtered %d statements from %d OpenVEX predicates", len(statements), len(vexes))
 
-	// Index the statements
-	si := index.StatementIndex{}
-	si.IndexStatements(statements)
+	// Create the vex product from the policy subject
 	hashes := map[openvex.Algorithm]openvex.Hash{}
 	for algo, val := range subj.GetDigest() {
 		h := hashToHash(algo)
@@ -63,9 +100,21 @@ func (t *Transformer) ApplyVEX(
 	}
 	product := openvex.Product{}
 	product.Hashes = hashes
+
+	// Index the statements and get those that apply
+	si, err := index.New(index.WithStatements(statements))
+	if err != nil {
+		return nil, fmt.Errorf("creating statement index")
+	}
+	logrus.Infof("VEX Index: %+v", si)
 	statements = si.Matches(index.WithProduct(&product))
-	productIndex := index.StatementIndex{}
-	productIndex.IndexStatements(statements)
+	logrus.Infof("Got %d statatements back applicable to product %+v", len(statements), product)
+
+	// Now index the applicable statements
+	productIndex, err := index.New(index.WithStatements(statements))
+	if err != nil {
+		return nil, fmt.Errorf("indexing produc statements: %w", err)
+	}
 
 	newReport := &osv.Results{
 		Date:    report.GetDate(),
@@ -73,49 +122,111 @@ func (t *Transformer) ApplyVEX(
 	}
 
 	// This sucks, we need better indexing in the vex libraries
-	for i, result := range report.Results {
+	for _, result := range report.Results {
+		// Clone the result to the new one
+		newResult := proto.CloneOf(result)
+		newResult.Packages = []*osv.Result_Package{}
+
 		for _, p := range result.GetPackages() {
-			newpackage := osv.Result_Package{}
+			// Comput the package URL for the purl
+			packagePurl := osvPackageToPurl(p.GetPackage())
+			if packagePurl == "" {
+				logrus.Infof("Could not build purl from %+v, no matching possible", p)
+				newResult.Packages = append(newResult.Packages, p)
+				continue
+			}
+
+			// Clone the package entry, but reset the vulnerabilities
+			newPackage := proto.CloneOf(p)
+			newPackage.Vulnerabilities = []*osv.Record{}
+
+			logrus.Infof("Checking vulns for %s", packagePurl)
+
 			// Assemble the filter pieces. First, the vuln:
 			for _, v := range p.Vulnerabilities {
+				id, aliases := normalizeVulnIds(v)
 				ovuln := openvex.Vulnerability{
-					Name: openvex.VulnerabilityID(v.GetId()),
-				}
-				for _, a := range v.Aliases {
-					ovuln.Aliases = append(ovuln.Aliases, openvex.VulnerabilityID(a))
+					Name:    openvex.VulnerabilityID(id),
+					Aliases: aliases,
 				}
 
-				var subcs = []*openvex.Subcomponent{}
-				for _, af := range v.Affected {
-					if af.GetPackage() == nil {
-						continue
-					}
-					if af.GetPackage().GetPurl() == "" {
-						continue
-					}
-					subcs = append(subcs, &openvex.Subcomponent{
-						Component: openvex.Component{
-							Identifiers: map[openvex.IdentifierType]string{
-								openvex.PURL: af.Package.GetPurl(),
-							},
+				logrus.Infof("  Checking vexes for %s %+v", ovuln.Name, ovuln.Aliases)
+
+				// Note that the scanner puts the affected package at the top
+				// of the result struct, so no need to descend to the affected
+				// data of the report.
+				subc := &openvex.Subcomponent{
+					Component: openvex.Component{
+						ID: packagePurl,
+						Identifiers: map[openvex.IdentifierType]string{
+							openvex.PURL: packagePurl,
 						},
-					})
+					},
 				}
 
-				// TODO: Apply filters and get statements
+				pstatements := productIndex.Matches(
+					index.WithVulnerability(&ovuln),
+					index.WithSubcomponent(subc),
+				)
+				logrus.Infof("  VEX Index: %+v", productIndex)
+				logrus.Infof("  Got %d vex statements from indexer for %s + %s", len(pstatements), ovuln.Name, subc.ID)
+
+				var statement *openvex.Statement
+				for _, s := range pstatements {
+					if statement == nil {
+						statement = s
+						continue
+					}
+
+					d := s.Timestamp
+					if s.LastUpdated != nil {
+						if s.LastUpdated.After(*d) {
+							d = s.LastUpdated
+						}
+					}
+
+					st := statement.Timestamp
+					if statement.LastUpdated != nil {
+						st = statement.LastUpdated
+					}
+
+					if d.After(*st) {
+						statement = s
+					}
+				}
+
+				// At this point we have the latest vex statement, we can now
+				// check if we're not_affected :lolsob:
+				if statement != nil && statement.Status == openvex.StatusNotAffected {
+					logrus.Infof("VEX data found for %s in %s, suppressing", v.GetId(), packagePurl)
+					continue
+				}
+
+				// ... if not, then inlucde it in the new one.
+				newPackage.Vulnerabilities = append(newPackage.Vulnerabilities, v)
 			}
 
-			if len(newpackage.Vulnerabilities) > 0 {
-				newReport.GetResults()[i].Packages = append(newReport.GetResults()[i].Packages, &newpackage)
+			if len(newPackage.Vulnerabilities) > 0 {
+				newResult.Packages = append(newResult.Packages, newPackage)
+			} else {
+				logrus.Infof("Vulnerabilities in %s are vexed. Skipping from report", packagePurl)
 			}
 		}
+		newReport.Results = append(newReport.Results, newResult)
+	}
+
+	data, err := protojson.MarshalOptions{
+		Multiline: true,
+		Indent:    "  ",
+	}.Marshal(newReport)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling new OSV report")
 	}
 
 	return &generic.Predicate{
 		Type:   aosv.PredicateType,
 		Parsed: newReport,
-		Source: nil,
-		Data:   []byte{}, // Marshal
+		Data:   data,
 	}, nil
 }
 
@@ -123,8 +234,9 @@ func (t *Transformer) ApplyVEX(
 func extractStatements(preds []attestation.Predicate) []*openvex.Statement {
 	ret := []*openvex.Statement{}
 	for _, pred := range preds {
-		doc, ok := pred.GetParsed().(openvex.VEX)
+		doc, ok := pred.GetParsed().(*openvex.VEX)
 		if !(ok) {
+			logrus.Info("No es")
 			continue
 		}
 
