@@ -13,6 +13,7 @@ import (
 
 	"github.com/fatih/color"
 	intoto "github.com/in-toto/attestation/go/v1"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/release-utils/util"
 
@@ -98,7 +99,7 @@ func (o *verifyOptions) SubjectDescriptor() (attestation.Subject, error) {
 			return nil, errors.New("invalid hash algorithm in subject")
 		}
 		return &intoto.ResourceDescriptor{
-			Digest: map[string]string{algo: pts[1]},
+			Digest: map[string]string{algo: pts[2]},
 		}, nil
 	}
 
@@ -219,6 +220,7 @@ using a collector.
 			if err != nil {
 				return fmt.Errorf("resolving subject string: %w", err)
 			}
+			logrus.Infof("Subject: %+v", subject)
 
 			// Parse the polcy file
 			parser := policy.NewParser()
