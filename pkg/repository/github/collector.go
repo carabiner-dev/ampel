@@ -74,7 +74,8 @@ func New(funcs ...optFn) (*Collector, error) {
 		return nil, err
 	}
 	return &Collector{
-		client: c,
+		Options: opts,
+		client:  c,
 	}, nil
 }
 
