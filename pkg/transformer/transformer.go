@@ -11,6 +11,7 @@ import (
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/transformer/protobom"
+	"github.com/carabiner-dev/ampel/pkg/transformer/vex"
 	"github.com/carabiner-dev/ampel/pkg/transformer/vulnreport"
 	"github.com/sirupsen/logrus"
 )
@@ -39,6 +40,9 @@ func (tf *Factory) Get(c Class) (Transformer, error) {
 	case vulnreport.ClassName:
 		logrus.Debugf("Found driver for transformer class %s", s)
 		return protobom.New(), nil
+	case vex.ClassName:
+		logrus.Debugf("Found driver for transformer class %s", s)
+		return vex.New(), nil
 	default:
 		return nil, fmt.Errorf("unknown transformer %q", s)
 	}

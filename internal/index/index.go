@@ -7,7 +7,6 @@ import (
 	"slices"
 
 	"github.com/openvex/go-vex/pkg/vex"
-	"github.com/sirupsen/logrus"
 )
 
 func New(funcs ...constructorFunc) (*StatementIndex, error) {
@@ -51,7 +50,6 @@ func (si *StatementIndex) IndexStatements(statements []*vex.Statement) {
 	si.VulnIndex = map[string][]*vex.Statement{}
 	si.ProdIndex = map[string][]*vex.Statement{}
 	si.SubIndex = map[string][]*vex.Statement{}
-	logrus.Infof("Indexer: Indexing %d statements", len(statements))
 	for _, s := range statements {
 		for _, p := range s.Products {
 			for _, id := range p.Identifiers {

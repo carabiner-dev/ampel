@@ -63,6 +63,8 @@ func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, pl
 		ext.Bindings(),
 		ext.Strings(),
 		ext.Encoders(),
+		ext.Lists(),
+		ext.Encoders(),
 	}
 
 	for _, plugin := range plugins {

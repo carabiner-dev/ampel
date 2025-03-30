@@ -13,7 +13,6 @@ import (
 
 	"github.com/fatih/color"
 	intoto "github.com/in-toto/attestation/go/v1"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/release-utils/util"
 
@@ -220,7 +219,6 @@ using a collector.
 			if err != nil {
 				return fmt.Errorf("resolving subject string: %w", err)
 			}
-			logrus.Infof("Subject: %+v", subject)
 
 			// Parse the polcy file
 			parser := policy.NewParser()
