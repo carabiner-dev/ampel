@@ -56,3 +56,27 @@ func TestFetchFromUrl(t *testing.T) {
 		})
 	}
 }
+
+func TestWithRepo(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name         string
+		sut          string
+		expectedOrg  string
+		expectedRepo string
+		start        *Options
+	}{
+		{"slug", "protobom/cel", "protobom", "cel", &Options{}},
+		{"repo", "cel", "", "cel", &Options{}},
+		{"blank", "", "", "", &Options{}},
+		{"no-overwrite", "cel", "protobom", "cel", &Options{Owner: "protobom"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			f := WithRepo(tc.sut)
+			f(tc.start)
+			require.Equal(t, tc.expectedOrg, tc.start.Owner)
+			require.Equal(t, tc.expectedRepo, tc.start.Repo)
+		})
+	}
+}

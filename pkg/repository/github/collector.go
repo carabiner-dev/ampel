@@ -48,9 +48,11 @@ func WithOwner(owner string) optFn {
 func WithRepo(repo string) optFn {
 	return func(opts *Options) {
 		owner, r, sino := strings.Cut(repo, "/")
-		opts.Owner = owner
 		if sino {
+			opts.Owner = owner
 			opts.Repo = r
+		} else {
+			opts.Repo = repo
 		}
 	}
 }
