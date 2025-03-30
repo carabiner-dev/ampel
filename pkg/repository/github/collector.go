@@ -133,18 +133,26 @@ func (c *Collector) FetchBySubject(ctx context.Context, opts attestation.FetchOp
 //
 //nolint:unparam
 func (c *Collector) fetchFromUrl(ctx context.Context, url string) ([]attestation.Envelope, bool, error) {
+	ret := []attestation.Envelope{}
+
+	// Call the API:
 	resp, err := c.client.Call(ctx, http.MethodGet, url, nil)
 	if err != nil {
+		// If we get a 404 here, it means there are no attestations.
+		// TODO(puerco): Use an HTTP error
+		if strings.Contains(err.Error(), "HTTP Error 404") {
+			return ret, false, nil
+		}
 		return nil, false, err
 	}
 	defer resp.Body.Close()
 	res := &attResponse{}
+
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(res); err != nil {
 		return nil, false, fmt.Errorf("parsing response: %w", err)
 	}
 
-	ret := []attestation.Envelope{}
 	for _, e := range res.Attestations {
 		ret = append(ret, e.Bundle)
 	}
