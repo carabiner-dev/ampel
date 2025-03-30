@@ -4,7 +4,6 @@
 package vulns
 
 import (
-	"errors"
 	"os"
 	"testing"
 
@@ -51,7 +50,7 @@ func TestParseV2(t *testing.T) {
 			pred, err := parseV2(data)
 			if tc.mustErr {
 				if tc.errType != nil {
-					require.True(t, errors.Is(err, tc.errType))
+					require.ErrorIs(t, err, tc.errType)
 				}
 				require.Error(t, err)
 				return

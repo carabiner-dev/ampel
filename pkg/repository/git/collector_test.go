@@ -44,7 +44,7 @@ func TestClone(t *testing.T) {
 
 			// Check if the methods work
 			res, err := c.Fetch(t.Context(), attestation.FetchOptions{})
-			require.NoError(t, err, err)
+			require.NoError(t, err)
 			require.Len(t, res, tc.expectedNum)
 		})
 	}

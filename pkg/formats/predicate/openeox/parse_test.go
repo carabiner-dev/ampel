@@ -4,7 +4,6 @@
 package openeox
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -27,7 +26,7 @@ func TestParse(t *testing.T) {
 			t.Helper()
 			require.NotNil(t, p.Parsed)
 			require.NotNil(t, p.Data)
-			require.NotZero(t, len(p.Data))
+			require.NotEmpty(t, p.Data)
 		}},
 		{"other-json", "", []byte(`{"chido":1, "mas": "no", "soy": [1,2] }`), true, attestation.ErrNotCorrectFormat, nil},
 		{"invalid-json", "", []byte(`"chido":1, "mas": "no", "soy": [1,2] }`), true, nil, nil},
@@ -44,7 +43,7 @@ func TestParse(t *testing.T) {
 			if tc.mustErr {
 				require.Error(t, err)
 				if tc.checkError != nil {
-					require.ErrorIs(t, err, tc.checkError, fmt.Sprintf("error must be %q", tc.checkError))
+					require.ErrorIs(t, err, tc.checkError, "error must be %q", tc.checkError)
 				}
 				return
 			}

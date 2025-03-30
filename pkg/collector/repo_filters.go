@@ -32,6 +32,8 @@ func (agent *Agent) fetcherRepos() []attestation.Fetcher {
 
 // storerRepos returns the list of configured repositories that implement the
 // Storer trait.
+//
+//nolint:unused // Still working on this
 func (agent *Agent) storerRepos() []attestation.Storer {
 	res := agent.filterRepositories(func(repos []attestation.Repository) any {
 		filtered := []attestation.Repository{}

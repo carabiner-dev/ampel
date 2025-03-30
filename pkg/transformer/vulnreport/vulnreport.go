@@ -41,6 +41,7 @@ func (t *Transformer) Mutate(
 	return nil, newPreds, nil
 }
 
+//nolint:unused
 func trivyToVulnsV2(original attestation.Predicate) (attestation.Predicate, error) {
 	if original == nil {
 		return nil, errors.New("original predicate undefined")

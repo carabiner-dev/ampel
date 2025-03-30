@@ -44,7 +44,7 @@ func TestParse(t *testing.T) {
 			require.NotNil(t, pred)
 			protopred, ok := pred.(*generic.Predicate)
 			require.True(t, ok)
-			require.Positive(t, len(protopred.Data))
+			require.NotEmpty(t, protopred.Data)
 			require.Equal(t, tc.expectRoot, len(protopred.Parsed.(*sbom.Document).NodeList.RootElements))
 			require.Equal(t, tc.expectNodes, len(protopred.Parsed.(*sbom.Document).NodeList.Nodes))
 		})

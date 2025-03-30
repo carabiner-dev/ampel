@@ -127,6 +127,8 @@ func (c *Collector) FetchBySubject(ctx context.Context, opts attestation.FetchOp
 
 // fetchFromUrl fetches a page of attestations from the GitHub api. At some point
 // this will return true in the boolean if more requests are needed.
+//
+//nolint:unparam
 func (c *Collector) fetchFromUrl(ctx context.Context, url string) ([]attestation.Envelope, bool, error) {
 	resp, err := c.client.Call(ctx, http.MethodGet, url, nil)
 	if err != nil {
