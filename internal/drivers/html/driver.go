@@ -9,6 +9,7 @@ import (
 
 	"github.com/carabiner-dev/ampel/internal/drivers/gotable"
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
+	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 func New() *Driver {
@@ -32,6 +33,9 @@ func (d *Driver) RenderResultSet(w io.Writer, rset *api.ResultSet) error {
 		}
 
 		t.SetOutputMirror(w)
+		t.Style().HTML = table.HTMLOptions{
+			EscapeText: false,
+		}
 		t.RenderHTML()
 	}
 	return nil
@@ -43,6 +47,9 @@ func (d *Driver) RenderResult(w io.Writer, result *api.Result) error {
 		return fmt.Errorf("building table: %w", err)
 	}
 	t.SetOutputMirror(w)
+	t.Style().HTML = table.HTMLOptions{
+		EscapeText: false,
+	}
 	t.RenderHTML()
 	return nil
 }
