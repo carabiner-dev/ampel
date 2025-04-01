@@ -96,16 +96,19 @@ func hashToHash(intotoHash string) string {
 // of officially supported ecosystems see the file in this bucket:
 // https://osv-vulnerabilities.storage.googleapis.com/ecosystems.txt
 func osvPackageToPurl(pkg *osv.Result_Package_Info) string {
-	var ptype, version, namespacename string
+	var ptype, version, namespacename, gov string
 	switch pkg.GetEcosystem() {
 	case "Go":
 		ptype = "golang"
 		version = pkg.GetVersion()
+		if !strings.HasPrefix(version, "v") {
+			gov = "v"
+		}
 		namespacename = pkg.GetName()
 	default:
 		return ""
 	}
-	return fmt.Sprintf("pkg:%s/%s@%s", ptype, namespacename, version)
+	return fmt.Sprintf("pkg:%s/%s@%s%s", ptype, namespacename, gov, version)
 }
 
 func normalizeVulnIds(record *osv.Record) (openvex.VulnerabilityID, []openvex.VulnerabilityID) {
