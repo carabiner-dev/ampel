@@ -28,6 +28,9 @@ type VerificationOptions struct {
 
 	// ResultsAttestationPath stores the path to write the results attestation
 	ResultsAttestationPath string
+
+	// SetExitCode sets a non-zero exit code on artifact verification
+	SetExitCode bool
 }
 
 var DefaultVerificationOptions = VerificationOptions{

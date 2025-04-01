@@ -17,6 +17,7 @@ import (
 	"sigs.k8s.io/release-utils/util"
 
 	"github.com/carabiner-dev/ampel/internal/render"
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/collector"
 	"github.com/carabiner-dev/ampel/pkg/policy"
@@ -71,6 +72,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 
 	cmd.PersistentFlags().StringVar(
 		&o.SubjectFile, "subject-file", "", "file to verify",
+	)
+
+	cmd.PersistentFlags().BoolVar(
+		&o.SetExitCode, "exit-code", true, "set a non-zero exit code on policy verification fail",
 	)
 }
 
@@ -239,7 +244,7 @@ using a collector.
 
 			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, p, subject)
 			if err != nil {
-				return fmt.Errorf("runnig subject verification: %w", err)
+				return fmt.Errorf("running subject verification: %w", err)
 			}
 
 			eng := render.NewEngine()
@@ -249,6 +254,12 @@ using a collector.
 
 			if err := eng.RenderResultSet(os.Stdout, results); err != nil {
 				return fmt.Errorf("rendering results: %w", err)
+			}
+
+			for _, r := range results.GetResults() {
+				if r.Status == api.StatusFAIL {
+					os.Exit(1)
+				}
 			}
 
 			return nil
