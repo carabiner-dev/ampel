@@ -53,28 +53,40 @@ func (si *StatementIndex) IndexStatements(statements []*vex.Statement) {
 	for _, s := range statements {
 		for _, p := range s.Products {
 			for _, id := range p.Identifiers {
-				si.ProdIndex[id] = append(si.ProdIndex[id], s)
+				if !slices.Contains(si.ProdIndex[id], s) {
+					si.ProdIndex[id] = append(si.ProdIndex[id], s)
+				}
 			}
 			for _, h := range p.Hashes {
-				si.ProdIndex[string(h)] = append(si.ProdIndex[string(h)], s)
+				if !slices.Contains(si.ProdIndex[string(h)], s) {
+					si.ProdIndex[string(h)] = append(si.ProdIndex[string(h)], s)
+				}
 			}
 
 			// Index the subcomponents
 			for _, sc := range p.Subcomponents {
 				for _, id := range sc.Identifiers {
-					si.SubIndex[id] = append(si.SubIndex[id], s)
+					if !slices.Contains(si.SubIndex[id], s) {
+						si.SubIndex[id] = append(si.SubIndex[id], s)
+					}
 				}
 				for _, h := range sc.Hashes {
-					si.SubIndex[string(h)] = append(si.SubIndex[string(h)], s)
+					if !slices.Contains(si.SubIndex[string(h)], s) {
+						si.SubIndex[string(h)] = append(si.SubIndex[string(h)], s)
+					}
 				}
 			}
 		}
 
 		if s.Vulnerability.Name != "" {
-			si.VulnIndex[string(s.Vulnerability.Name)] = append(si.VulnIndex[string(s.Vulnerability.Name)], s)
+			if !slices.Contains(si.VulnIndex[string(s.Vulnerability.Name)], s) {
+				si.VulnIndex[string(s.Vulnerability.Name)] = append(si.VulnIndex[string(s.Vulnerability.Name)], s)
+			}
 		}
 		for _, alias := range s.Vulnerability.Aliases {
-			si.VulnIndex[string(alias)] = append(si.VulnIndex[string(alias)], s)
+			if !slices.Contains(si.VulnIndex[string(alias)], s) {
+				si.VulnIndex[string(alias)] = append(si.VulnIndex[string(alias)], s)
+			}
 		}
 	}
 }
