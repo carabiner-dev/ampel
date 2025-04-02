@@ -20,7 +20,7 @@ builds:
   - id: ampel
     no_unique_dist_dir: true
     binary: ampel-{{ .Tag }}-{{ .Os }}-{{ .Arch }}
-    main: .
+    main: ./cmd/ampel
     goos:
       - darwin
       - linux
