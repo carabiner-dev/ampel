@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"github.com/openvex/go-vex/pkg/vex"
+	"github.com/sirupsen/logrus"
 )
 
 func New(funcs ...constructorFunc) (*StatementIndex, error) {
@@ -50,6 +51,7 @@ func (si *StatementIndex) IndexStatements(statements []*vex.Statement) {
 	si.VulnIndex = map[string][]*vex.Statement{}
 	si.ProdIndex = map[string][]*vex.Statement{}
 	si.SubIndex = map[string][]*vex.Statement{}
+
 	for _, s := range statements {
 		for _, p := range s.Products {
 			for _, id := range p.Identifiers {
@@ -65,8 +67,13 @@ func (si *StatementIndex) IndexStatements(statements []*vex.Statement) {
 
 			// Index the subcomponents
 			for _, sc := range p.Subcomponents {
+				// Match by ID too
+				if !slices.Contains(si.SubIndex[sc.ID], s) {
+					si.SubIndex[sc.ID] = append(si.SubIndex[sc.ID], s)
+				}
 				for _, id := range sc.Identifiers {
 					if !slices.Contains(si.SubIndex[id], s) {
+						logrus.Error("Comp: " + id)
 						si.SubIndex[id] = append(si.SubIndex[id], s)
 					}
 				}
