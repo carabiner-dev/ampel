@@ -52,7 +52,7 @@ func TestEvaluateChainedSelector(t *testing.T) {
 			ast, err := ev.CompileCode(env, tc.code)
 			require.NoError(t, err)
 
-			vars, err := ev.BuildSelectorVariables(&options.EvaluatorOptions{}, nil, nil, pred)
+			vars, err := ev.BuildSelectorVariables(&options.EvaluatorOptions{}, nil, nil, nil, nil, pred)
 			require.NoError(t, err)
 
 			res, err := ev.EvaluateChainedSelector(env, ast, vars)

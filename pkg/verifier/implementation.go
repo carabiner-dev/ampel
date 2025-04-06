@@ -17,6 +17,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/collector"
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 	"github.com/carabiner-dev/ampel/pkg/filters"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope"
@@ -361,6 +362,11 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 			return nil, nil, false, fmt.Errorf("no evaluator loaded for class %s", key)
 		}
 
+		// Populate the context data
+		ctx := context.WithValue(ctx, evalcontext.EvaluationContext{}, evalcontext.EvaluationContext{
+			Subject: subject,
+			Policy:  policy,
+		})
 		// Execute the selector
 		newsubject, err := evaluators[key].ExecChainedSelector(
 			ctx, &opts.EvaluatorOptions, link.GetPredicate(),
@@ -416,6 +422,15 @@ func (di *defaultIplementation) VerifySubject(
 		if key == "" {
 			key = class.Class("default")
 		}
+
+		// Populate the context data
+		ctx := context.WithValue(
+			ctx, evalcontext.EvaluationContext{},
+			evalcontext.EvaluationContext{
+				Subject: subject,
+				Policy:  p,
+			},
+		)
 		evalres, err := evaluators[key].ExecTenet(ctx, evalOpts, tenet, predicates)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("executing tenet #%d: %w", i, err))

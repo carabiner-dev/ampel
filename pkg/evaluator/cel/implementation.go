@@ -28,12 +28,12 @@ import (
 type CelEvaluatorImplementation interface {
 	CompileCode(*cel.Env, string) (*cel.Ast, error)
 	CreateEnvironment(*options.EvaluatorOptions, map[string]Plugin) (*cel.Env, error)
-	BuildVariables(*options.EvaluatorOptions, map[string]Plugin, *api.Tenet, []attestation.Predicate) (*map[string]interface{}, error)
-	EnsurePredicates(*api.Tenet, *map[string]interface{}) (*api.EvalResult, error)
+	BuildVariables(*options.EvaluatorOptions, map[string]Plugin, *api.Tenet, *api.Policy, attestation.Subject, []attestation.Predicate) (*map[string]any, error)
+	EnsurePredicates(*api.Tenet, *map[string]any) (*api.EvalResult, error)
 	EvaluateOutputs(*cel.Env, map[string]*cel.Ast, *map[string]any) (map[string]any, error)
 	Evaluate(*cel.Env, *cel.Ast, *map[string]any) (*api.EvalResult, error)
 	Assert(*api.ResultSet) bool
-	BuildSelectorVariables(*options.EvaluatorOptions, map[string]Plugin, *api.ChainedPredicate, attestation.Predicate) (*map[string]interface{}, error)
+	BuildSelectorVariables(*options.EvaluatorOptions, map[string]Plugin, *api.Policy, attestation.Subject, *api.ChainedPredicate, attestation.Predicate) (*map[string]any, error)
 	EvaluateChainedSelector(*cel.Env, *cel.Ast, *map[string]any) (attestation.Subject, error)
 }
 
@@ -83,11 +83,12 @@ func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, pl
 
 // BuildVariables builds the set of variables that will be exposed in the
 // CEL runtime.
-func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, plugins map[string]Plugin, tenet *api.Tenet, predicates []attestation.Predicate) (*map[string]any, error) {
+func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, plugins map[string]Plugin, tenet *api.Tenet, policy *api.Policy, subject attestation.Subject, predicates []attestation.Predicate) (*map[string]any, error) {
 	ret := map[string]any{}
 
 	// Collected predicates
 	preds := []*structpb.Value{}
+	fpreds := []attestation.Predicate{}
 	for _, p := range predicates {
 		if tenet.Predicates != nil {
 			if len(tenet.Predicates.Types) > 0 && !slices.Contains(tenet.Predicates.Types, string(p.GetType())) {
@@ -126,14 +127,14 @@ func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, pl
 
 	logrus.Debugf("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
 	for _, p := range plugins {
-		maps.Copy(ret, p.VarValues())
+		maps.Copy(ret, p.VarValues(policy, subject, fpreds))
 	}
 	return &ret, nil
 }
 
 // EnsurePredicates ensures variable processing produced at least one predicate
 // for the tenet to evaluate agains.
-func (dce *defaulCelEvaluator) EnsurePredicates(tenet *api.Tenet, vars *map[string]interface{}) (*api.EvalResult, error) {
+func (dce *defaulCelEvaluator) EnsurePredicates(tenet *api.Tenet, vars *map[string]any) (*api.EvalResult, error) {
 	// Fiorst, check if the tenet needs them
 	if tenet.Predicates == nil {
 		return nil, nil
@@ -314,8 +315,8 @@ func (dce *defaulCelEvaluator) Assert(*api.ResultSet) bool {
 
 // BuildSelectorVariables
 func (dce *defaulCelEvaluator) BuildSelectorVariables(
-	opts *options.EvaluatorOptions, plugins map[string]Plugin, _ *api.ChainedPredicate, predicate attestation.Predicate,
-) (*map[string]interface{}, error) {
+	opts *options.EvaluatorOptions, plugins map[string]Plugin, policy *api.Policy, subject attestation.Subject, _ *api.ChainedPredicate, predicate attestation.Predicate,
+) (*map[string]any, error) {
 	ret := map[string]any{}
 
 	// Collected predicates
@@ -350,7 +351,7 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 
 	logrus.Debugf("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
 	for _, p := range plugins {
-		maps.Copy(ret, p.VarValues())
+		maps.Copy(ret, p.VarValues(policy, subject, []attestation.Predicate{predicate}))
 	}
 
 	return &ret, nil

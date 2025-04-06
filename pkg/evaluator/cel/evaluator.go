@@ -10,6 +10,7 @@ import (
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/github"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/hasher"
@@ -91,7 +92,7 @@ type Plugin interface {
 	Library() cel.EnvOption
 
 	// VarValues returns the values of the variables handled by the plugin
-	VarValues() map[string]any
+	VarValues(*api.Policy, attestation.Subject, []attestation.Predicate) map[string]any
 }
 
 // RegisterPlugin registers a plugin expanding the CEL API available at eval time
@@ -119,7 +120,15 @@ func (e *Evaluator) RegisterPlugin(plugin api.Plugin) error {
 func (e *Evaluator) ExecChainedSelector(
 	ctx context.Context, opts *options.EvaluatorOptions, chained *api.ChainedPredicate, predicate attestation.Predicate,
 ) (attestation.Subject, error) {
-	vars, err := e.impl.BuildSelectorVariables(opts, e.Plugins, chained, predicate)
+	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+	if !ok {
+		evalContext = evalcontext.EvaluationContext{}
+	}
+
+	// Build the variable values for the runtime
+	vars, err := e.impl.BuildSelectorVariables(
+		opts, e.Plugins, evalContext.Policy, evalContext.Subject, chained, predicate,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("building selector variable set: %w", err)
 	}
@@ -156,7 +165,12 @@ func (e *Evaluator) ExecTenet(
 		outputAsts[id] = oast
 	}
 
-	vars, err := e.impl.BuildVariables(opts, e.Plugins, tenet, predicates)
+	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+	if !ok {
+		evalContext = evalcontext.EvaluationContext{}
+	}
+
+	vars, err := e.impl.BuildVariables(opts, e.Plugins, tenet, evalContext.Policy, evalContext.Subject, predicates)
 	if err != nil {
 		return nil, fmt.Errorf("building variables for eval environment: %w", err)
 	}
