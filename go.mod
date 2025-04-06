@@ -16,13 +16,14 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481
 	github.com/openvex/go-vex v0.2.5
+	github.com/protobom/cel v0.0.0-20250328164042-113b133f8020
 	github.com/protobom/protobom v0.5.2
 	github.com/sigstore/protobuf-specs v0.4.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/protobuf v1.36.6
-	sigs.k8s.io/release-utils v0.11.0
+	sigs.k8s.io/release-utils v0.11.1
 )
 
 require (
