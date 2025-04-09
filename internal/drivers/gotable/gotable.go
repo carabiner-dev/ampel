@@ -43,13 +43,25 @@ func (tb *TableBuilder) ResultsTable(result *api.Result) (table.Writer, error) {
 	banner := tb.Decorator.AmpelBanner("Evaluation Results")
 	t.AppendRow(table.Row{banner, banner, banner}, rowConfigAutoMerge)
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"ID", "ID", result.Policy.Id}, rowConfigAutoMerge)
+	if result.Meta.Description != "" {
+		txt := result.Meta.Description
+		if result.Policy.Id != "" {
+			txt = result.Policy.Id + ": " + txt
+		}
+		t.AppendRow(table.Row{txt, txt, txt}, rowConfigAutoMerge)
+		t.AppendSeparator()
+	} else if result.Policy.Id != "" {
+		t.AppendRow(table.Row{"ID", "ID", result.Policy.Id}, rowConfigAutoMerge)
+	}
+
 	t.AppendRow(table.Row{"Status", "Status", fmt.Sprintf("%s %s", tb.Decorator.StatusToDot(result.Status), tb.Decorator.Bold(result.Status))}, rowConfigAutoMerge)
 	t.AppendRow(table.Row{"Results Date", "Results Date", result.DateEnd.AsTime().Local()}, rowConfigAutoMerge)
 	t.AppendRow(table.Row{"Execution Time", "Execution Time", result.DateEnd.AsTime().Sub(result.DateStart.AsTime())}, rowConfigAutoMerge)
 	t.AppendRow(table.Row{"Tenets", "Tenets", tb.Decorator.TenetsToString(result)}, rowConfigAutoMerge)
 	t.AppendRow(table.Row{"Subject", "Subject", tb.Decorator.SubjectToString(result.Subject, result.Chain)}, rowConfigAutoMerge)
-	t.AppendRow(table.Row{"Controls", "Controls", tb.Decorator.ControlsToString(result, "", "")}, rowConfigAutoMerge)
+	if len(result.GetMeta().Controls) > 0 {
+		t.AppendRow(table.Row{"Controls", "Controls", tb.Decorator.ControlsToString(result, "", "")}, rowConfigAutoMerge)
+	}
 	t.AppendSeparator()
 	t.AppendRow(table.Row{tb.Decorator.Bold("Check"), tb.Decorator.Bold("Status"), tb.Decorator.Bold("Message")})
 	t.AppendSeparator()
