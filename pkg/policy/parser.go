@@ -44,6 +44,10 @@ func (p *Parser) ParseSet(policySetData []byte) (*v1.PolicySet, error) {
 		return nil, fmt.Errorf("parsing policy source: %w", err)
 	}
 
+	if set.GetMeta().GetEnforce() == "" {
+		set.GetMeta().Enforce = EnforceOn
+	}
+
 	for _, p := range set.Policies {
 		// TODO(puerco): Verify if policy source is enabled in addition to
 		// policy data. it shoud probably be a Verify function in the policy

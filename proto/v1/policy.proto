@@ -22,6 +22,7 @@ message PolicySetMeta {
     string description = 2;
     google.protobuf.Timestamp expiration = 3;
     int64 version = 4;
+    string enforce = 5;
 }
 
 message Policy {

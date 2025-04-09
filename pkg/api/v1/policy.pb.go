@@ -100,6 +100,7 @@ type PolicySetMeta struct {
 	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	Expiration    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expiration,proto3" json:"expiration,omitempty"`
 	Version       int64                  `protobuf:"varint,4,opt,name=version,proto3" json:"version,omitempty"`
+	Enforce       string                 `protobuf:"bytes,5,opt,name=enforce,proto3" json:"enforce,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -160,6 +161,13 @@ func (x *PolicySetMeta) GetVersion() int64 {
 		return x.Version
 	}
 	return 0
+}
+
+func (x *PolicySetMeta) GetEnforce() string {
+	if x != nil {
+		return x.Enforce
+	}
+	return ""
 }
 
 type Policy struct {
@@ -1390,14 +1398,15 @@ const file_policy_proto_rawDesc = "" +
 	"\bpolicies\x18\x03 \x03(\v2\x10.ampel.v1.PolicyR\bpolicies\x122\n" +
 	"\n" +
 	"identities\x18\x04 \x03(\v2\x12.ampel.v1.IdentityR\n" +
-	"identities\"\xa1\x01\n" +
+	"identities\"\xbb\x01\n" +
 	"\rPolicySetMeta\x12\x18\n" +
 	"\aruntime\x18\x01 \x01(\tR\aruntime\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12:\n" +
 	"\n" +
 	"expiration\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"expiration\x12\x18\n" +
-	"\aversion\x18\x04 \x01(\x03R\aversion\"\xfe\x03\n" +
+	"\aversion\x18\x04 \x01(\x03R\aversion\x12\x18\n" +
+	"\aenforce\x18\x05 \x01(\tR\aenforce\"\xfe\x03\n" +
 	"\x06Policy\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12+\n" +
 	"\x06source\x18\x02 \x01(\v2\x13.ampel.v1.PolicyRefR\x06source\x12\"\n" +
