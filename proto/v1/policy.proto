@@ -59,6 +59,7 @@ message Meta {
     string assert_mode = 3;
     repeated Control controls = 4; 
     int64 version = 5;
+    string enforce = 6;
 }
 
 message Identity {

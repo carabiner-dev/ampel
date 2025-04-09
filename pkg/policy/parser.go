@@ -14,6 +14,9 @@ import (
 const (
 	AssertModeAND = "AND"
 	AssertModeOR  = "OR"
+
+	EnforceOn  = "ON"
+	EnforceOff = "OFF"
 )
 
 func NewParser() *Parser {
@@ -50,6 +53,10 @@ func (p *Parser) ParseSet(policySetData []byte) (*v1.PolicySet, error) {
 
 		if p.GetMeta().GetAssertMode() == "" {
 			p.GetMeta().AssertMode = AssertModeAND
+		}
+
+		if p.GetMeta().GetEnforce() == "" {
+			p.GetMeta().Enforce = EnforceOn
 		}
 	}
 	return &set, nil

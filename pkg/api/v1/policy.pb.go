@@ -428,6 +428,7 @@ type Meta struct {
 	AssertMode    string                 `protobuf:"bytes,3,opt,name=assert_mode,json=assertMode,proto3" json:"assert_mode,omitempty"`
 	Controls      []*Control             `protobuf:"bytes,4,rep,name=controls,proto3" json:"controls,omitempty"`
 	Version       int64                  `protobuf:"varint,5,opt,name=version,proto3" json:"version,omitempty"`
+	Enforce       string                 `protobuf:"bytes,6,opt,name=enforce,proto3" json:"enforce,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -495,6 +496,13 @@ func (x *Meta) GetVersion() int64 {
 		return x.Version
 	}
 	return 0
+}
+
+func (x *Meta) GetEnforce() string {
+	if x != nil {
+		return x.Enforce
+	}
+	return ""
 }
 
 type Identity struct {
@@ -1417,14 +1425,15 @@ const file_policy_proto_rawDesc = "" +
 	"\blocation\x18\x04 \x01(\v2\x1c.ampel.v1.ResourceDescriptorR\blocation\"Q\n" +
 	"\tChainLink\x12:\n" +
 	"\tpredicate\x18\x01 \x01(\v2\x1a.ampel.v1.ChainedPredicateH\x00R\tpredicateB\b\n" +
-	"\x06source\"\xac\x01\n" +
+	"\x06source\"\xc6\x01\n" +
 	"\x04Meta\x12\x18\n" +
 	"\aruntime\x18\x01 \x01(\tR\aruntime\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1f\n" +
 	"\vassert_mode\x18\x03 \x01(\tR\n" +
 	"assertMode\x12-\n" +
 	"\bcontrols\x18\x04 \x03(\v2\x11.ampel.v1.ControlR\bcontrols\x12\x18\n" +
-	"\aversion\x18\x05 \x01(\x03R\aversion\"\xc0\x01\n" +
+	"\aversion\x18\x05 \x01(\x03R\aversion\x12\x18\n" +
+	"\aenforce\x18\x06 \x01(\tR\aenforce\"\xc0\x01\n" +
 	"\bIdentity\x12;\n" +
 	"\bsigstore\x18\x01 \x01(\v2\x1a.ampel.v1.IdentitySigstoreH\x00R\bsigstore\x88\x01\x01\x12,\n" +
 	"\x03key\x18\x02 \x01(\v2\x15.ampel.v1.IdentityKeyH\x01R\x03key\x88\x01\x01\x12,\n" +
