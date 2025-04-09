@@ -11,6 +11,11 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
+const (
+	AssertModeAND = "AND"
+	AssertModeOR  = "OR"
+)
+
 func NewParser() *Parser {
 	return &Parser{}
 }
@@ -41,6 +46,10 @@ func (p *Parser) ParseSet(policySetData []byte) (*v1.PolicySet, error) {
 		// policy data. it shoud probably be a Verify function in the policy
 		if p.Source != nil {
 			// TODO(puerco): Fetch the externally referenced policy here.
+		}
+
+		if p.Meta.AssertMode == "" {
+			p.Meta.AssertMode = AssertModeAND
 		}
 	}
 	return &set, nil
