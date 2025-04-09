@@ -108,6 +108,7 @@ func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, pl
 			return nil, fmt.Errorf("serializing predicate: %w", err)
 		}
 		preds = append(preds, val)
+		fpreds = append(fpreds, p)
 	}
 	ret[VarNamePredicates] = preds
 	if len(preds) > 0 {
@@ -200,7 +201,7 @@ func (dce *defaulCelEvaluator) EvaluateOutputs(
 			return nil, fmt.Errorf("evaluation error: %w", err)
 		}
 
-		evalResult[id] = result.Value()
+		evalResult[id] = result
 	}
 
 	// Round tripit
@@ -215,9 +216,7 @@ func (dce *defaulCelEvaluator) EvaluateOutputs(
 		return nil, fmt.Errorf("unmarshaling data: %w", err)
 	}
 
-	// spew.Dump(ret)
-
-	(*vars)["outputs"] = ret
+	(*vars)["outputs"] = evalResult
 	return ret, nil
 }
 
