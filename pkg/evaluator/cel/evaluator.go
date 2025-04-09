@@ -14,6 +14,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/github"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/hasher"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/protobom"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/url"
 	"github.com/google/cel-go/cel"
 	"github.com/sirupsen/logrus"
@@ -52,6 +53,14 @@ func NewWithOptions(opts *options.EvaluatorOptions) (*Evaluator, error) {
 	return eval, nil
 }
 
+// Ensure the default plugins implement the cel plugin interface
+var (
+	_ Plugin = (*hasher.Plugin)(nil)
+	_ Plugin = (*url.Plugin)(nil)
+	_ Plugin = (*github.Plugin)(nil)
+	_ Plugin = (*protobom.Plugin)(nil)
+)
+
 // rebuildEnvironment builds the environment with the current settings
 func (e *Evaluator) rebuildEnvironment(opts *options.EvaluatorOptions) error {
 	if opts.LoadDefaultPlugins {
@@ -62,6 +71,9 @@ func (e *Evaluator) rebuildEnvironment(opts *options.EvaluatorOptions) error {
 			return fmt.Errorf("registering url: %w", err)
 		}
 		if err := e.RegisterPlugin(github.New()); err != nil {
+			return fmt.Errorf("registering github: %w", err)
+		}
+		if err := e.RegisterPlugin(protobom.New()); err != nil {
 			return fmt.Errorf("registering github: %w", err)
 		}
 	}
@@ -189,10 +201,7 @@ func (e *Evaluator) ExecTenet(
 		return nil, fmt.Errorf("evaluating outputs: %w", err)
 	}
 
-	// Add the outputs to the variables
-	(*vars)["outputs"] = outputMap
-
-	// Evaluate the asts and compile the results into a resultset
+	// Evaluate the ASTs and compile the results into a resultset
 	result, err := e.impl.Evaluate(e.Environment, ast, vars)
 	if err != nil {
 		return nil, fmt.Errorf("evaluating ASTs: %w", err)

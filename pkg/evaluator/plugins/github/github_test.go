@@ -26,7 +26,7 @@ func TestVariableLoad(t *testing.T) {
 	program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
 	require.NoError(t, err)
 
-	_, _, err = program.Eval(u.VarValues())
+	_, _, err = program.Eval(u.VarValues(nil, nil, nil))
 	require.NoError(t, err)
 }
 
@@ -59,7 +59,7 @@ func TestParseRepo(t *testing.T) {
 			program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
 			require.NoError(t, err)
 
-			result, _, err := program.Eval(u.VarValues())
+			result, _, err := program.Eval(u.VarValues(nil, nil, nil))
 			if tc.mustErr {
 				require.Error(t, err)
 				return
@@ -97,7 +97,7 @@ func TestUriToOrg(t *testing.T) {
 			program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
 			require.NoError(t, err)
 
-			result, _, err := program.Eval(u.VarValues())
+			result, _, err := program.Eval(u.VarValues(nil, nil, nil))
 			if tc.mustErr {
 				require.Error(t, err)
 				return
@@ -139,7 +139,7 @@ func TestUriToRepo(t *testing.T) {
 			program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
 			require.NoError(t, err)
 
-			result, _, err := program.Eval(u.VarValues())
+			result, _, err := program.Eval(u.VarValues(nil, nil, nil))
 			if tc.mustErr {
 				require.Error(t, err)
 				return
@@ -183,7 +183,7 @@ func TestUriToBranch(t *testing.T) {
 			program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
 			require.NoError(t, err)
 
-			result, _, err := program.Eval(u.VarValues())
+			result, _, err := program.Eval(u.VarValues(nil, nil, nil))
 			if tc.mustErr {
 				require.Error(t, err)
 				return

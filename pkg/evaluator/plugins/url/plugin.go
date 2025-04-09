@@ -5,6 +5,7 @@ package url
 
 import (
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/google/cel-go/cel"
 )
@@ -33,7 +34,7 @@ func (h *Plugin) Library() cel.EnvOption {
 	return cel.Lib(h.Tool)
 }
 
-func (h *Plugin) VarValues() map[string]any {
+func (h *Plugin) VarValues(_ *api.Policy, _ attestation.Subject, _ []attestation.Predicate) map[string]any {
 	return map[string]any{
 		"url": h.Tool,
 	}
