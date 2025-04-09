@@ -48,8 +48,8 @@ func (p *Parser) ParseSet(policySetData []byte) (*v1.PolicySet, error) {
 			// TODO(puerco): Fetch the externally referenced policy here.
 		}
 
-		if p.Meta.AssertMode == "" {
-			p.Meta.AssertMode = AssertModeAND
+		if p.GetMeta().GetAssertMode() == "" {
+			p.GetMeta().AssertMode = AssertModeAND
 		}
 	}
 	return &set, nil

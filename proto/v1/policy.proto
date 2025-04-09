@@ -12,7 +12,7 @@ option go_package = "github.com/carabiner-dev/ampel/pkg/api/v1";
 
 message PolicySet {
     string id = 1; 
-    PolicySetMeta metadata = 2; 
+    PolicySetMeta meta = 2; 
     repeated Policy policies = 3;
     repeated Identity identities = 4;
 }

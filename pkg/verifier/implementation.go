@@ -124,11 +124,11 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 	evaluators := map[class.Class]evaluator.Evaluator{}
 	factory := evaluator.Factory{}
 	// First, build the default evaluator
-	def := class.Class(p.GetMeta().Runtime)
+	def := class.Class(p.GetMeta().GetRuntime())
 
 	// Compute the default runtime, first from the options received.
 	// If not set, then from the default options set.
-	if p.GetMeta().Runtime == "" {
+	if p.GetMeta().GetRuntime() == "" {
 		if opts.DefaultEvaluator != "" {
 			def = opts.DefaultEvaluator
 		} else {
@@ -142,8 +142,8 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 	}
 	logrus.Debugf("Registered default evaluator of class %s", def)
 	evaluators[class.Class("default")] = e
-	if p.GetMeta().Runtime != "" {
-		evaluators[class.Class(p.GetMeta().Runtime)] = e
+	if p.GetMeta().GetRuntime() != "" {
+		evaluators[class.Class(p.GetMeta().GetRuntime())] = e
 	}
 
 	for _, link := range p.GetChain() {
@@ -404,7 +404,7 @@ func (di *defaultIplementation) VerifySubject(
 		Policy: &api.PolicyRef{
 			Id: p.Id,
 		},
-		Meta: p.Meta,
+		Meta: p.GetMeta(),
 		Subject: &api.ResourceDescriptor{
 			Name:   subject.GetName(),
 			Uri:    subject.GetUri(),

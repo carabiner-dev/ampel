@@ -177,7 +177,7 @@ func failPolicyWithError(p *api.Policy, chain []*api.ChainedSubject, subject att
 		DateEnd:     timestamppb.Now(),
 		Policy:      &api.PolicyRef{},
 		EvalResults: []*api.EvalResult{},
-		Meta:        p.Meta,
+		Meta:        p.GetMeta(),
 		Chain:       chain,
 		Subject:     api.NewResourceDescriptor().FromSubject(subject),
 	}
