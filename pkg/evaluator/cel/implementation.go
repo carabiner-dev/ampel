@@ -21,6 +21,8 @@ import (
 	"github.com/google/cel-go/ext"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -183,6 +185,7 @@ func (dce *defaulCelEvaluator) EvaluateOutputs(
 	env *cel.Env, outputAsts map[string]*cel.Ast, vars *map[string]any,
 ) (map[string]any, error) {
 	evalResult := map[string]any{}
+	dataResult := outputDataResult{}
 	if env == nil {
 		return nil, fmt.Errorf("CEL environment not set")
 	}
@@ -202,10 +205,18 @@ func (dce *defaulCelEvaluator) EvaluateOutputs(
 		}
 
 		evalResult[id] = result
+		dr := result.Value()
+
+		// If the result value is a list of ref.Vals, we need to
+		// resolve it for it to marshal to json:
+		if _, ok := dr.([]ref.Val); ok {
+			dr = deRefList(dr.([]ref.Val))
+		}
+		dataResult[id] = dr
 	}
 
 	// Round tripit
-	data, err := json.Marshal(evalResult)
+	data, err := json.Marshal(&dataResult)
 	if err != nil {
 		return nil, fmt.Errorf("marshaling output evals: %w", err)
 	}
@@ -216,8 +227,58 @@ func (dce *defaulCelEvaluator) EvaluateOutputs(
 		return nil, fmt.Errorf("unmarshaling data: %w", err)
 	}
 
+	// We add to the variables the native CEL types
 	(*vars)["outputs"] = evalResult
+
+	// And return the normalized data structure after roundtripping
 	return ret, nil
+}
+
+type outputDataResult map[string]any
+
+func (odr *outputDataResult) MarshalJSON() ([]byte, error) {
+	premarshal := map[string]json.RawMessage{}
+	marshaler := protojson.MarshalOptions{
+		Multiline:         true,
+		Indent:            "  ",
+		EmitUnpopulated:   true,
+		EmitDefaultValues: true,
+	}
+	for id, output := range *odr {
+		if pb, ok := output.(proto.Message); ok {
+			logrus.Warnf("Protomarshal %s", id)
+			data, err := marshaler.Marshal(pb)
+			if err != nil {
+				return nil, fmt.Errorf("proto marshalling %s: %w", id, err)
+			}
+			premarshal[id] = data
+			continue
+		}
+		// Any other values
+		data, err := json.Marshal(output)
+		if err != nil {
+			return nil, fmt.Errorf("marshalling %s: %w", id, err)
+		}
+		logrus.Warnf("Normal marshal %s %T\n%s", id, output, string(data))
+
+		premarshal[id] = data
+	}
+
+	return json.Marshal(premarshal)
+}
+
+// deRefList recurses through ref lists as .Value() in the ref Lists
+// will not extract the value of the list members
+func deRefList(refList []ref.Val) []any {
+	r := []any{}
+	for _, v := range refList {
+		if rl, ok := v.Value().([]ref.Val); ok {
+			r = append(r, deRefList(rl))
+			continue
+		}
+		r = append(r, v.Value())
+	}
+	return r
 }
 
 // EvaluateChainedSelector

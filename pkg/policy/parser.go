@@ -38,9 +38,8 @@ func (p *Parser) ParseFile(path string) (*v1.PolicySet, error) {
 
 func (p *Parser) ParseSet(policySetData []byte) (*v1.PolicySet, error) {
 	set := v1.PolicySet{}
-	// dec := json.NewDecoder(bytes.NewReader(policySetData))
-
-	if err := protojson.Unmarshal(policySetData, &set); err != nil {
+	err := protojson.UnmarshalOptions{}.Unmarshal(policySetData, &set)
+	if err != nil {
 		return nil, fmt.Errorf("parsing policy source: %w", err)
 	}
 
