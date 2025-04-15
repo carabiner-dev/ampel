@@ -9,7 +9,7 @@ require (
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
 	github.com/fatih/color v1.18.0
 	github.com/go-git/go-billy/v5 v5.6.2
-	github.com/go-git/go-git/v5 v5.14.0
+	github.com/go-git/go-git/v5 v5.15.0
 	github.com/google/cel-go v0.24.1
 	github.com/in-toto/attestation v1.1.2-0.20250128181946-c0b4d86cf712
 	github.com/jedib0t/go-pretty/v6 v6.6.7
@@ -29,8 +29,8 @@ require (
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/ProtonMail/go-crypto v1.1.5 // indirect
-	github.com/cloudflare/circl v1.6.0 // indirect
+	github.com/ProtonMail/go-crypto v1.1.6 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
@@ -52,7 +52,7 @@ require (
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
-	golang.org/x/net v0.38.0 // indirect
+	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/oauth2 v0.28.0 // indirect
 	golang.org/x/term v0.31.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
