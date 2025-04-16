@@ -43,6 +43,10 @@ func (p *Parser) ParseSet(policySetData []byte) (*v1.PolicySet, error) {
 		return nil, fmt.Errorf("parsing policy source: %w", err)
 	}
 
+	if set.GetMeta() == nil {
+		set.Meta = &v1.PolicySetMeta{}
+	}
+
 	if set.GetMeta().GetEnforce() == "" {
 		set.GetMeta().Enforce = EnforceOn
 	}
