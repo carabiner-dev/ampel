@@ -99,7 +99,10 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	// Here, the policy may not require attestations (noop) but it's a corner
 	// case, we'll fix it later.
 	if len(atts) == 0 {
-		return nil, errors.New("no attestations found to evaluate policy")
+		return failPolicyWithError(
+			policy, chain, subject,
+			errors.New("no attestations found to evaluate policy"),
+		), nil
 	}
 
 	// Check identities to see if the attestations can be admitted
