@@ -61,5 +61,5 @@ func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {
 
 // FileExtensions returns the file extennsions this parser will look at.
 func (p *Parser) FileExtensions() []string {
-	return []string{"json", "jsonl"}
+	return []string{"json"}
 }

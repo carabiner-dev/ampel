@@ -21,6 +21,7 @@ type Format string
 const (
 	FormatDSSE     Format = "dsse"
 	FormatBare     Format = "bare"
+	FormatJSONL    Format = "jsonl"
 	FormatBundleV3 Format = "application/vnd.dev.sigstore.bundle.v0.3+json"
 )
 
