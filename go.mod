@@ -3,9 +3,10 @@ module github.com/carabiner-dev/ampel
 go 1.24
 
 require (
-	github.com/carabiner-dev/ghrfs v0.2.1
+	github.com/carabiner-dev/ghrfs v0.2.4
 	github.com/carabiner-dev/github v0.2.2
 	github.com/carabiner-dev/hasher v0.1.0
+	github.com/carabiner-dev/jsonl v0.2.0
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
 	github.com/fatih/color v1.18.0
 	github.com/go-git/go-billy/v5 v5.6.2
@@ -30,7 +31,6 @@ require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.1.6 // indirect
-	github.com/carabiner-dev/jsonl v0.2.0 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
