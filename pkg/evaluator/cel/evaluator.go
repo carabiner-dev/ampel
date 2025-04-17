@@ -19,9 +19,20 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var Class = class.Class("cel@v0")
+
+// EvaluationError captures error details when executing CEL code
+type EvaluationError struct {
+	Message   string
+	EvalError error
+}
+
+func (ee *EvaluationError) Error() string {
+	return ee.Message
+}
 
 const (
 	VarNamePredicate  = "predicate"
@@ -198,12 +209,40 @@ func (e *Evaluator) ExecTenet(
 
 	outputMap, err := e.impl.EvaluateOutputs(e.Environment, outputAsts, vars)
 	if err != nil {
+		ee, ok := err.(*EvaluationError)
+		if ok {
+			return &api.EvalResult{
+				Id:         tenet.Id,
+				Status:     api.StatusFAIL,
+				Date:       timestamppb.Now(),
+				Output:     &structpb.Struct{},
+				Statements: []*api.StatementRef{},
+				Error: &api.Error{
+					Message:  "Evaluating policy outputs: " + ee.Message,
+					Guidance: ee.EvalError.Error(),
+				},
+			}, nil
+		}
 		return nil, fmt.Errorf("evaluating outputs: %w", err)
 	}
 
 	// Evaluate the ASTs and compile the results into a resultset
 	result, err := e.impl.Evaluate(e.Environment, ast, vars)
 	if err != nil {
+		ee, ok := err.(*EvaluationError)
+		if ok {
+			return &api.EvalResult{
+				Id:         tenet.Id,
+				Status:     api.StatusFAIL,
+				Date:       timestamppb.Now(),
+				Output:     &structpb.Struct{},
+				Statements: []*api.StatementRef{},
+				Error: &api.Error{
+					Message:  "Evaluating policy code: " + ee.Message,
+					Guidance: ee.EvalError.Error(),
+				},
+			}, nil
+		}
 		return nil, fmt.Errorf("evaluating ASTs: %w", err)
 	}
 	// TODO(puerco) This should not happen here, Evaluate should init the result

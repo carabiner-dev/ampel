@@ -201,7 +201,10 @@ func (dce *defaulCelEvaluator) EvaluateOutputs(
 		// First evaluate the tenet.
 		result, _, err := program.Eval(*vars)
 		if err != nil {
-			return nil, fmt.Errorf("evaluation error: %w", err)
+			return nil, &EvaluationError{
+				Message:   "CEL evaluation error",
+				EvalError: err,
+			}
 		}
 
 		evalResult[id] = result
@@ -346,7 +349,10 @@ func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *m
 	// First evaluate the tenet.
 	result, _, err := program.Eval(*variables)
 	if err != nil {
-		return nil, fmt.Errorf("evaluation error: %w", err)
+		return nil, &EvaluationError{
+			Message:   "CEL evaluation error",
+			EvalError: err,
+		}
 	}
 
 	// Tenets must evaluate to true always
