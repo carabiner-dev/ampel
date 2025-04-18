@@ -31,6 +31,9 @@ type VerificationOptions struct {
 
 	// SetExitCode sets a non-zero exit code on artifact verification
 	SetExitCode bool
+
+	// Policies to evaluate from a PolicySet. Default is to evaluate all.
+	Policies []string
 }
 
 var DefaultVerificationOptions = VerificationOptions{

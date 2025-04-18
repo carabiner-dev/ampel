@@ -77,6 +77,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().BoolVar(
 		&o.SetExitCode, "exit-code", true, "set a non-zero exit code on policy verification fail",
 	)
+
+	cmd.PersistentFlags().StringSliceVar(
+		&o.Policies, "pid", []string{}, "list of policy IDs to evaluate from a set (defaults to all)",
+	)
 }
 
 // SubjectDescriptor parses the subkect string read from the command line

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
@@ -25,6 +26,9 @@ func (ampel *Ampel) Verify(
 ) (*api.ResultSet, error) {
 	switch v := policy.(type) {
 	case *api.Policy:
+		if len(opts.Policies) > 0 && !slices.Contains(opts.Policies, v.Id) {
+			return &api.ResultSet{}, nil
+		}
 		res, err := ampel.VerifySubjectWithPolicy(ctx, opts, v, subject)
 		if err != nil {
 			return nil, err
@@ -33,6 +37,9 @@ func (ampel *Ampel) Verify(
 	case *api.PolicySet:
 		rs := &api.ResultSet{}
 		for i, p := range v.Policies {
+			if len(opts.Policies) > 0 && !slices.Contains(opts.Policies, p.Id) {
+				continue
+			}
 			res, err := ampel.VerifySubjectWithPolicy(ctx, opts, p, subject)
 			if err != nil {
 				return nil, fmt.Errorf("evaluating policy #%d: %w", i, err)
@@ -44,6 +51,9 @@ func (ampel *Ampel) Verify(
 		rs := &api.ResultSet{}
 		for j, ps := range v {
 			for i, p := range ps.Policies {
+				if len(opts.Policies) > 0 && !slices.Contains(opts.Policies, p.Id) {
+					continue
+				}
 				res, err := ampel.VerifySubjectWithPolicy(ctx, opts, p, subject)
 				if err != nil {
 					return nil, fmt.Errorf("evaluating policy #%d/%d: %w", j, i, err)
