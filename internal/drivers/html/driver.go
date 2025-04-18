@@ -26,18 +26,16 @@ type Driver struct {
 
 // RenderResultSet takes a resultset
 func (d *Driver) RenderResultSet(w io.Writer, rset *api.ResultSet) error {
-	for _, result := range rset.Results {
-		t, err := d.TableWriter.ResultsTable(result)
-		if err != nil {
-			return fmt.Errorf("building table: %w", err)
-		}
-
-		t.SetOutputMirror(w)
-		t.Style().HTML = table.HTMLOptions{
-			EscapeText: false,
-		}
-		t.RenderHTML()
+	t, err := d.TableWriter.ResultSetTable(rset)
+	if err != nil {
+		return fmt.Errorf("building table: %w", err)
 	}
+
+	t.SetOutputMirror(w)
+	t.Style().HTML = table.HTMLOptions{
+		EscapeText: false,
+	}
+	t.RenderHTML()
 	return nil
 }
 
