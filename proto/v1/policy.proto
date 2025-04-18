@@ -35,8 +35,7 @@ message Policy {
     PredicateSpec predicates = 7;
     repeated Transformer transformers = 8;
     repeated Tenet tenets = 9;
-    bool enforced = 10;
-    optional google.protobuf.Timestamp expiration = 11;
+    optional google.protobuf.Timestamp expiration = 10;
 }
 
 message PolicyRef {

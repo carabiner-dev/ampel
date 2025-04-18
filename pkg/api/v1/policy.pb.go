@@ -181,8 +181,7 @@ type Policy struct {
 	Predicates    *PredicateSpec         `protobuf:"bytes,7,opt,name=predicates,proto3" json:"predicates,omitempty"`
 	Transformers  []*Transformer         `protobuf:"bytes,8,rep,name=transformers,proto3" json:"transformers,omitempty"`
 	Tenets        []*Tenet               `protobuf:"bytes,9,rep,name=tenets,proto3" json:"tenets,omitempty"`
-	Enforced      bool                   `protobuf:"varint,10,opt,name=enforced,proto3" json:"enforced,omitempty"`
-	Expiration    *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=expiration,proto3,oneof" json:"expiration,omitempty"`
+	Expiration    *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=expiration,proto3,oneof" json:"expiration,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -278,13 +277,6 @@ func (x *Policy) GetTenets() []*Tenet {
 		return x.Tenets
 	}
 	return nil
-}
-
-func (x *Policy) GetEnforced() bool {
-	if x != nil {
-		return x.Enforced
-	}
-	return false
 }
 
 func (x *Policy) GetExpiration() *timestamppb.Timestamp {
@@ -1398,7 +1390,7 @@ const file_policy_proto_rawDesc = "" +
 	"expiration\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"expiration\x12\x18\n" +
 	"\aversion\x18\x04 \x01(\x03R\aversion\x12\x18\n" +
-	"\aenforce\x18\x05 \x01(\tR\aenforce\"\xfe\x03\n" +
+	"\aenforce\x18\x05 \x01(\tR\aenforce\"\xe2\x03\n" +
 	"\x06Policy\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12+\n" +
 	"\x06source\x18\x02 \x01(\v2\x13.ampel.v1.PolicyRefR\x06source\x12\"\n" +
@@ -1412,11 +1404,10 @@ const file_policy_proto_rawDesc = "" +
 	"predicates\x18\a \x01(\v2\x17.ampel.v1.PredicateSpecR\n" +
 	"predicates\x129\n" +
 	"\ftransformers\x18\b \x03(\v2\x15.ampel.v1.TransformerR\ftransformers\x12'\n" +
-	"\x06tenets\x18\t \x03(\v2\x0f.ampel.v1.TenetR\x06tenets\x12\x1a\n" +
-	"\benforced\x18\n" +
-	" \x01(\bR\benforced\x12?\n" +
+	"\x06tenets\x18\t \x03(\v2\x0f.ampel.v1.TenetR\x06tenets\x12?\n" +
 	"\n" +
-	"expiration\x18\v \x01(\v2\x1a.google.protobuf.TimestampH\x00R\n" +
+	"expiration\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampH\x00R\n" +
 	"expiration\x88\x01\x01B\r\n" +
 	"\v_expiration\"\x9f\x01\n" +
 	"\tPolicyRef\x12\x0e\n" +
