@@ -1004,8 +1004,7 @@ type Tenet struct {
 	Outputs       map[string]*Output     `protobuf:"bytes,5,rep,name=outputs,proto3" json:"outputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Error         *Error                 `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
 	Title         string                 `protobuf:"bytes,7,opt,name=title,proto3" json:"title,omitempty"`
-	Enforced      bool                   `protobuf:"varint,8,opt,name=enforced,proto3" json:"enforced,omitempty"`
-	Assessment    *Assessment            `protobuf:"bytes,9,opt,name=assessment,proto3" json:"assessment,omitempty"`
+	Assessment    *Assessment            `protobuf:"bytes,8,opt,name=assessment,proto3" json:"assessment,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1087,13 +1086,6 @@ func (x *Tenet) GetTitle() string {
 		return x.Title
 	}
 	return ""
-}
-
-func (x *Tenet) GetEnforced() bool {
-	if x != nil {
-		return x.Enforced
-	}
-	return false
 }
 
 func (x *Tenet) GetAssessment() *Assessment {
@@ -1482,7 +1474,7 @@ const file_policy_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\";\n" +
 	"\rPredicateSpec\x12\x14\n" +
 	"\x05types\x18\x01 \x03(\tR\x05types\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\"\x93\x03\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\"\xf7\x02\n" +
 	"\x05Tenet\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\aruntime\x18\x02 \x01(\tR\aruntime\x12\x12\n" +
@@ -1492,10 +1484,9 @@ const file_policy_proto_rawDesc = "" +
 	"predicates\x126\n" +
 	"\aoutputs\x18\x05 \x03(\v2\x1c.ampel.v1.Tenet.OutputsEntryR\aoutputs\x12%\n" +
 	"\x05error\x18\x06 \x01(\v2\x0f.ampel.v1.ErrorR\x05error\x12\x14\n" +
-	"\x05title\x18\a \x01(\tR\x05title\x12\x1a\n" +
-	"\benforced\x18\b \x01(\bR\benforced\x124\n" +
+	"\x05title\x18\a \x01(\tR\x05title\x124\n" +
 	"\n" +
-	"assessment\x18\t \x01(\v2\x14.ampel.v1.AssessmentR\n" +
+	"assessment\x18\b \x01(\v2\x14.ampel.v1.AssessmentR\n" +
 	"assessment\x1aL\n" +
 	"\fOutputsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12&\n" +

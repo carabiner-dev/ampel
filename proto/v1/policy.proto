@@ -130,8 +130,7 @@ message Tenet {
     map <string, Output> outputs = 5;
     Error error = 6;
     string title = 7;
-    bool enforced = 8;
-    Assessment assessment = 9;
+    Assessment assessment = 8;
 }
 
 message ChainedOutput {
