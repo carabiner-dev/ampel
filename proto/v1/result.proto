@@ -50,5 +50,11 @@ message StatementRef {
 }
 
 message ResultSet {
-    repeated Result results = 1;
+    string id = 1; 
+    PolicySetMeta meta = 2;
+    string status = 3;
+    google.protobuf.Timestamp date_start = 4;
+    google.protobuf.Timestamp date_end = 5;
+    ResourceDescriptor subject = 6;
+    repeated Result results = 7;
 }
