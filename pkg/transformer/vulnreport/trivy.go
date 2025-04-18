@@ -8,13 +8,15 @@ import (
 	"fmt"
 	"time"
 
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	posv "github.com/carabiner-dev/osv/go/osv"
+
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/osv"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/trivy"
-	posv "github.com/carabiner-dev/osv/go/osv"
-	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // trivyToOSV converts a trivy v2 output to an OSV feed
@@ -33,7 +35,7 @@ func (t *Transformer) TrivyToOSV(original attestation.Predicate) (attestation.Pr
 	}
 
 	createdat := time.Now()
-	//parsed.createdat :=
+	// parsed.createdat :=
 	if parsed.CreatedAt != nil {
 		createdat = *parsed.CreatedAt
 	}

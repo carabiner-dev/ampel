@@ -54,7 +54,7 @@ func (p *Parser) ParseSet(policySetData []byte) (*v1.PolicySet, error) {
 	for _, p := range set.Policies {
 		// TODO(puerco): Verify if policy source is enabled in addition to
 		// policy data. it shoud probably be a Verify function in the policy
-		if p.Source != nil {
+		if p.Source != nil { //nolint: staticcheck
 			// TODO(puerco): Fetch the externally referenced policy here.
 		}
 

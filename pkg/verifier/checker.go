@@ -24,6 +24,9 @@ func (ampel *Ampel) CheckStatus(ctx context.Context, opts *StatusOptions, catalo
 	}
 
 	auth, err := ampel.checker.CheckIdentities(opts, envelopes)
+	if err != nil {
+		return nil, fmt.Errorf("checking identities: %w", err)
+	}
 	if !auth {
 		return nil, fmt.Errorf("unable to check compliance status: signature authorization failed")
 	}

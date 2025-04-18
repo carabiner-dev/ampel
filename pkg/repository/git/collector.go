@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2025 Carabiner Systems, Inc
 // SPDX-License-Identifier: Apache-2.0
 
-// Pacakge git implements an attestations collector that works on a git repository.
+// Package git implements an attestations collector that works on a git repository.
 // This package implements the logic to interact with the git repo and relies on
 // the filesystem collector to fetch and classify attestations.
 package git

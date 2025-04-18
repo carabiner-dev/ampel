@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package vex is a transformer that reads in a vulnerability report
-// and a number of VEX documents and supresses those that do not affect
+// and a number of VEX documents and suppresses those that do not affect
 // the subject
 package vex
 

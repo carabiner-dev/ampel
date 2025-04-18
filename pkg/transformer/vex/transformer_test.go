@@ -68,8 +68,8 @@ func TestApplyVEX(t *testing.T) {
 
 			require.Len(t, osvReport.GetResults(), 1)
 			require.Len(t, osvReport.GetResults()[0].Packages, tc.expectedPackages)
-			// require.Len(t, osvReport.GetResults()[0].Packages, 2, )
 		})
 	}
+
 	t.Fail()
 }

@@ -136,7 +136,7 @@ func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, pl
 }
 
 // EnsurePredicates ensures variable processing produced at least one predicate
-// for the tenet to evaluate agains.
+// for the tenet to evaluate against.
 func (dce *defaulCelEvaluator) EnsurePredicates(tenet *api.Tenet, vars *map[string]any) (*api.EvalResult, error) {
 	// Fiorst, check if the tenet needs them
 	if tenet.Predicates == nil {

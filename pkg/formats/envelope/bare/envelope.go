@@ -18,12 +18,12 @@ func (env *Envelope) GetStatement() attestation.Statement {
 	return env.Statement
 }
 
-func (_ *Envelope) GetSignatures() []attestation.Signature {
+func (*Envelope) GetSignatures() []attestation.Signature {
 	return []attestation.Signature{}
 }
 
 // GetVerifications returns always empty as they are by definition unsigned
-func (_ *Envelope) GetVerifications() []*attestation.SignatureVerification {
+func (*Envelope) GetVerifications() []*attestation.SignatureVerification {
 	return []*attestation.SignatureVerification{}
 }
 

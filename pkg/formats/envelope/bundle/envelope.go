@@ -74,7 +74,7 @@ func (env *Envelope) GetVerifications() []*attestation.SignatureVerification {
 }
 
 func (e *Envelope) Verify() error {
-	if e.Bundle.GetVerificationMaterial() == nil {
+	if e.GetVerificationMaterial() == nil {
 		return fmt.Errorf("no verification material found in bundle")
 	}
 
