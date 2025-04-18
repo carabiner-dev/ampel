@@ -262,7 +262,6 @@ func (odr *outputDataResult) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("marshalling %s: %w", id, err)
 		}
-		logrus.Warnf("Normal marshal %s %T\n%s", id, output, string(data))
 
 		premarshal[id] = data
 	}
