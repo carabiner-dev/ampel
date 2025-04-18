@@ -105,10 +105,16 @@ func (di *defaultIplementation) AssertResult(policy *api.Policy, result *api.Res
 			}
 		}
 		result.Status = api.StatusFAIL
+		if policy.Meta.Enforce == "OFF" {
+			result.Status = api.StatusSOFTFAIL
+		}
 	case "AND":
 		for _, er := range result.EvalResults {
 			if er.Status == api.StatusFAIL {
 				result.Status = api.StatusFAIL
+				if policy.Meta.Enforce == "OFF" {
+					result.Status = api.StatusSOFTFAIL
+				}
 				return nil
 			}
 		}
