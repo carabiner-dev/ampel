@@ -53,7 +53,7 @@ func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {
 		return nil, fmt.Errorf("parsing predicate: %w", err)
 	}
 
-	// Asign the new statement
+	// Assign the new statement
 	s = intoto.NewStatement(intoto.WithPredicate(pred))
 	env.Statement = s
 	return []attestation.Envelope{env}, nil

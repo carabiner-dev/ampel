@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
 
 // Decorator implements the tabnle decorator interface to style the output
@@ -42,7 +41,7 @@ func (d *Decorator) StatusToDot(status string) string {
 	}
 }
 
-func (d *Decorator) SubjectToString(subject *api.ResourceDescriptor, chain []*v1.ChainedSubject) string {
+func (d *Decorator) SubjectToString(subject *api.ResourceDescriptor, chain []*api.ChainedSubject) string {
 	predata := ""
 	for _, subsubj := range chain {
 		predata += d.SubjectToString(subsubj.Source, nil) + "<br>\n↳ "

@@ -12,7 +12,6 @@ import (
 	"github.com/jedib0t/go-pretty/v6/text"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
 
 type TableBuilder struct {
@@ -23,7 +22,7 @@ type TableBuilder struct {
 // decoration of the tabular reports.
 type TableDecorator interface {
 	AmpelBanner(string) string
-	SubjectToString(*api.ResourceDescriptor, []*v1.ChainedSubject) string
+	SubjectToString(*api.ResourceDescriptor, []*api.ChainedSubject) string
 	AssessmentToString(*api.Assessment) string
 	ErrorToString(*api.Error) string
 	StatusToDot(string) string

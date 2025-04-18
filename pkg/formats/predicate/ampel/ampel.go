@@ -39,17 +39,17 @@ type Parser struct{}
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 	att, err := p.ParseResultsPredicate(data)
 	if err == nil {
-		return att, err
+		return att, nil
 	}
 
 	att, err = p.ParsePolicySetPredicate(data)
 	if err == nil {
-		return att, err
+		return att, nil
 	}
 
 	att, err = p.ParsePolicyPredicate(data)
 	if err == nil {
-		return att, err
+		return att, nil
 	}
 	return nil, attestation.ErrNotCorrectFormat
 }

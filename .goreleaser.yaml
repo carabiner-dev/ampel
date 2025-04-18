@@ -42,7 +42,7 @@ archives:
     allow_different_binary_count: true
 checksum:
   disable: true
-  
+
 release:
   github:
     owner: carabiner-dev

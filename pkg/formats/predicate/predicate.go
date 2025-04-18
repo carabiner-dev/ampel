@@ -75,7 +75,8 @@ func WithTypeHints(hints []attestation.PredicateType) ParseOption {
 func (pl *ParsersList) GetTypeParsers(predicateTypes []attestation.PredicateType) *ParsersList {
 	ret := ParsersList{}
 	for t, p := range *pl {
-		if p.SupportsType(predicateTypes...) {
+		if p.SupportsType(predicateTypes...) { //nolint: staticcheck
+			// TODO: review this
 		}
 		if slices.Contains(predicateTypes, t) {
 			ret[t] = p
@@ -128,7 +129,7 @@ func (pl *ParsersList) Parse(data []byte, optFn ...ParseOption) (attestation.Pre
 
 	// by now we default to JSON unless the options say don't
 	if !opts.DefaultToJSON {
-		return nil, fmt.Errorf("unkown predictate type")
+		return nil, fmt.Errorf("unknown predictate type")
 	}
 
 	// Finally try the vanilla JSON parser

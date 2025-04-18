@@ -7,9 +7,9 @@ on:
   push:
     tags:
       - 'v*'
-permissions:
-  contents: read
-  
+
+permissions: {}
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -18,7 +18,7 @@ jobs:
       contents: write
       id-token: write
       attestations: write
-      
+
     steps:
       - name: Setup bnd
         uses: carabiner-dev/bnd-actions/setup@HEAD
@@ -43,7 +43,7 @@ jobs:
       - name: Set tag output
         id: tag
         run: echo "tag_name=${GITHUB_REF#refs/*/}" >> "$GITHUB_OUTPUT"
-  
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@9c156ee8a17a598857849441385a2041ef570552 # v6.3.0
         id: goreleaser
@@ -70,4 +70,3 @@ jobs:
         run: |
           bom generate --format=json -o /tmp/ampel-${{ steps.tag.outputs.tag_name }}.spdx.json .
           gh release upload ${{ steps.tag.outputs.tag_name }} /tmp/ampel-${{ steps.tag.outputs.tag_name }}.spdx.json
-          

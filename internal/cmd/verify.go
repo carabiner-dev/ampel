@@ -216,7 +216,7 @@ using a collector.
 				return err
 			}
 
-			// Supress output from here as options are correct
+			// Suppress output from here as options are correct
 			c.SilenceUsage = true
 
 			// Read the subject from the specified string:

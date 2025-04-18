@@ -11,9 +11,9 @@ import "github.com/carabiner-dev/ampel/pkg/attestation"
 // AlwaysMatch is a filter that matches any attestation
 type AlwaysMatch struct{}
 
-func (_ AlwaysMatch) Matches(attestation.Envelope) bool { return true }
+func (AlwaysMatch) Matches(attestation.Envelope) bool { return true }
 
 // NeverMatch is a filter implementation that never matches an attestation
 type NeverMatch struct{}
 
-func (_ NeverMatch) Matches(attestation.Envelope) bool { return false }
+func (NeverMatch) Matches(attestation.Envelope) bool { return false }

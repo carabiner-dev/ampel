@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2025 Carabiner Systems, Inc
 // SPDX-License-Identifier: Apache-2.0
 
-// Pacakge jsonl implements an attestations collector that reads
+// Package jsonl implements an attestations collector that reads
 // from files using the JSON Lines (jsonl) format.
 
 package git
