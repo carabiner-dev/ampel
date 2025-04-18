@@ -377,7 +377,13 @@ func (x *StatementRef) GetId() string {
 
 type ResultSet struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Results       []*Result              `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Meta          *PolicySetMeta         `protobuf:"bytes,2,opt,name=meta,proto3" json:"meta,omitempty"`
+	Status        string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	DateStart     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=date_start,json=dateStart,proto3" json:"date_start,omitempty"`
+	DateEnd       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=date_end,json=dateEnd,proto3" json:"date_end,omitempty"`
+	Subject       *ResourceDescriptor    `protobuf:"bytes,6,opt,name=subject,proto3" json:"subject,omitempty"`
+	Results       []*Result              `protobuf:"bytes,7,rep,name=results,proto3" json:"results,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -410,6 +416,48 @@ func (x *ResultSet) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ResultSet.ProtoReflect.Descriptor instead.
 func (*ResultSet) Descriptor() ([]byte, []int) {
 	return file_result_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ResultSet) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ResultSet) GetMeta() *PolicySetMeta {
+	if x != nil {
+		return x.Meta
+	}
+	return nil
+}
+
+func (x *ResultSet) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *ResultSet) GetDateStart() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DateStart
+	}
+	return nil
+}
+
+func (x *ResultSet) GetDateEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DateEnd
+	}
+	return nil
+}
+
+func (x *ResultSet) GetSubject() *ResourceDescriptor {
+	if x != nil {
+		return x.Subject
+	}
+	return nil
 }
 
 func (x *ResultSet) GetResults() []*Result {
@@ -455,9 +503,16 @@ const file_result_proto_rawDesc = "" +
 	"assessment\x18\a \x01(\v2\x14.ampel.v1.AssessmentR\n" +
 	"assessment\"\x1e\n" +
 	"\fStatementRef\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"7\n" +
-	"\tResultSet\x12*\n" +
-	"\aresults\x18\x01 \x03(\v2\x10.ampel.v1.ResultR\aresultsB\x87\x01\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xb6\x02\n" +
+	"\tResultSet\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12+\n" +
+	"\x04meta\x18\x02 \x01(\v2\x17.ampel.v1.PolicySetMetaR\x04meta\x12\x16\n" +
+	"\x06status\x18\x03 \x01(\tR\x06status\x129\n" +
+	"\n" +
+	"date_start\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tdateStart\x125\n" +
+	"\bdate_end\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\adateEnd\x126\n" +
+	"\asubject\x18\x06 \x01(\v2\x1c.ampel.v1.ResourceDescriptorR\asubject\x12*\n" +
+	"\aresults\x18\a \x03(\v2\x10.ampel.v1.ResultR\aresultsB\x87\x01\n" +
 	"\fcom.ampel.v1B\vResultProtoP\x01Z)github.com/carabiner-dev/ampel/pkg/api/v1\xa2\x02\x03AXX\xaa\x02\bAmpel.V1\xca\x02\bAmpel\\V1\xe2\x02\x14Ampel\\V1\\GPBMetadata\xea\x02\tAmpel::V1b\x06proto3"
 
 var (
@@ -487,6 +542,7 @@ var file_result_proto_goTypes = []any{
 	(*structpb.Struct)(nil),       // 10: google.protobuf.Struct
 	(*Error)(nil),                 // 11: ampel.v1.Error
 	(*Assessment)(nil),            // 12: ampel.v1.Assessment
+	(*PolicySetMeta)(nil),         // 13: ampel.v1.PolicySetMeta
 }
 var file_result_proto_depIdxs = []int32{
 	6,  // 0: ampel.v1.Result.date_start:type_name -> google.protobuf.Timestamp
@@ -505,12 +561,16 @@ var file_result_proto_depIdxs = []int32{
 	4,  // 13: ampel.v1.EvalResult.statements:type_name -> ampel.v1.StatementRef
 	11, // 14: ampel.v1.EvalResult.error:type_name -> ampel.v1.Error
 	12, // 15: ampel.v1.EvalResult.assessment:type_name -> ampel.v1.Assessment
-	0,  // 16: ampel.v1.ResultSet.results:type_name -> ampel.v1.Result
-	17, // [17:17] is the sub-list for method output_type
-	17, // [17:17] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	13, // 16: ampel.v1.ResultSet.meta:type_name -> ampel.v1.PolicySetMeta
+	6,  // 17: ampel.v1.ResultSet.date_start:type_name -> google.protobuf.Timestamp
+	6,  // 18: ampel.v1.ResultSet.date_end:type_name -> google.protobuf.Timestamp
+	9,  // 19: ampel.v1.ResultSet.subject:type_name -> ampel.v1.ResourceDescriptor
+	0,  // 20: ampel.v1.ResultSet.results:type_name -> ampel.v1.Result
+	21, // [21:21] is the sub-list for method output_type
+	21, // [21:21] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_result_proto_init() }

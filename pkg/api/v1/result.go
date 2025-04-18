@@ -5,6 +5,8 @@ package v1
 
 import (
 	"encoding/json"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -12,6 +14,43 @@ const (
 	StatusPASS     = "PASS"
 	StatusSOFTFAIL = "SOFTFAIL"
 )
+
+// Assert reads the set's results and computes the finish date
+// and set eval status.
+func (rs *ResultSet) Assert() error {
+	rs.DateEnd = timestamppb.Now()
+	for _, r := range rs.Results {
+		if r.Status == StatusFAIL {
+			rs.Status = StatusFAIL
+			return nil
+		}
+	}
+	rs.Status = StatusPASS
+	return nil
+}
+
+func (rs *ResultSet) MarshalJSON() ([]byte, error) {
+	type Alias ResultSet
+	var start, end string
+	if rs.DateStart != nil {
+		start = rs.DateStart.AsTime().Format("2006-01-02T15:04:05.000Z")
+	}
+	if rs.DateEnd != nil {
+		end = rs.DateEnd.AsTime().Format("2006-01-02T15:04:05.000Z")
+	}
+
+	return json.Marshal(
+		&struct {
+			DateStart string `json:"date_start"`
+			DateEnd   string `json:"date_end"`
+			*Alias
+		}{
+			DateStart: start,
+			DateEnd:   end,
+			Alias:     (*Alias)(rs),
+		},
+	)
+}
 
 func (r *Result) MarshalJSON() ([]byte, error) {
 	type Alias Result

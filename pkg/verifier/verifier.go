@@ -35,7 +35,17 @@ func (ampel *Ampel) Verify(
 		}
 		return &api.ResultSet{Results: []*api.Result{res}}, nil
 	case *api.PolicySet:
-		rs := &api.ResultSet{}
+		rs := &api.ResultSet{
+			Id:        v.Id,
+			Meta:      v.Meta,
+			DateStart: timestamppb.Now(),
+			Subject: &api.ResourceDescriptor{
+				Name:   subject.GetName(),
+				Uri:    subject.GetUri(),
+				Digest: subject.GetDigest(),
+			},
+			Results: []*api.Result{},
+		}
 		for i, p := range v.Policies {
 			if len(opts.Policies) > 0 && !slices.Contains(opts.Policies, p.Id) {
 				continue
@@ -45,6 +55,9 @@ func (ampel *Ampel) Verify(
 				return nil, fmt.Errorf("evaluating policy #%d: %w", i, err)
 			}
 			rs.Results = append(rs.Results, res)
+		}
+		if err := rs.Assert(); err != nil {
+			return nil, fmt.Errorf("asserting ResultSet: %w", err)
 		}
 		return rs, nil
 	case []*api.PolicySet:
