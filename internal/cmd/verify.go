@@ -34,6 +34,7 @@ type verifyOptions struct {
 	verifier.VerificationOptions
 	PolicyFile       string
 	Format           string
+	PolicyOutput     bool
 	SubjectAlgorithm string
 	Collectors       []string
 	Subject          string
@@ -80,6 +81,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 
 	cmd.PersistentFlags().StringSliceVar(
 		&o.Policies, "pid", []string{}, "list of policy IDs to evaluate from a set (defaults to all)",
+	)
+
+	cmd.PersistentFlags().BoolVar(
+		&o.PolicyOutput, "policy-out", false, "render the eval results per policy, more detailed than the set view",
 	)
 }
 
@@ -256,8 +261,16 @@ using a collector.
 				return err
 			}
 
-			if err := eng.RenderResultSet(os.Stdout, results); err != nil {
-				return fmt.Errorf("rendering results: %w", err)
+			if opts.PolicyOutput || len(opts.Policies) > 0 {
+				for _, r := range results.GetResults() {
+					if err := eng.RenderResult(os.Stdout, r); err != nil {
+						return fmt.Errorf("rendering results: %w", err)
+					}
+				}
+			} else {
+				if err := eng.RenderResultSet(os.Stdout, results); err != nil {
+					return fmt.Errorf("rendering results: %w", err)
+				}
 			}
 
 			for _, r := range results.GetResults() {

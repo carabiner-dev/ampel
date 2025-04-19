@@ -60,7 +60,7 @@ func (d *Decorator) SubjectToString(subject *api.ResourceDescriptor, chain []*ap
 	if subject.Name != "" {
 		ret := predata + subject.Name
 		for algo, val := range subject.Digest {
-			ret += fmt.Sprintf("\n  %s:%s", algo, val[0:16])
+			ret += fmt.Sprintf("\n  %s:%s...", algo, val[0:32])
 		}
 		return ret
 	}
