@@ -273,10 +273,8 @@ using a collector.
 				}
 			}
 
-			for _, r := range results.GetResults() {
-				if r.Status == api.StatusFAIL {
-					os.Exit(1)
-				}
+			if results.Status == api.StatusFAIL && opts.SetExitCode {
+				os.Exit(1)
 			}
 
 			return nil
