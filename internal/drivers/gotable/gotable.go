@@ -127,7 +127,7 @@ func (tb *TableBuilder) ResultSetTable(set *api.ResultSet) (table.Writer, error)
 				assessments = er.GetError().GetMessage() + "\n"
 			}
 		}
-		assessments = assessments[:(len(assessments) - 1)]
+		assessments = strings.TrimSuffix(assessments, "\n")
 
 		controls := "-"
 		if len(r.GetMeta().Controls) > 0 {
