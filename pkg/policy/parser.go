@@ -8,7 +8,7 @@ import (
 	"os"
 
 	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"google.golang.org/protobuf/encoding/protojson"
+	"sigs.k8s.io/release-utils/http"
 )
 
 const (
@@ -20,10 +20,16 @@ const (
 )
 
 func NewParser() *Parser {
-	return &Parser{}
+	return &Parser{
+		Fetcher: http.NewAgent(),
+		impl:    &defaultParserImplementation{},
+	}
 }
 
-type Parser struct{}
+type Parser struct {
+	Fetcher PolicyFetcher
+	impl    parserImplementation
+}
 
 // ParseFile parses a policy file
 func (p *Parser) ParseFile(path string) (*v1.PolicySet, error) {
@@ -36,35 +42,37 @@ func (p *Parser) ParseFile(path string) (*v1.PolicySet, error) {
 	return p.ParseSet(data)
 }
 
+type PolicyFetcher interface {
+	Get(string) ([]byte, error)
+}
+
+// policyStore is a struct to hold the fetched remote policies
+type policyStore map[string]fetchedRef
+
+type fetchedRef struct {
+	Data      *[]byte
+	Policy    *v1.Policy
+	PolicySet *v1.PolicySet
+}
+
+// ParseSet parses a policy set
 func (p *Parser) ParseSet(policySetData []byte) (*v1.PolicySet, error) {
-	set := v1.PolicySet{}
-	err := protojson.UnmarshalOptions{}.Unmarshal(policySetData, &set)
+	// Parse the policy set data
+	set, err := p.impl.ParsePolicySet(policySetData)
 	if err != nil {
 		return nil, fmt.Errorf("parsing policy source: %w", err)
 	}
 
-	if set.GetMeta() == nil {
-		set.Meta = &v1.PolicySetMeta{}
+	// Fetch the remote policies referenced in the set to complete it
+	store, err := p.impl.FetchReferences(p.Fetcher, set)
+	if err != nil {
+		return nil, fmt.Errorf("fetching remote references: %w", err)
 	}
 
-	if set.GetMeta().GetEnforce() == "" {
-		set.GetMeta().Enforce = EnforceOn
+	// Complete the PolicySet
+	if err := p.impl.CompletePolicySet(set, store); err != nil {
+		return nil, fmt.Errorf("completing policy set: %s", err)
 	}
 
-	for _, p := range set.Policies {
-		// TODO(puerco): Verify if policy source is enabled in addition to
-		// policy data. it shoud probably be a Verify function in the policy
-		if p.Source != nil { //nolint: staticcheck
-			// TODO(puerco): Fetch the externally referenced policy here.
-		}
-
-		if p.GetMeta().GetAssertMode() == "" {
-			p.GetMeta().AssertMode = AssertModeAND
-		}
-
-		if p.GetMeta().GetEnforce() == "" {
-			p.GetMeta().Enforce = EnforceOn
-		}
-	}
-	return &set, nil
+	return set, nil
 }
