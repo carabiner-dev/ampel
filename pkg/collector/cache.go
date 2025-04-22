@@ -38,9 +38,9 @@ type MemoryCache struct {
 }
 
 func buildKey[T ~string](getters []T) string {
-	var keys []string
-	for _, s := range getters {
-		keys = append(keys, string(s))
+	keys := make([]string, len(getters))
+	for i, s := range getters {
+		keys[i] = string(s)
 	}
 	slices.Sort(keys)
 	return strings.Join(keys, ":")

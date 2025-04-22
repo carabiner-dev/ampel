@@ -8,9 +8,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope/bare"
-	"github.com/stretchr/testify/require"
 )
 
 var _ attestation.Fetcher = (*fakeFetcher)(nil)
@@ -109,7 +110,6 @@ func TestFetch(t *testing.T) {
 			mustErr: true,
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			agent, err := New()
@@ -136,6 +136,7 @@ func TestFetch(t *testing.T) {
 func TestFetchAttestationsBySubject(t *testing.T) {
 	t.Parallel()
 
+	//nolint:dupl
 	for _, tc := range []struct {
 		name    string
 		fn      []func(context.Context, attestation.FetchOptions, []attestation.Subject) ([]attestation.Envelope, error)
@@ -209,7 +210,6 @@ func TestFetchAttestationsBySubject(t *testing.T) {
 			mustErr: true,
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			agent, err := New()
@@ -238,6 +238,7 @@ func TestFetchAttestationsBySubject(t *testing.T) {
 func TestFetchAttestationsByPredicateType(t *testing.T) {
 	t.Parallel()
 
+	//nolint:dupl
 	for _, tc := range []struct {
 		name    string
 		fn      []func(context.Context, attestation.FetchOptions, []attestation.PredicateType) ([]attestation.Envelope, error)
@@ -311,7 +312,6 @@ func TestFetchAttestationsByPredicateType(t *testing.T) {
 			mustErr: true,
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			agent, err := New()

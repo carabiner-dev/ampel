@@ -87,7 +87,6 @@ func (agent *Agent) Fetch(ctx context.Context, optFn ...FetchOptionsFunc) ([]att
 	t := throttler.New((agent.Options.ParallelFetches), len(repos))
 
 	for _, r := range repos {
-		r := r
 		go func() {
 			// Call the repo driver's fetch method
 			atts, err := r.Fetch(ctx, opts)
@@ -146,7 +145,6 @@ func (agent *Agent) FetchAttestationsBySubject(ctx context.Context, subjects []a
 		t := throttler.New((agent.Options.ParallelFetches), len(repos))
 
 		for _, r := range repos {
-			r := r
 			go func() {
 				atts, err := r.FetchBySubject(ctx, opts, subjects)
 				if err != nil {
@@ -218,7 +216,6 @@ func (agent *Agent) FetchAttestationsByPredicateType(ctx context.Context, pt []a
 		t := throttler.New((agent.Options.ParallelFetches), len(repos))
 
 		for _, r := range repos {
-			r := r
 			go func() {
 				// Call the repo driver's fetch method
 				atts, err := r.FetchByPredicateType(ctx, opts, pt)

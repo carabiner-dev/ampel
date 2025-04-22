@@ -27,6 +27,7 @@ func (agent *Agent) fetcherRepos() []attestation.Fetcher {
 		}
 		return filtered
 	})
+	//nolint:errcheck,forcetypeassert // Can't fail as we're defining it above
 	return res.([]attestation.Fetcher)
 }
 
@@ -44,5 +45,6 @@ func (agent *Agent) storerRepos() []attestation.Storer {
 		}
 		return filtered
 	})
+	//nolint:errcheck,forcetypeassert // Can't fail as we're defining it above
 	return res.([]attestation.Storer)
 }
