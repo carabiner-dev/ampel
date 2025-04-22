@@ -32,6 +32,7 @@ type PolicySet struct {
 	Meta          *PolicySetMeta         `protobuf:"bytes,2,opt,name=meta,proto3" json:"meta,omitempty"`
 	Policies      []*Policy              `protobuf:"bytes,3,rep,name=policies,proto3" json:"policies,omitempty"`
 	Identities    []*Identity            `protobuf:"bytes,4,rep,name=identities,proto3" json:"identities,omitempty"`
+	References    []*PolicyRef           `protobuf:"bytes,5,rep,name=references,proto3" json:"references,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -90,6 +91,13 @@ func (x *PolicySet) GetPolicies() []*Policy {
 func (x *PolicySet) GetIdentities() []*Identity {
 	if x != nil {
 		return x.Identities
+	}
+	return nil
+}
+
+func (x *PolicySet) GetReferences() []*PolicyRef {
+	if x != nil {
+		return x.References
 	}
 	return nil
 }
@@ -1375,14 +1383,17 @@ var File_policy_proto protoreflect.FileDescriptor
 
 const file_policy_proto_rawDesc = "" +
 	"\n" +
-	"\fpolicy.proto\x12\bampel.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\fintoto.proto\"\xaa\x01\n" +
+	"\fpolicy.proto\x12\bampel.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\fintoto.proto\"\xdf\x01\n" +
 	"\tPolicySet\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12+\n" +
 	"\x04meta\x18\x02 \x01(\v2\x17.ampel.v1.PolicySetMetaR\x04meta\x12,\n" +
 	"\bpolicies\x18\x03 \x03(\v2\x10.ampel.v1.PolicyR\bpolicies\x122\n" +
 	"\n" +
 	"identities\x18\x04 \x03(\v2\x12.ampel.v1.IdentityR\n" +
-	"identities\"\xbb\x01\n" +
+	"identities\x123\n" +
+	"\n" +
+	"references\x18\x05 \x03(\v2\x13.ampel.v1.PolicyRefR\n" +
+	"references\"\xbb\x01\n" +
 	"\rPolicySetMeta\x12\x18\n" +
 	"\aruntime\x18\x01 \x01(\tR\aruntime\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12:\n" +
@@ -1545,39 +1556,40 @@ var file_policy_proto_depIdxs = []int32{
 	1,  // 0: ampel.v1.PolicySet.meta:type_name -> ampel.v1.PolicySetMeta
 	2,  // 1: ampel.v1.PolicySet.policies:type_name -> ampel.v1.Policy
 	6,  // 2: ampel.v1.PolicySet.identities:type_name -> ampel.v1.Identity
-	23, // 3: ampel.v1.PolicySetMeta.expiration:type_name -> google.protobuf.Timestamp
-	3,  // 4: ampel.v1.Policy.source:type_name -> ampel.v1.PolicyRef
-	5,  // 5: ampel.v1.Policy.meta:type_name -> ampel.v1.Meta
-	11, // 6: ampel.v1.Policy.context:type_name -> ampel.v1.Context
-	4,  // 7: ampel.v1.Policy.chain:type_name -> ampel.v1.ChainLink
-	6,  // 8: ampel.v1.Policy.identities:type_name -> ampel.v1.Identity
-	14, // 9: ampel.v1.Policy.predicates:type_name -> ampel.v1.PredicateSpec
-	13, // 10: ampel.v1.Policy.transformers:type_name -> ampel.v1.Transformer
-	15, // 11: ampel.v1.Policy.tenets:type_name -> ampel.v1.Tenet
-	23, // 12: ampel.v1.Policy.expiration:type_name -> google.protobuf.Timestamp
-	6,  // 13: ampel.v1.PolicyRef.identity:type_name -> ampel.v1.Identity
-	24, // 14: ampel.v1.PolicyRef.location:type_name -> ampel.v1.ResourceDescriptor
-	17, // 15: ampel.v1.ChainLink.predicate:type_name -> ampel.v1.ChainedPredicate
-	7,  // 16: ampel.v1.Meta.controls:type_name -> ampel.v1.Control
-	8,  // 17: ampel.v1.Identity.sigstore:type_name -> ampel.v1.IdentitySigstore
-	9,  // 18: ampel.v1.Identity.key:type_name -> ampel.v1.IdentityKey
-	10, // 19: ampel.v1.Identity.ref:type_name -> ampel.v1.IdentityRef
-	20, // 20: ampel.v1.Context.values:type_name -> ampel.v1.Context.ValuesEntry
-	14, // 21: ampel.v1.Tenet.predicates:type_name -> ampel.v1.PredicateSpec
-	22, // 22: ampel.v1.Tenet.outputs:type_name -> ampel.v1.Tenet.OutputsEntry
-	12, // 23: ampel.v1.Tenet.error:type_name -> ampel.v1.Error
-	18, // 24: ampel.v1.Tenet.assessment:type_name -> ampel.v1.Assessment
-	6,  // 25: ampel.v1.ChainedPredicate.identities:type_name -> ampel.v1.Identity
-	25, // 26: ampel.v1.Output.value:type_name -> google.protobuf.Value
-	21, // 27: ampel.v1.Context.ValuesEntry.value:type_name -> ampel.v1.Context.ValueDef
-	25, // 28: ampel.v1.Context.ValueDef.value:type_name -> google.protobuf.Value
-	25, // 29: ampel.v1.Context.ValueDef.default:type_name -> google.protobuf.Value
-	19, // 30: ampel.v1.Tenet.OutputsEntry.value:type_name -> ampel.v1.Output
-	31, // [31:31] is the sub-list for method output_type
-	31, // [31:31] is the sub-list for method input_type
-	31, // [31:31] is the sub-list for extension type_name
-	31, // [31:31] is the sub-list for extension extendee
-	0,  // [0:31] is the sub-list for field type_name
+	3,  // 3: ampel.v1.PolicySet.references:type_name -> ampel.v1.PolicyRef
+	23, // 4: ampel.v1.PolicySetMeta.expiration:type_name -> google.protobuf.Timestamp
+	3,  // 5: ampel.v1.Policy.source:type_name -> ampel.v1.PolicyRef
+	5,  // 6: ampel.v1.Policy.meta:type_name -> ampel.v1.Meta
+	11, // 7: ampel.v1.Policy.context:type_name -> ampel.v1.Context
+	4,  // 8: ampel.v1.Policy.chain:type_name -> ampel.v1.ChainLink
+	6,  // 9: ampel.v1.Policy.identities:type_name -> ampel.v1.Identity
+	14, // 10: ampel.v1.Policy.predicates:type_name -> ampel.v1.PredicateSpec
+	13, // 11: ampel.v1.Policy.transformers:type_name -> ampel.v1.Transformer
+	15, // 12: ampel.v1.Policy.tenets:type_name -> ampel.v1.Tenet
+	23, // 13: ampel.v1.Policy.expiration:type_name -> google.protobuf.Timestamp
+	6,  // 14: ampel.v1.PolicyRef.identity:type_name -> ampel.v1.Identity
+	24, // 15: ampel.v1.PolicyRef.location:type_name -> ampel.v1.ResourceDescriptor
+	17, // 16: ampel.v1.ChainLink.predicate:type_name -> ampel.v1.ChainedPredicate
+	7,  // 17: ampel.v1.Meta.controls:type_name -> ampel.v1.Control
+	8,  // 18: ampel.v1.Identity.sigstore:type_name -> ampel.v1.IdentitySigstore
+	9,  // 19: ampel.v1.Identity.key:type_name -> ampel.v1.IdentityKey
+	10, // 20: ampel.v1.Identity.ref:type_name -> ampel.v1.IdentityRef
+	20, // 21: ampel.v1.Context.values:type_name -> ampel.v1.Context.ValuesEntry
+	14, // 22: ampel.v1.Tenet.predicates:type_name -> ampel.v1.PredicateSpec
+	22, // 23: ampel.v1.Tenet.outputs:type_name -> ampel.v1.Tenet.OutputsEntry
+	12, // 24: ampel.v1.Tenet.error:type_name -> ampel.v1.Error
+	18, // 25: ampel.v1.Tenet.assessment:type_name -> ampel.v1.Assessment
+	6,  // 26: ampel.v1.ChainedPredicate.identities:type_name -> ampel.v1.Identity
+	25, // 27: ampel.v1.Output.value:type_name -> google.protobuf.Value
+	21, // 28: ampel.v1.Context.ValuesEntry.value:type_name -> ampel.v1.Context.ValueDef
+	25, // 29: ampel.v1.Context.ValueDef.value:type_name -> google.protobuf.Value
+	25, // 30: ampel.v1.Context.ValueDef.default:type_name -> google.protobuf.Value
+	19, // 31: ampel.v1.Tenet.OutputsEntry.value:type_name -> ampel.v1.Output
+	32, // [32:32] is the sub-list for method output_type
+	32, // [32:32] is the sub-list for method input_type
+	32, // [32:32] is the sub-list for extension type_name
+	32, // [32:32] is the sub-list for extension extendee
+	0,  // [0:32] is the sub-list for field type_name
 }
 
 func init() { file_policy_proto_init() }

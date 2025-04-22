@@ -15,6 +15,7 @@ message PolicySet {
     PolicySetMeta meta = 2;
     repeated Policy policies = 3;
     repeated Identity identities = 4;
+    repeated PolicyRef references = 5;
 }
 
 message PolicySetMeta {
