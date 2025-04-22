@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"os"
 
-	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"sigs.k8s.io/release-utils/http"
+
+	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
 
 const (
@@ -34,7 +35,7 @@ type Parser struct {
 // ParseFile parses a policy file
 func (p *Parser) ParseFile(path string) (*v1.PolicySet, error) {
 	// TODO(puerco): Support policies enclosed in envelopes
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec
 	if err != nil {
 		return nil, fmt.Errorf("reading polciy file: %w", err)
 	}
@@ -44,15 +45,6 @@ func (p *Parser) ParseFile(path string) (*v1.PolicySet, error) {
 
 type PolicyFetcher interface {
 	Get(string) ([]byte, error)
-}
-
-// policyStore is a struct to hold the fetched remote policies
-type policyStore map[string]fetchedRef
-
-type fetchedRef struct {
-	Data      *[]byte
-	Policy    *v1.Policy
-	PolicySet *v1.PolicySet
 }
 
 // ParseSet parses a policy set
@@ -71,7 +63,7 @@ func (p *Parser) ParseSet(policySetData []byte) (*v1.PolicySet, error) {
 
 	// Complete the PolicySet
 	if err := p.impl.CompletePolicySet(set, store); err != nil {
-		return nil, fmt.Errorf("completing policy set: %s", err)
+		return nil, fmt.Errorf("completing policy set: %w", err)
 	}
 
 	return set, nil
