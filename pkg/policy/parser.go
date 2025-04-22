@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"os"
 
-	"sigs.k8s.io/release-utils/http"
-
 	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
 
@@ -22,7 +20,7 @@ const (
 
 func NewParser() *Parser {
 	return &Parser{
-		Fetcher: http.NewAgent(),
+		Fetcher: NewFetcher(),
 		impl:    &defaultParserImplementation{},
 	}
 }
@@ -41,10 +39,6 @@ func (p *Parser) ParseFile(path string) (*v1.PolicySet, error) {
 	}
 
 	return p.ParseSet(data)
-}
-
-type PolicyFetcher interface {
-	Get(string) ([]byte, error)
 }
 
 // ParseSet parses a policy set
