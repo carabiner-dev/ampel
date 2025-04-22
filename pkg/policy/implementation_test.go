@@ -20,7 +20,7 @@ func TestParseFetchedRef(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := parseFetchedRef([]byte(tc.data))
+			_, _, err := parseFetchedRef([]byte(tc.data))
 			if tc.mustErr {
 				require.Error(t, err)
 				return
@@ -28,5 +28,4 @@ func TestParseFetchedRef(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
-
 }
