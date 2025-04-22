@@ -35,6 +35,7 @@ func New(funcs ...InitFunction) (*Agent, error) {
 func NewWithOptions(opts *Options) *Agent {
 	return &Agent{
 		Options:      *opts,
+		Cache:        NewMemoryCache(),
 		Repositories: []attestation.Repository{},
 	}
 }
@@ -47,6 +48,7 @@ func NewWithOptions(opts *Options) *Agent {
 // configured repository drivers.
 type Agent struct {
 	Options      Options
+	Cache        Cache
 	Repositories []attestation.Repository
 }
 
@@ -127,35 +129,59 @@ func (agent *Agent) FetchAttestationsBySubject(ctx context.Context, subjects []a
 		f(&opts)
 	}
 
-	t := throttler.New((agent.Options.ParallelFetches), len(repos))
+	// Query the cache to see if we have cached attestations
+	if agent.Options.UseCache && agent.Cache != nil {
+		cachedAtts, err := agent.Cache.GetAttestationsBySubject(ctx, subjects)
+		if err != nil {
+			return nil, fmt.Errorf("querying attestations cache: %w", err)
+		}
 
-	for _, r := range repos {
-		r := r
-		go func() {
-			atts, err := r.FetchBySubject(ctx, opts, subjects)
+		if cachedAtts != nil {
+			ret = *cachedAtts
+		}
+	}
+
+	// If the cache returned data, skip fetching
+	if len(ret) == 0 {
+		t := throttler.New((agent.Options.ParallelFetches), len(repos))
+
+		for _, r := range repos {
+			r := r
+			go func() {
+				atts, err := r.FetchBySubject(ctx, opts, subjects)
+				if err != nil {
+					t.Done(err)
+					return
+				}
+
+				mutex.Lock()
+				ret = append(ret, atts...)
+				mutex.Unlock()
+				t.Done(nil)
+			}()
+			t.Throttle()
+		}
+		if err := t.Err(); err != nil {
+			return nil, fmt.Errorf("fetch throttler error: %w", err)
+		}
+		if agent.Options.UseCache && agent.Cache != nil {
+			err := agent.Cache.StoreAttestationsBySubject(ctx, subjects, &ret)
 			if err != nil {
-				t.Done(err)
-				return
+				return nil, fmt.Errorf("storing data in cache: %w", err)
 			}
-
-			mutex.Lock()
-			ret = append(ret, atts...)
-			mutex.Unlock()
-			t.Done(nil)
-		}()
-		t.Throttle()
+		}
 	}
 
 	if opts.Query != nil {
 		ret = opts.Query.Run(ret)
 	}
 
-	// Limit the returnes attestations. Mmmh....
+	// Limit the returned attestations. Mmmh....
 	if opts.Limit != 0 {
 		ret = ret[0:opts.Limit]
 	}
 
-	return ret, t.Err()
+	return ret, nil
 }
 
 // FetchAttestationsByPredicateType requests all attestations of a particular type
@@ -175,24 +201,48 @@ func (agent *Agent) FetchAttestationsByPredicateType(ctx context.Context, pt []a
 		f(&opts)
 	}
 
-	t := throttler.New((agent.Options.ParallelFetches), len(repos))
+	// Query the cache to see if we have cached attestations
+	if agent.Options.UseCache && agent.Cache != nil {
+		cachedAtts, err := agent.Cache.GetAttestationsByPredicateType(ctx, pt)
+		if err != nil {
+			return nil, fmt.Errorf("querying attestations cache: %w", err)
+		}
 
-	for _, r := range repos {
-		r := r
-		go func() {
-			// Call the repo driver's fetch method
-			atts, err := r.FetchByPredicateType(ctx, opts, pt)
+		if cachedAtts != nil {
+			ret = *cachedAtts
+		}
+	}
+
+	// If the cache returned data, skip fetching here
+	if len(ret) == 0 {
+		t := throttler.New((agent.Options.ParallelFetches), len(repos))
+
+		for _, r := range repos {
+			r := r
+			go func() {
+				// Call the repo driver's fetch method
+				atts, err := r.FetchByPredicateType(ctx, opts, pt)
+				if err != nil {
+					t.Done(err)
+					return
+				}
+
+				mutex.Lock()
+				ret = append(ret, atts...)
+				mutex.Unlock()
+				t.Done(nil)
+			}()
+			t.Throttle()
+		}
+		if err := t.Err(); err != nil {
+			return nil, fmt.Errorf("fetch throttler error: %w", err)
+		}
+		if agent.Options.UseCache && agent.Cache != nil {
+			err := agent.Cache.StoreAttestationsByPredicateType(ctx, pt, &ret)
 			if err != nil {
-				t.Done(err)
-				return
+				return nil, fmt.Errorf("storing data in cache: %w", err)
 			}
-
-			mutex.Lock()
-			ret = append(ret, atts...)
-			mutex.Unlock()
-			t.Done(nil)
-		}()
-		t.Throttle()
+		}
 	}
 
 	if opts.Query != nil {
@@ -204,5 +254,5 @@ func (agent *Agent) FetchAttestationsByPredicateType(ctx context.Context, pt []a
 		ret = ret[0:opts.Limit]
 	}
 
-	return ret, t.Err()
+	return ret, nil
 }

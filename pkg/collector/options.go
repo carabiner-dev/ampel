@@ -8,6 +8,7 @@ import "github.com/carabiner-dev/ampel/pkg/attestation"
 var defaultOptions = Options{
 	UserAgentString:  "ampel-collector/v1",
 	FailIfNoFetchers: false,
+	UseCache:         true,
 	ParallelFetches:  4,
 	ParallelStores:   4,
 	Fetch:            attestation.FetchOptions{},
@@ -20,6 +21,9 @@ type Options struct {
 
 	// FailIfNoFetchers Return an error when fetching if no repos are configured (instead of just nil)
 	FailIfNoFetchers bool
+
+	// Use cache controls if the agent uses the attestation cache
+	UseCache bool
 
 	ParallelFetches int
 	ParallelStores  int
