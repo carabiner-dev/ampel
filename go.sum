@@ -34,8 +34,8 @@ github.com/carabiner-dev/ghrfs v0.2.4 h1:+MtkJ/uRBNVnrExoHRiptlrpH1AAr7HIjO9Xlut
 github.com/carabiner-dev/ghrfs v0.2.4/go.mod h1:xRewpmbdE766e+XlKfcH+p/KcObAflOIwNq6s7TARb0=
 github.com/carabiner-dev/github v0.2.2 h1:Ykrlcct71fRQm4j37LhAz9FyzG4n1nlm2e+V62MIoJM=
 github.com/carabiner-dev/github v0.2.2/go.mod h1:J7VqMAUewwRQH6r6HMDmVNf39f/z7H5iyTzOfC8am9A=
-github.com/carabiner-dev/hasher v0.1.0 h1:M2wLzAed+987uWli9G7/Atu4wvJsnfPRm5YVSgi+Ipo=
-github.com/carabiner-dev/hasher v0.1.0/go.mod h1:+X5f8ts4Q/ubkmsWQGzCQwPxtJx39AoqoT/IlDR7M9Q=
+github.com/carabiner-dev/hasher v0.2.1 h1:zpvnKIBRosyduXPLQIfynZMdLZ03OGxwnSDUq+sqm1I=
+github.com/carabiner-dev/hasher v0.2.1/go.mod h1:bM7reKZ5gGEY4Bbcd3Lr2KhrtqNkEhJOmQ4ptGasnFY=
 github.com/carabiner-dev/jsonl v0.2.0 h1:PuEV8g3GRAXe2muHWqvTWewyhXRxMSb5gnOmiqc4MJI=
 github.com/carabiner-dev/jsonl v0.2.0/go.mod h1:H0ac1z6a6AEvRx1+laZrztAdGoYuB/CVlGXK5nHHQyI=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 h1:BJ9+OCNezZGkU8SrGC3oB7Tj+J0JsonwfZztcgUav6c=
