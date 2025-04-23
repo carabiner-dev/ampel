@@ -12,7 +12,7 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/go-git/go-billy/v5 v5.6.2
 	github.com/go-git/go-git/v5 v5.16.0
-	github.com/google/cel-go v0.24.1
+	github.com/google/cel-go v0.25.0
 	github.com/in-toto/attestation v1.1.2-0.20250128181946-c0b4d86cf712
 	github.com/jedib0t/go-pretty/v6 v6.6.7
 	github.com/mitchellh/go-wordwrap v1.0.1
@@ -62,7 +62,7 @@ require (
 )
 
 require (
-	cel.dev/expr v0.19.1 // indirect
+	cel.dev/expr v0.23.1 // indirect
 	github.com/CycloneDX/cyclonedx-go v0.9.2 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20230627203149-c72ef8859ca9 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
