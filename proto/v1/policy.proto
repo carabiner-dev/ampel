@@ -36,7 +36,6 @@ message Policy {
     PredicateSpec predicates = 7;
     repeated Transformer transformers = 8;
     repeated Tenet tenets = 9;
-    optional google.protobuf.Timestamp expiration = 10;
 }
 
 message PolicyRef {
@@ -61,6 +60,7 @@ message Meta {
     repeated Control controls = 4; 
     int64 version = 5;
     string enforce = 6;
+    optional google.protobuf.Timestamp expiration = 7;
 }
 
 message Identity {

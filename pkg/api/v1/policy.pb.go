@@ -189,7 +189,6 @@ type Policy struct {
 	Predicates    *PredicateSpec         `protobuf:"bytes,7,opt,name=predicates,proto3" json:"predicates,omitempty"`
 	Transformers  []*Transformer         `protobuf:"bytes,8,rep,name=transformers,proto3" json:"transformers,omitempty"`
 	Tenets        []*Tenet               `protobuf:"bytes,9,rep,name=tenets,proto3" json:"tenets,omitempty"`
-	Expiration    *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=expiration,proto3,oneof" json:"expiration,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -283,13 +282,6 @@ func (x *Policy) GetTransformers() []*Transformer {
 func (x *Policy) GetTenets() []*Tenet {
 	if x != nil {
 		return x.Tenets
-	}
-	return nil
-}
-
-func (x *Policy) GetExpiration() *timestamppb.Timestamp {
-	if x != nil {
-		return x.Expiration
 	}
 	return nil
 }
@@ -437,6 +429,7 @@ type Meta struct {
 	Controls      []*Control             `protobuf:"bytes,4,rep,name=controls,proto3" json:"controls,omitempty"`
 	Version       int64                  `protobuf:"varint,5,opt,name=version,proto3" json:"version,omitempty"`
 	Enforce       string                 `protobuf:"bytes,6,opt,name=enforce,proto3" json:"enforce,omitempty"`
+	Expiration    *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=expiration,proto3,oneof" json:"expiration,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -511,6 +504,13 @@ func (x *Meta) GetEnforce() string {
 		return x.Enforce
 	}
 	return ""
+}
+
+func (x *Meta) GetExpiration() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Expiration
+	}
+	return nil
 }
 
 type Identity struct {
@@ -1401,7 +1401,7 @@ const file_policy_proto_rawDesc = "" +
 	"expiration\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"expiration\x12\x18\n" +
 	"\aversion\x18\x04 \x01(\x03R\aversion\x12\x18\n" +
-	"\aenforce\x18\x05 \x01(\tR\aenforce\"\xe2\x03\n" +
+	"\aenforce\x18\x05 \x01(\tR\aenforce\"\x92\x03\n" +
 	"\x06Policy\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12+\n" +
 	"\x06source\x18\x02 \x01(\v2\x13.ampel.v1.PolicyRefR\x06source\x12\"\n" +
@@ -1415,12 +1415,7 @@ const file_policy_proto_rawDesc = "" +
 	"predicates\x18\a \x01(\v2\x17.ampel.v1.PredicateSpecR\n" +
 	"predicates\x129\n" +
 	"\ftransformers\x18\b \x03(\v2\x15.ampel.v1.TransformerR\ftransformers\x12'\n" +
-	"\x06tenets\x18\t \x03(\v2\x0f.ampel.v1.TenetR\x06tenets\x12?\n" +
-	"\n" +
-	"expiration\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampH\x00R\n" +
-	"expiration\x88\x01\x01B\r\n" +
-	"\v_expiration\"\x9f\x01\n" +
+	"\x06tenets\x18\t \x03(\v2\x0f.ampel.v1.TenetR\x06tenets\"\x9f\x01\n" +
 	"\tPolicyRef\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x03R\aversion\x12.\n" +
@@ -1428,7 +1423,7 @@ const file_policy_proto_rawDesc = "" +
 	"\blocation\x18\x04 \x01(\v2\x1c.ampel.v1.ResourceDescriptorR\blocation\"Q\n" +
 	"\tChainLink\x12:\n" +
 	"\tpredicate\x18\x01 \x01(\v2\x1a.ampel.v1.ChainedPredicateH\x00R\tpredicateB\b\n" +
-	"\x06source\"\xc6\x01\n" +
+	"\x06source\"\x96\x02\n" +
 	"\x04Meta\x12\x18\n" +
 	"\aruntime\x18\x01 \x01(\tR\aruntime\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1f\n" +
@@ -1436,7 +1431,11 @@ const file_policy_proto_rawDesc = "" +
 	"assertMode\x12-\n" +
 	"\bcontrols\x18\x04 \x03(\v2\x11.ampel.v1.ControlR\bcontrols\x12\x18\n" +
 	"\aversion\x18\x05 \x01(\x03R\aversion\x12\x18\n" +
-	"\aenforce\x18\x06 \x01(\tR\aenforce\"\xc0\x01\n" +
+	"\aenforce\x18\x06 \x01(\tR\aenforce\x12?\n" +
+	"\n" +
+	"expiration\x18\a \x01(\v2\x1a.google.protobuf.TimestampH\x00R\n" +
+	"expiration\x88\x01\x01B\r\n" +
+	"\v_expiration\"\xc0\x01\n" +
 	"\bIdentity\x12;\n" +
 	"\bsigstore\x18\x01 \x01(\v2\x1a.ampel.v1.IdentitySigstoreH\x00R\bsigstore\x88\x01\x01\x12,\n" +
 	"\x03key\x18\x02 \x01(\v2\x15.ampel.v1.IdentityKeyH\x01R\x03key\x88\x01\x01\x12,\n" +
@@ -1566,11 +1565,11 @@ var file_policy_proto_depIdxs = []int32{
 	14, // 10: ampel.v1.Policy.predicates:type_name -> ampel.v1.PredicateSpec
 	13, // 11: ampel.v1.Policy.transformers:type_name -> ampel.v1.Transformer
 	15, // 12: ampel.v1.Policy.tenets:type_name -> ampel.v1.Tenet
-	23, // 13: ampel.v1.Policy.expiration:type_name -> google.protobuf.Timestamp
-	6,  // 14: ampel.v1.PolicyRef.identity:type_name -> ampel.v1.Identity
-	24, // 15: ampel.v1.PolicyRef.location:type_name -> ampel.v1.ResourceDescriptor
-	17, // 16: ampel.v1.ChainLink.predicate:type_name -> ampel.v1.ChainedPredicate
-	7,  // 17: ampel.v1.Meta.controls:type_name -> ampel.v1.Control
+	6,  // 13: ampel.v1.PolicyRef.identity:type_name -> ampel.v1.Identity
+	24, // 14: ampel.v1.PolicyRef.location:type_name -> ampel.v1.ResourceDescriptor
+	17, // 15: ampel.v1.ChainLink.predicate:type_name -> ampel.v1.ChainedPredicate
+	7,  // 16: ampel.v1.Meta.controls:type_name -> ampel.v1.Control
+	23, // 17: ampel.v1.Meta.expiration:type_name -> google.protobuf.Timestamp
 	8,  // 18: ampel.v1.Identity.sigstore:type_name -> ampel.v1.IdentitySigstore
 	9,  // 19: ampel.v1.Identity.key:type_name -> ampel.v1.IdentityKey
 	10, // 20: ampel.v1.Identity.ref:type_name -> ampel.v1.IdentityRef
@@ -1598,10 +1597,10 @@ func file_policy_proto_init() {
 		return
 	}
 	file_intoto_proto_init()
-	file_policy_proto_msgTypes[2].OneofWrappers = []any{}
 	file_policy_proto_msgTypes[4].OneofWrappers = []any{
 		(*ChainLink_Predicate)(nil),
 	}
+	file_policy_proto_msgTypes[5].OneofWrappers = []any{}
 	file_policy_proto_msgTypes[6].OneofWrappers = []any{}
 	file_policy_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
