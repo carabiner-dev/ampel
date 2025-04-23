@@ -13,9 +13,6 @@ import (
 	"strings"
 	"time"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
-	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/ext"
@@ -25,6 +22,10 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
 
 type CelEvaluatorImplementation interface {

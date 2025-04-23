@@ -7,10 +7,11 @@ import (
 	"fmt"
 	"slices"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 var (

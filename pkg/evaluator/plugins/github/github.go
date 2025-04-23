@@ -11,12 +11,11 @@ import (
 	"reflect"
 	"strings"
 
-	"google.golang.org/protobuf/types/known/structpb"
-
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/common/types/traits"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type GitHubUtil struct{}

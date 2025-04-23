@@ -7,10 +7,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	"github.com/protobom/protobom/pkg/sbom"
 	"github.com/stretchr/testify/require"
+
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 )
 
 func TestParse(t *testing.T) {
@@ -45,8 +46,8 @@ func TestParse(t *testing.T) {
 			protopred, ok := pred.(*generic.Predicate)
 			require.True(t, ok)
 			require.NotEmpty(t, protopred.Data)
-			require.Equal(t, tc.expectRoot, len(protopred.Parsed.(*sbom.Document).NodeList.RootElements))
-			require.Equal(t, tc.expectNodes, len(protopred.Parsed.(*sbom.Document).NodeList.Nodes))
+			require.Len(t, protopred.Parsed.(*sbom.Document).NodeList.RootElements, tc.expectRoot)
+			require.Len(t, protopred.Parsed.(*sbom.Document).NodeList.Nodes, tc.expectNodes)
 		})
 	}
 }

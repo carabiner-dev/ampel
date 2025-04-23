@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/jedib0t/go-pretty/v6/table"
+
 	"github.com/carabiner-dev/ampel/internal/drivers/gotable"
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 func New() *Driver {

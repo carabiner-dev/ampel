@@ -7,8 +7,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	"github.com/stretchr/testify/require"
+
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 )
 
 func TestParse(t *testing.T) {

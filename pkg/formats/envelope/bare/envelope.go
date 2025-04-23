@@ -4,8 +4,9 @@
 package bare
 
 import (
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/sirupsen/logrus"
+
+	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 var _ attestation.Envelope = (*Envelope)(nil)

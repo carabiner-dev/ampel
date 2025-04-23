@@ -9,11 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/transformer/protobom"
 	"github.com/carabiner-dev/ampel/pkg/transformer/vex"
 	"github.com/carabiner-dev/ampel/pkg/transformer/vulnreport"
-	"github.com/sirupsen/logrus"
 )
 
 // Ensure the loaded drivers implement the transformers interface

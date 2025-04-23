@@ -8,10 +8,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	vsa "github.com/in-toto/attestation/go/predicates/vsa/v1"
 	"google.golang.org/protobuf/encoding/protojson"
+
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 )
 
 var PredicateType = attestation.PredicateType("https://slsa.dev/verification_summary/v1")
@@ -34,7 +35,7 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 			strings.Contains(err.Error(), `unknown field "`) {
 			return nil, attestation.ErrNotCorrectFormat
 		}
-		return nil, fmt.Errorf("error parsing SLSA/v0.2 provenance predicate: %s", err)
+		return nil, fmt.Errorf("error parsing SLSA/v0.2 provenance predicate: %w", err)
 	}
 	return &generic.Predicate{
 		Type:   PredicateType,

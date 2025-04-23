@@ -10,9 +10,10 @@ import (
 	"io"
 	"slices"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type PolicyError struct {

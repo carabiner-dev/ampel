@@ -12,7 +12,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/carabiner-dev/osv/go/osv"
 	gointoto "github.com/in-toto/attestation/go/v1"
+	openvex "github.com/openvex/go-vex/pkg/vex"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -21,8 +23,6 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	aosv "github.com/carabiner-dev/ampel/pkg/formats/predicate/osv"
-	"github.com/carabiner-dev/osv/go/osv"
-	openvex "github.com/openvex/go-vex/pkg/vex"
 )
 
 const ClassName = "vex"

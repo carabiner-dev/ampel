@@ -8,10 +8,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	v02 "github.com/in-toto/attestation/go/predicates/vulns/v02"
 	"google.golang.org/protobuf/encoding/protojson"
+
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 )
 
 var (
@@ -52,7 +53,7 @@ func parseV2(data []byte) (*generic.Predicate, error) {
 			return nil, attestation.ErrNotCorrectFormat
 		}
 
-		return nil, fmt.Errorf("error parsing v02 vuln predicate: %s", err)
+		return nil, fmt.Errorf("error parsing v02 vuln predicate: %w", err)
 	}
 	pred := &generic.Predicate{
 		Type:   PredicateTypeV2,

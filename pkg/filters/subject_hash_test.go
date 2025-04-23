@@ -6,11 +6,12 @@ package filters
 import (
 	"testing"
 
+	gointoto "github.com/in-toto/attestation/go/v1"
+	"github.com/stretchr/testify/require"
+
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope/bare"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
-	gointoto "github.com/in-toto/attestation/go/v1"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSubjectHashMatcher(t *testing.T) {

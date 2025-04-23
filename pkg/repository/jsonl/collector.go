@@ -13,10 +13,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/nozzle/throttler"
+
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/filters"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope"
-	"github.com/nozzle/throttler"
 )
 
 var TypeMoniker = "jsonl"
@@ -54,7 +55,7 @@ func (c *Collector) readAttestations(paths []string, filters *attestation.Filter
 	ret := []attestation.Envelope{}
 	mtx := sync.Mutex{}
 	for _, path := range paths {
-		path := path
+
 		go func() {
 			moreAtts, err := parseFile(path, filters)
 			if err != nil {

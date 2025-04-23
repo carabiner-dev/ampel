@@ -4,10 +4,11 @@
 package github
 
 import (
+	"github.com/google/cel-go/cel"
+
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
-	"github.com/google/cel-go/cel"
 )
 
 type Plugin struct {

@@ -6,24 +6,24 @@ package protobom
 import (
 	"bytes"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
-	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/cyclonedx"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/spdx"
 	"github.com/google/cel-go/cel"
 	"github.com/protobom/cel/pkg/elements"
 	"github.com/protobom/cel/pkg/library"
 	"github.com/protobom/protobom/pkg/reader"
 	"github.com/sirupsen/logrus"
+
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/cyclonedx"
+	"github.com/carabiner-dev/ampel/pkg/formats/predicate/spdx"
 )
 
 func New() *Plugin {
 	return &Plugin{}
 }
 
-type Plugin struct {
-}
+type Plugin struct{}
 
 func (h *Plugin) Capabilities() []api.Capability {
 	return []api.Capability{

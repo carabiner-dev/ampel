@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/ampel"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/cyclonedx"
@@ -21,7 +23,6 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/trivy"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/vsa"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/vulns"
-	"github.com/sirupsen/logrus"
 )
 
 var ErrWrongEncoding = errors.New("wrong data encoding, should be text/json")

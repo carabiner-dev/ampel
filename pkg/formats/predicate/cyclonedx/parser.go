@@ -7,9 +7,10 @@ import (
 	"bytes"
 	"strings"
 
+	"github.com/protobom/protobom/pkg/formats"
+
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/json"
-	"github.com/protobom/protobom/pkg/formats"
 )
 
 type Parser struct{}

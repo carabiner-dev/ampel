@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/carabiner-dev/hasher"
 	"github.com/fatih/color"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/spf13/cobra"
@@ -22,7 +23,6 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/collector"
 	"github.com/carabiner-dev/ampel/pkg/policy"
 	"github.com/carabiner-dev/ampel/pkg/verifier"
-	"github.com/carabiner-dev/hasher"
 )
 
 var (
@@ -205,7 +205,7 @@ using a collector.
 						opts.SubjectFile = args[0]
 					}
 				} else {
-					//.. otherwize this must be a hash or err
+					// .. otherwize this must be a hash or err
 					if !hashRegex.MatchString(args[0]) {
 						return fmt.Errorf("invalid argument, it must be a hash or a file")
 					}

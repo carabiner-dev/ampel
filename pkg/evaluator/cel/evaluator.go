@@ -7,6 +7,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/cel-go/cel"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
@@ -16,10 +21,6 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/hasher"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/protobom"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/url"
-	"github.com/google/cel-go/cel"
-	"github.com/sirupsen/logrus"
-	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var Class = class.Class("cel@v0")

@@ -7,11 +7,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/json"
 	v02 "github.com/carabiner-dev/ampel/pkg/formats/predicate/slsa/provenance/v02"
-	"github.com/stretchr/testify/require"
 )
 
 func TestParse(t *testing.T) {

@@ -4,9 +4,10 @@
 package dsse
 
 import (
+	sigstoreProtoDSSE "github.com/sigstore/protobuf-specs/gen/pb-go/dsse"
+
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement"
-	sigstoreProtoDSSE "github.com/sigstore/protobuf-specs/gen/pb-go/dsse"
 )
 
 var _ attestation.Envelope = (*Envelope)(nil)

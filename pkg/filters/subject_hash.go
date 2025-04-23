@@ -4,8 +4,9 @@
 package filters
 
 import (
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/sirupsen/logrus"
+
+	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 type SubjectHashMatcher struct {

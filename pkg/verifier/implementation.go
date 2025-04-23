@@ -12,6 +12,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/collector"
@@ -24,8 +27,6 @@ import (
 	ampelPred "github.com/carabiner-dev/ampel/pkg/formats/predicate/ampel"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
 	"github.com/carabiner-dev/ampel/pkg/transformer"
-	"github.com/sirupsen/logrus"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type defaultIplementation struct{}
@@ -237,7 +238,7 @@ func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identiti
 	// First, verify the signatures on the envelopes
 	for _, e := range envelopes {
 		if err := e.Verify(); err != nil {
-			return false, fmt.Errorf("verifying attestation signature: %s", err)
+			return false, fmt.Errorf("verifying attestation signature: %w", err)
 		}
 
 		// if !identityAllowed(identities, vr) {

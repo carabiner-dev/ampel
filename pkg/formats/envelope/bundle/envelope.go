@@ -7,11 +7,12 @@ import (
 	"crypto/x509"
 	"fmt"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
-	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"github.com/sirupsen/logrus"
+
+	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
 )
 
 type Envelope struct {

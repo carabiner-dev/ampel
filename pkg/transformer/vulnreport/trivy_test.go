@@ -7,10 +7,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	posv "github.com/carabiner-dev/ampel/pkg/formats/predicate/osv"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/trivy"
-	"github.com/stretchr/testify/require"
 )
 
 func TestTrivyToOSV(t *testing.T) {

@@ -13,11 +13,11 @@ import (
 	"slices"
 	"strings"
 
+	gh "github.com/carabiner-dev/github"
 	ita "github.com/in-toto/attestation/go/v1"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope/bundle"
-	gh "github.com/carabiner-dev/github"
 )
 
 var TypeMoniker = "github"

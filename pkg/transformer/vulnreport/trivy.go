@@ -8,10 +8,9 @@ import (
 	"fmt"
 	"time"
 
+	posv "github.com/carabiner-dev/osv/go/osv"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-
-	posv "github.com/carabiner-dev/osv/go/osv"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
@@ -134,7 +133,7 @@ func (t *Transformer) TrivyToOSV(original attestation.Predicate) (attestation.Pr
 				"ampel": map[string]any{
 					"severity": vuln.Severity,
 					// TODO(puerco): Fix this, the []string does not serialize
-					//"CWE":      vuln.CweIDs,
+					// "CWE":      vuln.CweIDs,
 					"KEV": "",
 				},
 			})

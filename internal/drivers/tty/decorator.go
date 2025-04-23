@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/fatih/color"
 	gww "github.com/mitchellh/go-wordwrap"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/fatih/color"
 )
 
 type Decorator struct{}

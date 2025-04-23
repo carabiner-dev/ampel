@@ -9,13 +9,14 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/protobom/protobom/pkg/reader"
+	"google.golang.org/protobuf/encoding/protojson"
+
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/cyclonedx"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/protobom"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/spdx"
-	"github.com/protobom/protobom/pkg/reader"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type Transformer struct{}
