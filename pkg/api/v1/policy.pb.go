@@ -515,9 +515,10 @@ func (x *Meta) GetExpiration() *timestamppb.Timestamp {
 
 type Identity struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Sigstore      *IdentitySigstore      `protobuf:"bytes,1,opt,name=sigstore,proto3,oneof" json:"sigstore,omitempty"`
-	Key           *IdentityKey           `protobuf:"bytes,2,opt,name=key,proto3,oneof" json:"key,omitempty"`
-	Ref           *IdentityRef           `protobuf:"bytes,3,opt,name=ref,proto3,oneof" json:"ref,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Sigstore      *IdentitySigstore      `protobuf:"bytes,2,opt,name=sigstore,proto3,oneof" json:"sigstore,omitempty"`
+	Key           *IdentityKey           `protobuf:"bytes,3,opt,name=key,proto3,oneof" json:"key,omitempty"`
+	Ref           *IdentityRef           `protobuf:"bytes,4,opt,name=ref,proto3,oneof" json:"ref,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -550,6 +551,13 @@ func (x *Identity) ProtoReflect() protoreflect.Message {
 // Deprecated: Use Identity.ProtoReflect.Descriptor instead.
 func (*Identity) Descriptor() ([]byte, []int) {
 	return file_policy_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *Identity) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
 }
 
 func (x *Identity) GetSigstore() *IdentitySigstore {
@@ -1435,11 +1443,12 @@ const file_policy_proto_rawDesc = "" +
 	"\n" +
 	"expiration\x18\a \x01(\v2\x1a.google.protobuf.TimestampH\x00R\n" +
 	"expiration\x88\x01\x01B\r\n" +
-	"\v_expiration\"\xc0\x01\n" +
-	"\bIdentity\x12;\n" +
-	"\bsigstore\x18\x01 \x01(\v2\x1a.ampel.v1.IdentitySigstoreH\x00R\bsigstore\x88\x01\x01\x12,\n" +
-	"\x03key\x18\x02 \x01(\v2\x15.ampel.v1.IdentityKeyH\x01R\x03key\x88\x01\x01\x12,\n" +
-	"\x03ref\x18\x03 \x01(\v2\x15.ampel.v1.IdentityRefH\x02R\x03ref\x88\x01\x01B\v\n" +
+	"\v_expiration\"\xd0\x01\n" +
+	"\bIdentity\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12;\n" +
+	"\bsigstore\x18\x02 \x01(\v2\x1a.ampel.v1.IdentitySigstoreH\x00R\bsigstore\x88\x01\x01\x12,\n" +
+	"\x03key\x18\x03 \x01(\v2\x15.ampel.v1.IdentityKeyH\x01R\x03key\x88\x01\x01\x12,\n" +
+	"\x03ref\x18\x04 \x01(\v2\x15.ampel.v1.IdentityRefH\x02R\x03ref\x88\x01\x01B\v\n" +
 	"\t_sigstoreB\x06\n" +
 	"\x04_keyB\x06\n" +
 	"\x04_ref\"E\n" +

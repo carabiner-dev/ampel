@@ -64,9 +64,10 @@ message Meta {
 }
 
 message Identity {
-    optional IdentitySigstore sigstore = 1;
-    optional IdentityKey key = 2;
-    optional IdentityRef ref = 3;
+    string id = 1;
+    optional IdentitySigstore sigstore = 2;
+    optional IdentityKey key = 3;
+    optional IdentityRef ref = 4;
 }
 
 // Control is a mapping tying the policy to an OSCAL control
