@@ -149,6 +149,7 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 	}
 	logrus.Debugf("Registered default evaluator of class %s", def)
 	evaluators[class.Class("default")] = e
+	evaluators[def] = e
 	if p.GetMeta().GetRuntime() != "" {
 		evaluators[class.Class(p.GetMeta().GetRuntime())] = e
 	}
@@ -364,6 +365,7 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 			key = class.Class("default")
 		}
 		if _, ok := evaluators[key]; !ok {
+			fmt.Printf("Evals: %+v\n", evaluators)
 			return nil, nil, false, fmt.Errorf("no evaluator loaded for class %s", key)
 		}
 
