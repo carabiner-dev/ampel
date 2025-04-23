@@ -14,6 +14,7 @@ import (
 	"github.com/carabiner-dev/hasher"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
@@ -210,18 +211,20 @@ func (dpi *defaultParserImplementation) CompletePolicySet(set *v1.PolicySet, sto
 		if p.Source == nil {
 			continue
 		}
-		policy, err := store.GetReferencedPolicy(p.Source)
+		remotePolicy, err := store.GetReferencedPolicy(p.Source)
 		if err != nil {
 			return fmt.Errorf("getting referenced policy: %w", err)
 		}
 
-		if policy == nil {
+		if remotePolicy == nil {
 			return fmt.Errorf("unable to complete policy #%d, reference nor resolved", i)
 		}
 
-		ref := p.Source // Keep the reference spec
-		set.Policies[i] = policy
-		set.Policies[i].Source = ref
+		// Merge the local policy changes onto the remote:
+		proto.Merge(remotePolicy, p)
+
+		// Now replace the local in the policy set with the enriched remote
+		set.Policies[i] = remotePolicy
 	}
 	return nil
 }
