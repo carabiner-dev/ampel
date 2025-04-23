@@ -5,7 +5,7 @@ go 1.24
 require (
 	github.com/carabiner-dev/ghrfs v0.2.4
 	github.com/carabiner-dev/github v0.2.2
-	github.com/carabiner-dev/hasher v0.2.1
+	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/jsonl v0.2.0
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
 	github.com/carabiner-dev/vcslocator v0.1.2-0.20250325030202-b145fcf66fe3
