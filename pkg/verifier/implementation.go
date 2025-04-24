@@ -234,6 +234,11 @@ func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identiti
 	if len(identities) == 0 {
 		logrus.Debug("No identities defined in policy. Not checking.")
 		return true, nil
+	} else {
+		logrus.Debug("Will look for signed attestations from:")
+		for _, i := range identities {
+			logrus.Debugf("  > %s", i.Slug())
+		}
 	}
 
 	// First, verify the signatures on the envelopes
