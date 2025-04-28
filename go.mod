@@ -18,7 +18,7 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481
 	github.com/openvex/go-vex v0.2.5
-	github.com/protobom/cel v0.0.0-20250416065057-680cda905cdc
+	github.com/protobom/cel v0.1.0
 	github.com/protobom/protobom v0.5.2
 	github.com/sigstore/protobuf-specs v0.4.1
 	github.com/sirupsen/logrus v1.9.3

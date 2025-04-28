@@ -197,8 +197,8 @@ github.com/prometheus/common v0.55.0 h1:KEi6DK7lXW/m7Ig5i47x0vRzuBsHuvJdi5ee6Y3G
 github.com/prometheus/common v0.55.0/go.mod h1:2SECS4xJG1kd8XF9IcM1gMX6510RAEL65zxzNImwdc8=
 github.com/prometheus/procfs v0.15.1 h1:YagwOFzUgYfKKHX6Dr+sHT7km/hxC76UB0learggepc=
 github.com/prometheus/procfs v0.15.1/go.mod h1:fB45yRUv8NstnjriLhBQLuOUt+WW4BsoGhij/e3PBqk=
-github.com/protobom/cel v0.0.0-20250416065057-680cda905cdc h1:cWRSCTyuLI6tFFeq8+qQBgKMYKcibDZoyJA8QsAgJXk=
-github.com/protobom/cel v0.0.0-20250416065057-680cda905cdc/go.mod h1:vimWfn7RPTsWOYrcUv0hJE6HcVrIiS9uCsFzqBOJVJc=
+github.com/protobom/cel v0.1.0 h1:BxzIwssIyavN78o4rH95E0GC6FIh2gb2PDPm+4w93pQ=
+github.com/protobom/cel v0.1.0/go.mod h1:Ycs/nyv34JH0BBUNdrPPQ2tZrBy3VpDME38K5Sox4Xc=
 github.com/protobom/protobom v0.5.2 h1:GQacWLer4tDskyjQpqbglXkT3ZlNy7AJCw/S2XZkVS8=
 github.com/protobom/protobom v0.5.2/go.mod h1:io5yUKGWBqGa2sx1n7aVPg+tG13Hun9oMz4Y+EjNjjc=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
