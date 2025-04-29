@@ -5,40 +5,11 @@ package verifier
 
 import (
 	"context"
-	"io"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/collector"
-	"github.com/carabiner-dev/ampel/pkg/evaluator"
-	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/oscal"
-	"github.com/carabiner-dev/ampel/pkg/transformer"
 )
-
-// AmpelImplementation
-type AmpelVerifier interface {
-	GatherAttestations(context.Context, *VerificationOptions, *collector.Agent, *api.Policy, attestation.Subject, []attestation.Envelope) ([]attestation.Envelope, error)
-	ParseAttestations(context.Context, []string) ([]attestation.Envelope, error)
-	BuildEvaluators(*VerificationOptions, *api.Policy) (map[class.Class]evaluator.Evaluator, error)
-	BuildTransformers(*VerificationOptions, *api.Policy) (map[transformer.Class]transformer.Transformer, error)
-	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *api.Policy, attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
-	CheckIdentities(*VerificationOptions, []*api.Identity, []attestation.Envelope) (bool, error)
-	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
-	AssertResult(*api.Policy, *api.Result) error
-	AttestResult(context.Context, *VerificationOptions, *api.Result) error
-
-	// AttestResultToWriter takes an evaluation result and writes an attestation to the supplied io.Writer
-	AttestResultToWriter(io.Writer, *api.Result) error
-
-	// AttestResultSetToWriter takes an policy resultset and writes an attestation to the supplied io.Writer
-	AttestResultSetToWriter(io.Writer, *api.ResultSet) error
-
-	VerifySubject(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.Result, error)
-	// ProcessChainedSubjects proceses the chain of attestations to find the ultimate
-	// subject a policy is supposed to operate on
-	ProcessChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *api.Policy, attestation.Subject, []attestation.Envelope) (attestation.Subject, []*api.ChainedSubject, bool, error)
-}
 
 type AmpelStatusChecker interface {
 	GatherResults(context.Context, *StatusOptions, attestation.Subject) ([]attestation.Envelope, error)
