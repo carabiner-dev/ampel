@@ -1,0 +1,7 @@
+{       
+       "$schema": "https://docs.oasis-open.org/openeox/tbd/schema/core.json",
+       "end_of_life": "2027-12-31T23:59:59Z",
+       "end_of_security_support": "2027-06-30T23:59:59Z",
+       "end_of_sales": "2026-12-31T23:59:59Z",
+       "last_updated": "2025-04-30T10:00:00Z"
+}
