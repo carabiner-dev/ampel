@@ -329,6 +329,25 @@ func (dce *defaulCelEvaluator) EvaluateChainedSelector(
 		if !ok {
 			return nil, errors.New("selectror must return a string or cel.Subject struct")
 		}
+
+		// We add here a little hack to copy gitCommit hashes to sha1s (and viceversa)
+		// to ensure maximum matching chances
+
+		// Handle algos of type gitCommit
+		if h, ok := subj.Digest[intoto.AlgorithmGitCommit.String()]; ok {
+			if _, ok := subj.Digest[intoto.AlgorithmSHA1.String()]; !ok && len(h) == 40 {
+				subj.Digest[intoto.AlgorithmSHA1.String()] = h
+			} else if _, ok := subj.Digest[intoto.AlgorithmSHA256.String()]; !ok && len(h) == 64 {
+				subj.Digest[intoto.AlgorithmSHA256.String()] = h
+			}
+		}
+
+		// If we have a sha1 (but no gitCommit), mirror it
+		if h, ok := subj.Digest[intoto.AlgorithmSHA1.String()]; ok {
+			if _, ok := subj.Digest[intoto.AlgorithmGitCommit.String()]; !ok {
+				subj.Digest[intoto.AlgorithmGitCommit.String()] = h
+			}
+		}
 		return subj, nil
 	default:
 		return nil, fmt.Errorf("predicate selector must return string or resource descr (got %T)", result.Value())
