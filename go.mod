@@ -1,12 +1,13 @@
 module github.com/carabiner-dev/ampel
 
-go 1.24
+go 1.24.1
 
 require (
 	github.com/carabiner-dev/ghrfs v0.2.4
 	github.com/carabiner-dev/github v0.2.2
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/jsonl v0.2.0
+	github.com/carabiner-dev/openeox v0.0.0-20250430212020-e3a5beb42ddd
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
 	github.com/carabiner-dev/vcslocator v0.1.2-0.20250325030202-b145fcf66fe3
 	github.com/fatih/color v1.18.0

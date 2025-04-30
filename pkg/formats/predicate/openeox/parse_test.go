@@ -23,11 +23,19 @@ func TestParse(t *testing.T) {
 		checkError   error
 		validatePred func(*testing.T, *generic.Predicate)
 	}{
-		{"normal", "testdata/sample-eox.json", nil, false, nil, func(t *testing.T, p *generic.Predicate) {
+		{"shell", "testdata/sample-eox.json", nil, false, nil, func(t *testing.T, p *generic.Predicate) {
 			t.Helper()
 			require.NotNil(t, p.Parsed)
 			require.NotNil(t, p.Data)
 			require.NotEmpty(t, p.Data)
+			require.Equal(t, PredicateTypeShell, p.Type)
+		}},
+		{"core", "testdata/sample-core.json", nil, false, nil, func(t *testing.T, p *generic.Predicate) {
+			t.Helper()
+			require.NotNil(t, p.Parsed)
+			require.NotNil(t, p.Data)
+			require.NotEmpty(t, p.Data)
+			require.Equal(t, PredicateTypeCore, p.Type)
 		}},
 		{"other-json", "", []byte(`{"chido":1, "mas": "no", "soy": [1,2] }`), true, attestation.ErrNotCorrectFormat, nil},
 		{"invalid-json", "", []byte(`"chido":1, "mas": "no", "soy": [1,2] }`), true, nil, nil},
