@@ -41,9 +41,10 @@ var Parsers = ParsersList{
 	trivy.PredicateType:          trivy.New(),
 	osv.PredicateType:            osv.New(),
 	openvex.PredicateType:        openvex.New(),
-	openeox.PredicateType:        openeox.New(),
+	openeox.PredicateTypeCore:    openeox.New(),
+	openeox.PredicateTypeShell:   openeox.New(),
 	slsa.PredicateType10:         slsa.NewParserV10(),
-	slsa.PredicateType10:         slsa.NewParserV11(),
+	slsa.PredicateType11:         slsa.NewParserV11(),
 	slsa.PredicateType02:         slsa.NewParserV02(),
 	vsa.PredicateType:            vsa.NewParser(),
 }

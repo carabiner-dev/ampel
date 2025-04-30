@@ -31,23 +31,6 @@ var PredicateTypes = []attestation.PredicateType{
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 	// The protobom parser does not support parsing from json data
 	return nil, attestation.ErrNotCorrectFormat
-	// r := reader.New()
-	// s := bytes.NewReader(data)
-	// doc, err := r.ParseStream(s)
-	// if err != nil {
-	// 	// If it's not a supported SBOM format, catch the error and
-	// 	// return the common error to hand off to another predicate parser.
-	// 	if strings.Contains(err.Error(), "unknown SBOM format") {
-	// 		return nil, attestation.ErrNotCorrectFormat
-	// 	}
-	// 	return nil, fmt.Errorf("parsing data: %w", err)
-	// }
-
-	// // Reset the predicates
-	// return &Predicate{
-	// 	Data:   data,
-	// 	Parsed: doc,
-	// }, err
 }
 
 func (p *Parser) SupportsType(testTypes ...attestation.PredicateType) bool {

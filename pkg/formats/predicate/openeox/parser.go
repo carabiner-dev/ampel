@@ -37,7 +37,7 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 		return nil, fmt.Errorf("creating openeox parser: %w", err)
 	}
 
-	var isShell = true
+	isShell := true
 	shell, err := parser.ParseShell(data)
 	if err != nil {
 		if strings.Contains(err.Error(), "proto:") && strings.Contains(err.Error(), "unknown field") {
