@@ -4,15 +4,17 @@
 package openeox
 
 import (
-	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
+
+	"github.com/carabiner-dev/openeox"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 )
 
-var PredicateType = attestation.PredicateType("https://openeox.org/schema-0.2.0.json")
+var PredicateType = attestation.PredicateType("https://docs.oasis-open.org/openeox/v1.0")
 
 type Parser struct{}
 
@@ -25,19 +27,22 @@ func (*Parser) SupportsType(predTypes ...attestation.PredicateType) bool {
 }
 
 func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
-	eox := &EOX{}
-	if err := json.Unmarshal(data, eox); err != nil {
-		return nil, fmt.Errorf("parsing EOX data: %w", err)
+	parser, err := openeox.NewParser()
+	if err != nil {
+		return nil, fmt.Errorf("creating openeox parser: %w", err)
 	}
 
-	// Check we are actually consuming and openeox file
-	if (eox.Schema != "" && eox.Schema != string(PredicateType)) || eox.EOLDate == nil {
-		return nil, attestation.ErrNotCorrectFormat
+	shell, err := parser.ParseShell(data)
+	if err != nil {
+		if strings.Contains(err.Error(), "proto:") && strings.Contains(err.Error(), "unknown field") {
+			return nil, attestation.ErrNotCorrectFormat
+		}
+		return nil, fmt.Errorf("parsing data: %w", err)
 	}
 
 	return &generic.Predicate{
 		Type:   PredicateType,
-		Parsed: eox,
+		Parsed: shell,
 		Data:   data,
 	}, nil
 }
