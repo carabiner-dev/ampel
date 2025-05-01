@@ -108,7 +108,7 @@ func (c *Collector) Fetch(ctx context.Context, opts attestation.FetchOptions) ([
 			return fmt.Errorf("reading file from fs: %w", err)
 		}
 
-		attestations := []attestation.Envelope{}
+		var attestations []attestation.Envelope
 
 		// Pass the read data to all the enabled parsers, except if the file
 		// is a jsonl bundle:

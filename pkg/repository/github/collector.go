@@ -145,7 +145,7 @@ func (c *Collector) fetchFromUrl(ctx context.Context, url string) ([]attestation
 		}
 		return nil, false, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 	res := &attResponse{}
 
 	dec := json.NewDecoder(resp.Body)

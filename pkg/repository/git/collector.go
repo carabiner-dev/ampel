@@ -33,7 +33,9 @@ func New(funcs ...optFn) (*Collector, error) {
 	// Apply the functional options
 	opts := defaultOptions
 	for _, fn := range funcs {
-		fn(&opts)
+		if err := fn(&opts); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := opts.Validate(); err != nil {

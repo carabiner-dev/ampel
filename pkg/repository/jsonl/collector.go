@@ -50,14 +50,13 @@ type Collector struct {
 }
 
 // readAttestations
-func (c *Collector) readAttestations(paths []string, filters *attestation.FilterSet) ([]attestation.Envelope, error) {
+func (c *Collector) readAttestations(paths []string, filterset *attestation.FilterSet) ([]attestation.Envelope, error) {
 	t := throttler.New(c.Options.MaxParallel, len(paths))
 	ret := []attestation.Envelope{}
 	mtx := sync.Mutex{}
 	for _, path := range paths {
-
 		go func() {
-			moreAtts, err := parseFile(path, filters)
+			moreAtts, err := parseFile(path, filterset)
 			if err != nil {
 				t.Done(err)
 				return
@@ -75,13 +74,13 @@ func (c *Collector) readAttestations(paths []string, filters *attestation.Filter
 	return ret, nil
 }
 
-func parseFile(path string, filters *attestation.FilterSet) ([]attestation.Envelope, error) {
-	f, err := os.Open(path)
+func parseFile(path string, filterset *attestation.FilterSet) ([]attestation.Envelope, error) {
+	f, err := os.Open(path) //nolint:gosec // This is supposed to open any file
 	if err != nil {
 		return nil, fmt.Errorf("opening %q: %w", path, err)
 	}
-	if filters == nil {
-		filters = &attestation.FilterSet{}
+	if filterset == nil {
+		filterset = &attestation.FilterSet{}
 	}
 	ret := []attestation.Envelope{}
 	scanner := bufio.NewScanner(f)
@@ -95,7 +94,7 @@ func parseFile(path string, filters *attestation.FilterSet) ([]attestation.Envel
 		if err != nil {
 			return nil, fmt.Errorf("parsing attestation %d in %q: %w", i, path, err)
 		}
-		ret = append(ret, filters.FilterList(envelopes)...)
+		ret = append(ret, filterset.FilterList(envelopes)...)
 		i++
 	}
 	return ret, nil
