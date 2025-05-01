@@ -258,6 +258,19 @@ func (odr *outputDataResult) MarshalJSON() ([]byte, error) {
 			premarshal[id] = data
 			continue
 		}
+
+		if mapmap, ok := output.(map[ref.Val]ref.Val); ok {
+			newoutput := map[string]any{}
+			for k, v := range mapmap {
+				kstring, ok := k.Value().(string)
+				if !ok {
+					return nil, fmt.Errorf("unable to marshal output value, map is not keyed with strings")
+				}
+				newoutput[kstring] = v.Value()
+			}
+			output = newoutput
+		}
+
 		// Any other values
 		data, err := json.Marshal(output)
 		if err != nil {
