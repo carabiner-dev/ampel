@@ -42,6 +42,14 @@ func (t *Transformer) Mutate(subj attestation.Subject, inputs []attestation.Pred
 		return nil, nil, fmt.Errorf("classifying attestations: %w", err)
 	}
 
+	// Check if we don't have a vulnerability report, then there is nothing
+	// to transform, return the same inputs.
+	if results == nil {
+		logrus.Debugf("No vulnerability report found in attestation pack")
+		return subj, inputs, nil
+	}
+
+	// Apply any VEX to documents received to the vulnerability report
 	pred, err := t.ApplyVEX(subj, results, vexes)
 	if err != nil {
 		return nil, nil, fmt.Errorf("performing VEX mutation: %w", err)
@@ -133,6 +141,9 @@ func normalizeVulnIds(record *osv.Record) (openvex.VulnerabilityID, []openvex.Vu
 func (t *Transformer) ApplyVEX(
 	subj attestation.Subject, report *osv.Results, vexes []attestation.Predicate,
 ) (attestation.Predicate, error) {
+	if report == nil {
+		return nil, fmt.Errorf("no vulnerability report found")
+	}
 	// Filter the applicable statements
 	statements := extractStatements(vexes)
 	logrus.Debugf("Filtered %d statements from %d OpenVEX predicates", len(statements), len(vexes))
