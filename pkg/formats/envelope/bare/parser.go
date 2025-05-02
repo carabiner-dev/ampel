@@ -6,6 +6,7 @@
 package bare
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
+	"github.com/carabiner-dev/hasher"
 )
 
 type Parser struct{}
@@ -31,6 +33,11 @@ func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {
 	}
 	if len(data) == 0 {
 		return nil, fmt.Errorf("short read when parsing attestation source")
+	}
+
+	digests, err := hasher.New().HashReaders([]io.Reader{bytes.NewReader(data)})
+	if err != nil || len(*digests) == 0 {
+		return nil, fmt.Errorf("error hashing envelope data: %w", err)
 	}
 
 	// When dealing with bare attestations, we can expect any JSON so we synthesize
@@ -55,6 +62,7 @@ func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {
 
 	// Assign the new statement
 	s = intoto.NewStatement(intoto.WithPredicate(pred))
+	s.GetPredicate().SetSource(digests.ToResourceDescriptors()[0])
 	env.Statement = s
 	return []attestation.Envelope{env}, nil
 }
