@@ -6,6 +6,7 @@
 package bundle
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -14,7 +15,10 @@ import (
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	//	intoto "github.com/in-toto/attestation/go/v1"
+
 	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/hasher"
 )
 
 type Parser struct{}
@@ -39,6 +43,11 @@ func (p *Parser) ParseFile(path string) ([]attestation.Envelope, error) {
 }
 
 func (p *Parser) Parse(data []byte) ([]attestation.Envelope, error) {
+	digests, err := hasher.New().HashReaders([]io.Reader{bytes.NewReader(data)})
+	if err != nil || len(*digests) == 0 {
+		return nil, fmt.Errorf("error hashing envelope data: %w", err)
+	}
+
 	env := &Envelope{
 		Bundle: sigstore.Bundle{},
 	}
@@ -51,6 +60,9 @@ func (p *Parser) Parse(data []byte) ([]attestation.Envelope, error) {
 	if _, err := env.GetStatementOrErr(); err != nil {
 		return nil, err
 	}
+
+	// Reigster the attestation digests in its source
+	env.GetStatement().GetPredicate().SetSource(digests.ToResourceDescriptors()[0])
 
 	return []attestation.Envelope{env}, nil
 }
