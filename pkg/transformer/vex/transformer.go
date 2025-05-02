@@ -7,8 +7,10 @@
 package vex
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"slices"
 	"strings"
 
@@ -23,6 +25,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	aosv "github.com/carabiner-dev/ampel/pkg/formats/predicate/osv"
+	"github.com/carabiner-dev/hasher"
 )
 
 const ClassName = "vex"
@@ -121,21 +124,20 @@ func osvPackageToPurl(pkg *osv.Result_Package_Info) string {
 	return fmt.Sprintf("pkg:%s/%s@%s%s", ptype, namespacename, gov, version)
 }
 
-func normalizeVulnIds(record *osv.Record) (openvex.VulnerabilityID, []openvex.VulnerabilityID) {
+func normalizeVulnIds(record *osv.Record) (main openvex.VulnerabilityID, aliases []openvex.VulnerabilityID) {
 	id := openvex.VulnerabilityID(record.GetId())
-	alias := []openvex.VulnerabilityID{id}
+	aliases = []openvex.VulnerabilityID{id}
 	for _, i := range record.Aliases {
 		if strings.HasPrefix(i, "CVE-") {
 			id = openvex.VulnerabilityID(i)
 		}
-		if !slices.Contains(alias, openvex.VulnerabilityID(i)) {
-			alias = append(alias, openvex.VulnerabilityID(i))
+		if !slices.Contains(aliases, openvex.VulnerabilityID(i)) {
+			aliases = append(aliases, openvex.VulnerabilityID(i))
 		}
 	}
 
-	slices.Sort(alias)
-
-	return id, alias
+	slices.Sort(aliases)
+	return id, aliases
 }
 
 // ApplyVEX applies a group of OpenVEX predicates to the vuln report
@@ -284,10 +286,20 @@ func (t *Transformer) ApplyVEX(
 		return nil, fmt.Errorf("marshaling new OSV report")
 	}
 
+	hsets, err := hasher.New().HashReaders([]io.Reader{bytes.NewReader(data)})
+	if err != nil || len(*hsets) == 0 {
+		return nil, fmt.Errorf("error hashing synthesised report: %w", err)
+	}
+
+	descr := hsets.ToResourceDescriptors()
+	descr[0].Name = "synhetic_report_with_vex_applied"
+	descr[0].Uri = "internal:vex"
+
 	return &generic.Predicate{
 		Type:   aosv.PredicateType,
 		Parsed: newReport,
 		Data:   data,
+		Source: descr[0],
 	}, nil
 }
 
@@ -303,15 +315,17 @@ func extractStatements(preds []attestation.Predicate) []*openvex.Statement {
 
 		// Cycle the VEX statements
 		// TODO: This should be a doc.ExtractStatement func
-		for _, s := range doc.Statements {
+		// update: done. Once this merges we reuse it:
+		// https://github.com/openvex/go-vex/pull/131
+		for i := range doc.Statements {
 			// Carry over the dates from the doc
-			if s.Timestamp == nil {
-				s.Timestamp = doc.Timestamp
+			if doc.Statements[i].Timestamp == nil {
+				doc.Statements[i].Timestamp = doc.Timestamp
 			}
-			if s.LastUpdated != nil {
-				s.LastUpdated = doc.LastUpdated
+			if doc.Statements[i].LastUpdated == nil {
+				doc.Statements[i].LastUpdated = doc.LastUpdated
 			}
-			ret = append(ret, &s)
+			ret = append(ret, &doc.Statements[i])
 		}
 	}
 	return ret
