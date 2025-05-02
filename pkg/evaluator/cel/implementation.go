@@ -59,7 +59,7 @@ func (dce *defaulCelEvaluator) CompileCode(env *cel.Env, code string) (*cel.Ast,
 // CreateEnvironment
 func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, plugins map[string]Plugin) (*cel.Env, error) {
 	envOpts := []cel.EnvOption{
-		cel.Variable(VarNamePredicates, cel.MapType(cel.IntType, cel.AnyType)),
+		cel.Variable(VarNamePredicates, cel.ListType(cel.AnyType)),
 		cel.Variable(VarNamePredicate, cel.AnyType),
 		cel.Variable(VarNameContext, cel.AnyType),
 		cel.Variable(VarNameOutputs, cel.AnyType),
@@ -93,6 +93,7 @@ func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, pl
 	preds := []*structpb.Value{}
 	fpreds := []attestation.Predicate{}
 	for _, p := range predicates {
+		// I think we can remove this filter
 		if tenet.Predicates != nil {
 			if len(tenet.Predicates.Types) > 0 && !slices.Contains(tenet.Predicates.Types, string(p.GetType())) {
 				logrus.Debugf("skipping predicate of type %q (not in tenet predicate types)", p.GetType())
