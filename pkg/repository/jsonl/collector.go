@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	cjsonl "github.com/carabiner-dev/jsonl"
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/nozzle/throttler"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
@@ -89,9 +90,30 @@ func parseJsonlFile(path string, filterset *attestation.FilterSet) ([]attestatio
 		if r == nil {
 			continue
 		}
+
+		// Parse the JSON doc
 		envelopes, err := envelope.Parsers.Parse(r)
 		if err != nil {
 			return nil, fmt.Errorf("parsing attestation %d in %q: %w", i, path, err)
+		}
+
+		// If the json did not return anything (not likely)
+		if len(envelopes) == 0 {
+			continue
+		}
+
+		// Complete the attestation source, we know that the envelope returns max 1
+		// attestation per line
+		if envelopes[0].GetStatement() != nil ||
+			envelopes[0].GetStatement().GetPredicate() != nil ||
+			envelopes[0].GetStatement().GetPredicate().GetSource() != nil {
+
+			rd := &intoto.ResourceDescriptor{
+				Name:   fmt.Sprintf("jsonl:%s#%d", path, i),
+				Uri:    fmt.Sprintf("jsonl:%s#%d", path, i),
+				Digest: envelopes[0].GetStatement().GetPredicate().GetSource().GetDigest(),
+			}
+			envelopes[0].GetStatement().GetPredicate().SetSource(rd)
 		}
 		ret = append(ret, filterset.FilterList(envelopes)...)
 	}

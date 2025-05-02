@@ -15,8 +15,6 @@ import (
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	//	intoto "github.com/in-toto/attestation/go/v1"
-
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/hasher"
 )
