@@ -6,13 +6,12 @@
 package jsonl
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 
+	cjsonl "github.com/carabiner-dev/jsonl"
 	"github.com/nozzle/throttler"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
@@ -56,7 +55,7 @@ func (c *Collector) readAttestations(paths []string, filterset *attestation.Filt
 	mtx := sync.Mutex{}
 	for _, path := range paths {
 		go func() {
-			moreAtts, err := parseFile(path, filterset)
+			moreAtts, err := parseJsonlFile(path, filterset)
 			if err != nil {
 				t.Done(err)
 				return
@@ -74,7 +73,9 @@ func (c *Collector) readAttestations(paths []string, filterset *attestation.Filt
 	return ret, nil
 }
 
-func parseFile(path string, filterset *attestation.FilterSet) ([]attestation.Envelope, error) {
+// parseJsonlFile uses the carabiner jsonl module to parse a jsonl bundle and
+// get all the attestations in it.
+func parseJsonlFile(path string, filterset *attestation.FilterSet) ([]attestation.Envelope, error) {
 	f, err := os.Open(path) //nolint:gosec // This is supposed to open any file
 	if err != nil {
 		return nil, fmt.Errorf("opening %q: %w", path, err)
@@ -83,20 +84,18 @@ func parseFile(path string, filterset *attestation.FilterSet) ([]attestation.Env
 		filterset = &attestation.FilterSet{}
 	}
 	ret := []attestation.Envelope{}
-	scanner := bufio.NewScanner(f)
-	i := 0
-	for scanner.Scan() {
-		if scanner.Text() == "" {
+
+	for i, r := range cjsonl.IterateBundle(f) {
+		if r == nil {
 			continue
 		}
-		reader := strings.NewReader(scanner.Text())
-		envelopes, err := envelope.Parsers.Parse(reader)
+		envelopes, err := envelope.Parsers.Parse(r)
 		if err != nil {
 			return nil, fmt.Errorf("parsing attestation %d in %q: %w", i, path, err)
 		}
 		ret = append(ret, filterset.FilterList(envelopes)...)
-		i++
 	}
+
 	return ret, nil
 }
 
@@ -120,6 +119,7 @@ func (c *Collector) FetchBySubject(ctx context.Context, opts attestation.FetchOp
 	if err != nil {
 		return nil, fmt.Errorf("reading attestation: %w", err)
 	}
+
 	return atts, err
 }
 

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseFile(t *testing.T) {
+func TestParseJsonlFile(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
 		name         string
@@ -18,12 +18,12 @@ func TestParseFile(t *testing.T) {
 		expectedAtts int
 	}{
 		{"single", "testdata/single.jsonl", false, 1},
-		{"bad", "testdata/bad.jsonl", true, 0},
+		{"badline", "testdata/bad.jsonl", false, 2}, // Bad line in the middle
 		{"multiple", "testdata/multiple.jsonl", false, 6},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			atts, err := parseFile(tc.srcData, nil)
+			atts, err := parseJsonlFile(tc.srcData, nil)
 			if tc.mustErr {
 				require.Error(t, err)
 				return
