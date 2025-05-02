@@ -142,7 +142,11 @@ func (o *verifyOptions) Validate() error {
 	}
 
 	if o.Subject != "" && o.SubjectFile != "" {
-		return fmt.Errorf("you can only specify subject or subject file")
+		errs = append(errs, fmt.Errorf("you can only specify subject or subject file"))
+	}
+
+	if len(o.AttestationFiles) == 0 && len(o.Collectors) == 0 {
+		errs = append(errs, errors.New("no attestation sources specified (collectors or files)"))
 	}
 
 	return errors.Join(errs...)
