@@ -49,6 +49,8 @@ func (t *Transformer) Mutate(subj attestation.Subject, inputs []attestation.Pred
 		return subj, inputs, nil
 	}
 
+	logrus.Debugf("VEX transformer: Got %d inputs, got results + %d vex documents", len(inputs), len(vexes))
+
 	// Apply any VEX to documents received to the vulnerability report
 	pred, err := t.ApplyVEX(subj, results, vexes)
 	if err != nil {
@@ -295,7 +297,7 @@ func extractStatements(preds []attestation.Predicate) []*openvex.Statement {
 	for _, pred := range preds {
 		doc, ok := pred.GetParsed().(*openvex.VEX)
 		if !(ok) {
-			logrus.Info("No es")
+			logrus.Debugf("POSSIBLE BUG: predicate is %T instead of OpenVEX", pred.GetParsed())
 			continue
 		}
 
