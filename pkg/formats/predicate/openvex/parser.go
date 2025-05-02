@@ -16,16 +16,18 @@ import (
 type Parser struct{}
 
 var (
-	PredicateType                             = attestation.PredicateType("https://openvex.dev/ns")
-	_             attestation.PredicateParser = (*Parser)(nil)
+	PredicateType   = attestation.PredicateType("https://openvex.dev/ns")
+	PredicateType02 = attestation.PredicateType("https://openvex.dev/ns/v0.2.0")
 )
+
+var _ attestation.PredicateParser = (*Parser)(nil)
 
 func New() *Parser {
 	return &Parser{}
 }
 
 func (*Parser) SupportsType(predTypes ...attestation.PredicateType) bool {
-	return slices.Contains(predTypes, PredicateType)
+	return slices.Contains(predTypes, PredicateType) || slices.Contains(predTypes, PredicateType02)
 }
 
 // Parse parses openvex predicate data
