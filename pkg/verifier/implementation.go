@@ -47,7 +47,9 @@ type AmpelVerifier interface {
 	// AttestResultSetToWriter takes an policy resultset and writes an attestation to the supplied io.Writer
 	AttestResultSetToWriter(io.Writer, *api.ResultSet) error
 
+	// VerifySubject runs the verification process.
 	VerifySubject(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.Result, error)
+
 	// ProcessChainedSubjects proceses the chain of attestations to find the ultimate
 	// subject a policy is supposed to operate on
 	ProcessChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *api.Policy, attestation.Subject, []attestation.Envelope) (attestation.Subject, []*api.ChainedSubject, bool, error)

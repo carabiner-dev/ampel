@@ -174,6 +174,23 @@ func (e *Evaluator) ExecChainedSelector(
 func (e *Evaluator) ExecTenet(
 	ctx context.Context, opts *options.EvaluatorOptions, tenet *api.Tenet, predicates []attestation.Predicate,
 ) (*api.EvalResult, error) {
+	// Build the statement refs to add to the results
+	statementRefs := []*api.StatementRef{}
+	for _, pred := range predicates {
+		sref := &api.StatementRef{
+			Type:        string(pred.GetType()),
+			Attestation: &api.ResourceDescriptor{},
+		}
+
+		if pred.GetSource() != nil {
+			sref.GetAttestation().Name = pred.GetSource().GetName()
+			sref.GetAttestation().Uri = pred.GetSource().GetUri()
+			sref.GetAttestation().Digest = pred.GetSource().GetDigest()
+		}
+
+		statementRefs = append(statementRefs, sref)
+	}
+
 	// Compile the tenet code into ASTs
 	ast, err := e.impl.CompileCode(e.Environment, tenet.Code)
 	if err != nil {
@@ -217,7 +234,7 @@ func (e *Evaluator) ExecTenet(
 				Status:     api.StatusFAIL,
 				Date:       timestamppb.Now(),
 				Output:     &structpb.Struct{},
-				Statements: []*api.StatementRef{},
+				Statements: statementRefs,
 				Error: &api.Error{
 					Message:  "Evaluating policy outputs: " + ee.Message,
 					Guidance: ee.EvalError.Error(),
@@ -237,7 +254,7 @@ func (e *Evaluator) ExecTenet(
 				Status:     api.StatusFAIL,
 				Date:       timestamppb.Now(),
 				Output:     &structpb.Struct{},
-				Statements: []*api.StatementRef{},
+				Statements: statementRefs,
 				Error: &api.Error{
 					Message:  "Evaluating policy code: " + ee.Message,
 					Guidance: ee.EvalError.Error(),
@@ -249,6 +266,7 @@ func (e *Evaluator) ExecTenet(
 	// TODO(puerco) This should not happen here, Evaluate should init the result
 	// with the tenet data
 	result.Id = tenet.Id
+	result.Statements = statementRefs
 
 	outStruct, err := structpb.NewStruct(outputMap)
 	if err != nil {
