@@ -471,21 +471,18 @@ func (di *defaultIplementation) VerifySubject(
 		)
 
 		// Filter the predicates to those requested by the tenet:
-		if tenet.GetPredicates() != nil && len(tenet.GetPredicates().GetTypes()) != 0 {
-			var npredicates = []attestation.Predicate{}
-			var idx = map[attestation.PredicateType]struct{}{}
-			for _, tp := range tenet.GetPredicates().GetTypes() {
-				idx[attestation.PredicateType(tp)] = struct{}{}
+		var npredicates = []attestation.Predicate{}
+		var idx = map[attestation.PredicateType]struct{}{}
+		for _, tp := range tenet.GetPredicates().GetTypes() {
+			idx[attestation.PredicateType(tp)] = struct{}{}
+		}
+		for _, p := range predicates {
+			if _, ok := idx[p.GetType()]; ok {
+				npredicates = append(npredicates, p)
 			}
-			for _, p := range predicates {
-				if _, ok := idx[p.GetType()]; ok {
-					npredicates = append(npredicates, p)
-				}
-			}
-			predicates = npredicates
 		}
 
-		evalres, err := evaluators[key].ExecTenet(ctx, evalOpts, tenet, predicates)
+		evalres, err := evaluators[key].ExecTenet(ctx, evalOpts, tenet, npredicates)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("executing tenet #%d: %w", i, err))
 			continue
