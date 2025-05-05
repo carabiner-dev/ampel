@@ -96,7 +96,7 @@ func (tb *TableBuilder) ResultSetTable(set *api.ResultSet) (table.Writer, error)
 	banner := tb.Decorator.AmpelBanner("Evaluation Results")
 	t.AppendRow(table.Row{banner, banner, banner, banner}, rowConfigAutoMerge)
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"PolicySet", set.Id, "Date", set.DateEnd.AsTime().Local()})
+	t.AppendRow(table.Row{tb.Decorator.Bold("PolicySet"), set.Id, tb.Decorator.Bold("Date"), set.DateEnd.AsTime().Local()})
 	t.AppendSeparator()
 	if s := set.GetSubject(); s != nil {
 		st := ""
@@ -116,7 +116,7 @@ func (tb *TableBuilder) ResultSetTable(set *api.ResultSet) (table.Writer, error)
 		)
 	}
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Policy", "Controls", "Status", "Details"})
+	t.AppendRow(table.Row{tb.Decorator.Bold("Policy"), tb.Decorator.Bold("Controls"), tb.Decorator.Bold("Status"), tb.Decorator.Bold("Details")})
 	t.AppendSeparator()
 	for _, r := range set.GetResults() {
 		assessments := ""
