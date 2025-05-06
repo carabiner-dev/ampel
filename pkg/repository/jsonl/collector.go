@@ -104,8 +104,8 @@ func parseJsonlFile(path string, filterset *attestation.FilterSet) ([]attestatio
 
 		// Complete the attestation source, we know that the envelope returns max 1
 		// attestation per line
-		if envelopes[0].GetStatement() != nil ||
-			envelopes[0].GetStatement().GetPredicate() != nil ||
+		if envelopes[0].GetStatement() != nil &&
+			envelopes[0].GetStatement().GetPredicate() != nil &&
 			envelopes[0].GetStatement().GetPredicate().GetSource() != nil {
 
 			rd := &intoto.ResourceDescriptor{
