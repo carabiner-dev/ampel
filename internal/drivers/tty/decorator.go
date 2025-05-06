@@ -38,11 +38,11 @@ func (d *Decorator) AmpelBanner(legend string) string {
 func (d *Decorator) StatusToDot(status string) string {
 	switch status {
 	case api.StatusFAIL:
-		return r("⬤")
+		return r("●")
 	case api.StatusPASS:
-		return g("⬤")
+		return g("●")
 	case api.StatusSOFTFAIL:
-		return y("⬤")
+		return y("●")
 	default:
 		return "?"
 	}
