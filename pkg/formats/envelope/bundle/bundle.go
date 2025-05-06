@@ -12,11 +12,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/carabiner-dev/hasher"
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
-	"github.com/carabiner-dev/hasher"
 )
 
 type Parser struct{}

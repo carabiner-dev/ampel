@@ -168,6 +168,9 @@ linters:
         - typeUnparen
         - unnamedResult
         - unnecessaryBlock
+    gosec:
+      excludes:
+        - G304
     nolintlint:
       # Enable to ensure that nolint directives are all used. Default is true.
       allow-unused: false

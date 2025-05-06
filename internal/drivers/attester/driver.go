@@ -4,14 +4,19 @@
 package attester
 
 import (
+	"fmt"
 	"io"
+	"os"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/verifier"
 )
 
 func New() *Driver {
-	v, _ := verifier.New()
+	v, err := verifier.New()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error creating verifier: %v", err)
+	}
 	return &Driver{
 		Ampel: v,
 	}

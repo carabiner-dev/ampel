@@ -33,7 +33,7 @@ type Parser struct {
 // ParseFile parses a policy file
 func (p *Parser) ParseFile(path string) (*v1.PolicySet, error) {
 	// TODO(puerco): Support policies enclosed in envelopes
-	data, err := os.ReadFile(path) //nolint:gosec
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("reading polciy file: %w", err)
 	}

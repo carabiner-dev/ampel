@@ -11,11 +11,12 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/carabiner-dev/hasher"
+
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
-	"github.com/carabiner-dev/hasher"
 )
 
 type Parser struct{}

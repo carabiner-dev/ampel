@@ -86,6 +86,8 @@ func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, pl
 
 // BuildVariables builds the set of variables that will be exposed in the
 // CEL runtime.
+//
+//nolint:gocritic // This passes around a large struct in vars
 func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, plugins map[string]Plugin, tenet *api.Tenet, policy *api.Policy, subject attestation.Subject, predicates []attestation.Predicate) (*map[string]any, error) {
 	ret := map[string]any{}
 
@@ -139,6 +141,8 @@ func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, pl
 
 // EnsurePredicates ensures variable processing produced at least one predicate
 // for the tenet to evaluate against.
+//
+//nolint:gocritic // This passes around a large struct in vars
 func (dce *defaulCelEvaluator) EnsurePredicates(tenet *api.Tenet, vars *map[string]any) (*api.EvalResult, error) {
 	// Fiorst, check if the tenet needs them
 	if tenet.Predicates == nil {
@@ -184,6 +188,7 @@ func (dce *defaulCelEvaluator) EnsurePredicates(tenet *api.Tenet, vars *map[stri
 
 // EvaluateOutputs
 func (dce *defaulCelEvaluator) EvaluateOutputs(
+	//nolint:gocritic // This passes around a large struct in vars
 	env *cel.Env, outputAsts map[string]*cel.Ast, vars *map[string]any,
 ) (map[string]any, error) {
 	evalResult := map[string]any{}
@@ -214,8 +219,8 @@ func (dce *defaulCelEvaluator) EvaluateOutputs(
 
 		// If the result value is a list of ref.Vals, we need to
 		// resolve it for it to marshal to json:
-		if _, ok := dr.([]ref.Val); ok {
-			dr = deRefList(dr.([]ref.Val))
+		if rv, ok := dr.([]ref.Val); ok {
+			dr = deRefList(rv)
 		}
 		dataResult[id] = dr
 	}
@@ -300,6 +305,7 @@ func deRefList(refList []ref.Val) []any {
 
 // EvaluateChainedSelector
 func (dce *defaulCelEvaluator) EvaluateChainedSelector(
+	//nolint:gocritic // This is passing a potentially large data set
 	env *cel.Env, ast *cel.Ast, vars *map[string]any,
 ) (attestation.Subject, error) {
 	if env == nil {
@@ -369,6 +375,8 @@ func (dce *defaulCelEvaluator) EvaluateChainedSelector(
 }
 
 // Evaluate the precompiled ASTs
+//
+//nolint:gocritic // This is passing a potentially large data set
 func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *map[string]any) (*api.EvalResult, error) {
 	program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
 	if err != nil {
@@ -413,6 +421,8 @@ func (dce *defaulCelEvaluator) Assert(*api.ResultSet) bool {
 }
 
 // BuildSelectorVariables
+//
+//nolint:gocritic // This passes around a large struct in vars
 func (dce *defaulCelEvaluator) BuildSelectorVariables(
 	opts *options.EvaluatorOptions, plugins map[string]Plugin, policy *api.Policy, subject attestation.Subject, _ *api.ChainedPredicate, predicate attestation.Predicate,
 ) (*map[string]any, error) {

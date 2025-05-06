@@ -227,6 +227,7 @@ func (e *Evaluator) ExecTenet(
 
 	outputMap, err := e.impl.EvaluateOutputs(e.Environment, outputAsts, vars)
 	if err != nil {
+		//nolint:errorlint
 		ee, ok := err.(*EvaluationError)
 		if ok {
 			return &api.EvalResult{
@@ -247,6 +248,7 @@ func (e *Evaluator) ExecTenet(
 	// Evaluate the ASTs and compile the results into a resultset
 	result, err := e.impl.Evaluate(e.Environment, ast, vars)
 	if err != nil {
+		//nolint:errorlint
 		ee, ok := err.(*EvaluationError)
 		if ok {
 			return &api.EvalResult{

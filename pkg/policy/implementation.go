@@ -155,11 +155,11 @@ func parseFetchedRef(data []byte) (string, *fetchedRef, error) {
 	}
 
 	// Compute the fetched data digest:
-	hasher := sha256.New()
-	if _, err := hasher.Write(data); err != nil {
+	h := sha256.New()
+	if _, err := h.Write(data); err != nil {
 		return "", nil, fmt.Errorf("hashing data: %w", err)
 	}
-	dataHash := fmt.Sprintf("%x", hasher.Sum(nil))
+	dataHash := fmt.Sprintf("%x", h.Sum(nil))
 
 	policySingle := &v1.Policy{}
 	policySet := &v1.PolicySet{}

@@ -70,6 +70,7 @@ func TestParseRepo(t *testing.T) {
 	}
 }
 
+//nolint:dupl
 func TestUriToOrg(t *testing.T) {
 	t.Parallel()
 	u := New()
@@ -104,14 +105,17 @@ func TestUriToOrg(t *testing.T) {
 			}
 			require.NoError(t, err)
 
+			//nolint:errcheck,forcetypeassert
 			res := result.Value().(*structpb.Struct)
 			require.Equal(t, tc.expected["name"], res.Fields["name"].GetStringValue())
 			require.Equal(t, tc.expected["uri"], res.Fields["uri"].GetStringValue())
+			//nolint:errcheck,forcetypeassert
 			require.Equal(t, tc.expected["digest"].(map[string]string)["sha256"], res.Fields["digest"].GetStructValue().Fields["sha256"].GetStringValue())
 		})
 	}
 }
 
+//nolint:dupl
 func TestUriToRepo(t *testing.T) {
 	t.Parallel()
 	u := New()
@@ -146,9 +150,11 @@ func TestUriToRepo(t *testing.T) {
 			}
 			require.NoError(t, err)
 
+			//nolint:errcheck,forcetypeassert
 			res := result.Value().(*structpb.Struct)
 			require.Equal(t, tc.expected["name"], res.Fields["name"].GetStringValue())
 			require.Equal(t, tc.expected["uri"], res.Fields["uri"].GetStringValue())
+			//nolint:errcheck,forcetypeassert
 			require.Equal(t, tc.expected["digest"].(map[string]string)["sha256"], res.Fields["digest"].GetStructValue().Fields["sha256"].GetStringValue())
 		})
 	}
@@ -190,9 +196,11 @@ func TestUriToBranch(t *testing.T) {
 			}
 			require.NoError(t, err)
 
+			//nolint:errcheck,forcetypeassert
 			res := result.Value().(*structpb.Struct)
 			require.Equal(t, tc.expected["name"], res.Fields["name"].GetStringValue())
 			require.Equal(t, tc.expected["uri"], res.Fields["uri"].GetStringValue())
+			//nolint:errcheck,forcetypeassert
 			require.Equal(t, tc.expected["digest"].(map[string]string)["sha256"], res.Fields["digest"].GetStructValue().Fields["sha256"].GetStringValue())
 		})
 	}

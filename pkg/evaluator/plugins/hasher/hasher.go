@@ -4,7 +4,7 @@
 package hasher
 
 import (
-	"crypto/sha1"
+	"crypto/sha1" //nolint:gosec // Needed for compatibility
 	"crypto/sha256"
 	"crypto/sha512"
 	"errors"
@@ -86,7 +86,7 @@ var s512 = func(_ ref.Val, rhs ref.Val) ref.Val {
 var s1 = func(_ ref.Val, rhs ref.Val) ref.Val {
 	switch v := rhs.Value().(type) {
 	case string:
-		h := sha1.New()
+		h := sha1.New() //nolint:gosec // Needed for compatibility
 		h.Write([]byte(v))
 		return types.String(fmt.Sprintf("%x", h.Sum(nil)))
 	default:

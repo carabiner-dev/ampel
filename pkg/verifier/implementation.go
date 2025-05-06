@@ -192,19 +192,20 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 	}
 
 	for _, t := range p.Tenets {
-		if t.Runtime != "" {
-			cl := class.Class(t.Runtime)
-			if _, ok := evaluators[cl]; ok {
-				continue
-			}
-			// TODO(puerco): Options here should come from the verifier options
-			e, err := factory.Get(&options.EvaluatorOptions{}, cl)
-			if err != nil {
-				return nil, fmt.Errorf("building %q runtime: %w", t.Runtime, err)
-			}
-			evaluators[cl] = e
-			logrus.Debugf("Registered evaluator of class %s", cl)
+		if t.Runtime == "" {
+			continue
 		}
+		cl := class.Class(t.Runtime)
+		if _, ok := evaluators[cl]; ok {
+			continue
+		}
+		// TODO(puerco): Options here should come from the verifier options
+		e, err := factory.Get(&options.EvaluatorOptions{}, cl)
+		if err != nil {
+			return nil, fmt.Errorf("building %q runtime: %w", t.Runtime, err)
+		}
+		evaluators[cl] = e
+		logrus.Debugf("Registered evaluator of class %s", cl)
 	}
 
 	if len(evaluators) == 0 {
@@ -273,6 +274,7 @@ func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identiti
 			return false, fmt.Errorf("verifying attestation signature: %w", err)
 		}
 
+		//nolint:gocritic // Under construction still
 		// if !identityAllowed(identities, vr) {
 		// 	logrus.Infof("Identity %+v not allowed by policy %+v", vr.SigstoreCertData, identities)
 		// 	return false, nil
@@ -283,7 +285,9 @@ func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identiti
 }
 
 // identityAllowed is a temporary stub function to gatye the allowed identities
-func identityAllowed(ids []*api.Identity, vr *attestation.SignatureVerification) bool { //nolint: unused
+//
+//nolint:unused // Under construction
+func identityAllowed(ids []*api.Identity, vr *attestation.SignatureVerification) bool {
 	if vr == nil {
 		logrus.Warn("DEMO WARNING: ALLOWING UNSIGNED STATEMENTS")
 		return true
@@ -471,8 +475,8 @@ func (di *defaultIplementation) VerifySubject(
 		)
 
 		// Filter the predicates to those requested by the tenet:
-		var npredicates = []attestation.Predicate{}
-		var idx = map[attestation.PredicateType]struct{}{}
+		npredicates := []attestation.Predicate{}
+		idx := map[attestation.PredicateType]struct{}{}
 		for _, tp := range tenet.GetPredicates().GetTypes() {
 			idx[attestation.PredicateType(tp)] = struct{}{}
 		}

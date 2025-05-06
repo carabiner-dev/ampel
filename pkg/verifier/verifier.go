@@ -210,6 +210,7 @@ func failPolicyWithError(p *api.Policy, chain []*api.ChainedSubject, subject att
 	}
 
 	guidance := ""
+	//nolint:errorlint
 	if pe, ok := err.(PolicyError); ok {
 		guidance = pe.Guidance
 	}

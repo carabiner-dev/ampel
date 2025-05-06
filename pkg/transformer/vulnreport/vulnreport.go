@@ -30,6 +30,7 @@ func (t *Transformer) Mutate(
 ) (attestation.Subject, []attestation.Predicate, error) {
 	newPreds := []attestation.Predicate{}
 	for _, original := range preds {
+		//nolint:gocritic // This will take more types at some point
 		switch original.GetType() {
 		case trivy.PredicateType:
 			newPred, err := t.TrivyToOSV(original)

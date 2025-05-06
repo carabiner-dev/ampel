@@ -4,7 +4,7 @@
 package subject
 
 import (
-	"crypto/sha1"
+	"crypto/sha1" //nolint:gosec // Needed for compatibility
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/hex"
@@ -35,7 +35,7 @@ type FileReaderOptions struct {
 
 var defaultFileReaderOptions = FileReaderOptions{
 	Hashers: map[string]hash.Hash{
-		"sha1":   sha1.New(),
+		"sha1":   sha1.New(), //nolint:gosec // Needed for compatibility
 		"sha256": sha256.New(),
 		"sha512": sha512.New(),
 	},
@@ -63,14 +63,17 @@ func (fr *FileReader) ReadPath(path string) (attestation.Subject, error) {
 		return nil, fmt.Errorf("opening path: %w", err)
 	}
 
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	sub, err := fr.ReadStream(f)
 	if err != nil {
 		return nil, err
 	}
 
-	sub.(*gointoto.ResourceDescriptor).Name = path
+	rd, ok := sub.(*gointoto.ResourceDescriptor)
+	if ok {
+		rd.Name = path
+	}
 	return sub, nil
 }
 

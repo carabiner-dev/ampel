@@ -13,16 +13,19 @@ import (
 var _ attestation.Envelope = (*Envelope)(nil)
 
 type Envelope struct {
-	Signatures    []attestation.Signature
-	Statement     attestation.Statement
-	Verifications []*attestation.SignatureVerification
+	Signatures    []attestation.Signature              `json:"signatures"`
+	Statement     attestation.Statement                `json:"-"`
+	Verifications []*attestation.SignatureVerification `json:"-"`
 	sigstoreProtoDSSE.Envelope
 }
 
 func (env *Envelope) GetStatement() attestation.Statement {
 	// This should not happen here.
-	s, _ := statement.Parsers.Parse(env.Payload)
-	return s
+	s, err := statement.Parsers.Parse(env.Payload)
+	if err == nil {
+		return s
+	}
+	return nil
 }
 
 func (env *Envelope) GetSignatures() []attestation.Signature {

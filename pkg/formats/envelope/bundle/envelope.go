@@ -101,6 +101,7 @@ func (e *Envelope) Verify() error {
 
 	logrus.Warn("SIGNATURE VALIDATION IS MOCKED, DO NOT USE YET")
 
+	//nolint:gocritic // Under construction
 	// ver := &attestation.SignatureVerification{
 	// 	SigstoreCertData: summary,
 	// }

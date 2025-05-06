@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/carabiner-dev/hasher"
 	"github.com/carabiner-dev/osv/go/osv"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	openvex "github.com/openvex/go-vex/pkg/vex"
@@ -25,7 +26,6 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	aosv "github.com/carabiner-dev/ampel/pkg/formats/predicate/osv"
-	"github.com/carabiner-dev/hasher"
 )
 
 const ClassName = "vex"

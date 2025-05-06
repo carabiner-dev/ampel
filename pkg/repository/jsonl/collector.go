@@ -77,7 +77,7 @@ func (c *Collector) readAttestations(paths []string, filterset *attestation.Filt
 // parseJsonlFile uses the carabiner jsonl module to parse a jsonl bundle and
 // get all the attestations in it.
 func parseJsonlFile(path string, filterset *attestation.FilterSet) ([]attestation.Envelope, error) {
-	f, err := os.Open(path) //nolint:gosec // This is supposed to open any file
+	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("opening %q: %w", path, err)
 	}
@@ -107,7 +107,6 @@ func parseJsonlFile(path string, filterset *attestation.FilterSet) ([]attestatio
 		if envelopes[0].GetStatement() != nil &&
 			envelopes[0].GetStatement().GetPredicate() != nil &&
 			envelopes[0].GetStatement().GetPredicate().GetSource() != nil {
-
 			rd := &intoto.ResourceDescriptor{
 				Name:   fmt.Sprintf("jsonl:%s#%d", path, i),
 				Uri:    fmt.Sprintf("jsonl:%s#%d", path, i),

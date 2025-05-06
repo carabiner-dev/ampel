@@ -7,8 +7,8 @@ import "github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 
 // Signature abstracts a signature. At least for now.
 type (
-	Signature   interface{}
-	Certificate interface{}
+	Signature   interface{} //nolint:iface // To be implemented
+	Certificate interface{} //nolint:iface // To be implemented
 )
 
 // Results of the signature verification process
@@ -18,4 +18,4 @@ type SignatureVerification struct {
 
 // Verification options abstracts the different options that can be tweaked
 // to verify the various signature types
-type VerificationOptions interface{}
+type VerificationOptions interface{} //nolint:iface // To be implemented

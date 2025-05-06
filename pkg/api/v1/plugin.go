@@ -42,11 +42,11 @@ func PluginHasCapability(capability Capability, plugin Plugin) bool {
 }
 
 type (
-	PredicateParser      interface{}
-	EnvelopeParser       interface{}
-	StatementParser      interface{}
-	PredicateTransformer interface{}
-	SignatureVerifier    interface{}
+	PredicateParser      interface{} //nolint:iface // To be backfilled
+	EnvelopeParser       interface{} //nolint:iface // To be backfilled
+	StatementParser      interface{} //nolint:iface // To be backfilled
+	PredicateTransformer interface{} //nolint:iface // To be backfilled
+	SignatureVerifier    interface{} //nolint:iface // To be backfilled
 )
 
 type EvalEnginePlugin interface {
