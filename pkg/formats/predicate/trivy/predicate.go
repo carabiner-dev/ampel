@@ -12,35 +12,35 @@ import (
 var PredicateType = attestation.PredicateType("https://trivy.dev/report")
 
 type TrivyReport struct {
-	SchemaVersion int        `json:"schema_version"`
-	CreatedAt     *time.Time `json:"created_at"`
-	ArtifactName  string     `json:"artifact_name"`
-	ArtifactType  string     `json:"artifact_type"`
+	SchemaVersion int        `json:"SchemaVersion"`
+	CreatedAt     *time.Time `json:"CreatedAt"`
+	ArtifactName  string     `json:"ArtifactName"`
+	ArtifactType  string     `json:"ArtifactType"`
 
-	Results []Result `json:"results"`
+	Results []Result `json:"Results"`
 }
 
 type Result struct {
-	Vulnerabilities []*Vulnerability `json:"vulnerabilities"`
+	Vulnerabilities []*Vulnerability `json:"Vulnerabilities"`
 }
 
 type CVSS struct {
-	V3Vector string  `json:"v3_vector"`
-	V3Score  float32 `json:"v3_score"`
+	V3Vector string  `json:"V3Vector"`
+	V3Score  float32 `json:"V3Score"`
 }
 
 type Vulnerability struct {
-	VulnerabilityID  string            `json:"vulnerability_id"`
-	PkgName          string            `json:"pkg_name"`
-	InstalledVersion string            `json:"installed_version"`
-	FixedVersion     string            `json:"fixed_version"`
-	PkgIdentifier    map[string]string `json:"pkg_identifier"`
-	CVSS             map[string]CVSS   `json:"cvss"`
-	Title            string            `json:"title"`
-	Description      string            `json:"description"`
-	Severity         string            `json:"severity"` // "CRITICAL"
-	CweIDs           []string          `json:"cwe_ids"`
-	References       []string          `json:"references"`
-	PublishedDate    *time.Time        `json:"published_date"`
-	LastModifiedDate *time.Time        `json:"last_modified_date"`
+	VulnerabilityID  string            `json:"VulnerabilityID"`
+	PkgName          string            `json:"PkgName"`
+	InstalledVersion string            `json:"InstalledVersion"`
+	FixedVersion     string            `json:"FixedVersion"`
+	PkgIdentifier    map[string]string `json:"PkgIdentifier"`
+	CVSS             map[string]CVSS   `json:"CVSS"`
+	Title            string            `json:"Title"`
+	Description      string            `json:"Description"`
+	Severity         string            `json:"Severity"` // "CRITICAL"
+	CweIDs           []string          `json:"CweIDs"`
+	References       []string          `json:"References"`
+	PublishedDate    *time.Time        `json:"PublishedDate"`
+	LastModifiedDate *time.Time        `json:"LastModifiedDate"`
 }
