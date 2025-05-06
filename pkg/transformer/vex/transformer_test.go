@@ -70,6 +70,4 @@ func TestApplyVEX(t *testing.T) {
 			require.Len(t, osvReport.GetResults()[0].Packages, tc.expectedPackages)
 		})
 	}
-
-	t.Fail()
 }

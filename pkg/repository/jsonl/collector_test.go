@@ -43,7 +43,8 @@ func TestReadAttestations(t *testing.T) {
 		expectedAtts int
 	}{
 		{"single", []string{"testdata/single.jsonl"}, false, 1},
-		{"bad", []string{"testdata/bad.jsonl"}, true, 0},
+		// The parser should be resilient to a bad line in the jsonl data
+		{"bad", []string{"testdata/bad.jsonl"}, false, 2},
 		{"multiple", []string{"testdata/multiple.jsonl", "testdata/single.jsonl"}, false, 7},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
