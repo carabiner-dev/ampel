@@ -25,7 +25,7 @@ func TestEvaluateChainedSelector(t *testing.T) {
 	}{
 		{"slsa", "predicate.data.materials[0]", "testdata/slsa-v0.2.json", &intoto.ResourceDescriptor{
 			Uri:    "git+https://github.com/slsa-framework/slsa-verifier@refs/tags/v2.6.0",
-			Digest: map[string]string{"sha1": "3714a2a4684014deb874a0e737dffa0ee02dd647"},
+			Digest: map[string]string{"sha1": "3714a2a4684014deb874a0e737dffa0ee02dd647", "gitCommit": "3714a2a4684014deb874a0e737dffa0ee02dd647"},
 		}, false},
 		{"string", "\"sha1:\"+predicate.data.materials[0].digest[\"sha1\"]", "testdata/slsa-v0.2.json", &intoto.ResourceDescriptor{
 			Digest: map[string]string{"sha1": "3714a2a4684014deb874a0e737dffa0ee02dd647"},
@@ -62,9 +62,9 @@ func TestEvaluateChainedSelector(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.NotNil(t, res)
-			require.Equal(t, tc.expected.Uri, res.GetUri())
-			require.Equal(t, tc.expected.Name, res.GetName())
-			require.Equal(t, tc.expected.Digest, res.GetDigest())
+			require.Equal(t, tc.expected.GetUri(), res.GetUri())
+			require.Equal(t, tc.expected.GetName(), res.GetName())
+			require.Equal(t, tc.expected.GetDigest(), res.GetDigest())
 		})
 	}
 }
