@@ -1,6 +1,6 @@
 module github.com/carabiner-dev/ampel
 
-go 1.24.1
+go 1.24.3
 
 require (
 	github.com/carabiner-dev/ghrfs v0.3.2
