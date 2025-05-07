@@ -42,7 +42,7 @@ func New(funcs ...optFn) (*Collector, error) {
 		),
 		ghrfs.WithCache(true),
 		ghrfs.WithCacheExtensions(
-			[]string{"jsonl", "json", "pub", "sig", "pub", "pem", "spdx", "cdx"},
+			[]string{"jsonl", "json", "pub", "sig", "crt", "key", "pub", "pem", "spdx", "cdx", "bundle"},
 		),
 	)
 	if err != nil {

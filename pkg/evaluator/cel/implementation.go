@@ -88,16 +88,19 @@ func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, pl
 // CEL runtime.
 //
 //nolint:gocritic // This passes around a large struct in vars
-func (dce *defaulCelEvaluator) BuildVariables(opts *options.EvaluatorOptions, plugins map[string]Plugin, tenet *api.Tenet, policy *api.Policy, subject attestation.Subject, predicates []attestation.Predicate) (*map[string]any, error) {
+func (dce *defaulCelEvaluator) BuildVariables(
+	opts *options.EvaluatorOptions, plugins map[string]Plugin, tenet *api.Tenet,
+	policy *api.Policy, subject attestation.Subject, predicates []attestation.Predicate,
+) (*map[string]any, error) {
+	// List of variables to return
 	ret := map[string]any{}
-
 	// Collected predicates
 	preds := []*structpb.Value{}
 	fpreds := []attestation.Predicate{}
 	for _, p := range predicates {
 		// I think we can remove this filter
 		if tenet.Predicates != nil {
-			if len(tenet.Predicates.Types) > 0 && !slices.Contains(tenet.Predicates.Types, string(p.GetType())) {
+			if len(tenet.GetPredicates().GetTypes()) > 0 && !slices.Contains(tenet.GetPredicates().GetTypes(), string(p.GetType())) {
 				logrus.Debugf("skipping predicate of type %q (not in tenet predicate types)", p.GetType())
 				continue
 			}

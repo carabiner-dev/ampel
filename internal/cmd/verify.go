@@ -240,7 +240,7 @@ using a collector.
 
 			// Parse the polcy file
 			parser := policy.NewParser()
-			p, err := parser.ParseFile(opts.PolicyFile)
+			p, err := parser.OpenPolicySet(opts.PolicyFile)
 			if err != nil {
 				return fmt.Errorf("parsing policy: %w", err)
 			}
