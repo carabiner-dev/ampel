@@ -474,15 +474,26 @@ func (di *defaultIplementation) VerifySubject(
 			},
 		)
 
-		// Filter the predicates to those requested by the tenet:
+		// Filter the predicates to those requested by the tenet or the policy:
 		npredicates := []attestation.Predicate{}
 		idx := map[attestation.PredicateType]struct{}{}
-		for _, tp := range tenet.GetPredicates().GetTypes() {
-			idx[attestation.PredicateType(tp)] = struct{}{}
+
+		// If the tenet has a set of predicate types defined, it supersedes
+		// those defined at the policy level:
+		if len(tenet.GetPredicates().GetTypes()) > 0 {
+			for _, tp := range tenet.GetPredicates().GetTypes() {
+				idx[attestation.PredicateType(tp)] = struct{}{}
+			}
+		} else {
+			// Tenet has no predicate types defined, filter using the policy types
+			for _, tp := range p.GetPredicates().GetTypes() {
+				idx[attestation.PredicateType(tp)] = struct{}{}
+			}
 		}
-		for _, p := range predicates {
-			if _, ok := idx[p.GetType()]; ok {
-				npredicates = append(npredicates, p)
+
+		for _, pred := range predicates {
+			if _, ok := idx[pred.GetType()]; ok {
+				npredicates = append(npredicates, pred)
 			}
 		}
 
