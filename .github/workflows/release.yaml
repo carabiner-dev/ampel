@@ -15,9 +15,10 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
-      id-token: write
-      attestations: write
+      contents: write # To push artifacts to the relase
+      id-token: write # To sign attestations 
+      attestations: write 
+      packages: write # To push the image
 
     steps:
       - name: Setup bnd
@@ -51,6 +52,11 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: ko build --bare ./cmd/ampel
+        env:
+          GIT_HASH: ${{ github.sha }}
+          GIT_VERSION: ${{ steps.tag.outputs.tag_name }}
 
       - name: Generate Provenance
         id: tejolote
