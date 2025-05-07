@@ -40,6 +40,10 @@ func New(funcs ...optFn) (*Collector, error) {
 		ghrfs.FromURL(
 			fmt.Sprintf("%s/releases/tag/%s", c.Options.RepoURL, c.Options.Tag),
 		),
+		ghrfs.WithCache(true),
+		ghrfs.WithCacheExtensions(
+			[]string{"jsonl", "json", "pub", "sig", "pub", "pem", "spdx", "cdx"},
+		),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("creating GHRFS from: %w", err)
