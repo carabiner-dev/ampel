@@ -259,10 +259,9 @@ func (odr *outputDataResult) MarshalJSON() ([]byte, error) {
 	}
 	for id, output := range *odr {
 		if pb, ok := output.(proto.Message); ok {
-			logrus.Warnf("Protomarshal %s", id)
 			data, err := marshaler.Marshal(pb)
 			if err != nil {
-				return nil, fmt.Errorf("proto marshalling %s: %w", id, err)
+				return nil, fmt.Errorf("proto marshaling %s: %w", id, err)
 			}
 			premarshal[id] = data
 			continue

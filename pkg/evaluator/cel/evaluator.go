@@ -166,7 +166,7 @@ func (e *Evaluator) ExecChainedSelector(
 	if err != nil {
 		return nil, fmt.Errorf("evaluating chained subject: %w", err)
 	}
-	logrus.Infof("chained subject: %+v", subject)
+	logrus.Debugf("chained subject from selector: %+v", subject)
 	return subject, nil
 }
 
