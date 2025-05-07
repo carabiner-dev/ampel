@@ -7,6 +7,7 @@ package gotable
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -104,7 +105,9 @@ func (tb *TableBuilder) ResultSetTable(set *api.ResultSet) (table.Writer, error)
 			st += s.GetName() + "\n"
 		}
 		for algo, val := range s.GetDigest() {
-			st += fmt.Sprintf("- %s:%s...\n", algo, val[0:32])
+			// This will prevent a panic if the subject hash is short, but it should never
+			strlen := math.Min(32, float64(len(val)))
+			st += fmt.Sprintf("- %s:%s...\n", algo, val[0:int(strlen)])
 		}
 		st = strings.TrimSuffix(st, "\n")
 		t.AppendRow(
