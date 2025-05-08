@@ -32,19 +32,27 @@ var (
 
 type verifyOptions struct {
 	verifier.VerificationOptions
-	PolicyFile       string
-	Format           string
-	PolicyOutput     bool
-	SubjectAlgorithm string
-	Collectors       []string
-	Subject          string
-	SubjectFile      string
+	PolicyFile   string
+	Format       string
+	PolicyOutput bool
+	Collectors   []string
+	Subject      string
+	SubjectFile  string
+	SubjectHash  string
 }
 
 // AddFlags adds the flags
 func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVarP(
-		&o.Subject, "subject", "s", "", "a hashes (algo:value) or paths to files to add as subjects ",
+		&o.Subject, "subject", "s", "", "subject hash (algo:value) or a path to a files to verify ",
+	)
+
+	cmd.PersistentFlags().StringVar(
+		&o.SubjectFile, "subject-file", "", "file to verify",
+	)
+
+	cmd.PersistentFlags().StringVar(
+		&o.SubjectHash, "subject-hash", "", "hash to verify",
 	)
 
 	cmd.PersistentFlags().StringVarP(
@@ -71,10 +79,6 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 		&o.Collectors, "collector", "c", []string{}, "attestation collectors to initialize",
 	)
 
-	cmd.PersistentFlags().StringVar(
-		&o.SubjectFile, "subject-file", "", "file to verify",
-	)
-
 	cmd.PersistentFlags().BoolVar(
 		&o.SetExitCode, "exit-code", true, "set a non-zero exit code on policy verification fail",
 	)
@@ -88,31 +92,38 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	)
 }
 
+func parseHash(estring string) (algo, value string, err error) {
+	if hashRegex == nil {
+		hashRegex = regexp.MustCompile(hashRegexStr)
+	}
+
+	// If the string matches algo:hexValue then we never try to look
+	// for a file. Never.
+	pts := hashRegex.FindStringSubmatch(estring)
+	if pts != nil {
+		algo := strings.ToLower(pts[1])
+		if _, ok := intoto.HashAlgorithms[algo]; !ok {
+			return "", "", errors.New("invalid hash algorithm in subject")
+		}
+		return algo, pts[2], nil
+	}
+	return "", "", fmt.Errorf("error parsing hash string")
+}
+
 // SubjectDescriptor parses the subkect string read from the command line
 // and returns a resource descriptor, either by synhesizing it from the specified
 // hash or by hashing a file.
 func (o *verifyOptions) SubjectDescriptor() (attestation.Subject, error) {
-	if o.Subject == "" && o.SubjectFile == "" {
-		return nil, fmt.Errorf("no subject hash or subject file defined")
-	}
 	// If we have a hash, check it and create the descriptor:
-	if o.Subject != "" {
-		if hashRegex == nil {
-			hashRegex = regexp.MustCompile(hashRegexStr)
+	if o.SubjectHash != "" {
+		algo, val, err := parseHash(o.SubjectHash)
+		if err != nil {
+			return nil, err
 		}
 
-		// If the string matches algo:hexValue then we never try to look
-		// for a file. Never.
-		pts := hashRegex.FindStringSubmatch(o.Subject)
-		if pts != nil {
-			algo := strings.ToLower(pts[1])
-			if _, ok := intoto.HashAlgorithms[algo]; !ok {
-				return nil, errors.New("invalid hash algorithm in subject")
-			}
-			return &intoto.ResourceDescriptor{
-				Digest: map[string]string{algo: pts[2]},
-			}, nil
-		}
+		return &intoto.ResourceDescriptor{
+			Digest: map[string]string{algo: val},
+		}, nil
 	}
 
 	hashes, err := hasher.New().HashFiles([]string{o.SubjectFile})
@@ -124,8 +135,12 @@ func (o *verifyOptions) SubjectDescriptor() (attestation.Subject, error) {
 
 func (o *verifyOptions) Validate() error {
 	errs := []error{}
-	if o.Subject == "" && o.SubjectFile == "" {
-		errs = append(errs, errors.New("no subject or subject-file specified"))
+	if o.SubjectFile == "" && o.SubjectHash == "" {
+		errs = append(errs, fmt.Errorf("no subject specified (use --subject, --subject-file or --subject-hash)"))
+	}
+
+	if o.SubjectFile != "" && o.SubjectHash != "" {
+		errs = append(errs, fmt.Errorf("subject specified twice (as file and hash)"))
 	}
 
 	if o.PolicyFile == "" {
@@ -138,10 +153,6 @@ func (o *verifyOptions) Validate() error {
 		if err := render.GetDriverBytType(o.Format); err != nil {
 			errs = append(errs, errors.New("invalid format"))
 		}
-	}
-
-	if o.Subject != "" && o.SubjectFile != "" {
-		errs = append(errs, fmt.Errorf("you can only specify subject or subject file"))
 	}
 
 	if len(o.AttestationFiles) == 0 && len(o.Collectors) == 0 {
@@ -167,8 +178,8 @@ To verify an artifact, ampel required three pieces:
 
 %s
 This is often an artifact such as a file. Most commonly, a policy will be evaluated
-against a hash. Ampel canobtain the hashes from files for you but you can specify
-them in the command line or using a subject reader.
+against a hash. AMPEL can compute the hashes from files for you (--subject-file)
+or you can specify a hash in the command line using --subject-hash.
 
 %s
 The policy code. Ampel policies are written in JSON, they can be signed and verified 
@@ -195,28 +206,31 @@ using a collector.
 		SilenceErrors:     false,
 		PersistentPreRunE: initLogging,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if hashRegex == nil {
-				hashRegex = regexp.MustCompile(hashRegexStr)
+			if len(args) > 0 {
+				if opts.Subject == "" {
+					opts.Subject = args[0]
+				} else if opts.Subject != args[0] {
+					return fmt.Errorf("subject specified twice (as argument and flag)")
+				}
 			}
 
-			if len(args) > 0 {
-				// If arg 0 is a file, use it as the subject file
-				if util.Exists(args[0]) {
-					if opts.SubjectFile != "" {
-						return fmt.Errorf("subject file specified twice (as arg and --subject-file)")
+			if opts.Subject != "" {
+				// Always check the hash first to avoid fooling the hash with a
+				// carfule placed file
+				if _, _, err := parseHash(opts.Subject); err == nil {
+					if opts.SubjectHash == "" {
+						opts.SubjectHash = opts.Subject
+					} else if opts.SubjectHash != opts.Subject {
+						return fmt.Errorf("subject hash specified twice")
+					}
+				} else if util.Exists(opts.Subject) {
+					if opts.SubjectFile == "" {
+						opts.SubjectFile = opts.Subject
 					} else {
-						opts.SubjectFile = args[0]
+						return fmt.Errorf("subject file specified twice")
 					}
 				} else {
-					// .. otherwize this must be a hash or err
-					if !hashRegex.MatchString(args[0]) {
-						return fmt.Errorf("invalid argument, it must be a hash or a file")
-					}
-					if opts.Subject != "" {
-						return fmt.Errorf("subject hash specified twice (-s and arg)")
-					} else {
-						opts.Subject = args[0]
-					}
+					return fmt.Errorf("unable to identify subject string %q", opts.Subject)
 				}
 			}
 
