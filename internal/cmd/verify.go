@@ -104,16 +104,15 @@ func (o *verifyOptions) SubjectDescriptor() (attestation.Subject, error) {
 		// If the string matches algo:hexValue then we never try to look
 		// for a file. Never.
 		pts := hashRegex.FindStringSubmatch(o.Subject)
-		if pts == nil {
-			return nil, fmt.Errorf("unable to parse string as hash")
+		if pts != nil {
+			algo := strings.ToLower(pts[1])
+			if _, ok := intoto.HashAlgorithms[algo]; !ok {
+				return nil, errors.New("invalid hash algorithm in subject")
+			}
+			return &intoto.ResourceDescriptor{
+				Digest: map[string]string{algo: pts[2]},
+			}, nil
 		}
-		algo := strings.ToLower(pts[1])
-		if _, ok := intoto.HashAlgorithms[algo]; !ok {
-			return nil, errors.New("invalid hash algorithm in subject")
-		}
-		return &intoto.ResourceDescriptor{
-			Digest: map[string]string{algo: pts[2]},
-		}, nil
 	}
 
 	hashes, err := hasher.New().HashFiles([]string{o.SubjectFile})
