@@ -174,12 +174,6 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("asserting results: %w", err)
 	}
 
-	// Generate the results attestation. If the attestation is disabled in the
-	// options, this is a NOOP.
-	if err := ampel.impl.AttestResult(ctx, opts, result); err != nil {
-		return nil, fmt.Errorf("attesting results: %w", err)
-	}
-
 	// Generate outputs
 	return result, nil
 }

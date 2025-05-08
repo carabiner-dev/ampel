@@ -273,6 +273,18 @@ using a collector.
 				return fmt.Errorf("running subject verification: %w", err)
 			}
 
+			// Generate the results attestation
+			if opts.AttestResults {
+				attFile, err := os.Create(opts.ResultsAttestationPath)
+				if err != nil {
+					return fmt.Errorf("unable to open results attestation path")
+				}
+
+				if err := ampel.AttestResultSet(attFile, results); err != nil {
+					return fmt.Errorf("writing results attestation: %w", err)
+				}
+			}
+
 			eng := render.NewEngine()
 			if err := eng.SetDriver(opts.Format); err != nil {
 				return err
