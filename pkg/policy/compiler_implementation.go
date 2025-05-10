@@ -7,8 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"google.golang.org/protobuf/proto"
+
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
 
 type compilerImplementation interface {
@@ -32,7 +33,6 @@ func (dci *defaultCompilerImpl) ValidateSet(*CompilerOptions, *api.PolicySet) er
 	//   Remote ID is not the reference id
 	//
 	return nil
-
 }
 
 // ExtractRemoteReferences extracts and enriches the remote references from all
@@ -116,7 +116,9 @@ func (dci *defaultCompilerImpl) FetchRemoteResources(_ *CompilerOptions, store S
 		refs[i].Location.Content = datum
 
 		// Store the reference
-		store.StoreReference(refs[i])
+		if err := store.StoreReference(refs[i]); err != nil {
+			return fmt.Errorf("storing external ref #%d: %w", i, err)
+		}
 	}
 
 	return nil
@@ -141,7 +143,10 @@ func (dci *defaultCompilerImpl) AssemblePolicySet(_ *CompilerOptions, set *api.P
 			return fmt.Errorf("unable to complete policy #%d, reference not resolved", i)
 		}
 
-		assembledPolicy := proto.Clone(remotePolicy).(*api.Policy)
+		assembledPolicy, ok := proto.Clone(remotePolicy).(*api.Policy)
+		if !ok {
+			return fmt.Errorf("unable to cast reassembled policy #%d: %w", i, err)
+		}
 
 		// Merge the local policy changes onto the remote:
 		proto.Merge(assembledPolicy, p)

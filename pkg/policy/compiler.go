@@ -6,13 +6,14 @@ package policy
 import (
 	"fmt"
 	"io"
+	"os"
+
+	"google.golang.org/protobuf/encoding/protojson"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
-type CompilerOptions struct {
-}
+type CompilerOptions struct{}
 
 type Compiler struct {
 	Options CompilerOptions
@@ -27,6 +28,16 @@ func NewCompiler() (*Compiler, error) {
 		Store:   newRefStore(),
 		impl:    &defaultCompilerImpl{},
 	}, nil
+}
+
+// CompileFile takes a path to a file and returnes a compiled policyset
+func (compiler *Compiler) CompileFile(path string) (*api.PolicySet, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("opening policy file: %w", err)
+	}
+
+	return compiler.CompileReader(f)
 }
 
 func (compiler *Compiler) CompileReader(r io.Reader) (*api.PolicySet, error) {
@@ -49,7 +60,7 @@ func (compiler *Compiler) CompileReader(r io.Reader) (*api.PolicySet, error) {
 	return compiler.Compile(set)
 }
 
-// Compile builds a policy set fetching any remote pieces as necesary
+// Compile builds a policy set fetching any remote pieces as necessary
 func (compiler *Compiler) Compile(set *api.PolicySet) (*api.PolicySet, error) {
 	// Validate PolicySet / Policies
 	if err := compiler.impl.ValidateSet(&compiler.Options, set); err != nil {

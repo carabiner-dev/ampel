@@ -144,7 +144,7 @@ func (o *verifyOptions) Validate() error {
 	}
 
 	if o.PolicyFile == "" {
-		errs = append(errs, errors.New("a polciy file must be defined"))
+		errs = append(errs, errors.New("a policy file must be defined"))
 	}
 
 	if o.Format == "" {
@@ -251,17 +251,21 @@ using a collector.
 				return fmt.Errorf("resolving subject string: %w", err)
 			}
 
-			// Parse the polcy file
-			parser := policy.NewParser()
-			p, err := parser.OpenPolicySet(opts.PolicyFile)
+			// Compile the policy
+			compiler, err := policy.NewCompiler()
 			if err != nil {
-				return fmt.Errorf("parsing policy: %w", err)
+				return fmt.Errorf("creating policy compiler: %w", err)
+			}
+			p, err := compiler.CompileFile(opts.PolicyFile)
+			if err != nil {
+				return fmt.Errorf("compiling policy set: %w", err)
 			}
 
-			// Load the built in repository types
+			// Load the built-in repository types
 			if err := collector.LoadDefaultRepositoryTypes(); err != nil {
 				return fmt.Errorf("loading repository collector types: %w", err)
 			}
+
 			// Run the ampel verifier
 			ampel, err := verifier.New(verifier.WithCollectorInits(opts.Collectors))
 			if err != nil {

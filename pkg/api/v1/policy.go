@@ -79,7 +79,6 @@ func (ref *PolicyRef) Validate() error {
 				} else if parts.Commit == "" {
 					errs = append(errs, errors.New("remoter policies referenced by VCS locator require a digest or commit hash"))
 				}
-
 			} else if uri != "" {
 				errs = append(errs, errors.New("remote policies referenced by URL require at least one hash"))
 			}
