@@ -42,8 +42,8 @@ github.com/carabiner-dev/openeox v0.0.0-20250430212020-e3a5beb42ddd h1:WEQbh3d2h
 github.com/carabiner-dev/openeox v0.0.0-20250430212020-e3a5beb42ddd/go.mod h1:40KVT1ee6L8VoWT44RvAQ0AtG91MFr5/zBzTmNiXQWY=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 h1:BJ9+OCNezZGkU8SrGC3oB7Tj+J0JsonwfZztcgUav6c=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92/go.mod h1:o7jXwi/fFZ9mQlvVlog0kcvyEkwQT3eWmVQmrorBGpE=
-github.com/carabiner-dev/vcslocator v0.1.2-0.20250325030202-b145fcf66fe3 h1:MkoUFJ4FjL/dOrYGC5WrfHI1UUnww2VZfTqRwqkEfxE=
-github.com/carabiner-dev/vcslocator v0.1.2-0.20250325030202-b145fcf66fe3/go.mod h1:ACv4Ic26ccgVYBOUIWsgzAtNRMFgNQDV3M6XI7la8Ro=
+github.com/carabiner-dev/vcslocator v0.2.0 h1:oH86+Rn/TpIvsbP92/jhLOIdphtGvc8664gbv9ADNYM=
+github.com/carabiner-dev/vcslocator v0.2.0/go.mod h1:/67gubbzxtg25MIg/eRlmBkHExFDqyVZ2Dj0VJatHwE=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/cloudflare/circl v1.6.1 h1:zqIqSPIndyBh1bjLVVDHMPpVKqp8Su/V+6MeDzzQBQ0=

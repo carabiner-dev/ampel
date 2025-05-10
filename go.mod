@@ -9,7 +9,7 @@ require (
 	github.com/carabiner-dev/jsonl v0.2.0
 	github.com/carabiner-dev/openeox v0.0.0-20250430212020-e3a5beb42ddd
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
-	github.com/carabiner-dev/vcslocator v0.1.2-0.20250325030202-b145fcf66fe3
+	github.com/carabiner-dev/vcslocator v0.2.0
 	github.com/fatih/color v1.18.0
 	github.com/go-git/go-billy/v5 v5.6.2
 	github.com/go-git/go-git/v5 v5.16.0
