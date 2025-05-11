@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/release-utils/log"
 	"sigs.k8s.io/release-utils/version"
@@ -82,11 +81,4 @@ func New() *cobra.Command {
 
 func initLogging(*cobra.Command, []string) error {
 	return log.SetupGlobalLogger(commandLineOpts.logLevel)
-}
-
-// Execute builds the command
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		logrus.Fatal(err)
-	}
 }

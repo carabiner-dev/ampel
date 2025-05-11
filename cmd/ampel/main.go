@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"os"
 
 	"github.com/carabiner-dev/ampel/internal/cmd"
 )
@@ -9,6 +9,6 @@ import (
 func main() {
 	cmdline := cmd.New()
 	if err := cmdline.Execute(); err != nil {
-		fmt.Printf("Exec error: %v\n", err)
+		os.Exit(1)
 	}
 }
