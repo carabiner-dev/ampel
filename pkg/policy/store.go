@@ -10,22 +10,21 @@ import (
 	"strings"
 
 	intoto "github.com/in-toto/attestation/go/v1"
-	"google.golang.org/protobuf/encoding/protojson"
 
-	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
 
 // Storage backend is an interface that fronts systems that store and index policies
 type StorageBackend interface {
-	StoreReference(*v1.PolicyRef) error
-	GetReferencedPolicy(*v1.PolicyRef) (*v1.Policy, error)
+	StoreReference(*api.PolicyRef) error
+	GetReferencedPolicy(*api.PolicyRef) (*api.Policy, error)
 }
 
 func newRefStore() *refStore {
 	return &refStore{
-		references: map[string]*v1.PolicyRef{},
-		policySets: map[string]*v1.PolicySet{},
-		policies:   map[string]*v1.Policy{},
+		references: map[string]*api.PolicyRef{},
+		policySets: map[string]*api.PolicySet{},
+		policies:   map[string]*api.Policy{},
 		ids:        map[string]string{},
 		urls:       map[string]string{},
 		hashes:     map[string]string{},
@@ -33,16 +32,16 @@ func newRefStore() *refStore {
 }
 
 type refStore struct {
-	references map[string]*v1.PolicyRef
-	policySets map[string]*v1.PolicySet
-	policies   map[string]*v1.Policy
+	references map[string]*api.PolicyRef
+	policySets map[string]*api.PolicySet
+	policies   map[string]*api.Policy
 	ids        map[string]string
 	urls       map[string]string
 	hashes     map[string]string
 }
 
 // StoreReference stores a reference and adds it to the index
-func (rs *refStore) StoreReference(ref *v1.PolicyRef) error {
+func (rs *refStore) StoreReference(ref *api.PolicyRef) error {
 	if ref.GetLocation() == nil {
 		return fmt.Errorf("unable to store policy no location data found")
 	}
@@ -85,25 +84,24 @@ func (rs *refStore) StoreReference(ref *v1.PolicyRef) error {
 		rs.hashes[fmt.Sprintf("%s:%s", algo, val)] = contentHash
 	}
 
-	// Parse the policyset
-	set := &v1.PolicySet{}
-	pol := &v1.Policy{}
-	if err := protojson.Unmarshal(ref.Location.GetContent(), set); err == nil {
+	// Parse the data and assign whatever comes out of it
+	set, pcy, err := NewParser().ParsePolicyOrSet(ref.Location.GetContent())
+	switch {
+	case set != nil:
 		rs.registerPolicySet(contentHash, set)
-	} else if err := protojson.Unmarshal(ref.Location.GetContent(), pol); err == nil {
-		rs.registerPolicy(contentHash, pol)
-	} else {
-		return errors.New("error parsing referenced content")
+	case pcy != nil:
+		rs.registerPolicy(contentHash, pcy)
+	case err != nil:
+		return err
 	}
-
 	return nil
 }
 
-func (rs *refStore) registerPolicy(contentHash string, pol *v1.Policy) {
+func (rs *refStore) registerPolicy(contentHash string, pol *api.Policy) {
 	rs.policies[contentHash] = pol
 }
 
-func (rs *refStore) registerPolicySet(contentHash string, set *v1.PolicySet) {
+func (rs *refStore) registerPolicySet(contentHash string, set *api.PolicySet) {
 	// TODO(puerco): Aqui solo si es un set, si es policy no
 	rs.policySets[contentHash] = set
 
@@ -118,7 +116,7 @@ func (rs *refStore) registerPolicySet(contentHash string, set *v1.PolicySet) {
 }
 
 // This retrieves a policy from the sets by its ID
-func (rs *refStore) GetPolicyByID(id string) *v1.Policy {
+func (rs *refStore) GetPolicyByID(id string) *api.Policy {
 	if id == "" {
 		return nil
 	}
@@ -132,14 +130,14 @@ func (rs *refStore) GetPolicyByID(id string) *v1.Policy {
 	return nil
 }
 
-func (rs *refStore) GetPolicyRefBySHA256(sha string) *v1.PolicyRef {
+func (rs *refStore) GetPolicyRefBySHA256(sha string) *api.PolicyRef {
 	if v, ok := rs.references[sha]; ok {
 		return v
 	}
 	return nil
 }
 
-func (rs *refStore) GetPolicySetBySHA256(sha string) *v1.PolicySet {
+func (rs *refStore) GetPolicySetBySHA256(sha string) *api.PolicySet {
 	sha = strings.TrimPrefix(sha, "sha256:")
 	if v, ok := rs.policySets[sha]; ok {
 		return v
@@ -148,7 +146,7 @@ func (rs *refStore) GetPolicySetBySHA256(sha string) *v1.PolicySet {
 }
 
 // GetReferencedPolicy
-func (rs *refStore) GetReferencedPolicy(ref *v1.PolicyRef) (*v1.Policy, error) {
+func (rs *refStore) GetReferencedPolicy(ref *api.PolicyRef) (*api.Policy, error) {
 	// Try finding the policy by indexed ID
 	if p := rs.GetPolicyByID(ref.GetId()); p != nil {
 		return p, nil
