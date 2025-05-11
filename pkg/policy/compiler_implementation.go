@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
+	"github.com/sirupsen/logrus"
 )
 
 type compilerImplementation interface {
@@ -40,7 +41,20 @@ func (dci *defaultCompilerImpl) ValidateSet(*CompilerOptions, *api.PolicySet) er
 func (dci *defaultCompilerImpl) ExtractRemoteReferences(_ *CompilerOptions, set *api.PolicySet) ([]*api.PolicyRef, error) {
 	ret := []*api.PolicyRef{}
 	uriIndex := map[string]*api.PolicyRef{}
-	for _, ref := range set.References {
+
+	// Add all the references we have, first the set-level refs:
+	refs := []*api.PolicyRef{}
+	refs = append(refs, set.References...)
+	// ... and all policy sources
+	for _, p := range set.Policies {
+		if p.GetSource() != nil {
+			refs = append(refs, p.GetSource())
+		}
+	}
+
+	// Now, ragen over all refs and extract the ones that point to remote resources
+	for _, ref := range refs {
+		// If it does not have location coordinates, skip it
 		if ref.GetLocation() == nil {
 			continue
 		}
@@ -70,7 +84,7 @@ func (dci *defaultCompilerImpl) ExtractRemoteReferences(_ *CompilerOptions, set 
 		for algo, val := range ref.GetLocation().GetDigest() {
 			if v, ok := uriIndex[url].Location.Digest[algo]; ok {
 				if v != val {
-					return nil, fmt.Errorf("inconsistency detected, hash values clash")
+					return nil, fmt.Errorf("inconsistency detected, hash values clash for URI %s", url)
 				}
 			}
 			uriIndex[url].Location.Digest[algo] = val
@@ -86,7 +100,7 @@ func (dci *defaultCompilerImpl) ExtractRemoteReferences(_ *CompilerOptions, set 
 }
 
 // FetchRemoteResources pulls all the remote data in parallel and stores it
-// int
+// in the configured StorageBackend.
 func (dci *defaultCompilerImpl) FetchRemoteResources(_ *CompilerOptions, store StorageBackend, refs []*api.PolicyRef) error {
 	if store == nil {
 		return errors.New("storage backend missing")
@@ -103,6 +117,8 @@ func (dci *defaultCompilerImpl) FetchRemoteResources(_ *CompilerOptions, store S
 		}
 		uris[i] = uri
 	}
+
+	logrus.Debugf("Fetching remote references: %+v", uris)
 
 	// Retrieve the remote data
 	data, err := fetcher.GetGroup(uris)

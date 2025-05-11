@@ -119,6 +119,9 @@ func (rs *refStore) registerPolicySet(contentHash string, set *v1.PolicySet) {
 
 // This retrieves a policy from the sets by its ID
 func (rs *refStore) GetPolicyByID(id string) *v1.Policy {
+	if id == "" {
+		return nil
+	}
 	if sha, ok := rs.ids[id]; ok {
 		for _, p := range rs.policySets[sha].GetPolicies() {
 			if p.GetId() == id {
@@ -146,11 +149,7 @@ func (rs *refStore) GetPolicySetBySHA256(sha string) *v1.PolicySet {
 
 // GetReferencedPolicy
 func (rs *refStore) GetReferencedPolicy(ref *v1.PolicyRef) (*v1.Policy, error) {
-	if ref.GetId() == "" {
-		return nil, fmt.Errorf("reference does not have a policy ID")
-	}
-
-	// Try by ID
+	// Try finding the policy by indexed ID
 	if p := rs.GetPolicyByID(ref.GetId()); p != nil {
 		return p, nil
 	}

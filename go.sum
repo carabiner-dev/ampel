@@ -44,6 +44,8 @@ github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 h1:BJ9+OCNezZGkU
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92/go.mod h1:o7jXwi/fFZ9mQlvVlog0kcvyEkwQT3eWmVQmrorBGpE=
 github.com/carabiner-dev/vcslocator v0.2.1 h1:WmKH06zZs8ZD7eYbDF67U7BtfuxRBKk4Jm8VcsbzzZ0=
 github.com/carabiner-dev/vcslocator v0.2.1/go.mod h1:/67gubbzxtg25MIg/eRlmBkHExFDqyVZ2Dj0VJatHwE=
+github.com/carabiner-dev/vcslocator v0.2.2-0.20250510222822-ccc4763b90ce h1:rRjRJigi0Qiy2J1c8jZNSQykFjWEKohsDWCTegXDPjk=
+github.com/carabiner-dev/vcslocator v0.2.2-0.20250510222822-ccc4763b90ce/go.mod h1:/67gubbzxtg25MIg/eRlmBkHExFDqyVZ2Dj0VJatHwE=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/cloudflare/circl v1.6.1 h1:zqIqSPIndyBh1bjLVVDHMPpVKqp8Su/V+6MeDzzQBQ0=
