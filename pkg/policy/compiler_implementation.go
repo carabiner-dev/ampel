@@ -60,14 +60,11 @@ func (dci *defaultCompilerImpl) ExtractRemoteReferences(_ *CompilerOptions, set 
 		}
 
 		// Check if the policy has a DownloadLocation
-		url := ref.GetLocation().GetDownloadLocation()
-		if url == "" {
-			url = ref.GetLocation().GetUri()
-		}
-		if url == "" {
+		if ref.GetSourceURL() == "" {
 			continue
 		}
 
+		url := ref.GetSourceURL()
 		if _, ok := uriIndex[url]; !ok {
 			uriIndex[url] = ref
 			continue

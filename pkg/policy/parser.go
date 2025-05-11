@@ -89,10 +89,13 @@ func (p *Parser) ParsePolicyOrSet(data []byte) (set *api.PolicySet, pcy *api.Pol
 	}()
 	go func() {
 		defer wg.Done()
-		set, errPolicy = p.impl.ParsePolicySet(data)
+		pcy, errPolicy = p.impl.ParsePolicy(data)
 	}()
 
-	if errSet != nil && errPolicy != nil {
+	// Wait for both parsers
+	wg.Wait()
+
+	if (set == nil && pcy == nil) || (errSet != nil && errPolicy != nil) {
 		return nil, nil, errors.New("unable to parse a policy or policySet from data")
 	}
 	return set, pcy, nil

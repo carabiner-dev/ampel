@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	intoto "github.com/in-toto/attestation/go/v1"
+	"github.com/sirupsen/logrus"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
@@ -88,45 +89,103 @@ func (rs *refStore) StoreReference(ref *api.PolicyRef) error {
 	set, pcy, err := NewParser().ParsePolicyOrSet(ref.Location.GetContent())
 	switch {
 	case set != nil:
-		rs.registerPolicySet(contentHash, set)
+		if err := rs.registerPolicySet(contentHash, set); err != nil {
+			return fmt.Errorf("indexing policy set: %w", err)
+		}
 	case pcy != nil:
-		rs.registerPolicy(contentHash, pcy)
+		if err := rs.registerPolicy(contentHash, pcy); err != nil {
+			return fmt.Errorf("indexing policy: %w", err)
+		}
 	case err != nil:
 		return err
 	}
 	return nil
 }
 
-func (rs *refStore) registerPolicy(contentHash string, pol *api.Policy) {
-	rs.policies[contentHash] = pol
+// registerPolicy register a policy, not form a set.
+func (rs *refStore) registerPolicy(contentHash string, pcy *api.Policy) error {
+	if pcy.GetId() != "" {
+		if currentHash, ok := rs.ids[pcy.GetId()]; ok {
+			if currentHash != contentHash {
+				return fmt.Errorf("duplicate policy ID %q with different hash", pcy.GetId())
+			}
+		}
+	}
+	rs.ids[pcy.GetId()] = contentHash
+	rs.policies[contentHash] = pcy
+	return nil
 }
 
-func (rs *refStore) registerPolicySet(contentHash string, set *api.PolicySet) {
-	// TODO(puerco): Aqui solo si es un set, si es policy no
+// registerPolicySet registers the policy in the storage index
+func (rs *refStore) registerPolicySet(contentHash string, set *api.PolicySet) error {
+	if set == nil {
+		return errors.New("attempt to index null policy set")
+	}
 	rs.policySets[contentHash] = set
 
-	// TODO(puerco): Aqui solo si es un set
 	// Store all the policy IDs in the referenced set
 	for _, p := range set.GetPolicies() {
+		// If a policy does not have an id, it cannot be referenced in a
+		// set, so we skip indexing it.
 		if p.GetId() == "" {
 			continue
 		}
+
+		// Check we don't already have the policy ID in another file
+		if currentHash, ok := rs.ids[p.GetId()]; ok {
+			if currentHash != contentHash {
+				return fmt.Errorf("duplicate policy id %q with different hash", p.GetId())
+			}
+		}
 		rs.ids[p.GetId()] = contentHash
 	}
+	return nil
+}
+
+// This retrieves a policy from the sets by its source URL
+func (rs *refStore) GetPolicyByURL(url string) *api.Policy {
+	sha, ok := rs.urls[url]
+	if !ok {
+		return nil
+	}
+	return rs.GetPolicyBySHA256(sha)
 }
 
 // This retrieves a policy from the sets by its ID
 func (rs *refStore) GetPolicyByID(id string) *api.Policy {
-	if id == "" {
+	sha, ok := rs.ids[id]
+	if !ok || id == "" {
 		return nil
 	}
-	if sha, ok := rs.ids[id]; ok {
-		for _, p := range rs.policySets[sha].GetPolicies() {
-			if p.GetId() == id {
-				return p
-			}
+
+	if _, ok := rs.policies[sha]; ok {
+		return rs.policies[sha]
+	}
+
+	if _, ok := rs.policySets[sha]; !ok {
+		return nil
+	}
+
+	for _, p := range rs.policySets[sha].GetPolicies() {
+		if p.GetId() == id {
+			return p
 		}
 	}
+
+	// This should never happen as it would point to a corrupt index
+	logrus.Warnf("Indexed policy-id %q points to PolicySet that does not have it", id)
+	return nil
+}
+
+func (rs *refStore) GetPolicyBySHA256(sha string) *api.Policy {
+	if _, ok := rs.policies[sha]; ok {
+		return rs.policies[sha]
+	}
+
+	if _, ok := rs.policySets[sha]; !ok {
+		return nil
+	}
+
 	return nil
 }
 
@@ -149,6 +208,10 @@ func (rs *refStore) GetPolicySetBySHA256(sha string) *api.PolicySet {
 func (rs *refStore) GetReferencedPolicy(ref *api.PolicyRef) (*api.Policy, error) {
 	// Try finding the policy by indexed ID
 	if p := rs.GetPolicyByID(ref.GetId()); p != nil {
+		return p, nil
+	}
+
+	if p := rs.GetPolicyByURL(ref.GetSourceURL()); p != nil {
 		return p, nil
 	}
 
