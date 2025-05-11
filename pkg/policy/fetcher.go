@@ -16,6 +16,7 @@ import (
 
 type PolicyFetcher interface {
 	Get(string) ([]byte, error)
+	GetGroup(uris []string) ([][]byte, error)
 }
 
 func NewFetcher() *Fetcher {
