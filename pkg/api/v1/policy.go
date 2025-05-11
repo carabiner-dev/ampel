@@ -58,6 +58,19 @@ func (i *Identity) Slug() string {
 	}
 }
 
+// GetSourceURL returns the URL to fetch the policy. First, it will try the
+// DownloadLocation, if emtpy returns the UR
+func (ref *PolicyRef) GetSourceURL() string {
+	if ref.GetLocation() == nil {
+		return ""
+	}
+
+	if ref.GetLocation().GetDownloadLocation() != "" {
+		return ref.GetLocation().GetDownloadLocation()
+	}
+	return ref.GetLocation().GetUri()
+}
+
 // Validate returns an error if the reference is not valid
 func (ref *PolicyRef) Validate() error {
 	errs := []error{}
