@@ -13,15 +13,19 @@ import (
 
 type parserImplementation interface {
 	ParsePolicySet([]byte) (*v1.PolicySet, error)
+	ParsePolicy([]byte) (*v1.Policy, error)
 }
 
 type defaultParserImplementationV1 struct{}
 
 func (dpi *defaultParserImplementationV1) ParsePolicySet(policySetData []byte) (*v1.PolicySet, error) {
 	set := &v1.PolicySet{}
-	err := protojson.UnmarshalOptions{}.Unmarshal(policySetData, set)
+	err := protojson.UnmarshalOptions{
+		AllowPartial:   false,
+		DiscardUnknown: false,
+	}.Unmarshal(policySetData, set)
 	if err != nil {
-		return nil, fmt.Errorf("parsing policy source: %w", err)
+		return nil, fmt.Errorf("parsing policy set source: %w", err)
 	}
 
 	if set.GetMeta() == nil {
@@ -46,4 +50,29 @@ func (dpi *defaultParserImplementationV1) ParsePolicySet(policySetData []byte) (
 		}
 	}
 	return set, nil
+}
+
+func (dpi *defaultParserImplementationV1) ParsePolicy(policySetData []byte) (*v1.Policy, error) {
+	p := &v1.Policy{}
+	err := protojson.UnmarshalOptions{
+		AllowPartial:   false,
+		DiscardUnknown: false,
+	}.Unmarshal(policySetData, p)
+	if err != nil {
+		return nil, fmt.Errorf("parsing policy source: %w", err)
+	}
+
+	if p.GetMeta() == nil {
+		p.Meta = &v1.Meta{}
+	}
+
+	if p.GetMeta().GetEnforce() == "" {
+		p.GetMeta().Enforce = EnforceOn
+	}
+
+	if p.GetMeta().GetAssertMode() == "" {
+		p.GetMeta().AssertMode = AssertModeAND
+	}
+
+	return p, nil
 }

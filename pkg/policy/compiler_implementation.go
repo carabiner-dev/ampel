@@ -7,10 +7,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/sirupsen/logrus"
 )
 
 type compilerImplementation interface {
