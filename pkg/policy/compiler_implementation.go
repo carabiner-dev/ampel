@@ -6,6 +6,7 @@ package policy
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
@@ -161,8 +162,44 @@ func (dci *defaultCompilerImpl) AssemblePolicySet(_ *CompilerOptions, set *api.P
 			return fmt.Errorf("unable to cast reassembled policy #%d: %w", i, err)
 		}
 
+		// index the tenet overlays:
+		patches := map[string]*api.Tenet{}
+		appenders := []*api.Tenet{}
+		for _, t := range p.Tenets {
+			// Tenets without ID (or, later, with IDs not matching the source policy)
+			// will be added as new tenets to the policy. Only if IDs match on the
+			// source and the overlay will be combined.
+			if t.GetId() == "" {
+				appenders = append(appenders, t)
+				continue
+			}
+			patches[t.GetId()] = t
+		}
+
 		// Merge the local policy changes onto the remote:
+		tenets := []*api.Tenet{}
+		overlaysAdded := []string{}
+		for _, t := range assembledPolicy.GetTenets() {
+			nt, ok := proto.Clone(t).(*api.Tenet)
+			if !ok {
+				continue
+			}
+			if _, ok := patches[nt.GetId()]; nt.GetId() != "" && ok {
+				proto.Merge(nt, patches[nt.GetId()])
+			}
+			overlaysAdded = append(overlaysAdded, nt.GetId())
+			tenets = append(tenets, nt)
+		}
+		for id, t := range patches {
+			if !slices.Contains(overlaysAdded, id) {
+				tenets = append(tenets, t)
+			}
+		}
+		tenets = append(tenets, appenders...)
+
+		// Merge the policy overlay onto the remote policy
 		proto.Merge(assembledPolicy, p)
+		assembledPolicy.Tenets = tenets
 		assembledPolicy.Source = nil
 
 		// Now replace the local in the policy set with the enriched remote

@@ -13,7 +13,10 @@ import (
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
 
-type CompilerOptions struct{}
+type CompilerOptions struct {
+	// TODO: No remote data
+	// TODO: Fail merging on unknown remote tenet ids
+}
 
 type Compiler struct {
 	Options CompilerOptions
