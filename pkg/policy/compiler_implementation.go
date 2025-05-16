@@ -45,7 +45,9 @@ func (dci *defaultCompilerImpl) ExtractRemoteReferences(_ *CompilerOptions, set 
 
 	// Add all the references we have, first the set-level refs:
 	refs := []*api.PolicyRef{}
-	refs = append(refs, set.References...)
+	if set.GetCommon() != nil && set.GetCommon().GetReferences() != nil {
+		refs = append(refs, set.GetCommon().GetReferences()...)
+	}
 	// ... and all policy sources
 	for _, p := range set.Policies {
 		if p.GetSource() != nil {
@@ -205,7 +207,11 @@ func (dci *defaultCompilerImpl) AssemblePolicySet(_ *CompilerOptions, set *api.P
 		// Now replace the local in the policy set with the enriched remote
 		set.Policies[i] = assembledPolicy
 	}
-	set.References = nil
+	if set.GetMeta() == nil {
+		set.Meta = &api.PolicySetMeta{}
+	} else {
+		set.GetCommon().References = nil
+	}
 	return nil
 }
 

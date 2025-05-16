@@ -13,9 +13,8 @@ option go_package = "github.com/carabiner-dev/ampel/pkg/api/v1";
 message PolicySet {
     string id = 1;
     PolicySetMeta meta = 2;
-    repeated Policy policies = 3;
-    repeated Identity identities = 4;
-    repeated PolicyRef references = 5;
+    PolicySetCommon common = 3;
+    repeated Policy policies = 4;
 }
 
 message PolicySetMeta {
@@ -24,6 +23,12 @@ message PolicySetMeta {
     google.protobuf.Timestamp expiration = 3;
     int64 version = 4;
     string enforce = 5;
+}
+
+message PolicySetCommon {
+    repeated Identity identities = 1;
+    repeated PolicyRef references = 2;
+    Context contect = 3;
 }
 
 message Policy {
