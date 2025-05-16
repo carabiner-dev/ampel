@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/carabiner-dev/vcslocator"
+	intoto "github.com/in-toto/attestation/go/v1"
 )
 
 func (meta *Meta) testsControl(ctrl *Control) bool {
@@ -59,7 +60,7 @@ func (i *Identity) Slug() string {
 }
 
 // GetSourceURL returns the URL to fetch the policy. First, it will try the
-// DownloadLocation, if emtpy returns the UR
+// DownloadLocation, if empty returns the UR
 func (ref *PolicyRef) GetSourceURL() string {
 	if ref.GetLocation() == nil {
 		return ""
@@ -74,6 +75,7 @@ func (ref *PolicyRef) GetSourceURL() string {
 // Validate returns an error if the reference is not valid
 func (ref *PolicyRef) Validate() error {
 	errs := []error{}
+
 	// If the download URL is not a VCS locator, the policy MUST have at least one hash
 	if ref.GetLocation() != nil {
 		uri := ref.GetLocation().GetUri()
@@ -95,7 +97,16 @@ func (ref *PolicyRef) Validate() error {
 			} else if uri != "" {
 				errs = append(errs, errors.New("remote policies referenced by URL require at least one hash"))
 			}
+		} else {
+			for algo := range ref.GetLocation().GetDigest() {
+				if _, ok := intoto.HashAlgorithms[algo]; !ok {
+					errs = append(errs, fmt.Errorf("unknown algorithm %q in reference digest", algo))
+				}
+			}
 		}
 	}
+
+	// TODO Check hash algorithms to be valid (from the intoto catalog)
+
 	return errors.Join(errs...)
 }

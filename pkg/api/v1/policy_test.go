@@ -49,6 +49,14 @@ func TestPolicyRefValidate(t *testing.T) {
 				},
 			},
 		},
+		{
+			"invalid-hash-algos", true,
+			&PolicyRef{
+				Location: &ResourceDescriptor{
+					Digest: map[string]string{"sha2000-deluxe": "59c8563ff26810478b6ab8ff4c779b4e14385392"},
+				},
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
