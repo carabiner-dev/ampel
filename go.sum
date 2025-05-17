@@ -42,8 +42,8 @@ github.com/carabiner-dev/openeox v0.0.0-20250430212020-e3a5beb42ddd h1:WEQbh3d2h
 github.com/carabiner-dev/openeox v0.0.0-20250430212020-e3a5beb42ddd/go.mod h1:40KVT1ee6L8VoWT44RvAQ0AtG91MFr5/zBzTmNiXQWY=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 h1:BJ9+OCNezZGkU8SrGC3oB7Tj+J0JsonwfZztcgUav6c=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92/go.mod h1:o7jXwi/fFZ9mQlvVlog0kcvyEkwQT3eWmVQmrorBGpE=
-github.com/carabiner-dev/vcslocator v0.2.2-0.20250511025212-70bcc04b9e68 h1:AqTOHHVn2SKq3KBF143BetrCtdxSJ6ctulp2BDXwYIM=
-github.com/carabiner-dev/vcslocator v0.2.2-0.20250511025212-70bcc04b9e68/go.mod h1:/67gubbzxtg25MIg/eRlmBkHExFDqyVZ2Dj0VJatHwE=
+github.com/carabiner-dev/vcslocator v0.2.2 h1:UXhuMUxtDiwGzfCxvpNJXRyqUY8qZl0+Ug3TjJluS4s=
+github.com/carabiner-dev/vcslocator v0.2.2/go.mod h1:/67gubbzxtg25MIg/eRlmBkHExFDqyVZ2Dj0VJatHwE=
 github.com/cenkalti/backoff/v5 v5.0.2 h1:rIfFVxEf1QsI7E1ZHfp/B4DF/6QBAUhmgkxc0H7Zss8=
 github.com/cenkalti/backoff/v5 v5.0.2/go.mod h1:rkhZdG3JZukswDf7f0cwqPNk4K0sa+F97BxZthm/crw=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
