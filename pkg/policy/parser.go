@@ -46,13 +46,13 @@ type Parser struct {
 // reading and parsing data (still under construction).
 func (p *Parser) Open(location string) (set *api.PolicySet, pcy *api.Policy, err error) {
 	switch {
-	case strings.HasPrefix(location, "https://"):
+	case strings.HasPrefix(location, "git+https://"), strings.HasPrefix(location, "git+ssh://"):
 		var b bytes.Buffer
 		if err := vcslocator.CopyFile(location, &b); err != nil {
 			return nil, nil, fmt.Errorf("copying data from repository: %w", err)
 		}
 		return p.ParsePolicyOrSet(b.Bytes())
-	case strings.HasPrefix(location, "git+https"), strings.HasPrefix(location, "git+ssh"):
+	case strings.HasPrefix(location, "https://"):
 		data, err := http.NewAgent().Get(location)
 		if err != nil {
 			return nil, nil, fmt.Errorf("fething http data: %w", err)
