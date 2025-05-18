@@ -251,12 +251,19 @@ using a collector.
 				return fmt.Errorf("resolving subject string: %w", err)
 			}
 
+			// TODO: Supportbare policies
+			set, _, err := policy.NewParser().Open(opts.PolicyFile)
+			if err != nil {
+				return fmt.Errorf("opening policy: %w", err)
+			}
+
 			// Compile the policy
 			compiler, err := policy.NewCompiler()
 			if err != nil {
 				return fmt.Errorf("creating policy compiler: %w", err)
 			}
-			p, err := compiler.CompileFile(opts.PolicyFile)
+
+			set, err = compiler.CompileSet(set)
 			if err != nil {
 				return fmt.Errorf("compiling policy set: %w", err)
 			}
@@ -272,7 +279,7 @@ using a collector.
 				return fmt.Errorf("creating verifier: %w", err)
 			}
 
-			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, p, subject)
+			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, set, subject)
 			if err != nil {
 				return fmt.Errorf("running subject verification: %w", err)
 			}

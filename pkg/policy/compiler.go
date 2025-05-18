@@ -4,11 +4,8 @@
 package policy
 
 import (
+	"errors"
 	"fmt"
-	"io"
-	"os"
-
-	"google.golang.org/protobuf/encoding/protojson"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
@@ -33,38 +30,22 @@ func NewCompiler() (*Compiler, error) {
 	}, nil
 }
 
-// CompileFile takes a path to a file and returnes a compiled policyset
-func (compiler *Compiler) CompileFile(path string) (*api.PolicySet, error) {
-	f, err := os.Open(path)
+func (compiler *Compiler) Compile(data []byte) (set *api.PolicySet, pcy *api.Policy, err error) {
+	set, _, err = NewParser().ParsePolicyOrSet(data)
 	if err != nil {
-		return nil, fmt.Errorf("opening policy file: %w", err)
+		return nil, nil, err
 	}
 
-	return compiler.CompileReader(f)
-}
-
-func (compiler *Compiler) CompileReader(r io.Reader) (*api.PolicySet, error) {
-	set := &api.PolicySet{}
-	data, err := io.ReadAll(r)
-	if err != nil {
-		return nil, fmt.Errorf("reading policy data: %w", err)
+	if set != nil {
+		set, err := compiler.CompileSet(set)
+		return set, nil, err
 	}
 
-	unmarshaller := protojson.UnmarshalOptions{
-		AllowPartial:   false,
-		DiscardUnknown: false,
-	}
-
-	// Unmarshall the policy source
-	if err := unmarshaller.Unmarshal(data, set); err != nil {
-		return nil, fmt.Errorf("unmarshalling policy: %w", err)
-	}
-
-	return compiler.Compile(set)
+	return nil, nil, errors.New("compiling bare policies is not implemented yet")
 }
 
 // Compile builds a policy set fetching any remote pieces as necessary
-func (compiler *Compiler) Compile(set *api.PolicySet) (*api.PolicySet, error) {
+func (compiler *Compiler) CompileSet(set *api.PolicySet) (*api.PolicySet, error) {
 	// Validate PolicySet / Policies
 	if err := compiler.impl.ValidateSet(&compiler.Options, set); err != nil {
 		return nil, fmt.Errorf("validating policy set: %w", err)
