@@ -80,3 +80,8 @@ func (compiler *Compiler) CompileSet(set *api.PolicySet) (*api.PolicySet, error)
 	// Return
 	return set, nil
 }
+
+// Compile builds a policy set fetching any remote pieces as necessary
+func (compiler *Compiler) CompilePolicy(set *api.Policy) (*api.Policy, error) {
+	return nil, fmt.Errorf("compiling bare policies is not supported yet")
+}

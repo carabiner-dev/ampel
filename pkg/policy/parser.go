@@ -45,25 +45,49 @@ type Parser struct {
 // (https URLs or VCS locators) and will eventually verify signatures after
 // reading and parsing data (still under construction).
 func (p *Parser) Open(location string) (set *api.PolicySet, pcy *api.Policy, err error) {
+	compiler, err := NewCompiler()
+	if err != nil {
+		return nil, nil, fmt.Errorf("creating policy compiler: %w", err)
+	}
+
+	// Open de PolicySet/Policy data from files or remote locations
+	var data []byte
 	switch {
 	case strings.HasPrefix(location, "git+https://"), strings.HasPrefix(location, "git+ssh://"):
 		var b bytes.Buffer
 		if err := vcslocator.CopyFile(location, &b); err != nil {
 			return nil, nil, fmt.Errorf("copying data from repository: %w", err)
 		}
-		return p.ParsePolicyOrSet(b.Bytes())
+		data = b.Bytes()
 	case strings.HasPrefix(location, "https://"):
-		data, err := http.NewAgent().Get(location)
-		if err != nil {
-			return nil, nil, fmt.Errorf("fething http data: %w", err)
-		}
-		return p.ParsePolicyOrSet(data)
+		data, err = http.NewAgent().Get(location)
 	default:
-		data, err := os.ReadFile(location)
+		data, err = os.ReadFile(location)
+	}
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("opening policy data: %w", err)
+	}
+
+	// Parse the read data
+	set, pcy, err = p.ParsePolicyOrSet(data)
+	if err != nil {
+		return nil, nil, fmt.Errorf("parsing policy data: %w", err)
+	}
+
+	// Compile the PolicySet/Policy
+	if set != nil {
+		set, err = compiler.CompileSet(set)
 		if err != nil {
-			return nil, nil, fmt.Errorf("opening policy file: %w", err)
+			return nil, nil, fmt.Errorf("compiling policy set: %w", err)
 		}
-		return p.ParsePolicyOrSet(data)
+		return set, nil, nil
+	} else {
+		pcy, err = compiler.CompilePolicy(pcy)
+		if err != nil {
+			return nil, nil, fmt.Errorf("compiling policy: %w", err)
+		}
+		return nil, pcy, nil
 	}
 }
 
