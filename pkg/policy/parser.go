@@ -4,10 +4,15 @@
 package policy
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
+
+	"github.com/carabiner-dev/vcslocator"
+	"sigs.k8s.io/release-utils/http"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
@@ -34,6 +39,32 @@ func NewParser() *Parser {
 // to assemble policies with external/remote references.
 type Parser struct {
 	impl parserImplementation
+}
+
+// Open opens a Policy or policySet. This function supports remote locations
+// (https URLs or VCS locators) and will eventually verify signatures after
+// reading and parsing data (still under construction).
+func (p *Parser) Open(location string) (set *api.PolicySet, pcy *api.Policy, err error) {
+	switch {
+	case strings.HasPrefix(location, "https://"):
+		var b bytes.Buffer
+		if err := vcslocator.CopyFile(location, &b); err != nil {
+			return nil, nil, fmt.Errorf("copying data from repository: %w", err)
+		}
+		return p.ParsePolicyOrSet(b.Bytes())
+	case strings.HasPrefix(location, "git+https"), strings.HasPrefix(location, "git+ssh"):
+		data, err := http.NewAgent().Get(location)
+		if err != nil {
+			return nil, nil, fmt.Errorf("fething http data: %w", err)
+		}
+		return p.ParsePolicyOrSet(data)
+	default:
+		data, err := os.ReadFile(location)
+		if err != nil {
+			return nil, nil, fmt.Errorf("opening policy file: %w", err)
+		}
+		return p.ParsePolicyOrSet(data)
+	}
 }
 
 // ParseFile parses a policySet from a file
