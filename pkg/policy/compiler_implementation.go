@@ -207,8 +207,8 @@ func (dci *defaultCompilerImpl) AssemblePolicySet(_ *CompilerOptions, set *api.P
 		// Now replace the local in the policy set with the enriched remote
 		set.Policies[i] = assembledPolicy
 	}
-	if set.GetMeta() == nil {
-		set.Meta = &api.PolicySetMeta{}
+	if set.GetCommon() == nil {
+		set.Common = &api.PolicySetCommon{}
 	} else {
 		set.GetCommon().References = nil
 	}
