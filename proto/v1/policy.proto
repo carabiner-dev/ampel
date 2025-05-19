@@ -15,6 +15,7 @@ message PolicySet {
     PolicySetMeta meta = 2;
     PolicySetCommon common = 3;
     repeated Policy policies = 4;
+    repeated FrameworkRef frameworks = 5;
 }
 
 message PolicySetMeta {
@@ -23,6 +24,15 @@ message PolicySetMeta {
     google.protobuf.Timestamp expiration = 3;
     int64 version = 4;
     string enforce = 5;
+
+}
+
+// FrameworkRef is a reference to a security framework. The reference binds
+// the controls tested by each the policy to the the framework definition.  
+message FrameworkRef {
+    string id = 1; // String identifier for the framework
+    string name = 2; // Security framework name
+    ResourceDescriptor definition = 3; // Link to the framework definition
 }
 
 message PolicySetCommon {
@@ -75,11 +85,12 @@ message Identity {
     optional IdentityRef ref = 4;
 }
 
-// Control is a mapping tying the policy to an OSCAL control
+// Control is a mapping tying the policy to an framework control
 message Control {
-    string class = 1;
-    string id = 2;
-    string title = 3;
+    string id = 1;
+    string class = 2;
+    string framework = 3;
+    string title = 4;
 }
 
 // IdentitySigstore represents the identity of a fulcio cert.
