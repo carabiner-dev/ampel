@@ -34,6 +34,10 @@ type VerificationOptions struct {
 
 	// Policies to evaluate from a PolicySet. Default is to evaluate all.
 	Policies []string
+
+	// GitCommitShaHack enables a hack to duplicate gitCommit subjects of read
+	// attestations as sha1 when reading attestations
+	GitCommitShaHack bool
 }
 
 var DefaultVerificationOptions = VerificationOptions{
@@ -45,6 +49,9 @@ var DefaultVerificationOptions = VerificationOptions{
 
 	// ResultsAttestationPath path to the results attestation
 	ResultsAttestationPath: "results.intoto.json",
+
+	// Duplicate any gitCommit digests as sha1
+	GitCommitShaHack: true,
 }
 
 func NewVerificationOptions() VerificationOptions {

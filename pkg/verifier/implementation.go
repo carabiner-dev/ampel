@@ -15,6 +15,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	gointoto "github.com/in-toto/attestation/go/v1"
+
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/collector"
@@ -69,13 +71,32 @@ func (di *defaultIplementation) GatherAttestations(
 	// filtered out as no subject matching is done. This is because we ingest
 	// all of them in case they are needed when computing the chained subjects.
 
+	digest := subject.GetDigest()
+
+	// Here we apply the gitCommit hack if it's tuned on
+	if opts.GitCommitShaHack {
+		_, hasCommit := digest[string(gointoto.AlgorithmGitCommit)]
+		_, hasSHA1 := digest[string(gointoto.AlgorithmSHA1)]
+
+		if hasCommit && !hasSHA1 && len(digest[string(gointoto.AlgorithmGitCommit)]) == 40 {
+			digest[string(gointoto.AlgorithmSHA1)] = digest[string(gointoto.AlgorithmGitCommit)]
+		} else if hasSHA1 && !hasCommit {
+			digest[string(gointoto.AlgorithmGitCommit)] = digest[string(gointoto.AlgorithmSHA1)]
+		}
+
+		// Clone the subject with te updated digests
+		subject = &gointoto.ResourceDescriptor{
+			Name:   subject.GetName(),
+			Uri:    subject.GetUri(),
+			Digest: digest,
+		}
+	}
+
 	// ... but we also need to keep the specified attestations that don't
 	// have a subject. These come from bare json files, such as unsigned SBOMs
 	attestations = attestation.NewQuery().WithFilter(
 		&filters.SubjectHashMatcher{
-			HashSets: []map[string]string{
-				subject.GetDigest(),
-			},
+			HashSets: []map[string]string{digest},
 		},
 		&filters.SubjectlessMatcher{},
 	).Run(attestations, attestation.WithMode(attestation.QueryModeOr))
