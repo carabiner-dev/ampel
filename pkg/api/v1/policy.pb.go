@@ -32,7 +32,6 @@ type PolicySet struct {
 	Meta          *PolicySetMeta         `protobuf:"bytes,2,opt,name=meta,proto3" json:"meta,omitempty"`
 	Common        *PolicySetCommon       `protobuf:"bytes,3,opt,name=common,proto3" json:"common,omitempty"`
 	Policies      []*Policy              `protobuf:"bytes,4,rep,name=policies,proto3" json:"policies,omitempty"`
-	Frameworks    []*FrameworkRef        `protobuf:"bytes,5,rep,name=frameworks,proto3" json:"frameworks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -95,13 +94,6 @@ func (x *PolicySet) GetPolicies() []*Policy {
 	return nil
 }
 
-func (x *PolicySet) GetFrameworks() []*FrameworkRef {
-	if x != nil {
-		return x.Frameworks
-	}
-	return nil
-}
-
 type PolicySetMeta struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Runtime       string                 `protobuf:"bytes,1,opt,name=runtime,proto3" json:"runtime,omitempty"`
@@ -109,6 +101,7 @@ type PolicySetMeta struct {
 	Expiration    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expiration,proto3" json:"expiration,omitempty"`
 	Version       int64                  `protobuf:"varint,4,opt,name=version,proto3" json:"version,omitempty"`
 	Enforce       string                 `protobuf:"bytes,5,opt,name=enforce,proto3" json:"enforce,omitempty"`
+	Frameworks    []*FrameworkRef        `protobuf:"bytes,6,rep,name=frameworks,proto3" json:"frameworks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -176,6 +169,13 @@ func (x *PolicySetMeta) GetEnforce() string {
 		return x.Enforce
 	}
 	return ""
+}
+
+func (x *PolicySetMeta) GetFrameworks() []*FrameworkRef {
+	if x != nil {
+		return x.Frameworks
+	}
+	return nil
 }
 
 // FrameworkRef is a reference to a security framework. The reference binds
@@ -1521,15 +1521,12 @@ var File_policy_proto protoreflect.FileDescriptor
 
 const file_policy_proto_rawDesc = "" +
 	"\n" +
-	"\fpolicy.proto\x12\bampel.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\fintoto.proto\"\xe1\x01\n" +
+	"\fpolicy.proto\x12\bampel.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\fintoto.proto\"\xa9\x01\n" +
 	"\tPolicySet\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12+\n" +
 	"\x04meta\x18\x02 \x01(\v2\x17.ampel.v1.PolicySetMetaR\x04meta\x121\n" +
 	"\x06common\x18\x03 \x01(\v2\x19.ampel.v1.PolicySetCommonR\x06common\x12,\n" +
-	"\bpolicies\x18\x04 \x03(\v2\x10.ampel.v1.PolicyR\bpolicies\x126\n" +
-	"\n" +
-	"frameworks\x18\x05 \x03(\v2\x16.ampel.v1.FrameworkRefR\n" +
-	"frameworks\"\xbb\x01\n" +
+	"\bpolicies\x18\x04 \x03(\v2\x10.ampel.v1.PolicyR\bpolicies\"\xf3\x01\n" +
 	"\rPolicySetMeta\x12\x18\n" +
 	"\aruntime\x18\x01 \x01(\tR\aruntime\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12:\n" +
@@ -1537,7 +1534,10 @@ const file_policy_proto_rawDesc = "" +
 	"expiration\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"expiration\x12\x18\n" +
 	"\aversion\x18\x04 \x01(\x03R\aversion\x12\x18\n" +
-	"\aenforce\x18\x05 \x01(\tR\aenforce\"p\n" +
+	"\aenforce\x18\x05 \x01(\tR\aenforce\x126\n" +
+	"\n" +
+	"frameworks\x18\x06 \x03(\v2\x16.ampel.v1.FrameworkRefR\n" +
+	"frameworks\"p\n" +
 	"\fFrameworkRef\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12<\n" +
@@ -1709,8 +1709,8 @@ var file_policy_proto_depIdxs = []int32{
 	1,  // 0: ampel.v1.PolicySet.meta:type_name -> ampel.v1.PolicySetMeta
 	3,  // 1: ampel.v1.PolicySet.common:type_name -> ampel.v1.PolicySetCommon
 	4,  // 2: ampel.v1.PolicySet.policies:type_name -> ampel.v1.Policy
-	2,  // 3: ampel.v1.PolicySet.frameworks:type_name -> ampel.v1.FrameworkRef
-	25, // 4: ampel.v1.PolicySetMeta.expiration:type_name -> google.protobuf.Timestamp
+	25, // 3: ampel.v1.PolicySetMeta.expiration:type_name -> google.protobuf.Timestamp
+	2,  // 4: ampel.v1.PolicySetMeta.frameworks:type_name -> ampel.v1.FrameworkRef
 	26, // 5: ampel.v1.FrameworkRef.definition:type_name -> ampel.v1.ResourceDescriptor
 	8,  // 6: ampel.v1.PolicySetCommon.identities:type_name -> ampel.v1.Identity
 	5,  // 7: ampel.v1.PolicySetCommon.references:type_name -> ampel.v1.PolicyRef

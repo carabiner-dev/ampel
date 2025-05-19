@@ -15,7 +15,6 @@ message PolicySet {
     PolicySetMeta meta = 2;
     PolicySetCommon common = 3;
     repeated Policy policies = 4;
-    repeated FrameworkRef frameworks = 5;
 }
 
 message PolicySetMeta {
@@ -24,7 +23,7 @@ message PolicySetMeta {
     google.protobuf.Timestamp expiration = 3;
     int64 version = 4;
     string enforce = 5;
-
+    repeated FrameworkRef frameworks = 6;
 }
 
 // FrameworkRef is a reference to a security framework. The reference binds
