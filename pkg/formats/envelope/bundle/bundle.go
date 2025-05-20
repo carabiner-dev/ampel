@@ -7,15 +7,18 @@ package bundle
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/carabiner-dev/hasher"
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
@@ -32,12 +35,27 @@ func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {
 	return p.Parse(data)
 }
 
+// ParseFile parses a sigstore bundle and returns the envelope
 func (p *Parser) ParseFile(path string) ([]attestation.Envelope, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("opening file: %w", err)
 	}
-	return p.ParseStream(f)
+	envs, err := p.ParseStream(f)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set the source data in the envelope
+	src := envs[0].GetStatement().GetPredicate().GetSource()
+	rd, ok := src.(*v1.ResourceDescriptor)
+	if !ok {
+		return nil, errors.New("unable to cast source as resource descriptor")
+	}
+	rd.Name = filepath.Base(path)
+	rd.Uri = fmt.Sprintf("file:%s", path)
+	envs[0].GetStatement().GetPredicate().SetSource(rd)
+	return envs, nil
 }
 
 func (p *Parser) Parse(data []byte) ([]attestation.Envelope, error) {

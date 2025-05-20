@@ -8,15 +8,16 @@ package generic
 import (
 	"encoding/json"
 
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 type Predicate struct {
-	Type          attestation.PredicateType `json:"_type"`
-	Parsed        any
-	Source        attestation.Subject                  `json:"-"`
-	Data          []byte                               `json:"-"`
-	Verifications []*attestation.SignatureVerification `json:"-"`
+	Type         attestation.PredicateType `json:"_type"`
+	Parsed       any
+	Source       attestation.Subject `json:"-"`
+	Data         []byte              `json:"-"`
+	Verification *api.Verification   `json:"-"`
 }
 
 func (p *Predicate) GetType() attestation.PredicateType { return p.Type }
@@ -31,8 +32,8 @@ func (p *Predicate) GetSource() attestation.Subject    { return p.Source }
 func (p *Predicate) SetSource(src attestation.Subject) { p.Source = src }
 
 // GetVerifications returns the signature verifications from the predicate
-func (p *Predicate) GetVerifications() []*attestation.SignatureVerification {
-	return p.Verifications
+func (p *Predicate) GetVerification() *api.Verification {
+	return p.Verification
 }
 
 // MarshalJSON implements the JSON marshaler interface. It reuses any pre

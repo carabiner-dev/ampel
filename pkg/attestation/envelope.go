@@ -3,6 +3,8 @@
 
 package attestation
 
+import v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
+
 // Envelope is a construct that wraps the statement, its signature and all the
 // verification material. The goal of this abstraction is to get a single
 // interface to verify statements, even when all the bits amy be in separate
@@ -11,6 +13,6 @@ type Envelope interface {
 	GetStatement() Statement
 	GetSignatures() []Signature
 	GetCertificate() Certificate
-	GetVerifications() []*SignatureVerification
+	GetVerification() *v1.Verification
 	Verify() error
 }

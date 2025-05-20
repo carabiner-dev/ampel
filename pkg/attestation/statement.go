@@ -3,6 +3,8 @@
 
 package attestation
 
+import api "github.com/carabiner-dev/ampel/pkg/api/v1"
+
 type PredicateType string
 
 // Statement wraps the attestation types in an interface to access its contents
@@ -11,7 +13,7 @@ type Statement interface {
 	GetPredicate() Predicate
 	GetPredicateType() PredicateType
 	GetType() string
-	GetVerifications() []*SignatureVerification
+	GetVerification() *api.Verification
 }
 
 type Predicate interface {
@@ -19,7 +21,7 @@ type Predicate interface {
 	SetType(PredicateType) error
 	GetParsed() any
 	GetData() []byte
-	GetVerifications() []*SignatureVerification
+	GetVerification() *api.Verification
 	GetSource() Subject
 	SetSource(Subject)
 }

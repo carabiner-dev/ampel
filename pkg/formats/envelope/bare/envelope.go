@@ -6,6 +6,7 @@ package bare
 import (
 	"github.com/sirupsen/logrus"
 
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
@@ -24,8 +25,8 @@ func (*Envelope) GetSignatures() []attestation.Signature {
 }
 
 // GetVerifications returns always empty as they are by definition unsigned
-func (*Envelope) GetVerifications() []*attestation.SignatureVerification {
-	return []*attestation.SignatureVerification{}
+func (*Envelope) GetVerification() *api.Verification {
+	return nil
 }
 
 func (env *Envelope) GetCertificate() attestation.Certificate {

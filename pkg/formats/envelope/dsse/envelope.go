@@ -6,6 +6,7 @@ package dsse
 import (
 	sigstoreProtoDSSE "github.com/sigstore/protobuf-specs/gen/pb-go/dsse"
 
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement"
 )
@@ -13,9 +14,9 @@ import (
 var _ attestation.Envelope = (*Envelope)(nil)
 
 type Envelope struct {
-	Signatures    []attestation.Signature              `json:"signatures"`
-	Statement     attestation.Statement                `json:"-"`
-	Verifications []*attestation.SignatureVerification `json:"-"`
+	Signatures   []attestation.Signature `json:"signatures"`
+	Statement    attestation.Statement   `json:"-"`
+	Verification *api.Verification       `json:"-"`
 	sigstoreProtoDSSE.Envelope
 }
 
@@ -42,11 +43,11 @@ func (env *Envelope) Verify() error {
 }
 
 // GetVerifications returns the envelop signtature verifications
-func (env *Envelope) GetVerifications() []*attestation.SignatureVerification {
+func (env *Envelope) GetVerification() *api.Verification {
 	if env.GetStatement() == nil {
 		return nil
 	}
-	return env.GetStatement().GetVerifications()
+	return env.GetStatement().GetVerification()
 }
 
 // Signature is a clone of the dsse signature struct that can be copied around

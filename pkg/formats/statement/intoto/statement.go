@@ -13,6 +13,7 @@ import (
 
 	gointoto "github.com/in-toto/attestation/go/v1"
 
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate"
 )
@@ -111,9 +112,9 @@ func (s *Statement) WriteJson(w io.Writer) error {
 }
 
 // GetVerifications returns the verifications from the underlying predicate
-func (s *Statement) GetVerifications() []*attestation.SignatureVerification {
+func (s *Statement) GetVerification() *api.Verification {
 	if s.GetPredicate() == nil {
 		return nil
 	}
-	return s.GetPredicate().GetVerifications()
+	return s.GetPredicate().GetVerification()
 }

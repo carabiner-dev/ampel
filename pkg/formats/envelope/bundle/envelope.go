@@ -11,15 +11,16 @@ import (
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"github.com/sirupsen/logrus"
 
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
 )
 
 type Envelope struct {
 	sigstore.Bundle
-	Signatures    []attestation.Signature
-	Statement     attestation.Statement
-	Verifications []*attestation.SignatureVerification
+	Signatures   []attestation.Signature
+	Statement    attestation.Statement
+	Verification *api.Verification
 }
 
 func (e *Envelope) GetStatementOrErr() (attestation.Statement, error) {
@@ -67,11 +68,11 @@ func (e *Envelope) GetSignatures() []attestation.Signature {
 
 // GetVerifications returns the signtature verifications stored in the
 // predicate (via the statement)
-func (env *Envelope) GetVerifications() []*attestation.SignatureVerification {
+func (env *Envelope) GetVerification() *api.Verification {
 	if env.GetStatement() == nil {
 		return nil
 	}
-	return env.GetStatement().GetVerifications()
+	return env.GetStatement().GetVerification()
 }
 
 func (e *Envelope) Verify() error {
@@ -99,7 +100,7 @@ func (e *Envelope) Verify() error {
 	logrus.Debugf("  Cert SAN:     %s", summary.SubjectAlternativeName)
 	logrus.Debugf("  Cert Issuer:  %s", summary.CertificateIssuer)
 
-	logrus.Warn("SIGNATURE VALIDATION IS MOCKED, DO NOT USE YET")
+	// logrus.Warn("SIGNATURE VALIDATION IS MOCKED, DO NOT USE YET")
 
 	//nolint:gocritic // Under construction
 	// ver := &attestation.SignatureVerification{
