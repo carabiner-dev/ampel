@@ -20,6 +20,13 @@ func (env *Envelope) GetStatement() attestation.Statement {
 	return env.Statement
 }
 
+func (env *Envelope) GetPredicate() attestation.Predicate {
+	if s := env.GetStatement(); s != nil {
+		return env.GetStatement().GetPredicate()
+	}
+	return nil
+}
+
 func (*Envelope) GetSignatures() []attestation.Signature {
 	return []attestation.Signature{}
 }

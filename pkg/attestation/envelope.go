@@ -11,6 +11,7 @@ import v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
 // files.
 type Envelope interface {
 	GetStatement() Statement
+	GetPredicate() Predicate
 	GetSignatures() []Signature
 	GetCertificate() Certificate
 	GetVerification() *v1.Verification
