@@ -24,6 +24,7 @@ type Predicate interface {
 	GetVerification() *api.Verification
 	GetSource() Subject
 	SetSource(Subject)
+	SetVerification(*api.Verification)
 }
 
 // Subject abstracts a piece of software covered by an attestation

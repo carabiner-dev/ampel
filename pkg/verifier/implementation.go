@@ -288,43 +288,37 @@ func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identiti
 		}
 	}
 
+	errs := []error{}
+
 	// First, verify the signatures on the envelopes
-	for _, e := range envelopes {
+	for i, e := range envelopes {
+		// Attestations are expected to be verified here already, but we want
+		// to make sure. This should not be an issue as the verification data
+		// should be already cached.
 		if err := e.Verify(); err != nil {
 			return false, fmt.Errorf("verifying attestation signature: %w", err)
 		}
 
-		//nolint:gocritic // Under construction still
-		// if !identityAllowed(identities, vr) {
-		// 	logrus.Infof("Identity %+v not allowed by policy %+v", vr.SigstoreCertData, identities)
-		// 	return false, nil
-		// }
-	}
+		validSigners := []*api.Identity{}
+		if e.GetVerification() == nil {
+			errs = append(errs, errors.New("attestation not verified"))
+			continue
+		}
 
-	return true, nil
-}
-
-// identityAllowed is a temporary stub function to gatye the allowed identities
-//
-//nolint:unused // Under construction
-func identityAllowed(ids []*api.Identity, vr *attestation.SignatureVerification) bool {
-	if vr == nil {
-		logrus.Warn("DEMO WARNING: ALLOWING UNSIGNED STATEMENTS")
-		return true
-	}
-	for i := range ids {
-		switch {
-		case ids[i].Sigstore != nil:
-			if ids[i].Sigstore.Identity == vr.SigstoreCertData.SubjectAlternativeName &&
-				ids[i].Sigstore.Issuer == vr.SigstoreCertData.Issuer {
-				return true
+		for _, id := range identities {
+			if e.GetVerification().MatchesIdentity(id) {
+				validSigners = append(validSigners, id)
 			}
-		default:
-			// Method not impleented
-			logrus.Error("identity type not implemented")
+		}
+
+		if len(validSigners) == 0 {
+			errs = append(errs, fmt.Errorf("attestation %d (type %s) has no recognized signer identities", i, e.GetStatement().GetType()))
 		}
 	}
-	return false
+
+	// We don't use the errors yet, but at some point we should embed them into
+	// the attestation verification.
+	return len(errs) == 0, nil
 }
 
 func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, subject attestation.Subject, envs []attestation.Envelope) ([]attestation.Predicate, error) {
