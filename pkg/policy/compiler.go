@@ -60,6 +60,10 @@ func (compiler *Compiler) Compile(data []byte) (set *api.PolicySet, pcy *api.Pol
 
 // Compile builds a policy set fetching any remote pieces as necessary
 func (compiler *Compiler) CompileSet(set *api.PolicySet) (*api.PolicySet, error) {
+	if err := set.Validate(); err != nil {
+		return nil, fmt.Errorf("validating policy set: %w", err)
+	}
+
 	// Validate PolicySet / Policies
 	if err := compiler.impl.ValidateSet(&compiler.Options, set); err != nil {
 		return nil, fmt.Errorf("validating policy set: %w", err)

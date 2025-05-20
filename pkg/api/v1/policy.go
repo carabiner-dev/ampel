@@ -59,6 +59,35 @@ func (i *Identity) Slug() string {
 	}
 }
 
+// Validate checks the integrity of the identity and returns an error if
+// fields are missing or invalid
+func (i *Identity) Validate() error {
+	if i.GetKey() == nil && i.GetSigstore() == nil {
+		return fmt.Errorf("identity has no sigstore or key data")
+	}
+
+	errs := []error{}
+	if i.GetSigstore() != nil {
+		if i.GetSigstore().GetIssuer() == "" {
+			errs = append(errs, fmt.Errorf("sigstore identity has no issuer defined"))
+		}
+
+		if i.GetSigstore().GetIdentity() == "" {
+			errs = append(errs, fmt.Errorf("sigstore identity has no identifier (email/account) defined"))
+		}
+	}
+
+	if i.GetKey() != nil {
+		if i.GetKey().GetId() == "" {
+			errs = append(errs, errors.New("key identity has no key ID defined"))
+		}
+		if i.GetKey().GetData() == "" {
+			errs = append(errs, errors.New("key identity has no key data set"))
+		}
+	}
+	return errors.Join(errs...)
+}
+
 // GetSourceURL returns the URL to fetch the policy. First, it will try the
 // DownloadLocation, if empty returns the UR
 func (ref *PolicyRef) GetSourceURL() string {
@@ -107,6 +136,28 @@ func (ref *PolicyRef) Validate() error {
 	}
 
 	// TODO Check hash algorithms to be valid (from the intoto catalog)
+
+	return errors.Join(errs...)
+}
+
+func (set *PolicySet) Validate() error {
+	errs := []error{}
+	for _, p := range set.GetPolicies() {
+		if err := p.Validate(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
+}
+
+func (p *Policy) Validate() error {
+	errs := []error{}
+
+	for _, i := range p.GetIdentities() {
+		if err := i.Validate(); err != nil {
+			errs = append(errs, err)
+		}
+	}
 
 	return errors.Join(errs...)
 }
