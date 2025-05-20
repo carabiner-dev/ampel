@@ -13,8 +13,18 @@ import (
 type CompilerOptions struct {
 	// TODO: No remote data
 	// TODO: Fail merging on unknown remote tenet ids
+
+	// MaxRemoteRecursion captures the maximum recursion level the
+	// compiler will do to fetch remote content. Note that this setting
+	// causes exponential requests, so be careful when defining a value.
+	MaxRemoteRecursion int
 }
 
+var defaultCompilerOpts = CompilerOptions{
+	MaxRemoteRecursion: 3,
+}
+
+// Compiler is the policy compiler
 type Compiler struct {
 	Options CompilerOptions
 	Store   StorageBackend
@@ -22,7 +32,7 @@ type Compiler struct {
 }
 
 func NewCompiler() (*Compiler, error) {
-	opts := CompilerOptions{}
+	opts := defaultCompilerOpts
 	return &Compiler{
 		Options: opts,
 		Store:   newRefStore(),
@@ -30,6 +40,10 @@ func NewCompiler() (*Compiler, error) {
 	}, nil
 }
 
+// Compile is main method to assemble policies.
+//
+// Compiling means fetching all the policy references and assembling a
+// policy in memory with the fetched data.
 func (compiler *Compiler) Compile(data []byte) (set *api.PolicySet, pcy *api.Policy, err error) {
 	set, _, err = NewParser().ParsePolicyOrSet(data)
 	if err != nil {
