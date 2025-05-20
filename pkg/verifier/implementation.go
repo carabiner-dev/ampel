@@ -12,10 +12,9 @@ import (
 	"slices"
 	"strings"
 
+	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/timestamppb"
-
-	gointoto "github.com/in-toto/attestation/go/v1"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"

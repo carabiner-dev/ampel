@@ -18,6 +18,7 @@ import (
 // Storage backend is an interface that fronts systems that store and index policies
 type StorageBackend interface {
 	StoreReference(*api.PolicyRef) error
+	StoreReferenceWithReturn(*api.PolicyRef) (*api.PolicySet, *api.Policy, error)
 	GetReferencedPolicy(*api.PolicyRef) (*api.Policy, error)
 }
 
@@ -43,14 +44,21 @@ type refStore struct {
 
 // StoreReference stores a reference and adds it to the index
 func (rs *refStore) StoreReference(ref *api.PolicyRef) error {
+	_, _, err := rs.StoreReferenceWithReturn(ref)
+	return err
+}
+
+// StoreReferenceWithReturn stores a policy reference returning the parsed
+// Policy or PolicySet from the ref content.
+func (rs *refStore) StoreReferenceWithReturn(ref *api.PolicyRef) (*api.PolicySet, *api.Policy, error) {
 	if ref.GetLocation() == nil {
-		return fmt.Errorf("unable to store policy no location data found")
+		return nil, nil, fmt.Errorf("unable to store policy no location data found")
 	}
 
 	// If the policy content is nil at some point we could try to fetch it
 	// but for now we use the fetcher as it it can fet in parallel.
 	if ref.GetLocation().GetContent() == nil {
-		return fmt.Errorf("unable to store policy, content is empty")
+		return nil, nil, fmt.Errorf("unable to store policy, content is empty")
 	}
 
 	if ref.GetLocation().GetDigest() == nil {
@@ -67,7 +75,7 @@ func (rs *refStore) StoreReference(ref *api.PolicyRef) error {
 	if _, ok := ref.GetLocation().GetDigest()[string(intoto.AlgorithmSHA256)]; !ok {
 		ref.GetLocation().GetDigest()[string(intoto.AlgorithmSHA256)] = contentHash
 	} else if contentHash != ref.GetLocation().GetDigest()[string(intoto.AlgorithmSHA256)] {
-		return fmt.Errorf("policy sha256 digest does not match content")
+		return nil, nil, fmt.Errorf("policy sha256 digest does not match content")
 	}
 
 	// TODO(puerco) Here the reference shuold be augmented if it already exists
@@ -90,16 +98,16 @@ func (rs *refStore) StoreReference(ref *api.PolicyRef) error {
 	switch {
 	case set != nil:
 		if err := rs.registerPolicySet(contentHash, set); err != nil {
-			return fmt.Errorf("indexing policy set: %w", err)
+			return nil, nil, fmt.Errorf("indexing policy set: %w", err)
 		}
 	case pcy != nil:
 		if err := rs.registerPolicy(contentHash, pcy); err != nil {
-			return fmt.Errorf("indexing policy: %w", err)
+			return nil, nil, fmt.Errorf("indexing policy: %w", err)
 		}
 	case err != nil:
-		return err
+		return nil, nil, err
 	}
-	return nil
+	return set, pcy, err
 }
 
 // registerPolicy register a policy, not form a set.
