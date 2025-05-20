@@ -26,7 +26,7 @@ type Parser struct{}
 
 // ParseFile parses a file and returns all envelopes in it.
 func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {
-	// Readd all data to mem :/
+	// Read all data to memory :/
 	data, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("parsing stream: %w", err)
@@ -49,21 +49,19 @@ func (p *Parser) ParseFile(path string) ([]attestation.Envelope, error) {
 	// Set the source data in the envelope
 	src := envs[0].GetStatement().GetPredicate().GetSource()
 	rd, ok := src.(*v1.ResourceDescriptor)
-	if !ok {
+	if rd != nil && !ok {
 		return nil, errors.New("unable to cast source as resource descriptor")
 	}
-	rd.Name = filepath.Base(path)
-	rd.Uri = fmt.Sprintf("file:%s", path)
-	envs[0].GetStatement().GetPredicate().SetSource(rd)
+
+	if rd != nil {
+		rd.Name = filepath.Base(path)
+		rd.Uri = fmt.Sprintf("file:%s", path)
+		envs[0].GetStatement().GetPredicate().SetSource(rd)
+	}
 	return envs, nil
 }
 
 func (p *Parser) Parse(data []byte) ([]attestation.Envelope, error) {
-	digests, err := hasher.New().HashReaders([]io.Reader{bytes.NewReader(data)})
-	if err != nil || len(*digests) == 0 {
-		return nil, fmt.Errorf("error hashing envelope data: %w", err)
-	}
-
 	env := &Envelope{
 		Bundle: sigstore.Bundle{},
 	}
@@ -75,6 +73,11 @@ func (p *Parser) Parse(data []byte) ([]attestation.Envelope, error) {
 	// Ensure we have a valid statement and predicate
 	if _, err := env.GetStatementOrErr(); err != nil {
 		return nil, err
+	}
+
+	digests, err := hasher.New().HashReaders([]io.Reader{bytes.NewReader(data)})
+	if err != nil || len(*digests) == 0 {
+		return nil, fmt.Errorf("error hashing envelope data: %w", err)
 	}
 
 	// Reigster the attestation digests in its source
