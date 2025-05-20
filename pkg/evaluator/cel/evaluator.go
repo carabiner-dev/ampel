@@ -40,6 +40,7 @@ const (
 	VarNamePredicates = "predicates"
 	VarNameContext    = "context"
 	VarNameOutputs    = "outputs"
+	VarNameSubject    = "subject"
 )
 
 // New creates a new CEL evaluator with the default options

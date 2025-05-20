@@ -63,6 +63,7 @@ func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, pl
 		cel.Variable(VarNamePredicate, cel.AnyType),
 		cel.Variable(VarNameContext, cel.AnyType),
 		cel.Variable(VarNameOutputs, cel.AnyType),
+		cel.Variable(VarNameSubject, cel.AnyType),
 		ext.Bindings(),
 		ext.Strings(),
 		ext.Encoders(),
@@ -135,11 +136,44 @@ func (dce *defaulCelEvaluator) BuildVariables(
 	}
 	ret[VarNameContext] = s
 
+	ret[VarNameSubject] = extractSubjectData(subject)
+
 	logrus.Debugf("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
 	for _, p := range plugins {
 		maps.Copy(ret, p.VarValues(policy, subject, fpreds))
 	}
 	return &ret, nil
+}
+
+func extractSubjectData(subject attestation.Subject) *structpb.Struct {
+	// Add the subject data to the runtime variables
+	subjectData := map[string]any{
+		"name":              "",
+		"uri":               "",
+		"download_location": "",
+		"digest":            map[string]string{},
+	}
+
+	// If the context has the subject add it to the environment
+	if subject != nil {
+		subjectData["name"] = subject.GetName()
+		subjectData["uri"] = subject.GetUri()
+		if subject.GetDigest() != nil {
+			subjectData["digest"] = subject.GetDigest()
+		}
+	}
+
+	if rd, ok := subject.(*intoto.ResourceDescriptor); ok {
+		subjectData["download_location"] = rd.GetDownloadLocation()
+	}
+
+	sd, err := structpb.NewStruct(subjectData)
+	if err != nil {
+		logrus.Debugf("Error structuring context data: %v", err)
+		return nil
+	}
+
+	return sd
 }
 
 // EnsurePredicates ensures variable processing produced at least one predicate
@@ -426,7 +460,8 @@ func (dce *defaulCelEvaluator) Assert(*api.ResultSet) bool {
 //
 //nolint:gocritic // This passes around a large struct in vars
 func (dce *defaulCelEvaluator) BuildSelectorVariables(
-	opts *options.EvaluatorOptions, plugins map[string]Plugin, policy *api.Policy, subject attestation.Subject, _ *api.ChainedPredicate, predicate attestation.Predicate,
+	opts *options.EvaluatorOptions, plugins map[string]Plugin, policy *api.Policy,
+	subject attestation.Subject, _ *api.ChainedPredicate, predicate attestation.Predicate,
 ) (*map[string]any, error) {
 	ret := map[string]any{}
 
@@ -447,6 +482,7 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 
 	ret[VarNamePredicates] = preds
 	ret[VarNamePredicate] = val
+	ret[VarNameSubject] = extractSubjectData(subject)
 
 	// Add the context to the runtime environment
 	contextData := map[string]any{}
