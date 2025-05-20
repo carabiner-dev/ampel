@@ -40,9 +40,6 @@ func (dci *defaultCompilerImpl) ValidateSet(*CompilerOptions, *api.PolicySet) er
 // ExtractRemoteReferences extracts and enriches the remote references from all
 // information available in (possibly) repeatead remote references.
 func (dci *defaultCompilerImpl) ExtractRemoteReferences(_ *CompilerOptions, set *api.PolicySet) ([]*api.PolicyRef, error) {
-	ret := []*api.PolicyRef{}
-	uriIndex := map[string]*api.PolicyRef{}
-
 	// Add all the references we have, first the set-level refs:
 	refs := []*api.PolicyRef{}
 	if set.GetCommon() != nil && set.GetCommon().GetReferences() != nil {
@@ -55,7 +52,19 @@ func (dci *defaultCompilerImpl) ExtractRemoteReferences(_ *CompilerOptions, set 
 		}
 	}
 
-	// Now, ragen over all refs and extract the ones that point to remote resources
+	ret, err := groupRemoteRefs(refs)
+	if err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
+
+func groupRemoteRefs(refs []*api.PolicyRef) ([]*api.PolicyRef, error) {
+	uriIndex := map[string]*api.PolicyRef{}
+	ret := []*api.PolicyRef{}
+
+	// Rage over all refs and extract the ones that point to remote resources
 	for _, ref := range refs {
 		// If it does not have location coordinates, skip it
 		if ref.GetLocation() == nil {
@@ -95,33 +104,43 @@ func (dci *defaultCompilerImpl) ExtractRemoteReferences(_ *CompilerOptions, set 
 	for _, ref := range uriIndex {
 		ret = append(ret, ref)
 	}
-
 	return ret, nil
 }
 
-// FetchRemoteResources pulls all the remote data in parallel and stores it
-// in the configured StorageBackend.
-func (dci *defaultCompilerImpl) FetchRemoteResources(_ *CompilerOptions, store StorageBackend, refs []*api.PolicyRef) error {
-	if store == nil {
-		return errors.New("storage backend missing")
-	}
-	fetcher := NewFetcher()
-
+func fetchRemoteResources(
+	_ *CompilerOptions, recurse int, store StorageBackend, refs []*api.PolicyRef,
+) error {
 	// Extract the URIs
-	uris := make([]string, len(refs))
-	for i, ref := range refs {
+	uris := []string{}
+	newRefs := []*api.PolicyRef{}
+	for _, ref := range refs {
+		p, err := store.GetReferencedPolicy(ref)
+		if err != nil {
+			return fmt.Errorf("checking cached copy of referenced policy: %w", err)
+		}
+		// If we already have a copy, skip
+		if p != nil {
+			continue
+		}
+
 		// Check if the policy has a DownloadLocation
 		uri := ref.GetLocation().GetDownloadLocation()
 		if uri == "" {
 			uri = ref.GetLocation().GetUri()
 		}
-		uris[i] = uri
+		uris = append(uris, uri)
+		newRefs = append(newRefs, ref)
 	}
 
-	logrus.Debugf("Fetching remote references: %+v", uris)
+	if len(uris) == 0 {
+		logrus.Debugf("No remote resources required to fetch (from %d refs)", len(refs))
+		return nil
+	}
+
+	logrus.Debugf("Fetching remote references (depth %d): %+v", recurse, uris)
 
 	// Retrieve the remote data
-	data, err := fetcher.GetGroup(uris)
+	data, err := NewFetcher().GetGroup(uris)
 	if err != nil {
 		return fmt.Errorf("fetching remote data: %w", err)
 	}
@@ -129,15 +148,24 @@ func (dci *defaultCompilerImpl) FetchRemoteResources(_ *CompilerOptions, store S
 	// Store the retrieved data in the resource descriptor
 	for i, datum := range data {
 		// Here we shoud validate any hashes we have
-		refs[i].Location.Content = datum
+		newRefs[i].Location.Content = datum
 
 		// Store the reference
-		if err := store.StoreReference(refs[i]); err != nil {
+		if err := store.StoreReference(newRefs[i]); err != nil {
 			return fmt.Errorf("storing external ref #%d: %w", i, err)
 		}
 	}
-
 	return nil
+}
+
+// FetchRemoteResources pulls all the remote data in parallel and stores it
+// in the configured StorageBackend.
+func (dci *defaultCompilerImpl) FetchRemoteResources(opts *CompilerOptions, store StorageBackend, refs []*api.PolicyRef) error {
+	if store == nil {
+		return errors.New("storage backend missing")
+	}
+
+	return fetchRemoteResources(opts, 0, store, refs)
 }
 
 func (dci *defaultCompilerImpl) ValidateRemotes(*CompilerOptions, StorageBackend) error {
