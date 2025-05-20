@@ -10,6 +10,7 @@ import (
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
@@ -18,9 +19,8 @@ import (
 
 type Envelope struct {
 	sigstore.Bundle
-	Signatures   []attestation.Signature
-	Statement    attestation.Statement
-	Verification *api.Verification
+	Signatures []attestation.Signature
+	Statement  attestation.Statement
 }
 
 func (e *Envelope) GetStatementOrErr() (attestation.Statement, error) {
@@ -58,6 +58,13 @@ func (e *Envelope) GetStatement() attestation.Statement {
 	return statement
 }
 
+func (env *Envelope) GetPredicate() attestation.Predicate {
+	if s := env.GetStatement(); s != nil {
+		return env.GetStatement().GetPredicate()
+	}
+	return nil
+}
+
 func (e *Envelope) GetCertificate() attestation.Certificate {
 	return nil
 }
@@ -75,7 +82,15 @@ func (env *Envelope) GetVerification() *api.Verification {
 	return env.GetStatement().GetVerification()
 }
 
+// Verify checks the bundle signatures and generatesit Verification data.
+// If the envelope is already verified, the signatures are not verified
+// again.
 func (e *Envelope) Verify() error {
+	// If the bundle is already verified, don't retry
+	if e.GetVerification() != nil {
+		return nil
+	}
+
 	if e.GetVerificationMaterial() == nil {
 		return fmt.Errorf("no verification material found in bundle")
 	}
@@ -100,12 +115,22 @@ func (e *Envelope) Verify() error {
 	logrus.Debugf("  Cert SAN:     %s", summary.SubjectAlternativeName)
 	logrus.Debugf("  Cert Issuer:  %s", summary.CertificateIssuer)
 
-	// logrus.Warn("SIGNATURE VALIDATION IS MOCKED, DO NOT USE YET")
+	// Register the verification data
+	e.GetPredicate().SetVerification(&api.Verification{
+		Signature: &api.SignatureVerification{
+			Date:     timestamppb.Now(),
+			Verified: true,
+			Identities: []*api.Identity{
+				{
+					Sigstore: &api.IdentitySigstore{
+						Issuer:   summary.Issuer,
+						Identity: summary.SubjectAlternativeName,
+					},
+				},
+			},
+		},
+	})
 
-	//nolint:gocritic // Under construction
-	// ver := &attestation.SignatureVerification{
-	// 	SigstoreCertData: summary,
-	// }
 	return nil
 }
 
