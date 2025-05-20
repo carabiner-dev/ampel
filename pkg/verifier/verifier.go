@@ -132,15 +132,15 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	// Check identities to see if the attestations can be admitted
 	// TODO(puerco)
 	// Option: Unmatched identities cause a:fail or b:ignore
-	allow, _, err := ampel.impl.CheckIdentities(opts, policy.Identities, atts)
+	allow, idErrors, err := ampel.impl.CheckIdentities(opts, policy.Identities, atts)
 	if err != nil {
-		return nil, fmt.Errorf("admission failed: %w", err)
+		return nil, fmt.Errorf("error validating signer identity: %w", err)
 	}
 
 	if !allow {
 		return failPolicyWithError(policy, chain, subject, PolicyError{
-			error:    errors.New("identity validation failed"),
-			Guidance: "Ensure the attestations are signed with the expected identites as defined in the policy.",
+			error:    errors.New("attestation identity validation failed"),
+			Guidance: errors.Join(idErrors...).Error(),
 		}), nil
 	}
 
@@ -193,10 +193,13 @@ func (ampel *Ampel) AttestResultSet(w io.Writer, resultset *api.ResultSet) error
 // error guidance for the tenets will be read from it.
 func failPolicyWithError(p *api.Policy, chain []*api.ChainedSubject, subject attestation.Subject, err error) *api.Result {
 	res := &api.Result{
-		Status:      api.StatusFAIL,
-		DateStart:   timestamppb.Now(),
-		DateEnd:     timestamppb.Now(),
-		Policy:      &api.PolicyRef{},
+		Status:    api.StatusFAIL,
+		DateStart: timestamppb.Now(),
+		DateEnd:   timestamppb.Now(),
+		Policy: &api.PolicyRef{
+			Id:      p.Id,
+			Version: p.GetMeta().GetVersion(),
+		},
 		EvalResults: []*api.EvalResult{},
 		Meta:        p.GetMeta(),
 		Chain:       chain,

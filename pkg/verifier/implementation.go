@@ -283,7 +283,7 @@ func (di *defaultIplementation) Transform(
 // identities defined in thew policy.
 func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identities []*api.Identity, envelopes []attestation.Envelope) (bool, []error, error) {
 	// verification errors for the user
-	errs := []error{}
+	errs := make([]error, len(envelopes))
 
 	// If there are no identities defined, return here
 	if len(identities) == 0 {
