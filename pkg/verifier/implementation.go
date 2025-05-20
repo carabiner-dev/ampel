@@ -37,7 +37,10 @@ type AmpelVerifier interface {
 	BuildEvaluators(*VerificationOptions, *api.Policy) (map[class.Class]evaluator.Evaluator, error)
 	BuildTransformers(*VerificationOptions, *api.Policy) (map[transformer.Class]transformer.Transformer, error)
 	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *api.Policy, attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
-	CheckIdentities(*VerificationOptions, []*api.Identity, []attestation.Envelope) (bool, error)
+
+	// CheckIdentities verifies that attestations are signed by the policy identities
+	CheckIdentities(*VerificationOptions, []*api.Identity, []attestation.Envelope) (bool, []error, error)
+
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
 	AssertResult(*api.Policy, *api.Result) error
 	AttestResult(context.Context, *VerificationOptions, *api.Result) error
@@ -276,11 +279,16 @@ func (di *defaultIplementation) Transform(
 	return subject, predicates, nil
 }
 
-func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identities []*api.Identity, envelopes []attestation.Envelope) (bool, error) {
+// CheckIdentities checks that the ingested attestations are signed by one of the
+// identities defined in thew policy.
+func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identities []*api.Identity, envelopes []attestation.Envelope) (bool, []error, error) {
+	// verification errors for the user
+	errs := []error{}
+
 	// If there are no identities defined, return here
 	if len(identities) == 0 {
 		logrus.Debug("No identities defined in policy. Not checking.")
-		return true, nil
+		return true, nil, nil
 	} else {
 		logrus.Debug("Will look for signed attestations from:")
 		for _, i := range identities {
@@ -288,7 +296,7 @@ func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identiti
 		}
 	}
 
-	errs := []error{}
+	validIdentities := true
 
 	// First, verify the signatures on the envelopes
 	for i, e := range envelopes {
@@ -296,12 +304,15 @@ func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identiti
 		// to make sure. This should not be an issue as the verification data
 		// should be already cached.
 		if err := e.Verify(); err != nil {
-			return false, fmt.Errorf("verifying attestation signature: %w", err)
+			errs[i] = fmt.Errorf("verifying attestation signature: %w", err)
+			validIdentities = false
+			continue
 		}
 
 		validSigners := []*api.Identity{}
 		if e.GetVerification() == nil {
-			errs = append(errs, errors.New("attestation not verified"))
+			errs[i] = errors.New("attestation not verified")
+			validIdentities = false
 			continue
 		}
 
@@ -312,13 +323,14 @@ func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identiti
 		}
 
 		if len(validSigners) == 0 {
-			errs = append(errs, fmt.Errorf("attestation %d (type %s) has no recognized signer identities", i, e.GetStatement().GetType()))
+			validIdentities = false
+			errs[i] = fmt.Errorf("attestation %d (type %s) has no recognized signer identities", i, e.GetStatement().GetType())
 		}
 	}
 
 	// We don't use the errors yet, but at some point we should embed them into
 	// the attestation verification.
-	return len(errs) == 0, nil
+	return validIdentities, errs, nil
 }
 
 func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, subject attestation.Subject, envs []attestation.Envelope) ([]attestation.Predicate, error) {
@@ -385,9 +397,9 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 		var pass bool
 		var err error
 		if link.GetPredicate().GetIdentities() != nil {
-			pass, err = di.CheckIdentities(opts, link.GetPredicate().GetIdentities(), attestations)
+			pass, _, err = di.CheckIdentities(opts, link.GetPredicate().GetIdentities(), attestations)
 		} else {
-			pass, err = di.CheckIdentities(opts, policy.GetIdentities(), attestations)
+			pass, _, err = di.CheckIdentities(opts, policy.GetIdentities(), attestations)
 		}
 		if err != nil {
 			return nil, nil, false, fmt.Errorf("error checking attestation identity: %w", err)

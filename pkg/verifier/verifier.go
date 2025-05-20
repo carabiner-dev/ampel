@@ -132,7 +132,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	// Check identities to see if the attestations can be admitted
 	// TODO(puerco)
 	// Option: Unmatched identities cause a:fail or b:ignore
-	allow, err := ampel.impl.CheckIdentities(opts, policy.Identities, atts)
+	allow, _, err := ampel.impl.CheckIdentities(opts, policy.Identities, atts)
 	if err != nil {
 		return nil, fmt.Errorf("admission failed: %w", err)
 	}
