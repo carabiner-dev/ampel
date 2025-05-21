@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
+	sgbundle "github.com/sigstore/sigstore-go/pkg/bundle"
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -15,6 +16,7 @@ import (
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
+	"github.com/carabiner-dev/bnd/pkg/bnd"
 )
 
 type Envelope struct {
@@ -89,6 +91,20 @@ func (e *Envelope) Verify() error {
 	// If the bundle is already verified, don't retry
 	if e.GetVerification() != nil {
 		return nil
+	}
+
+	// Verify the sigstore signatures
+	verifier := bnd.NewVerifier()
+
+	// We skip the identity verification as the policy chekcs it at runtime:
+	verifier.Options.SkipIdentityCheck = true
+
+	// Verify the bundle. We discard the result for now as it does not include
+	// the signature. We may capture it at some point.
+	if _, err := verifier.VerifyParsedBundle(&sgbundle.Bundle{
+		Bundle: &e.Bundle,
+	}); err != nil {
+		return fmt.Errorf("verifying sigstore signatures: %w", err)
 	}
 
 	if e.GetVerificationMaterial() == nil {
