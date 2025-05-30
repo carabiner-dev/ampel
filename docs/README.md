@@ -37,12 +37,11 @@ contributions are welcome!
       - The "Bare" Envelope
     - Contents
       - Subjects
-      - Statements
       - Predicates
   - Reading Attestations
     - Types and Versioning
-    - Queries and Filters
     - Collectors
+    - Queries and Filters
   - Signatures and Identities
   - Tools
     - bnd
@@ -50,7 +49,7 @@ contributions are welcome!
 - The AMPEL Policy Guide
   - Policies and PolicySets
   - A Word About Runtimes
-  - The Main Policy Structure
+  - General Policy Structure
     - Metadata
     - Identities
     - Predicate Spec

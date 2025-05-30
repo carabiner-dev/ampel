@@ -28,3 +28,15 @@ Finally you need a policy. A policy dicatates the expected conditions that the
 metadata needs to meet for the policy to PASS. Policies are written in JSON and
 can have many conditions, known as _tenets_ in AMPEL-speak. Policies can specify
 trusted identities, can be tied to security framework controls and can be reused.
+
+## A Basic Evaluation Run
+
+To run an evaluation, simply invoke AMPEL passing the three required ingredients:
+
+```bash
+ampel verify binary.exe -p policy.json -a attestation.intoto.json
+```
+
+By default, AMPEL exits -1 if the policy does not pass. In the example above, we
+are feeding ampel a single attestation. While you can specify attestations via
+the `-a|--attestation` flag, in the real world you will be using collectors. 
