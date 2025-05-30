@@ -94,7 +94,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	// Parse any extra attestation files defined in the options
 	atts, err := ampel.impl.ParseAttestations(ctx, opts.AttestationFiles)
 	if err != nil {
-		return nil, fmt.Errorf("parsing files: %w", err)
+		return nil, fmt.Errorf("parsing single attestations: %w", err)
 	}
 
 	// Process chained subjects. These have access to all the read attestations

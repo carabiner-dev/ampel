@@ -6,6 +6,7 @@ package statement
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -33,15 +34,18 @@ func (pl *ParserList) Parse(data []byte) (attestation.Statement, error) {
 	}
 	errs := []error{}
 	for f, p := range *pl {
-		logrus.Debugf("Checking if statement is %s", f)
 		pres, err := p.Parse(data)
 		if err == nil {
-			logrus.Debugf("found statement of type %s", f)
+			logrus.Debugf("Checking if statement is: %s [YES]", f)
 			return pres, nil
 		}
-		if !errors.Is(err, attestation.ErrNotCorrectFormat) {
+
+		if strings.Contains(err.Error(), attestation.ErrNotCorrectFormat.Error()) {
+			logrus.Debugf("Checking if statement is: %s [ERROR]", f)
 			errs = append(errs, err)
+			continue
 		}
+		logrus.Debugf("Checking if statement is: %s [NO]", f)
 	}
 	if len(errs) == 0 {
 		return nil, fmt.Errorf("unknown statement type: %w", attestation.ErrNotCorrectFormat)

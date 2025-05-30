@@ -131,7 +131,7 @@ func (di *defaultIplementation) ParseAttestations(ctx context.Context, paths []s
 		logrus.Debugf("parsing %s (%d envelope drivers loaded)", path, len(envelope.Parsers))
 		env, err := envelope.Parsers.Parse(f)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, fmt.Errorf("parsing %q: %w", path, err))
 			continue
 		}
 

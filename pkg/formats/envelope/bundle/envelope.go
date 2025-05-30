@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"fmt"
 
+	"github.com/carabiner-dev/bnd/pkg/bnd"
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	sgbundle "github.com/sigstore/sigstore-go/pkg/bundle"
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
@@ -16,7 +17,6 @@ import (
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
-	"github.com/carabiner-dev/bnd/pkg/bnd"
 )
 
 type Envelope struct {
