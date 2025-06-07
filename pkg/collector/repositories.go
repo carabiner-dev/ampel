@@ -13,6 +13,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/repository/filesystem"
 	"github.com/carabiner-dev/ampel/pkg/repository/github"
 	"github.com/carabiner-dev/ampel/pkg/repository/jsonl"
+	"github.com/carabiner-dev/ampel/pkg/repository/note"
 	"github.com/carabiner-dev/ampel/pkg/repository/release"
 )
 
@@ -58,6 +59,7 @@ func LoadDefaultRepositoryTypes() error {
 		jsonl.TypeMoniker:      jsonl.Build,
 		github.TypeMoniker:     github.Build,
 		release.TypeMoniker:    release.Build,
+		note.TypeMoniker:       note.Build,
 	} {
 		if err := RegisterCollectorType(t, factory); err != nil {
 			if !errors.Is(err, ErrTypeAlreadyRegistered) {
