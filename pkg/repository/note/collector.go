@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Copyright 2025 Carabiner Systems, Inc
 // SPDX-License-Identifier: Apache-2.0
 
-// Package gitnote implementes an attestation fetcher that can read from
+// Package note implementes an attestation fetcher that can read from
 // git commit notes.
-package gitnote
+package note
 
 import (
 	"bytes"
