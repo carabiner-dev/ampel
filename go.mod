@@ -10,10 +10,10 @@ require (
 	github.com/carabiner-dev/jsonl v0.2.0
 	github.com/carabiner-dev/openeox v0.0.0-20250430212020-e3a5beb42ddd
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
-	github.com/carabiner-dev/vcslocator v0.2.2
+	github.com/carabiner-dev/vcslocator v0.3.0
 	github.com/fatih/color v1.18.0
 	github.com/go-git/go-billy/v5 v5.6.2
-	github.com/go-git/go-git/v5 v5.16.0
+	github.com/go-git/go-git/v5 v5.16.1
 	github.com/google/cel-go v0.25.0
 	github.com/in-toto/attestation v1.1.2-0.20250128181946-c0b4d86cf712
 	github.com/jedib0t/go-pretty/v6 v6.6.7
