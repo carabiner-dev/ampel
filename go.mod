@@ -3,7 +3,7 @@ module github.com/carabiner-dev/ampel
 go 1.24.3
 
 require (
-	github.com/carabiner-dev/bnd v0.1.4
+	github.com/carabiner-dev/bnd v0.2.0
 	github.com/carabiner-dev/ghrfs v0.3.2
 	github.com/carabiner-dev/github v0.2.2
 	github.com/carabiner-dev/hasher v0.2.2
