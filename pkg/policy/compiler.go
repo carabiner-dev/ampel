@@ -4,8 +4,8 @@
 package policy
 
 import (
-	"errors"
 	"fmt"
+	"os"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
@@ -40,22 +40,34 @@ func NewCompiler() (*Compiler, error) {
 	}, nil
 }
 
+func (compiler *Compiler) CompileFile(path string) (set *api.PolicySet, pcy *api.Policy, err error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, nil, fmt.Errorf("reading policy file: %w", err)
+	}
+	return compiler.Compile(data)
+}
+
 // Compile is main method to assemble policies.
 //
 // Compiling means fetching all the policy references and assembling a
 // policy in memory with the fetched data.
 func (compiler *Compiler) Compile(data []byte) (set *api.PolicySet, pcy *api.Policy, err error) {
-	set, _, err = NewParser().ParsePolicyOrSet(data)
+	set, pcy, err = NewParser().ParsePolicyOrSet(data)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if set != nil {
-		set, err := compiler.CompileSet(set)
-		return set, nil, err
+	if set == nil && pcy != nil {
+		set = &api.PolicySet{
+			Policies: []*api.Policy{
+				pcy,
+			},
+		}
 	}
 
-	return nil, nil, errors.New("compiling bare policies is not implemented yet")
+	set, err = compiler.CompileSet(set)
+	return set, nil, err
 }
 
 // Compile builds a policy set fetching any remote pieces as necessary
