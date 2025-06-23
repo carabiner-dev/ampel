@@ -15,7 +15,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.6.2
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/google/cel-go v0.25.0
-	github.com/in-toto/attestation v1.1.2-0.20250128181946-c0b4d86cf712
+	github.com/in-toto/attestation v1.1.2
 	github.com/jedib0t/go-pretty/v6 v6.6.7
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481
