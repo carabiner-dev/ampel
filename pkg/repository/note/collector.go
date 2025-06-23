@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2025 Carabiner Systems, Inc
 // SPDX-License-Identifier: Apache-2.0
 
-// Package note implementes an attestation fetcher that can read from
+// Package note implements an attestation fetcher that can read from
 // git commit notes.
 package note
 
@@ -11,14 +11,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/carabiner-dev/jsonl"
+	"github.com/carabiner-dev/vcslocator"
 	intoto "github.com/in-toto/attestation/go/v1"
 
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/filters"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope"
-	"github.com/carabiner-dev/vcslocator"
 )
 
 var TypeMoniker = "note"
@@ -108,6 +109,9 @@ func (c *Collector) Fetch(ctx context.Context, opts attestation.FetchOptions) ([
 	return ret, nil
 }
 
+// extractCommitBundle reads the jsonl attestations bundle from the commit
+// notes data. Returns an error if cloning fails but nil if there is no
+// bundle data in the commit.
 func (c *Collector) extractCommitBundle() (io.Reader, error) {
 	if c.Options.Locator == "" {
 		return nil, errors.New("unable to read note, no VCS locator set")
@@ -124,26 +128,48 @@ func (c *Collector) extractCommitBundle() (io.Reader, error) {
 
 	path := components.Commit[0:2] + "/" + components.Commit[2:]
 
-	// Now, reform the repo URL to fetch the notes
-	var b bytes.Buffer
-
-	// For remote URIs, construct the note VCS locator using the repoURL:
-	uri := "git+" + components.RepoURL() + "@refs/notes/commits#" + path
+	// We need two locators because we will check for sharded notes data
+	// but also for direct files at the root of the notes reference. For
+	// more details check this issue:
+	//   https://github.com/slsa-framework/slsa-source-poc/issues/215
+	uriShard := "git+" + components.RepoURL() + "@refs/notes/commits#" + path
+	uriFile := "git+" + components.RepoURL() + "@refs/notes/commits#" + components.Commit
 
 	// vcslocator 0.3.0 does not return a url for file urls, so we need to
 	// build it manually:
 	if components.Transport == vcslocator.TransportFile {
-		uri = "file://" + components.RepoPath + "@refs/notes/commits#" + path
+		uriShard = "file://" + components.RepoPath + "@refs/notes/commits#" + path
+		uriFile = "file://" + components.RepoPath + "@refs/notes/commits#" + components.Commit
 	}
 
-	// OK, now copy the note data using the standard vcslocator funcs:
-	if err := vcslocator.CopyFile(
-		vcslocator.Locator(uri), &b,
-	); err != nil {
-		return nil, fmt.Errorf("fetching git note: %w", err)
-	}
+	var bufferShard bytes.Buffer
+	var bufferFile bytes.Buffer
 
-	return &b, nil
+	// OK, now copy the note data using the standard vcslocator functions.
+	// We copy them as a group as the vcs locator module optimizes the cloning
+	// ops. Note that this will always err, so we don't check the error immediately.
+	err = vcslocator.CopyFileGroup(
+		[]string{uriShard, uriFile}, []io.Writer{&bufferShard, &bufferFile},
+	)
+
+	// Depending on wether the notes data was sharded or not, one of the VCS
+	// locators will contain the data and the other will err when opening the
+	// non-existent file.
+	switch {
+	case bufferShard.Len() > 0:
+		return &bufferShard, nil
+	case bufferFile.Len() > 0:
+		return &bufferFile, nil
+	default:
+		// Now, here we need to check. If the error is not found, then it means
+		// there is no attestation data, not that there is an error
+		err1, err2, _ := strings.Cut(err.Error(), "\n")
+		if strings.Contains(err1, "file does not exist") &&
+			strings.Contains(err2, "file does not exist") {
+			return &bytes.Buffer{}, nil
+		}
+		return nil, err
+	}
 }
 
 // FetchBySubject calls the attestation reader with a filter preconfigured
