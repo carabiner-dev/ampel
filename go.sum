@@ -92,8 +92,8 @@ github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM
 github.com/blang/semver/v4 v4.0.0/go.mod h1:IbckMUScFkM3pff0VJDNKRiT6TG/YpiHIM2yvyW5YoQ=
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0 h1:any4BmKE+jGIaMpnU8YgH/I2LPiLBufr6oMMlVBbn9M=
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0/go.mod h1:bm7JXdkRd4BHJk9HpwqAI8BoAY1lps46Enkdqw6aRX0=
-github.com/carabiner-dev/bnd v0.1.4 h1:HBj/oJtTrlXPdCzIBPGzq3JVUcgN0LsxtQNzB0kISS8=
-github.com/carabiner-dev/bnd v0.1.4/go.mod h1:m+qlnXEXWNJZ7UZLmp5rCjgOLTorEndrRWQ5Xrmpm1o=
+github.com/carabiner-dev/bnd v0.2.0 h1:iD6qKPJeUW1pTi3DXYjcT2klUfW8kih1g2ic02WPxpQ=
+github.com/carabiner-dev/bnd v0.2.0/go.mod h1:ecogX7Dmh/fvsp1i0j2Nv3HT0FfBiPXJ8+Z7cQYnM40=
 github.com/carabiner-dev/ghrfs v0.3.2 h1:SBxmC7H2efJzebzrpZNsXB/03eZTeBORguXvKftpif4=
 github.com/carabiner-dev/ghrfs v0.3.2/go.mod h1:xRewpmbdE766e+XlKfcH+p/KcObAflOIwNq6s7TARb0=
 github.com/carabiner-dev/github v0.2.2 h1:Ykrlcct71fRQm4j37LhAz9FyzG4n1nlm2e+V62MIoJM=
