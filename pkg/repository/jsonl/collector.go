@@ -122,7 +122,7 @@ func parseJsonlFile(path string, filterset *attestation.FilterSet) ([]attestatio
 
 // Fetch queries the repository and retrieves any attestations matching the query
 func (c *Collector) Fetch(ctx context.Context, opts attestation.FetchOptions) ([]attestation.Envelope, error) {
-	return nil, attestation.ErrFetcherMethodNotImplemented
+	return c.readAttestations(c.Options.Paths, &attestation.FilterSet{})
 }
 
 // FetchBySubject calls the attestation reader with a filter preconfigured
