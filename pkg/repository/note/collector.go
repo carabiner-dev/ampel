@@ -46,7 +46,9 @@ func New(funcs ...optFn) (*Collector, error) {
 		return nil, fmt.Errorf("validating options: %w", err)
 	}
 
-	return &Collector{}, nil
+	return &Collector{
+		Options: opts,
+	}, nil
 }
 
 type Options struct {
@@ -104,6 +106,8 @@ func (c *Collector) Fetch(ctx context.Context, opts attestation.FetchOptions) ([
 			}
 			envelopes[0].GetStatement().GetPredicate().SetSource(rd)
 		}
+
+		ret = append(ret, envelopes...)
 	}
 
 	return ret, nil
