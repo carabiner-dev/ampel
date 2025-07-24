@@ -37,14 +37,14 @@ message FrameworkRef {
 message PolicySetCommon {
     repeated Identity identities = 1;
     repeated PolicyRef references = 2;
-    Context contect = 3;
+    map<string, ContextVal> context = 3;
 }
 
 message Policy {
     string id = 1;
     PolicyRef source = 2;
     Meta meta = 3;
-    Context context = 4;
+    map<string, ContextVal> context = 4;
     repeated ChainLink chain = 5;
     repeated Identity identities = 6;
     PredicateSpec predicates = 7;
@@ -111,15 +111,11 @@ message IdentityRef {
     string id = 1;
 }
 
-message Context {
-    map<string, ValueDef> values = 1;
-    
-    message ValueDef {
+message ContextVal {
         string type = 1;
         bool required = 2;
         google.protobuf.Value value = 3;
         google.protobuf.Value default = 4;
-    }    
 }
 
 message Error {

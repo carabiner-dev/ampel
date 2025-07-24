@@ -3,11 +3,25 @@
 
 package v1
 
-// ToMap compiles the context data values into a map, filling the fields
+// ContextMap compiles the context data values into a map, filling the fields
 // with their defaults when needed.
-func (c *Context) ToMap() map[string]any {
+func (s *PolicySet) ContextMap() map[string]any {
 	ret := map[string]any{}
-	for label, value := range c.Values {
+	for label, value := range s.Context {
+		if value.Value != nil {
+			ret[label] = value.Value.AsInterface()
+		} else {
+			ret[label] = value.Default.AsInterface()
+		}
+	}
+	return ret
+}
+
+// ContextMap compiles the context data values into a map, filling the fields
+// with their defaults when needed.
+func (c *Policy) ContextMap() map[string]any {
+	ret := map[string]any{}
+	for label, value := range c.Context {
 		if value.Value != nil {
 			ret[label] = value.Value.AsInterface()
 		} else {

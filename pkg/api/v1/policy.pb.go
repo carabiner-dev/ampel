@@ -244,7 +244,7 @@ type PolicySetCommon struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Identities    []*Identity            `protobuf:"bytes,1,rep,name=identities,proto3" json:"identities,omitempty"`
 	References    []*PolicyRef           `protobuf:"bytes,2,rep,name=references,proto3" json:"references,omitempty"`
-	Contect       *Context               `protobuf:"bytes,3,opt,name=contect,proto3" json:"contect,omitempty"`
+	Context       map[string]*ContextVal `protobuf:"bytes,3,rep,name=context,proto3" json:"context,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -293,9 +293,9 @@ func (x *PolicySetCommon) GetReferences() []*PolicyRef {
 	return nil
 }
 
-func (x *PolicySetCommon) GetContect() *Context {
+func (x *PolicySetCommon) GetContext() map[string]*ContextVal {
 	if x != nil {
-		return x.Contect
+		return x.Context
 	}
 	return nil
 }
@@ -305,7 +305,7 @@ type Policy struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Source        *PolicyRef             `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
 	Meta          *Meta                  `protobuf:"bytes,3,opt,name=meta,proto3" json:"meta,omitempty"`
-	Context       *Context               `protobuf:"bytes,4,opt,name=context,proto3" json:"context,omitempty"`
+	Context       map[string]*ContextVal `protobuf:"bytes,4,rep,name=context,proto3" json:"context,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Chain         []*ChainLink           `protobuf:"bytes,5,rep,name=chain,proto3" json:"chain,omitempty"`
 	Identities    []*Identity            `protobuf:"bytes,6,rep,name=identities,proto3" json:"identities,omitempty"`
 	Predicates    *PredicateSpec         `protobuf:"bytes,7,opt,name=predicates,proto3" json:"predicates,omitempty"`
@@ -366,7 +366,7 @@ func (x *Policy) GetMeta() *Meta {
 	return nil
 }
 
-func (x *Policy) GetContext() *Context {
+func (x *Policy) GetContext() map[string]*ContextVal {
 	if x != nil {
 		return x.Context
 	}
@@ -939,27 +939,30 @@ func (x *IdentityRef) GetId() string {
 	return ""
 }
 
-type Context struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
-	Values        map[string]*Context_ValueDef `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+type ContextVal struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+	Required      bool                   `protobuf:"varint,2,opt,name=required,proto3" json:"required,omitempty"`
+	Value         *structpb.Value        `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+	Default       *structpb.Value        `protobuf:"bytes,4,opt,name=default,proto3" json:"default,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Context) Reset() {
-	*x = Context{}
+func (x *ContextVal) Reset() {
+	*x = ContextVal{}
 	mi := &file_policy_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Context) String() string {
+func (x *ContextVal) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Context) ProtoMessage() {}
+func (*ContextVal) ProtoMessage() {}
 
-func (x *Context) ProtoReflect() protoreflect.Message {
+func (x *ContextVal) ProtoReflect() protoreflect.Message {
 	mi := &file_policy_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -971,14 +974,35 @@ func (x *Context) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Context.ProtoReflect.Descriptor instead.
-func (*Context) Descriptor() ([]byte, []int) {
+// Deprecated: Use ContextVal.ProtoReflect.Descriptor instead.
+func (*ContextVal) Descriptor() ([]byte, []int) {
 	return file_policy_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *Context) GetValues() map[string]*Context_ValueDef {
+func (x *ContextVal) GetType() string {
 	if x != nil {
-		return x.Values
+		return x.Type
+	}
+	return ""
+}
+
+func (x *ContextVal) GetRequired() bool {
+	if x != nil {
+		return x.Required
+	}
+	return false
+}
+
+func (x *ContextVal) GetValue() *structpb.Value {
+	if x != nil {
+		return x.Value
+	}
+	return nil
+}
+
+func (x *ContextVal) GetDefault() *structpb.Value {
+	if x != nil {
+		return x.Default
 	}
 	return nil
 }
@@ -1449,74 +1473,6 @@ func (x *Output) GetValue() *structpb.Value {
 	return nil
 }
 
-type Context_ValueDef struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
-	Required      bool                   `protobuf:"varint,2,opt,name=required,proto3" json:"required,omitempty"`
-	Value         *structpb.Value        `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
-	Default       *structpb.Value        `protobuf:"bytes,4,opt,name=default,proto3" json:"default,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Context_ValueDef) Reset() {
-	*x = Context_ValueDef{}
-	mi := &file_policy_proto_msgTypes[23]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Context_ValueDef) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Context_ValueDef) ProtoMessage() {}
-
-func (x *Context_ValueDef) ProtoReflect() protoreflect.Message {
-	mi := &file_policy_proto_msgTypes[23]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Context_ValueDef.ProtoReflect.Descriptor instead.
-func (*Context_ValueDef) Descriptor() ([]byte, []int) {
-	return file_policy_proto_rawDescGZIP(), []int{13, 1}
-}
-
-func (x *Context_ValueDef) GetType() string {
-	if x != nil {
-		return x.Type
-	}
-	return ""
-}
-
-func (x *Context_ValueDef) GetRequired() bool {
-	if x != nil {
-		return x.Required
-	}
-	return false
-}
-
-func (x *Context_ValueDef) GetValue() *structpb.Value {
-	if x != nil {
-		return x.Value
-	}
-	return nil
-}
-
-func (x *Context_ValueDef) GetDefault() *structpb.Value {
-	if x != nil {
-		return x.Default
-	}
-	return nil
-}
-
 var File_policy_proto protoreflect.FileDescriptor
 
 const file_policy_proto_rawDesc = "" +
@@ -1543,20 +1499,23 @@ const file_policy_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12<\n" +
 	"\n" +
 	"definition\x18\x03 \x01(\v2\x1c.ampel.v1.ResourceDescriptorR\n" +
-	"definition\"\xa7\x01\n" +
+	"definition\"\x8e\x02\n" +
 	"\x0fPolicySetCommon\x122\n" +
 	"\n" +
 	"identities\x18\x01 \x03(\v2\x12.ampel.v1.IdentityR\n" +
 	"identities\x123\n" +
 	"\n" +
 	"references\x18\x02 \x03(\v2\x13.ampel.v1.PolicyRefR\n" +
-	"references\x12+\n" +
-	"\acontect\x18\x03 \x01(\v2\x11.ampel.v1.ContextR\acontect\"\x92\x03\n" +
+	"references\x12@\n" +
+	"\acontext\x18\x03 \x03(\v2&.ampel.v1.PolicySetCommon.ContextEntryR\acontext\x1aP\n" +
+	"\fContextEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12*\n" +
+	"\x05value\x18\x02 \x01(\v2\x14.ampel.v1.ContextValR\x05value:\x028\x01\"\xf0\x03\n" +
 	"\x06Policy\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12+\n" +
 	"\x06source\x18\x02 \x01(\v2\x13.ampel.v1.PolicyRefR\x06source\x12\"\n" +
-	"\x04meta\x18\x03 \x01(\v2\x0e.ampel.v1.MetaR\x04meta\x12+\n" +
-	"\acontext\x18\x04 \x01(\v2\x11.ampel.v1.ContextR\acontext\x12)\n" +
+	"\x04meta\x18\x03 \x01(\v2\x0e.ampel.v1.MetaR\x04meta\x127\n" +
+	"\acontext\x18\x04 \x03(\v2\x1d.ampel.v1.Policy.ContextEntryR\acontext\x12)\n" +
 	"\x05chain\x18\x05 \x03(\v2\x13.ampel.v1.ChainLinkR\x05chain\x122\n" +
 	"\n" +
 	"identities\x18\x06 \x03(\v2\x12.ampel.v1.IdentityR\n" +
@@ -1565,7 +1524,10 @@ const file_policy_proto_rawDesc = "" +
 	"predicates\x18\a \x01(\v2\x17.ampel.v1.PredicateSpecR\n" +
 	"predicates\x129\n" +
 	"\ftransformers\x18\b \x03(\v2\x15.ampel.v1.TransformerR\ftransformers\x12'\n" +
-	"\x06tenets\x18\t \x03(\v2\x0f.ampel.v1.TenetR\x06tenets\"\x9f\x01\n" +
+	"\x06tenets\x18\t \x03(\v2\x0f.ampel.v1.TenetR\x06tenets\x1aP\n" +
+	"\fContextEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12*\n" +
+	"\x05value\x18\x02 \x01(\v2\x14.ampel.v1.ContextValR\x05value:\x028\x01\"\x9f\x01\n" +
 	"\tPolicyRef\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x03R\aversion\x12.\n" +
@@ -1609,13 +1571,9 @@ const file_policy_proto_rawDesc = "" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x12\n" +
 	"\x04data\x18\x03 \x01(\tR\x04data\"\x1d\n" +
 	"\vIdentityRef\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\xb4\x02\n" +
-	"\aContext\x125\n" +
-	"\x06values\x18\x01 \x03(\v2\x1d.ampel.v1.Context.ValuesEntryR\x06values\x1aU\n" +
-	"\vValuesEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x120\n" +
-	"\x05value\x18\x02 \x01(\v2\x1a.ampel.v1.Context.ValueDefR\x05value:\x028\x01\x1a\x9a\x01\n" +
-	"\bValueDef\x12\x12\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x9c\x01\n" +
+	"\n" +
+	"ContextVal\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x1a\n" +
 	"\brequired\x18\x02 \x01(\bR\brequired\x12,\n" +
 	"\x05value\x18\x03 \x01(\v2\x16.google.protobuf.ValueR\x05value\x120\n" +
@@ -1689,7 +1647,7 @@ var file_policy_proto_goTypes = []any{
 	(*IdentitySigstore)(nil),      // 10: ampel.v1.IdentitySigstore
 	(*IdentityKey)(nil),           // 11: ampel.v1.IdentityKey
 	(*IdentityRef)(nil),           // 12: ampel.v1.IdentityRef
-	(*Context)(nil),               // 13: ampel.v1.Context
+	(*ContextVal)(nil),            // 13: ampel.v1.ContextVal
 	(*Error)(nil),                 // 14: ampel.v1.Error
 	(*Transformer)(nil),           // 15: ampel.v1.Transformer
 	(*PredicateSpec)(nil),         // 16: ampel.v1.PredicateSpec
@@ -1698,8 +1656,8 @@ var file_policy_proto_goTypes = []any{
 	(*ChainedPredicate)(nil),      // 19: ampel.v1.ChainedPredicate
 	(*Assessment)(nil),            // 20: ampel.v1.Assessment
 	(*Output)(nil),                // 21: ampel.v1.Output
-	nil,                           // 22: ampel.v1.Context.ValuesEntry
-	(*Context_ValueDef)(nil),      // 23: ampel.v1.Context.ValueDef
+	nil,                           // 22: ampel.v1.PolicySetCommon.ContextEntry
+	nil,                           // 23: ampel.v1.Policy.ContextEntry
 	nil,                           // 24: ampel.v1.Tenet.OutputsEntry
 	(*timestamppb.Timestamp)(nil), // 25: google.protobuf.Timestamp
 	(*ResourceDescriptor)(nil),    // 26: ampel.v1.ResourceDescriptor
@@ -1714,10 +1672,10 @@ var file_policy_proto_depIdxs = []int32{
 	26, // 5: ampel.v1.FrameworkRef.definition:type_name -> ampel.v1.ResourceDescriptor
 	8,  // 6: ampel.v1.PolicySetCommon.identities:type_name -> ampel.v1.Identity
 	5,  // 7: ampel.v1.PolicySetCommon.references:type_name -> ampel.v1.PolicyRef
-	13, // 8: ampel.v1.PolicySetCommon.contect:type_name -> ampel.v1.Context
+	22, // 8: ampel.v1.PolicySetCommon.context:type_name -> ampel.v1.PolicySetCommon.ContextEntry
 	5,  // 9: ampel.v1.Policy.source:type_name -> ampel.v1.PolicyRef
 	7,  // 10: ampel.v1.Policy.meta:type_name -> ampel.v1.Meta
-	13, // 11: ampel.v1.Policy.context:type_name -> ampel.v1.Context
+	23, // 11: ampel.v1.Policy.context:type_name -> ampel.v1.Policy.ContextEntry
 	6,  // 12: ampel.v1.Policy.chain:type_name -> ampel.v1.ChainLink
 	8,  // 13: ampel.v1.Policy.identities:type_name -> ampel.v1.Identity
 	16, // 14: ampel.v1.Policy.predicates:type_name -> ampel.v1.PredicateSpec
@@ -1731,16 +1689,16 @@ var file_policy_proto_depIdxs = []int32{
 	10, // 22: ampel.v1.Identity.sigstore:type_name -> ampel.v1.IdentitySigstore
 	11, // 23: ampel.v1.Identity.key:type_name -> ampel.v1.IdentityKey
 	12, // 24: ampel.v1.Identity.ref:type_name -> ampel.v1.IdentityRef
-	22, // 25: ampel.v1.Context.values:type_name -> ampel.v1.Context.ValuesEntry
-	16, // 26: ampel.v1.Tenet.predicates:type_name -> ampel.v1.PredicateSpec
-	24, // 27: ampel.v1.Tenet.outputs:type_name -> ampel.v1.Tenet.OutputsEntry
-	14, // 28: ampel.v1.Tenet.error:type_name -> ampel.v1.Error
-	20, // 29: ampel.v1.Tenet.assessment:type_name -> ampel.v1.Assessment
-	8,  // 30: ampel.v1.ChainedPredicate.identities:type_name -> ampel.v1.Identity
-	27, // 31: ampel.v1.Output.value:type_name -> google.protobuf.Value
-	23, // 32: ampel.v1.Context.ValuesEntry.value:type_name -> ampel.v1.Context.ValueDef
-	27, // 33: ampel.v1.Context.ValueDef.value:type_name -> google.protobuf.Value
-	27, // 34: ampel.v1.Context.ValueDef.default:type_name -> google.protobuf.Value
+	27, // 25: ampel.v1.ContextVal.value:type_name -> google.protobuf.Value
+	27, // 26: ampel.v1.ContextVal.default:type_name -> google.protobuf.Value
+	16, // 27: ampel.v1.Tenet.predicates:type_name -> ampel.v1.PredicateSpec
+	24, // 28: ampel.v1.Tenet.outputs:type_name -> ampel.v1.Tenet.OutputsEntry
+	14, // 29: ampel.v1.Tenet.error:type_name -> ampel.v1.Error
+	20, // 30: ampel.v1.Tenet.assessment:type_name -> ampel.v1.Assessment
+	8,  // 31: ampel.v1.ChainedPredicate.identities:type_name -> ampel.v1.Identity
+	27, // 32: ampel.v1.Output.value:type_name -> google.protobuf.Value
+	13, // 33: ampel.v1.PolicySetCommon.ContextEntry.value:type_name -> ampel.v1.ContextVal
+	13, // 34: ampel.v1.Policy.ContextEntry.value:type_name -> ampel.v1.ContextVal
 	21, // 35: ampel.v1.Tenet.OutputsEntry.value:type_name -> ampel.v1.Output
 	36, // [36:36] is the sub-list for method output_type
 	36, // [36:36] is the sub-list for method input_type
