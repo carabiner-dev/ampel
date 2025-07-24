@@ -46,7 +46,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: chainguard-dev/actions/boilerplate@a643adefc8ec64796d92837210be6bf0a6d0788e # v1.4.4
+      - uses: chainguard-dev/actions/boilerplate@ae2f0393ff2a60c572ff4d3485f406e8f36dfd38 # v1.4.6
         with:
           boilerplate-directory: "./hack/boilerplates"
           extension: ${{ matrix.extension }}
