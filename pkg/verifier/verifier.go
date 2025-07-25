@@ -97,11 +97,18 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("parsing single attestations: %w", err)
 	}
 
+	evalContext, err := ampel.impl.AssemblePolicyEvalContext(ctx, opts, policy)
+	if err != nil {
+		return nil, fmt.Errorf("assembling policy context: %w", err)
+	}
+
 	// Process chained subjects. These have access to all the read attestations
 	// even when some will be discarded in the next step. Computing the chain
 	// will use the configured repositories if more attestations are required.
 	var chain []*api.ChainedSubject
-	subject, chain, policyFail, err := ampel.impl.ProcessChainedSubjects(ctx, opts, evaluators, ampel.Collector, policy, subject, atts)
+	subject, chain, policyFail, err := ampel.impl.ProcessChainedSubjects(
+		ctx, opts, evaluators, ampel.Collector, policy, evalContext, subject, atts,
+	)
 	if err != nil {
 		// If policyFail is true, then we don't return an error but rather
 		// a policy fail result based on the error
@@ -161,8 +168,8 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("applying transformations: %w", err)
 	}
 
-	// Eval Policy
-	result, err := ampel.impl.VerifySubject(ctx, opts, evaluators, policy, subject, preds)
+	// Evaluate the Policy
+	result, err := ampel.impl.VerifySubject(ctx, opts, evaluators, policy, evalContext, subject, preds)
 	if err != nil {
 		return nil, fmt.Errorf("verifying subject: %w", err)
 	}

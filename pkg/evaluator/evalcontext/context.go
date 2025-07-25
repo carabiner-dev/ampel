@@ -11,10 +11,15 @@ import (
 // The evaluation context is the data structure we pass to the evaluators
 // in the context. This lets implementation have access to more data while
 // keeping the function signatures scoped to the minimun elements needed.
+//
+// The evaluation context data travels in this options set after being
+// assembled and precomputed by the verifier from the policy data and
+// external definitions.
 type (
 	EvaluationContextKey struct{}
 	EvaluationContext    struct {
 		Subject attestation.Subject
 		Policy  *api.Policy
+		Context map[string]any
 	}
 )

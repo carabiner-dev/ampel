@@ -52,11 +52,14 @@ type AmpelVerifier interface {
 	AttestResultSetToWriter(io.Writer, *api.ResultSet) error
 
 	// VerifySubject runs the verification process.
-	VerifySubject(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *api.Policy, attestation.Subject, []attestation.Predicate) (*api.Result, error)
+	VerifySubject(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *api.Policy, map[string]any, attestation.Subject, []attestation.Predicate) (*api.Result, error)
 
 	// ProcessChainedSubjects proceses the chain of attestations to find the ultimate
 	// subject a policy is supposed to operate on
-	ProcessChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *api.Policy, attestation.Subject, []attestation.Envelope) (attestation.Subject, []*api.ChainedSubject, bool, error)
+	ProcessChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *api.Policy, map[string]any, attestation.Subject, []attestation.Envelope) (attestation.Subject, []*api.ChainedSubject, bool, error)
+
+	// AssemblePolicyEvalContext builds the policy context by mixing defaults and defined values
+	AssemblePolicyEvalContext(context.Context, *VerificationOptions, *api.Policy) (map[string]any, error)
 }
 
 type defaultIplementation struct{}
@@ -344,7 +347,7 @@ func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, su
 // SelectChainedSubject returns a new subkect from an ingested attestatom
 func (di *defaultIplementation) ProcessChainedSubjects(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
-	agent *collector.Agent, policy *api.Policy, subject attestation.Subject,
+	agent *collector.Agent, policy *api.Policy, evalContext map[string]any, subject attestation.Subject,
 	attestations []attestation.Envelope,
 ) (attestation.Subject, []*api.ChainedSubject, bool, error) {
 	chain := []*api.ChainedSubject{}
@@ -352,6 +355,7 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 	if policy.GetChain() == nil {
 		return subject, chain, false, nil
 	}
+
 	logrus.Debug("Processing evidence chain")
 	for i, link := range policy.GetChain() {
 		logrus.Debugf(" Link needs %s", link.GetPredicate().GetType())
@@ -431,9 +435,10 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 		}
 
 		// Populate the context data
-		ctx := context.WithValue(ctx, evalcontext.EvaluationContext{}, evalcontext.EvaluationContext{
+		ctx := context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalcontext.EvaluationContext{
 			Subject: subject,
 			Policy:  policy,
+			Context: evalContext,
 		})
 		// Execute the selector
 		newsubject, err := evaluators[key].ExecChainedSelector(
@@ -461,11 +466,58 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 	return subject, chain, false, nil
 }
 
+// AssemblePolicyEvalContext puts together the context.
+func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, opts *VerificationOptions, p *api.Policy) (map[string]any, error) {
+	//TODO(puerco): If the policy set sent values from the common context
+	// they would be found in the context.
+	ret := map[string]any{}
+	errs := []error{}
+
+	// Policy has no context
+	if p.GetContext() == nil {
+		return ret, nil
+	}
+
+	definitions := opts.Context
+	if definitions == nil {
+		definitions = map[string]any{}
+	}
+
+	// Assemle the context by overriding values in order
+	for k, contextVal := range p.GetContext() {
+		var v any
+		// First case: If the policy has a burned value, that is it.
+		// Burned context values into the policy are signed and cannot
+		// be modified.
+		if contextVal.Value != nil {
+			ret[k] = contextVal.Value.AsInterface()
+			continue
+		}
+
+		// Second. The overridable base value is the policy default:
+		if contextVal.Default != nil {
+			v = contextVal.Default.AsInterface()
+		}
+
+		// Third. If there is a value defined, we override the default:
+		if v, ok := definitions[k]; ok {
+			ret[k] = v
+		}
+
+		ret[k] = v
+		// Fail if the value is required and not set
+		if contextVal.Required && ret[k] == nil {
+			errs = append(errs, fmt.Errorf("context value %s is required but not set", k))
+		}
+	}
+	return ret, errors.Join(errs...)
+}
+
 // VerifySubject performs the core verification of attested data. This step runs after
 // all gathering, parsing, transforming and verification is performed.
 func (di *defaultIplementation) VerifySubject(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
-	p *api.Policy, subject attestation.Subject, predicates []attestation.Predicate,
+	p *api.Policy, evalContext map[string]any, subject attestation.Subject, predicates []attestation.Predicate,
 ) (*api.Result, error) {
 	rs := &api.Result{
 		DateStart: timestamppb.Now(),
@@ -480,9 +532,7 @@ func (di *defaultIplementation) VerifySubject(
 		},
 	}
 
-	evalOpts := &options.EvaluatorOptions{
-		Context: p.Context,
-	}
+	evalOpts := &options.EvaluatorOptions{}
 
 	errs := []error{}
 	for i, tenet := range p.Tenets {
@@ -493,10 +543,11 @@ func (di *defaultIplementation) VerifySubject(
 
 		// Populate the context data
 		ctx := context.WithValue(
-			ctx, evalcontext.EvaluationContext{},
+			ctx, evalcontext.EvaluationContextKey{},
 			evalcontext.EvaluationContext{
 				Subject: subject,
 				Policy:  p,
+				Context: evalContext,
 			},
 		)
 

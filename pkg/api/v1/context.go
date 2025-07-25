@@ -7,7 +7,7 @@ package v1
 // with their defaults when needed.
 func (s *PolicySet) ContextMap() map[string]any {
 	ret := map[string]any{}
-	for label, value := range s.Context {
+	for label, value := range s.GetCommon().GetContext() {
 		if value.Value != nil {
 			ret[label] = value.Value.AsInterface()
 		} else {

@@ -38,6 +38,9 @@ type VerificationOptions struct {
 	// GitCommitShaHack enables a hack to duplicate gitCommit subjects of read
 	// attestations as sha1 when reading attestations
 	GitCommitShaHack bool
+
+	// Context passes the contextual data to populate the policy at evaltime.
+	Context map[string]any
 }
 
 var DefaultVerificationOptions = VerificationOptions{
