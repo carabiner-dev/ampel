@@ -112,10 +112,10 @@ message IdentityRef {
 }
 
 message ContextVal {
-        string type = 1;
-        bool required = 2;
-        google.protobuf.Value value = 3;
-        google.protobuf.Value default = 4;
+    string type = 1;
+    bool required = 2;
+    google.protobuf.Value value = 3;
+    google.protobuf.Value default = 4;
 }
 
 message Error {
