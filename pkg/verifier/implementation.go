@@ -14,6 +14,7 @@ import (
 
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
@@ -519,6 +520,10 @@ func (di *defaultIplementation) VerifySubject(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
 	p *api.Policy, evalContext map[string]any, subject attestation.Subject, predicates []attestation.Predicate,
 ) (*api.Result, error) {
+	evalContextStruct, err := structpb.NewStruct(evalContext)
+	if err != nil {
+		return nil, fmt.Errorf("serializing evaluation context data: %w", err)
+	}
 	rs := &api.Result{
 		DateStart: timestamppb.Now(),
 		Policy: &api.PolicyRef{
@@ -530,6 +535,7 @@ func (di *defaultIplementation) VerifySubject(
 			Uri:    subject.GetUri(),
 			Digest: subject.GetDigest(),
 		},
+		Context: evalContextStruct,
 	}
 
 	evalOpts := &options.EvaluatorOptions{}
