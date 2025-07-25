@@ -212,7 +212,7 @@ func (e *Evaluator) ExecTenet(
 		evalContext = evalcontext.EvaluationContext{}
 	}
 
-	vars, err := e.impl.BuildVariables(opts, e.Plugins, tenet, evalContext.Policy, evalContext.Subject, predicates)
+	vars, err := e.impl.BuildVariables(opts, e.Plugins, tenet, &evalContext, predicates)
 	if err != nil {
 		return nil, fmt.Errorf("building variables for eval environment: %w", err)
 	}
