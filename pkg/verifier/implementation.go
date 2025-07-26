@@ -348,7 +348,7 @@ func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, su
 // SelectChainedSubject returns a new subkect from an ingested attestatom
 func (di *defaultIplementation) ProcessChainedSubjects(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
-	agent *collector.Agent, policy *api.Policy, evalContext map[string]any, subject attestation.Subject,
+	agent *collector.Agent, policy *api.Policy, evalContextValues map[string]any, subject attestation.Subject,
 	attestations []attestation.Envelope,
 ) (attestation.Subject, []*api.ChainedSubject, bool, error) {
 	chain := []*api.ChainedSubject{}
@@ -437,9 +437,9 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 
 		// Populate the context data
 		ctx := context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalcontext.EvaluationContext{
-			Subject: subject,
-			Policy:  policy,
-			Context: evalContext,
+			Subject:       subject,
+			Policy:        policy,
+			ContextValues: evalContextValues,
 		})
 		// Execute the selector
 		newsubject, err := evaluators[key].ExecChainedSelector(
@@ -471,56 +471,78 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, opts *VerificationOptions, p *api.Policy) (map[string]any, error) {
 	//TODO(puerco): If the policy set sent values from the common context
 	// they would be found in the context.
-	ret := map[string]any{}
 	errs := []error{}
 
-	// Policy has no context
-	if p.GetContext() == nil {
-		return ret, nil
+	// Load the context definitions as received from invocation
+	definitions := map[string]any{}
+	values := map[string]any{}
+	assembledContext := map[string]*api.ContextVal{}
+
+	// Things using AMPEL send the definitions in the context
+	preContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+	if ok {
+		if preContext.ContextValues != nil {
+			definitions = preContext.ContextValues
+		}
+
+		// Assemble the context structure from the struct received from ancestors
+		// (eg if its coming from a PolicySet commons)
+		if preContext.Context != nil {
+			assembledContext = preContext.Context
+		}
+	}
+	fmt.Printf("Pre-assembly: %+v\n", assembledContext)
+
+	// Override the ancestor context structure with the policy (if any)
+	for k, def := range p.GetContext() {
+		if _, ok := assembledContext[k]; ok {
+			fmt.Print(" MERFV")
+			assembledContext[k].Merge(def)
+		} else {
+			assembledContext[k] = def
+		}
 	}
 
-	definitions := opts.Context
-	if definitions == nil {
-		definitions = map[string]any{}
-	}
+	fmt.Printf("Assembled: %+v\n", assembledContext)
 
 	// Assemle the context by overriding values in order
-	for k, contextVal := range p.GetContext() {
+	for k, contextDef := range assembledContext {
 		var v any
 		// First case: If the policy has a burned value, that is it.
 		// Burned context values into the policy are signed and cannot
 		// be modified.
-		if contextVal.Value != nil {
-			ret[k] = contextVal.Value.AsInterface()
+		if contextDef.Value != nil {
+			values[k] = contextDef.Value.AsInterface()
 			continue
 		}
 
 		// Second. The overridable base value is the policy default:
-		if contextVal.Default != nil {
-			v = contextVal.Default.AsInterface()
+		if contextDef.Default != nil {
+			v = contextDef.Default.AsInterface()
 		}
 
 		// Third. If there is a value defined, we override the default:
 		if v, ok := definitions[k]; ok {
-			ret[k] = v
+			values[k] = v
 		}
 
-		ret[k] = v
+		values[k] = v
+
 		// Fail if the value is required and not set
-		if contextVal.Required && ret[k] == nil {
+		if contextDef.Required != nil && *contextDef.Required && values[k] == nil {
 			errs = append(errs, fmt.Errorf("context value %s is required but not set", k))
 		}
 	}
-	return ret, errors.Join(errs...)
+	return values, errors.Join(errs...)
 }
 
 // VerifySubject performs the core verification of attested data. This step runs after
 // all gathering, parsing, transforming and verification is performed.
 func (di *defaultIplementation) VerifySubject(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
-	p *api.Policy, evalContext map[string]any, subject attestation.Subject, predicates []attestation.Predicate,
+	p *api.Policy, evalContextValues map[string]any, subject attestation.Subject, predicates []attestation.Predicate,
 ) (*api.Result, error) {
-	evalContextStruct, err := structpb.NewStruct(evalContext)
+	evalContextValuesStruct, err := structpb.NewStruct(evalContextValues)
 	if err != nil {
 		return nil, fmt.Errorf("serializing evaluation context data: %w", err)
 	}
@@ -535,7 +557,7 @@ func (di *defaultIplementation) VerifySubject(
 			Uri:    subject.GetUri(),
 			Digest: subject.GetDigest(),
 		},
-		Context: evalContextStruct,
+		Context: evalContextValuesStruct,
 	}
 
 	evalOpts := &options.EvaluatorOptions{}
@@ -551,9 +573,9 @@ func (di *defaultIplementation) VerifySubject(
 		ctx := context.WithValue(
 			ctx, evalcontext.EvaluationContextKey{},
 			evalcontext.EvaluationContext{
-				Subject: subject,
-				Policy:  p,
-				Context: evalContext,
+				Subject:       subject,
+				Policy:        p,
+				ContextValues: evalContextValues,
 			},
 		)
 

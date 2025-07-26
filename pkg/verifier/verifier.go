@@ -14,6 +14,7 @@ import (
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 )
 
 type PolicyError struct {
@@ -47,6 +48,18 @@ func (ampel *Ampel) Verify(
 			},
 			Results: []*api.Result{},
 		}
+
+		// If the policyset has a context defined, load it in the context
+		// to send it down the wire to each policy evaluation.
+		if v.GetCommon() != nil && v.GetCommon().GetContext() != nil {
+			evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+			if !ok {
+				evalContext = evalcontext.EvaluationContext{}
+			}
+			evalContext.Context = v.GetCommon().GetContext()
+			ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext)
+		}
+
 		for i, p := range v.Policies {
 			if len(opts.Policies) > 0 && !slices.Contains(opts.Policies, p.Id) {
 				continue

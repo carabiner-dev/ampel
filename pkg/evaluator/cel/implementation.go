@@ -127,8 +127,7 @@ func (dce *defaulCelEvaluator) BuildVariables(
 		ret[VarNamePredicate] = preds[0]
 	}
 
-	// FIXME: From context
-	s, err := structpb.NewStruct(evalContext.Context)
+	s, err := structpb.NewStruct(evalContext.ContextValues)
 	if err != nil {
 		return nil, fmt.Errorf("structuring context data: %w", err)
 	}

@@ -18,8 +18,13 @@ import (
 type (
 	EvaluationContextKey struct{}
 	EvaluationContext    struct {
+		// Subject under evaluation
 		Subject attestation.Subject
-		Policy  *api.Policy
-		Context map[string]any
+		// Policy in effect
+		Policy *api.Policy
+		// Context definitions as distilled through inheritance
+		Context map[string]*api.ContextVal
+		// Context values from evaluation invocation
+		ContextValues map[string]any
 	}
 )
