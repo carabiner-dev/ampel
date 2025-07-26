@@ -469,8 +469,6 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 
 // AssemblePolicyEvalContext puts together the context.
 func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, opts *VerificationOptions, p *api.Policy) (map[string]any, error) {
-	//TODO(puerco): If the policy set sent values from the common context
-	// they would be found in the context.
 	errs := []error{}
 
 	// Load the context definitions as received from invocation
@@ -491,27 +489,27 @@ func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, o
 			assembledContext = preContext.Context
 		}
 	}
-	fmt.Printf("Pre-assembly: %+v\n", assembledContext)
 
 	// Override the ancestor context structure with the policy (if any)
 	for k, def := range p.GetContext() {
 		if _, ok := assembledContext[k]; ok {
-			fmt.Print(" MERFV")
 			assembledContext[k].Merge(def)
 		} else {
 			assembledContext[k] = def
 		}
 	}
 
-	fmt.Printf("Assembled: %+v\n", assembledContext)
-
-	// Assemle the context by overriding values in order
+	// Assemble the context by overriding values in order
 	for k, contextDef := range assembledContext {
 		var v any
-		// First case: If the policy has a burned value, that is it.
+		// First case: If the policy has a burned in value, that is it.
 		// Burned context values into the policy are signed and cannot
 		// be modified.
 		if contextDef.Value != nil {
+			// Potential change:
+			// Here if the defined values attempt to flip a value
+			// burned in the policy code, perhaps we should return
+			// an error instead of ignoring.
 			values[k] = contextDef.Value.AsInterface()
 			continue
 		}
@@ -522,8 +520,8 @@ func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, o
 		}
 
 		// Third. If there is a value defined, we override the default:
-		if v, ok := definitions[k]; ok {
-			values[k] = v
+		if _, ok := definitions[k]; ok {
+			v = definitions[k]
 		}
 
 		values[k] = v
@@ -533,6 +531,7 @@ func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, o
 			errs = append(errs, fmt.Errorf("context value %s is required but not set", k))
 		}
 	}
+
 	return values, errors.Join(errs...)
 }
 

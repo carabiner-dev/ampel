@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -21,6 +22,7 @@ import (
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/collector"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 	"github.com/carabiner-dev/ampel/pkg/policy"
 	"github.com/carabiner-dev/ampel/pkg/verifier"
 )
@@ -32,13 +34,15 @@ var (
 
 type verifyOptions struct {
 	verifier.VerificationOptions
-	PolicyFile   string
-	Format       string
-	PolicyOutput bool
-	Collectors   []string
-	Subject      string
-	SubjectFile  string
-	SubjectHash  string
+	PolicyFile        string
+	Format            string
+	PolicyOutput      bool
+	ContextJSON       string
+	ContextStringVals []string
+	Collectors        []string
+	Subject           string
+	SubjectFile       string
+	SubjectHash       string
 }
 
 // AddFlags adds the flags
@@ -65,6 +69,14 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 
 	cmd.PersistentFlags().BoolVar(
 		&o.AttestResults, "attest-results", o.AttestResults, "write an attestation with the evaluation results to --results-path",
+	)
+
+	cmd.PersistentFlags().StringSliceVarP(
+		&o.ContextStringVals, "context", "x", []string{}, "evaluation context value definitions",
+	)
+
+	cmd.PersistentFlags().StringVar(
+		&o.ContextJSON, "context-json", "", "JSON struct with the context definition or prefix with @ to read from a file",
 	)
 
 	cmd.PersistentFlags().StringVar(
@@ -273,8 +285,49 @@ using a collector.
 				return fmt.Errorf("creating verifier: %w", err)
 			}
 
-			// TODO(puerco): If file is a policy pass it here (not just the set)
-			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, set, subject)
+			// Build the context
+			ctx := context.Background()
+
+			ctxVals := map[string]any{}
+
+			// Read context data from JSON:
+			if opts.ContextJSON != "" {
+				// Inline ....
+				jsonData := []byte(opts.ContextJSON)
+				// ... or from a file if it's preceded with a @:
+				if strings.HasPrefix(opts.ContextJSON, "@") {
+					jsonData, err = os.ReadFile(opts.ContextJSON[1:])
+					if err != nil {
+						return fmt.Errorf("reading context data file: %w", err)
+					}
+				}
+
+				// unmarshal the json blob
+				if err := json.Unmarshal(jsonData, &ctxVals); err != nil {
+					return fmt.Errorf("unmarshaling context data from JSON: %w", err)
+				}
+			}
+
+			// Parse individual string values from the -x flag
+			if len(opts.ContextStringVals) > 0 {
+				for _, stringSpec := range opts.ContextStringVals {
+					key, val, ok := strings.Cut(stringSpec, ":")
+					if !ok {
+						return fmt.Errorf("invalid context string: %q (must be formatted as key:value )", stringSpec)
+					}
+					ctxVals[key] = val
+				}
+			}
+
+			// if there are values, ship them
+			if len(ctxVals) > 0 {
+				ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalcontext.EvaluationContext{
+					ContextValues: ctxVals,
+				})
+			}
+
+			// Run the evaluation:
+			results, err := ampel.Verify(ctx, &opts.VerificationOptions, set, subject)
 			if err != nil {
 				return fmt.Errorf("running subject verification: %w", err)
 			}
@@ -302,10 +355,8 @@ using a collector.
 						return fmt.Errorf("rendering results: %w", err)
 					}
 				}
-			} else {
-				if err := eng.RenderResultSet(os.Stdout, results); err != nil {
-					return fmt.Errorf("rendering results: %w", err)
-				}
+			} else if err := eng.RenderResultSet(os.Stdout, results); err != nil {
+				return fmt.Errorf("rendering results: %w", err)
 			}
 
 			if results.Status == api.StatusFAIL && opts.SetExitCode {
