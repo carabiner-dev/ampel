@@ -16,12 +16,12 @@ message Result {
     string status = 1;
     google.protobuf.Timestamp date_start = 2;
     google.protobuf.Timestamp date_end = 3;
-    // repeated Output output = 3;
     PolicyRef policy = 4;
     repeated EvalResult eval_results = 5;
     Meta meta = 6;
-    repeated ChainedSubject chain = 7;
-    ResourceDescriptor subject = 8;
+    google.protobuf.Struct context = 7;
+    repeated ChainedSubject chain = 8;
+    ResourceDescriptor subject = 9;
 }
 
 message ChainedSubject {

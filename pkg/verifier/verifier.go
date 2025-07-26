@@ -14,6 +14,7 @@ import (
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 )
 
 type PolicyError struct {
@@ -47,6 +48,18 @@ func (ampel *Ampel) Verify(
 			},
 			Results: []*api.Result{},
 		}
+
+		// If the policyset has a context defined, load it in the context
+		// to send it down the wire to each policy evaluation.
+		if v.GetCommon() != nil && v.GetCommon().GetContext() != nil {
+			evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+			if !ok {
+				evalContext = evalcontext.EvaluationContext{}
+			}
+			evalContext.Context = v.GetCommon().GetContext()
+			ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext)
+		}
+
 		for i, p := range v.Policies {
 			if len(opts.Policies) > 0 && !slices.Contains(opts.Policies, p.Id) {
 				continue
@@ -97,11 +110,18 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("parsing single attestations: %w", err)
 	}
 
+	evalContext, err := ampel.impl.AssemblePolicyEvalContext(ctx, opts, policy)
+	if err != nil {
+		return nil, fmt.Errorf("assembling policy context: %w", err)
+	}
+
 	// Process chained subjects. These have access to all the read attestations
 	// even when some will be discarded in the next step. Computing the chain
 	// will use the configured repositories if more attestations are required.
 	var chain []*api.ChainedSubject
-	subject, chain, policyFail, err := ampel.impl.ProcessChainedSubjects(ctx, opts, evaluators, ampel.Collector, policy, subject, atts)
+	subject, chain, policyFail, err := ampel.impl.ProcessChainedSubjects(
+		ctx, opts, evaluators, ampel.Collector, policy, evalContext, subject, atts,
+	)
 	if err != nil {
 		// If policyFail is true, then we don't return an error but rather
 		// a policy fail result based on the error
@@ -161,8 +181,8 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("applying transformations: %w", err)
 	}
 
-	// Eval Policy
-	result, err := ampel.impl.VerifySubject(ctx, opts, evaluators, policy, subject, preds)
+	// Evaluate the Policy
+	result, err := ampel.impl.VerifySubject(ctx, opts, evaluators, policy, evalContext, subject, preds)
 	if err != nil {
 		return nil, fmt.Errorf("verifying subject: %w", err)
 	}

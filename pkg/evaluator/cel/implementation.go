@@ -25,13 +25,14 @@ import (
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
 
 type CelEvaluatorImplementation interface {
 	CompileCode(*cel.Env, string) (*cel.Ast, error)
 	CreateEnvironment(*options.EvaluatorOptions, map[string]Plugin) (*cel.Env, error)
-	BuildVariables(*options.EvaluatorOptions, map[string]Plugin, *api.Tenet, *api.Policy, attestation.Subject, []attestation.Predicate) (*map[string]any, error)
+	BuildVariables(*options.EvaluatorOptions, map[string]Plugin, *api.Tenet, *evalcontext.EvaluationContext, []attestation.Predicate) (*map[string]any, error)
 	EnsurePredicates(*api.Tenet, *map[string]any) (*api.EvalResult, error)
 	EvaluateOutputs(*cel.Env, map[string]*cel.Ast, *map[string]any) (map[string]any, error)
 	Evaluate(*cel.Env, *cel.Ast, *map[string]any) (*api.EvalResult, error)
@@ -92,7 +93,7 @@ func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, pl
 //nolint:gocritic // This passes around a large struct in vars
 func (dce *defaulCelEvaluator) BuildVariables(
 	opts *options.EvaluatorOptions, plugins map[string]Plugin, tenet *api.Tenet,
-	policy *api.Policy, subject attestation.Subject, predicates []attestation.Predicate,
+	evalContext *evalcontext.EvaluationContext, predicates []attestation.Predicate,
 ) (*map[string]any, error) {
 	// List of variables to return
 	ret := map[string]any{}
@@ -126,22 +127,17 @@ func (dce *defaulCelEvaluator) BuildVariables(
 		ret[VarNamePredicate] = preds[0]
 	}
 
-	// Context
-	contextData := map[string]any{}
-	if opts.Context != nil {
-		contextData = opts.Context.ToMap()
-	}
-	s, err := structpb.NewStruct(contextData)
+	s, err := structpb.NewStruct(evalContext.ContextValues)
 	if err != nil {
 		return nil, fmt.Errorf("structuring context data: %w", err)
 	}
 	ret[VarNameContext] = s
 
-	ret[VarNameSubject] = extractSubjectData(subject)
+	ret[VarNameSubject] = extractSubjectData(evalContext.Subject)
 
 	logrus.Debugf("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
 	for _, p := range plugins {
-		maps.Copy(ret, p.VarValues(policy, subject, fpreds))
+		maps.Copy(ret, p.VarValues(evalContext.Policy, evalContext.Subject, fpreds))
 	}
 	return &ret, nil
 }
@@ -485,17 +481,17 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 	ret[VarNamePredicate] = val
 	ret[VarNameSubject] = extractSubjectData(subject)
 
-	// Add the context to the runtime environment
-	contextData := map[string]any{}
-	if opts.Context != nil {
-		contextData = opts.Context.ToMap()
-	}
+	// // Add the context to the runtime environment
+	// contextData := map[string]any{}
+	// if opts.Context != nil {
+	// 	contextData = opts.Context
+	// }
 
-	s, err := structpb.NewStruct(contextData)
-	if err != nil {
-		return nil, fmt.Errorf("structuring context data: %w", err)
-	}
-	ret[VarNameContext] = s
+	// s, err := structpb.NewStruct(contextData)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("structuring context data: %w", err)
+	// }
+	// ret[VarNameContext] = s
 
 	logrus.Debugf("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
 	for _, p := range plugins {
