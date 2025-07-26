@@ -54,7 +54,18 @@ contributions are welcome!
     - Identities
     - Predicate Spec
     - Tenets
-  - Context
+  - Evaluation Context
+    - An Intro to Contextual Data
+    - The ContextVal struct
+    - Common Context in PolicySets
+    - Data Sources
+      - Policy Code
+      - JSON Struct
+      - Command Line Flag
+    - Definition Override Order
+    - Using Context Data
+      - Data types and Complex Data
+    - Context Values in Evaluation Results
   - Transformers
   - Attestation Chaining
   - Identities
