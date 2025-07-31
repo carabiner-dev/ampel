@@ -477,6 +477,12 @@ func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, o
 	values := map[string]any{}
 	assembledContext := map[string]*api.ContextVal{}
 
+	// Context names can be any case, but they cannot clash when normalized
+	// to lower case. This means that both MyValue and myvalue are valid names
+	// but you cannot have both at the same time.
+	lcnames := map[string]string{}
+	fromParent := map[string]struct{}{} // This is to track if the value vas defined at the parent
+
 	// Things using AMPEL send the definitions in the context
 	preContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
 	if ok {
@@ -489,7 +495,14 @@ func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, o
 		if preContext.Context != nil {
 			for k, v := range preContext.Context {
 				// Validate key?
-				assembledContext[strings.ToLower(k)] = v
+				assembledContext[k] = v
+				if existingName, ok := lcnames[strings.ToLower(k)]; ok {
+					if existingName != k {
+						return nil, fmt.Errorf("parent context value name %q clashes with existing name %q", k, lcnames[strings.ToLower(k)])
+					}
+				}
+				lcnames[strings.ToLower(k)] = k
+				fromParent[k] = struct{}{}
 			}
 		}
 	}
@@ -497,7 +510,18 @@ func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, o
 	// Override the ancestor context structure with the policy context
 	// definition (if any)
 	for k, def := range p.GetContext() {
-		k = strings.ToLower(k)
+		// Check if there is an existing value name that clashed with this one
+		// when normalized to lowercase
+		if existingName, ok := lcnames[strings.ToLower(k)]; ok {
+			if existingName != k {
+				// Here choose which error to return
+				if _, ok := fromParent[k]; ok {
+					return nil, fmt.Errorf("context value name %q clashes with %q coming from parent context", k, lcnames[strings.ToLower(k)])
+				}
+				return nil, fmt.Errorf("context value name %q clashes with existing name %q", k, lcnames[strings.ToLower(k)])
+			}
+		}
+		lcnames[strings.ToLower(k)] = k
 		// Validate the key? Probably in a policy validation func
 		if _, ok := assembledContext[k]; ok {
 			assembledContext[k].Merge(def)
@@ -511,6 +535,9 @@ func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, o
 	if err != nil {
 		return nil, fmt.Errorf("getting values from providers: %w", err)
 	}
+
+	fmt.Printf("Assembled Context: %+v\n", assembledContext)
+	fmt.Printf("Context Values: %+v\n", definitions)
 
 	// Assemble the context by overriding values in order
 	for k, contextDef := range assembledContext {
