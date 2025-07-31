@@ -82,6 +82,11 @@ tuned to changing environment conditions with contextual data. For example, a
 policy can define a context value with the repository name, that would allow it
 to define tenets that can evaluate in any repository.
 
+Contextual data is exposed to the evaluation runtime in key-value pairs. A policy
+defines the values it needs and one of the context data providers supplies the
+values. During the policy evaluation, all values are accesible through the
+`context.` global object.
+
 ### An Intro to Contextual Data
 
 Contextual data is not meant to be used a general purpose variables, the idea
@@ -125,6 +130,17 @@ or overriding a value, the new value can be of a different type. It is up to the
 evaluation runtime to cast the context values into their preferred type
 representation but in general if the  runtime is typed (such as CEL for example),
 the runtime _should_ respect the original type.
+
+### Context Value Naming
+
+Context value names are strings. They can use all letters (a-z) and digits (0-9)
+plus underscores (_). Uppercase characters can be used and SHOULD be honored in
+by runtimes.
+
+One important note on names: __Context names cannot clash when normalized
+to lowercase__. In other words: `MyValue` and `myvalue` are both valid context
+value names but you cannot have define them at the same time. The reason for this
+is that AMPEL needs to support context value providers that may be case insensitive.
 
 ### Common Context in PolicySets
 
