@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"slices"
 	"strings"
@@ -20,6 +21,7 @@ import (
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/collector"
+	acontext "github.com/carabiner-dev/ampel/pkg/context"
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
@@ -472,7 +474,6 @@ func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, o
 	errs := []error{}
 
 	// Load the context definitions as received from invocation
-	definitions := map[string]any{}
 	values := map[string]any{}
 	assembledContext := map[string]*api.ContextVal{}
 
@@ -480,23 +481,35 @@ func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, o
 	preContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
 	if ok {
 		if preContext.ContextValues != nil {
-			definitions = preContext.ContextValues
+			logrus.Warnf("Eval context has preloaded values. They will be discarded")
 		}
 
 		// Assemble the context structure from the struct received from ancestors
 		// (eg if its coming from a PolicySet commons)
 		if preContext.Context != nil {
-			assembledContext = preContext.Context
+			for k, v := range preContext.Context {
+				// Validate key?
+				assembledContext[strings.ToLower(k)] = v
+			}
 		}
 	}
 
-	// Override the ancestor context structure with the policy (if any)
+	// Override the ancestor context structure with the policy context
+	// definition (if any)
 	for k, def := range p.GetContext() {
+		k = strings.ToLower(k)
+		// Validate the key? Probably in a policy validation func
 		if _, ok := assembledContext[k]; ok {
 			assembledContext[k].Merge(def)
 		} else {
 			assembledContext[k] = def
 		}
+	}
+
+	// Get the values from the configured providers
+	definitions, err := acontext.GetValues(opts.ContextProviders, slices.Collect(maps.Keys(assembledContext)))
+	if err != nil {
+		return nil, fmt.Errorf("getting values from providers: %w", err)
 	}
 
 	// Assemble the context by overriding values in order

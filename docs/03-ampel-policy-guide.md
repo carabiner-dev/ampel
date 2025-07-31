@@ -169,13 +169,13 @@ As mentioned above, values can be replaced with another type for now.
 
 Contextual values can get their data from external sources which are not
 connected to the subject, evidence or policy. In AMPEL's initial release we
-support three sources: Policy code, a JSON struct or through command line flags.
-AMPEL will support more ways of defining context values in the future.
+support four sources: Policy code, a JSON struct, command line flags or
+environment variables. AMPEL will support more ways of defining context
+values in the future.
 
-
-Data sources may define any number of values but note that any keys that
-are not defined in (or computed into) the policy context definition will
-not be exposed to the evaluation engine.
+Data sources may define any number of values but note that for security 
+purposes, any keys that are not defined in (or computed into) the policy
+context definition will not be exposed to the evaluation engine.
 
 #### Policy Code
 
@@ -231,20 +231,52 @@ ampel verify ... --context="name:John Doe" -x "email:john@doe.com"
 Note that all values defined with the `--context` flag are sent as string to 
 the evaluation engine.
 
+#### Environment Variables
+
+Setting the `--context-env` flag loads the environent context provider. This
+provider reads context data from environment variables. To expose context data
+to AMPEL through envvars, set an environment variable with the `AMPEL_` prefix
+followed by the context definition name in uppercase.
+
+For example, to define this context value:
+
+```json
+  "context": {
+    "email": { "required": true }
+  }
+```
+
+Export an environment variable called `AMPEL_EMAIL`:
+
+```bash
+export AMPEL_EMAIL="joe@example.com"
+```
+
+Because of security constraints, all variable names need to have the prefix.
+If you need to read an existing variable you could copy its value in the shell:
+
+```bash
+export AMPEL_USERNAME="${USERNAME}"
+```
+
 ### Definition Override Order
 
-When computing the stack of value definitions, AMPEL overrides the data in
-the following order:
+When computing the stack of value definitions, the AMPEL CLI overrides the data
+in the following order:
 
 1. PolicySet Default
 2. Policy Default
-3. JSON Struct
-4. Command line flag
-5. PolicySet value
-6. Policy value
+3. Environment Variable
+4. JSON Struct
+5. Command line flag
+6. PolicySet value
+7. Policy value
 
-Note that a policyset or policy that depends on another policy set or policy can
-also override its values.
+When referencing policies, a PolicySet or Policy derived from another
+source file will inherit its parent's context definition and can override it.
+
+Also note that this order applies to the ampel CLI verifier. Other programs
+using AMPEL to verify may not follow this order.
 
 ### Using Context Data
 
