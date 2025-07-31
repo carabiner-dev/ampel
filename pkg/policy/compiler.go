@@ -4,10 +4,15 @@
 package policy
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
+	"github.com/carabiner-dev/vcslocator"
+	"sigs.k8s.io/release-utils/http"
 )
 
 type CompilerOptions struct {
@@ -40,6 +45,51 @@ func NewCompiler() (*Compiler, error) {
 	}, nil
 }
 
+// CompileLocation takes a location string and parses a policy or policy set
+// as read from it. The location will be tested, if it is a URL or VCS locator,
+// it will be retrieved remotely. If its a local file, it will be read from
+// disk. Anything else throws an error.
+func (compiler *Compiler) CompileLocation(location string) (set *api.PolicySet, pcy *api.Policy, err error) {
+	// First, if it looks like a URI, fetch it.
+	//
+	// TODO(puerco): Figure out a way to not hardcode supported schemes
+	if strings.HasPrefix(location, "git+https://") ||
+		strings.HasPrefix(location, "git+ssh://") ||
+		strings.HasPrefix(location, "https://") {
+		return compiler.CompileRemote(location)
+	}
+
+	// Try it as a file:
+	set, pcy, err = compiler.CompileFile(location)
+	if err == nil {
+		return set, pcy, nil
+	} else {
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, nil, fmt.Errorf("reading policy file: %w", err)
+		}
+	}
+	return nil, nil, errors.New("unsupported policy location")
+}
+
+// CompileRemote reads a policy or policy set from a remote location. The location
+// URI can be a git VCS locator using HTTPS or SSH as transport or an HTTPS URL.
+func (compiler *Compiler) CompileRemote(uri string) (set *api.PolicySet, pcy *api.Policy, err error) {
+	var b bytes.Buffer
+	switch {
+	case strings.HasPrefix(uri, "git+https://") || strings.HasPrefix(uri, "git+ssh://"):
+		err = vcslocator.CopyFile(uri, &b)
+	case strings.HasPrefix(uri, "https://"):
+		err = http.NewAgent().GetToWriter(&b, uri)
+	default:
+		return nil, nil, fmt.Errorf("unsupported policy location")
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("reading policy from remote location: %w", err)
+	}
+	return compiler.Compile(b.Bytes())
+}
+
+// CompileFile reads data from a local file and returns either a policy set or policy
 func (compiler *Compiler) CompileFile(path string) (set *api.PolicySet, pcy *api.Policy, err error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
