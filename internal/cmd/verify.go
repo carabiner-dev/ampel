@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -22,7 +21,7 @@ import (
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/collector"
-	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
+	acontext "github.com/carabiner-dev/ampel/pkg/context"
 	"github.com/carabiner-dev/ampel/pkg/policy"
 	"github.com/carabiner-dev/ampel/pkg/verifier"
 )
@@ -37,6 +36,7 @@ type verifyOptions struct {
 	PolicyFile        string
 	Format            string
 	PolicyOutput      bool
+	ContextEnv        bool
 	ContextJSON       string
 	ContextStringVals []string
 	Collectors        []string
@@ -77,6 +77,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 
 	cmd.PersistentFlags().StringVar(
 		&o.ContextJSON, "context-json", "", "JSON struct with the context definition or prefix with @ to read from a file",
+	)
+
+	cmd.PersistentFlags().BoolVar(
+		&o.ContextEnv, "context-env", true, "Support reading context values from env vars",
 	)
 
 	cmd.PersistentFlags().StringVar(
@@ -285,49 +289,28 @@ using a collector.
 				return fmt.Errorf("creating verifier: %w", err)
 			}
 
-			// Build the context
-			ctx := context.Background()
-
-			ctxVals := map[string]any{}
-
-			// Read context data from JSON:
-			if opts.ContextJSON != "" {
-				// Inline ....
-				jsonData := []byte(opts.ContextJSON)
-				// ... or from a file if it's preceded with a @:
-				if strings.HasPrefix(opts.ContextJSON, "@") {
-					jsonData, err = os.ReadFile(opts.ContextJSON[1:])
-					if err != nil {
-						return fmt.Errorf("reading context data file: %w", err)
-					}
-				}
-
-				// unmarshal the json blob
-				if err := json.Unmarshal(jsonData, &ctxVals); err != nil {
-					return fmt.Errorf("unmarshaling context data from JSON: %w", err)
-				}
-			}
-
-			// Parse individual string values from the -x flag
+			// Pass the -x flags as a new StringMapList list provider
 			if len(opts.ContextStringVals) > 0 {
-				for _, stringSpec := range opts.ContextStringVals {
-					key, val, ok := strings.Cut(stringSpec, ":")
-					if !ok {
-						return fmt.Errorf("invalid context string: %q (must be formatted as key:value )", stringSpec)
-					}
-					ctxVals[key] = val
-				}
+				l := acontext.StringMapList(opts.ContextStringVals)
+				opts.WithContextProvider(&l)
 			}
 
-			// if there are values, ship them
-			if len(ctxVals) > 0 {
-				ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalcontext.EvaluationContext{
-					ContextValues: ctxVals,
-				})
+			// Read the evaluation context data from JSON:
+			if opts.ContextJSON != "" {
+				provider, err := acontext.NewProviderFromJSONFile(opts.ContextJSON)
+				if err != nil {
+					return fmt.Errorf("processing JSON context: %w", err)
+				}
+				opts.WithContextProvider(provider)
+			}
+
+			// Load the environment context reader if selected
+			if opts.ContextEnv {
+				opts.WithContextProvider(acontext.NewEnvContextReader())
 			}
 
 			// Run the evaluation:
-			results, err := ampel.Verify(ctx, &opts.VerificationOptions, set, subject)
+			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, set, subject)
 			if err != nil {
 				return fmt.Errorf("running subject verification: %w", err)
 			}
