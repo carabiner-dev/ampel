@@ -10,9 +10,10 @@ import (
 	"os"
 	"strings"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/vcslocator"
 	"sigs.k8s.io/release-utils/http"
+
+	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
 
 type CompilerOptions struct {
@@ -63,12 +64,10 @@ func (compiler *Compiler) CompileLocation(location string) (set *api.PolicySet, 
 	set, pcy, err = compiler.CompileFile(location)
 	if err == nil {
 		return set, pcy, nil
-	} else {
-		if !errors.Is(err, os.ErrNotExist) {
-			return nil, nil, fmt.Errorf("reading policy file: %w", err)
-		}
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return nil, nil, fmt.Errorf("reading policy file: %w", err)
 	}
-	return nil, nil, errors.New("unsupported policy location")
+	return nil, nil, errors.New("unsupported policy location (URI type or file not found)")
 }
 
 // CompileRemote reads a policy or policy set from a remote location. The location

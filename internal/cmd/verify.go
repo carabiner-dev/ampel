@@ -33,7 +33,7 @@ var (
 
 type verifyOptions struct {
 	verifier.VerificationOptions
-	PolicyFile        string
+	PolicyLocation    string
 	Format            string
 	PolicyOutput      bool
 	ContextEnv        bool
@@ -60,7 +60,7 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	)
 
 	cmd.PersistentFlags().StringVarP(
-		&o.PolicyFile, "policy", "p", "", "policy file",
+		&o.PolicyLocation, "policy", "p", "", "policy/policySet location (can be a file URL or VCS locator)",
 	)
 
 	cmd.PersistentFlags().StringSliceVarP(
@@ -159,7 +159,7 @@ func (o *verifyOptions) Validate() error {
 		errs = append(errs, fmt.Errorf("subject specified twice (as file and hash)"))
 	}
 
-	if o.PolicyFile == "" {
+	if o.PolicyLocation == "" {
 		errs = append(errs, errors.New("a policy file must be defined"))
 	}
 
@@ -273,7 +273,8 @@ using a collector.
 				return fmt.Errorf("creating policy compiler: %w", err)
 			}
 
-			set, _, err := compiler.CompileFile(opts.PolicyFile)
+			// Compile the policy or location
+			set, _, err := compiler.CompileLocation(opts.PolicyLocation)
 			if err != nil {
 				return fmt.Errorf("compiling policy set: %w", err)
 			}
