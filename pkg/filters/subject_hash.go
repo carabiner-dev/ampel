@@ -22,29 +22,33 @@ func (sm *SubjectHashMatcher) Matches(att attestation.Envelope) bool {
 		if sb.GetDigest() == nil {
 			continue
 		}
-	HASHSETLOOP:
+
 		for _, hs := range sm.HashSets {
 			match := false
 			for subalgo, subdig := range sb.GetDigest() {
+				// If the filter does not have the algorithm
+				// in the attestation, continue to the next.
 				if _, ok := hs[subalgo]; !ok {
 					continue
 				}
 
 				if hs[subalgo] == subdig {
 					logrus.Debugf("%s:%s = %s", subalgo, hs[subalgo], subdig)
-					// We have one match
+					// We have a match, but we cannot return it now as
+					// we need to check all algos.
 					match = true
 				} else {
 					logrus.Debugf("%s != %s ", hs[subalgo], subdig)
-					// If the hashset has the algo but
-					continue HASHSETLOOP
+					// If the hashset has the algo but does not match we can
+					// bail now.
+					match = false
+					break
 				}
 			}
 			if match {
 				return true
 			}
 		}
-		return false
 	}
 
 	return false

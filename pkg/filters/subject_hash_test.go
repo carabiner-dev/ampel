@@ -126,6 +126,31 @@ func TestSubjectHashMatcher(t *testing.T) {
 			},
 			true,
 		},
+		{
+			"one-hash-two-subjects",
+			[]map[string]string{
+				{
+					"sha256": "cdd80609c252ba5336de7033518cfe15f9e466a53c1de14545cc6ec22e56252b",
+				},
+			},
+			func(t *testing.T) attestation.Envelope {
+				t.Helper()
+				statement := intoto.NewStatement()
+				statement.AddSubject(&gointoto.ResourceDescriptor{
+					Digest: map[string]string{
+						"sha256": "8c61b87a505474105dd251fe05ab43c8278675f4667bde245ad89992b926f8f9",
+					},
+				})
+				statement.AddSubject(&gointoto.ResourceDescriptor{
+					Digest: map[string]string{
+						"sha256": "cdd80609c252ba5336de7033518cfe15f9e466a53c1de14545cc6ec22e56252b",
+					},
+				})
+				env := &bare.Envelope{Statement: statement}
+				return env
+			},
+			true,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
