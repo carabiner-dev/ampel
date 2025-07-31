@@ -22,6 +22,8 @@ type Provider interface {
 func GetValues(providers []Provider, keys []string) (map[string]any, error) {
 	ret := map[string]any{}
 	maps := []map[string]any{}
+
+	// Assemble the maps from all providers
 	for _, p := range providers {
 		m, err := p.GetContextMap(keys)
 		if err != nil {
@@ -30,7 +32,7 @@ func GetValues(providers []Provider, keys []string) (map[string]any, error) {
 		maps = append(maps, m)
 	}
 
-	// Return the first value found by trying the providers
+	// Return the first value found by trying the provider data
 	// in the order they were loaded:
 	for _, k := range keys {
 		for _, mp := range maps {
