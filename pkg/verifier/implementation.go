@@ -536,8 +536,8 @@ func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, o
 		return nil, fmt.Errorf("getting values from providers: %w", err)
 	}
 
-	fmt.Printf("Assembled Context: %+v\n", assembledContext)
-	fmt.Printf("Context Values: %+v\n", definitions)
+	logrus.Infof("[CTX] Assembled Context: %+v", assembledContext)
+	logrus.Infof("[CTX] Context Values: %+v", definitions)
 
 	// Assemble the context by overriding values in order
 	for k, contextDef := range assembledContext {
