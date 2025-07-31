@@ -5,6 +5,7 @@ package verifier
 
 import (
 	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/ampel/pkg/context"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
@@ -15,6 +16,9 @@ type VerificationOptions struct {
 
 	// Collectors is a collection of configured attestation fetchers
 	Collectors []attestation.Fetcher
+
+	// ContextProviders has a list of providers to read contextual data
+	ContextProviders []context.Provider
 
 	// AttestationFiles are additional attestations passed manually
 	AttestationFiles []string
@@ -38,9 +42,6 @@ type VerificationOptions struct {
 	// GitCommitShaHack enables a hack to duplicate gitCommit subjects of read
 	// attestations as sha1 when reading attestations
 	GitCommitShaHack bool
-
-	// Context passes the contextual data to populate the policy at evaltime.
-	Context map[string]any
 }
 
 var DefaultVerificationOptions = VerificationOptions{
@@ -55,8 +56,16 @@ var DefaultVerificationOptions = VerificationOptions{
 
 	// Duplicate any gitCommit digests as sha1
 	GitCommitShaHack: true,
+
+	// Context providers, by default we enable the envvar provider
+	ContextProviders: []context.Provider{},
 }
 
 func NewVerificationOptions() VerificationOptions {
 	return DefaultVerificationOptions
+}
+
+func (vo *VerificationOptions) WithContextProvider(provider context.Provider) *VerificationOptions {
+	vo.ContextProviders = append(vo.ContextProviders, provider)
+	return vo
 }

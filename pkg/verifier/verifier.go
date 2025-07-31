@@ -49,8 +49,8 @@ func (ampel *Ampel) Verify(
 			Results: []*api.Result{},
 		}
 
-		// If the policyset has a context defined, load it in the context
-		// to send it down the wire to each policy evaluation.
+		// If the policyset has a context defined, load the definition in the
+		// (golang) context to send it down the wire to each policy evaluation.
 		if v.GetCommon() != nil && v.GetCommon().GetContext() != nil {
 			evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
 			if !ok {
