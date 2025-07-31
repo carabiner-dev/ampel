@@ -16,7 +16,7 @@ require (
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/google/cel-go v0.26.0
 	github.com/in-toto/attestation v1.1.2
-	github.com/jedib0t/go-pretty/v6 v6.6.7
+	github.com/jedib0t/go-pretty/v6 v6.6.8
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481
 	github.com/openvex/go-vex v0.2.5
