@@ -41,6 +41,50 @@ func (policy *Policy) TestsControl(ctrl *Control) bool {
 	return policy.GetMeta().testsControl(ctrl)
 }
 
+// NewIdentityFromSlug returns a new identity by parsing a slug string.
+//
+// There are three kinds of identities supported: sigstore, key and reference.
+func NewIdentityFromSlug(slug string) (*Identity, error) {
+	itype, identityString, ok := strings.Cut(slug, "::")
+	if !ok {
+		refId, isRef := strings.CutPrefix(slug, "ref:")
+		if isRef {
+			return &Identity{Ref: &IdentityRef{Id: refId}}, nil
+		}
+	}
+
+	switch itype {
+	case "sigstore", "sigstore(regexp)":
+		issuer, ident, ok := strings.Cut(identityString, "::")
+		if !ok {
+			return nil, fmt.Errorf("unable to parse sigstore identity from identity string")
+		}
+		mode := "exact"
+		if itype == "sigstore(regexp)" {
+			mode = "regexp"
+		}
+		return &Identity{
+			Sigstore: &IdentitySigstore{
+				Mode:     &mode,
+				Issuer:   issuer,
+				Identity: ident,
+			},
+		}, nil
+	case "key":
+		keyType, keyId, ok := strings.Cut(identityString, "::")
+		if !ok {
+			return nil, fmt.Errorf("unable to parse key details from identity string")
+		}
+		return &Identity{
+			Key: &IdentityKey{
+				Id:   keyId,
+				Type: keyType,
+			},
+		}, nil
+	}
+	return nil, fmt.Errorf("unable to parse identity from slug string")
+}
+
 // Slug returns a string representing the identity
 func (i *Identity) Slug() string {
 	switch {
