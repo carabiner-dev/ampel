@@ -3,6 +3,8 @@
 
 package v1
 
+import "regexp"
+
 // MatchesIdentity returns true if one of the verified signatures matches
 // the identity.
 func (v *Verification) MatchesIdentity(id *Identity) bool {
@@ -34,15 +36,36 @@ func (sv *SignatureVerification) MatchesSigstoreIdentity(id *IdentitySigstore) b
 		return false
 	}
 
+	// If this is a regexp matcher, compile them
+	var regIdentity, regIssuer *regexp.Regexp
+	if id.Mode != nil && *id.Mode == SigstoreModeRegexp {
+		var err error
+		regIdentity, err = regexp.Compile(id.GetIdentity())
+		if err != nil {
+			return false
+		}
+		regIssuer, err = regexp.Compile(id.GetIssuer())
+		if err != nil {
+			return false
+		}
+	}
+
 	// Check each identity in the verification until one matches.
 	for _, signer := range sv.Identities {
 		if signer.GetSigstore() == nil {
 			continue
 		}
 
-		if signer.GetSigstore().GetIdentity() == id.GetIdentity() &&
-			signer.GetSigstore().GetIssuer() == id.GetIssuer() {
-			return true
+		if id.Mode == nil || *id.Mode == SigstoreModeExact {
+			if signer.GetSigstore().GetIdentity() == id.GetIdentity() &&
+				signer.GetSigstore().GetIssuer() == id.GetIssuer() {
+				return true
+			}
+		} else if *id.Mode == SigstoreModeRegexp {
+			if regIdentity.MatchString(signer.GetSigstore().GetIdentity()) &&
+				regIssuer.MatchString(signer.GetSigstore().GetIssuer()) {
+				return true
+			}
 		}
 	}
 	return false
