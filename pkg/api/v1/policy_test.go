@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestPolicyRefValidate(t *testing.T) {
@@ -66,6 +67,70 @@ func TestPolicyRefValidate(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+		})
+	}
+}
+
+func TestParseIdentitySlug(t *testing.T) {
+	modeExact := SigstoreModeExact
+	modeRegexp := SigstoreModeRegexp
+	t.Parallel()
+	for _, tt := range []struct {
+		name    string
+		slug    string
+		mustErr bool
+		expect  *Identity
+	}{
+		{
+			"sigstore",
+			"sigstore::https://token.actions.githubusercontent.com::https://github.com/slsa-framework/slsa-source-poc/.github/workflows/release.yaml@refs/tags/v0.6.1",
+			false,
+			&Identity{
+				Sigstore: &IdentitySigstore{
+					Mode:     &modeExact,
+					Issuer:   "https://token.actions.githubusercontent.com",
+					Identity: "https://github.com/slsa-framework/slsa-source-poc/.github/workflows/release.yaml@refs/tags/v0.6.1",
+				},
+			},
+		},
+		{
+			"sigstore-regexp",
+			"sigstore(regexp)::https://token.actions.githubusercontent.com::https://github.com/slsa-framework/slsa-source-poc/.github/workflows/release.yaml@refs/tags/v0.6.1",
+			false,
+			&Identity{
+				Sigstore: &IdentitySigstore{
+					Mode:     &modeRegexp,
+					Issuer:   "https://token.actions.githubusercontent.com",
+					Identity: "https://github.com/slsa-framework/slsa-source-poc/.github/workflows/release.yaml@refs/tags/v0.6.1",
+				},
+			},
+		},
+		{
+			"key",
+			"key::ed25519::c6d8e2f4g7h9i1j3k5l7m9n2o4p6q8r1s3t5u7v9w2x4y6z8a1b3c5d7e9f1a3b5",
+			false,
+			&Identity{
+				Key: &IdentityKey{
+					Type: "ed25519",
+					Id:   "c6d8e2f4g7h9i1j3k5l7m9n2o4p6q8r1s3t5u7v9w2x4y6z8a1b3c5d7e9f1a3b5",
+				},
+			},
+		},
+		{
+			"ref",
+			"ref:my-key",
+			false,
+			&Identity{Ref: &IdentityRef{Id: "my-key"}},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			res, err := NewIdentityFromSlug(tt.slug)
+			if tt.mustErr {
+				require.Error(t, err)
+			}
+			require.NoError(t, err)
+			require.True(t, proto.Equal(tt.expect, res))
 		})
 	}
 }

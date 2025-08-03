@@ -12,6 +12,11 @@ import (
 	intoto "github.com/in-toto/attestation/go/v1"
 )
 
+const (
+	SigstoreModeExact  string = "exact"
+	SigstoreModeRegexp string = "regexp"
+)
+
 func (meta *Meta) testsControl(ctrl *Control) bool {
 	if meta.GetControls() == nil {
 		return false
@@ -59,9 +64,9 @@ func NewIdentityFromSlug(slug string) (*Identity, error) {
 		if !ok {
 			return nil, fmt.Errorf("unable to parse sigstore identity from identity string")
 		}
-		mode := "exact"
+		mode := SigstoreModeExact
 		if itype == "sigstore(regexp)" {
-			mode = "regexp"
+			mode = SigstoreModeRegexp
 		}
 		return &Identity{
 			Sigstore: &IdentitySigstore{
@@ -90,7 +95,7 @@ func (i *Identity) Slug() string {
 	switch {
 	case i.GetSigstore() != nil:
 		mode := ""
-		if i.GetSigstore().GetMode() == "regexp" {
+		if i.GetSigstore().GetMode() == SigstoreModeRegexp {
 			mode = "(regexp)"
 		}
 		return fmt.Sprintf("sigstore%s::%s::%s", mode, i.GetSigstore().GetIssuer(), i.GetSigstore().GetIdentity())
