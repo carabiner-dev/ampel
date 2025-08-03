@@ -42,6 +42,10 @@ type VerificationOptions struct {
 	// GitCommitShaHack enables a hack to duplicate gitCommit subjects of read
 	// attestations as sha1 when reading attestations
 	GitCommitShaHack bool
+
+	// IdentityStrings feeds the signature identities to add to the policy
+	// definitions when verifying signatures.
+	IdentityStrings []string
 }
 
 var DefaultVerificationOptions = VerificationOptions{

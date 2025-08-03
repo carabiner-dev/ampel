@@ -287,17 +287,32 @@ func (di *defaultIplementation) Transform(
 
 // CheckIdentities checks that the ingested attestations are signed by one of the
 // identities defined in thew policy.
-func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identities []*api.Identity, envelopes []attestation.Envelope) (bool, []error, error) {
+func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, policyIdentities []*api.Identity, envelopes []attestation.Envelope) (bool, []error, error) {
 	// verification errors for the user
 	errs := make([]error, len(envelopes))
 
+	allIds := []*api.Identity{}
+	allIds = append(allIds, policyIdentities...)
+
+	// Add any identities defined in options
+	if len(opts.IdentityStrings) > 0 {
+		logrus.Debugf("Got %d identity strings from options", len(opts.IdentityStrings))
+		for _, idSlug := range opts.IdentityStrings {
+			ident, err := api.NewIdentityFromSlug(idSlug)
+			if err != nil {
+				return false, nil, fmt.Errorf("invalid identity slug %q: %w", idSlug, err)
+			}
+			allIds = append(allIds, ident)
+		}
+	}
+
 	// If there are no identities defined, return here
-	if len(identities) == 0 {
+	if len(allIds) == 0 {
 		logrus.Debug("No identities defined in policy. Not checking.")
 		return true, nil, nil
 	} else {
 		logrus.Debug("Will look for signed attestations from:")
-		for _, i := range identities {
+		for _, i := range allIds {
 			logrus.Debugf("  > %s", i.Slug())
 		}
 	}
@@ -322,7 +337,7 @@ func (di *defaultIplementation) CheckIdentities(_ *VerificationOptions, identiti
 			continue
 		}
 
-		for _, id := range identities {
+		for _, id := range allIds {
 			if e.GetVerification().MatchesIdentity(id) {
 				validSigners = append(validSigners, id)
 			}
@@ -536,8 +551,8 @@ func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, o
 		return nil, fmt.Errorf("getting values from providers: %w", err)
 	}
 
-	logrus.Infof("[CTX] Assembled Context: %+v", assembledContext)
-	logrus.Infof("[CTX] Context Values: %+v", definitions)
+	logrus.Debugf("[CTX] Assembled Context: %+v", assembledContext)
+	logrus.Debugf("[CTX] Context Values: %+v", definitions)
 
 	// Assemble the context by overriding values in order
 	for k, contextDef := range assembledContext {
