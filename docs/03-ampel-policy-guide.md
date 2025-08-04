@@ -48,11 +48,11 @@ its description, expiration date, runtime, etc.
 
 ### Identities
 
-While not reuired, a policy must specify the identities that can sign the
+While not required, a policy SHOULD specify the identities that can sign the
 attestations selected for evaluation. While AMPEL verifies the signatures
 automatically, the sigstore identities or the signer keys will be compared
 against the identities list defined in the policy. If none match, the policy
-will fail.
+will fail. See the section below for more on specifying signer identities.
 
 ### Predicate Spec
 
@@ -349,3 +349,135 @@ value:
 
 Since context data is expected to change with the environment, the results
 attestation keeps record of the computed values for future auditing.
+
+## Signer Identities
+
+All data used as evidence such as attestations should be signed. When ingesting
+attestations, AMPEL will verify that the data signature is valid. Validating the
+cryptographic signature does not imply ensuring the right party/parties have
+signed the data.
+
+While AMPEL can skip the signer identity check, it is recommended that authorizarion
+includes a verification of the signer identity.
+
+### Supported Identities
+
+Ampel supports two kinds of identities natively:
+
+1. __Sigstore:__ Attestations signed and packed in a sigstore bundle are natively
+supported. The sigstore identity bundle consists of two parts: 1) the OIDC 
+identity issuer (common ones are Google, Github, Microsoft, etc) and 2) the
+identity string which will typically be the user's email or a workload identifier.
+
+2. __Keys:__ Basic support for keys is built in. The key identity is the the key ID.
+Support for keys is still under development and in flux.
+
+### Specifying Identities
+
+There three ways of specifying the signer identity to be verified. Remember that
+if no signer is set, then attestations will be admitted regardless of who signed
+them.
+
+#### 1. In-policy Definition
+
+Policies can have their identitied hard-coded in the policy code. This is the
+preferred way identities become immutable once the policy is signed. The downside
+of hard-coding IDs is that it poses some challenges when reusing policies across
+systems.
+
+Identities in the code can be specified at the `Policy` or `PolicySet` level. If a 
+`PolicySet` has a set of identities defined they apply to all policies in the set.
+Inidividual policies can augment the list of accepted identies at the `Policy` level.
+There is no way for a policy to revoke an identity specified at the PolicySet level.
+
+The basic identity construct accounts for both keys and sigstore types:
+
+```json
+  "identities": [
+    {
+      "sigstore": {
+        "issuer": "https://accounts.google.com",
+        "identity": "joe@example.com",
+        "mode": "exact"
+      }
+    },
+    {
+      "key": {
+        "id": "4e24e0c9-5b77-4b5a-9504-7cec6d91e5d5",
+        "type": "ed25519",
+        "data": "302a300506032b6570032100a8b4c0f7f8d7e4d6f5c3b9a2e8f1d4c7b0a9e2f5c8b1d4a7e0f3c6b9",
+      }
+    }
+]
+```
+
+The identities list is a top level field in the policy JSON and lives under the
+`commons` section in the PolicySet.
+
+#### 2. Policy Reuse and References
+
+A policy referencing another source policy MAY override the signer identities.
+If the child policy does not have an identity set defined, it will implicitly use
+the identities set in the origin source code.
+
+#### 3. Command Line Definition
+
+When running `ampel verify` you may specify the expected signer identity by
+passing the verifier an [identity slug] using the `--signer` flag. You can
+specify the`--signer` flag multiple times to create a list of allowed signer.
+
+> [!WARNING]  
+> Identities in the command line are ignored when a policy specifies its signers
+> in the code (either in code or in a source policy). Once the effective policy
+> is compiled, if it has a list of identities they are treated as immutable and
+> cannot be overriden with `--signer`. In this case, AMPEL will print a warning
+> and ignore the flag.
+
+### Sigstore RegExp
+
+Sigstore identities have two matching modes: `exact` or `regexp`. In exact mode,
+the strings for the OIDC issuer and identity must match exactly. In real world
+situations, the sigstore identity changes. For example, workflow identities in
+GitHub often capture versions, branches or different workflows.
+
+To account for the mutating nature, you can use a regexp to match chaning id
+strings. For example, to allow anyone in a domain to sign an attestation:
+
+```json
+  "identities": [
+    {
+      "sigstore": {
+        "issuer": "https://accounts.google.com",
+        "identity": ".*@example.com",
+        "mode": "regexp"
+      }
+    },
+  ]
+```
+
+### Identity Slugs
+
+To pass identity data around, AMPEL uses an identity slug format which can be
+fed to the `--signer` flag and other places. The format is as follows:
+
+#### Sigstore
+
+The format to specify a sigstore identity is:
+
+```
+sigstore:::ISSUER:::IDENTITY
+```
+
+You can specify a regex identity adding `(regex)` to the sigstore label:
+
+```
+sigstore(regexp):::ISSUER_REGEXP:::IDENTITY_REGEXP
+```
+
+#### Keys
+
+To specify a key (unstable), use the following string format:
+
+```
+key:::TYPE:::KEY_ID:::KEY_DATA
+```
