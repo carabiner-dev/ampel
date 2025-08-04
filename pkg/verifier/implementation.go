@@ -294,8 +294,14 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 	allIds := []*api.Identity{}
 	allIds = append(allIds, policyIdentities...)
 
+	if len(policyIdentities) > 0 && len(opts.IdentityStrings) > 0 {
+		logrus.Warnf(
+			"Policy has signer identities defined, %d identities from options will be ignored",
+			len(opts.IdentityStrings))
+	}
+
 	// Add any identities defined in options
-	if len(opts.IdentityStrings) > 0 {
+	if len(opts.IdentityStrings) > 0 && len(policyIdentities) == 0 {
 		logrus.Debugf("Got %d identity strings from options", len(opts.IdentityStrings))
 		for _, idSlug := range opts.IdentityStrings {
 			ident, err := api.NewIdentityFromSlug(idSlug)
