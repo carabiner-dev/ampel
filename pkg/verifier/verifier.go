@@ -25,7 +25,7 @@ type PolicyError struct {
 // Verify checks a subject against a policy using the available evidence
 func (ampel *Ampel) Verify(
 	ctx context.Context, opts *VerificationOptions, policy any, subject attestation.Subject,
-) (*api.ResultSet, error) {
+) (api.Results, error) {
 	switch v := policy.(type) {
 	case *api.Policy:
 		if len(opts.Policies) > 0 && !slices.Contains(opts.Policies, v.Id) {
@@ -35,7 +35,7 @@ func (ampel *Ampel) Verify(
 		if err != nil {
 			return nil, err
 		}
-		return &api.ResultSet{Results: []*api.Result{res}}, nil
+		return res, nil
 	case *api.PolicySet:
 		rs := &api.ResultSet{
 			Id:        v.Id,
@@ -204,8 +204,16 @@ func (ampel *Ampel) AttestResult(w io.Writer, result *api.Result) error {
 }
 
 // AttestResult writes an attestation capturing an evaluation result
-func (ampel *Ampel) AttestResultSet(w io.Writer, resultset *api.ResultSet) error {
-	return ampel.impl.AttestResultSetToWriter(w, resultset)
+func (ampel *Ampel) AttestResults(w io.Writer, results api.Results) error {
+	switch r := results.(type) {
+	case *api.Result:
+		rs := &api.ResultSet{Results: []*api.Result{r}}
+		return ampel.impl.AttestResultSetToWriter(w, rs)
+	case *api.ResultSet:
+		return ampel.impl.AttestResultSetToWriter(w, r)
+	default:
+		return fmt.Errorf("results are not result or resultset")
+	}
 }
 
 // failPolicyWithError returns a failed status result for the policicy where all
