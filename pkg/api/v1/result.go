@@ -15,6 +15,10 @@ const (
 	StatusSOFTFAIL = "SOFTFAIL"
 )
 
+type Results interface {
+	GetStatus() string
+}
+
 // Assert reads the set's results and computes the finish date
 // and set eval status.
 func (rs *ResultSet) Assert() error {
