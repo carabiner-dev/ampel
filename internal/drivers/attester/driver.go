@@ -27,9 +27,9 @@ type Driver struct {
 }
 
 func (d *Driver) RenderResultSet(w io.Writer, rset *api.ResultSet) error {
-	return d.Ampel.AttestResultSet(w, rset)
+	return d.Ampel.AttestResults(w, rset)
 }
 
 func (d *Driver) RenderResult(w io.Writer, status *api.Result) error {
-	return d.Ampel.AttestResult(w, status)
+	return d.Ampel.AttestResults(w, status)
 }

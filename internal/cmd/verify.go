@@ -278,9 +278,9 @@ using a collector.
 			}
 
 			// Compile the policy or location
-			set, _, err := compiler.CompileLocation(opts.PolicyLocation)
+			set, pcy, err := compiler.CompileLocation(opts.PolicyLocation)
 			if err != nil {
-				return fmt.Errorf("compiling policy set: %w", err)
+				return fmt.Errorf("compiling policy: %w", err)
 			}
 
 			// Load the built-in repository types
@@ -315,7 +315,7 @@ using a collector.
 			}
 
 			// Run the evaluation:
-			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, set, subject)
+			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, policy.PolicyOrSet(set, pcy), subject)
 			if err != nil {
 				return fmt.Errorf("running subject verification: %w", err)
 			}
@@ -327,7 +327,7 @@ using a collector.
 					return fmt.Errorf("unable to open results attestation path")
 				}
 
-				if err := ampel.AttestResultSet(attFile, results); err != nil {
+				if err := ampel.AttestResults(attFile, results); err != nil {
 					return fmt.Errorf("writing results attestation: %w", err)
 				}
 			}
@@ -337,17 +337,24 @@ using a collector.
 				return err
 			}
 
-			if opts.PolicyOutput || len(opts.Policies) > 0 {
-				for _, r := range results.GetResults() {
-					if err := eng.RenderResult(os.Stdout, r); err != nil {
-						return fmt.Errorf("rendering results: %w", err)
-					}
+			switch r := results.(type) {
+			case *api.Result:
+				if err := eng.RenderResult(os.Stdout, r); err != nil {
+					return fmt.Errorf("rendering result: %w", err)
 				}
-			} else if err := eng.RenderResultSet(os.Stdout, results); err != nil {
-				return fmt.Errorf("rendering results: %w", err)
+			case *api.ResultSet:
+				if opts.PolicyOutput || len(opts.Policies) > 0 {
+					for _, r := range r.GetResults() {
+						if err := eng.RenderResult(os.Stdout, r); err != nil {
+							return fmt.Errorf("rendering results: %w", err)
+						}
+					}
+				} else if err := eng.RenderResultSet(os.Stdout, r); err != nil {
+					return fmt.Errorf("rendering results: %w", err)
+				}
 			}
 
-			if results.Status == api.StatusFAIL && opts.SetExitCode {
+			if results.GetStatus() == api.StatusFAIL && opts.SetExitCode {
 				os.Exit(1)
 			}
 
