@@ -16,6 +16,14 @@ import (
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
 
+// PolicyOrSet takes a policy or policyset and returns the one that is not nill
+func PolicyOrSet(set *api.PolicySet, pcy *api.Policy) any {
+	if set != nil {
+		return set
+	}
+	return pcy
+}
+
 type CompilerOptions struct {
 	// TODO: No remote data
 	// TODO: Fail merging on unknown remote tenet ids
@@ -107,12 +115,11 @@ func (compiler *Compiler) Compile(data []byte) (set *api.PolicySet, pcy *api.Pol
 		return nil, nil, err
 	}
 
+	// TODO(puerco): Here, the policy needs to be assembled. Not
+	// supported yet for single policies.
 	if set == nil && pcy != nil {
-		set = &api.PolicySet{
-			Policies: []*api.Policy{
-				pcy,
-			},
-		}
+		fmt.Println("Es Policy")
+		return nil, pcy, nil
 	}
 
 	set, err = compiler.CompileSet(set)

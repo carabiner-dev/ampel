@@ -4,6 +4,7 @@
 package verifier
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"text/template"
 
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
@@ -46,7 +48,7 @@ type AmpelVerifier interface {
 
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
 	AssertResult(*api.Policy, *api.Result) error
-	AttestResult(context.Context, *VerificationOptions, *api.Result) error
+	AttestResults(context.Context, *VerificationOptions, api.Results) error
 
 	// AttestResultToWriter takes an evaluation result and writes an attestation to the supplied io.Writer
 	AttestResultToWriter(io.Writer, *api.Result) error
@@ -294,8 +296,14 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 	allIds := []*api.Identity{}
 	allIds = append(allIds, policyIdentities...)
 
+	if len(policyIdentities) > 0 && len(opts.IdentityStrings) > 0 {
+		logrus.Warnf(
+			"Policy has signer identities defined, %d identities from options will be ignored",
+			len(opts.IdentityStrings))
+	}
+
 	// Add any identities defined in options
-	if len(opts.IdentityStrings) > 0 {
+	if len(opts.IdentityStrings) > 0 && len(policyIdentities) == 0 {
 		logrus.Debugf("Got %d identity strings from options", len(opts.IdentityStrings))
 		for _, idSlug := range opts.IdentityStrings {
 			ident, err := api.NewIdentityFromSlug(idSlug)
@@ -663,14 +671,56 @@ func (di *defaultIplementation) VerifySubject(
 		}
 		logrus.WithField("tenet", i).Debugf("Result: %+v", evalres)
 
-		// Carry over the error from the policy if the evaluator didn't add one
-		if evalres.Status != api.StatusPASS && evalres.Error == nil {
-			evalres.Error = tenet.Error
+		// Ideally, we should not reach here with unparseabke templates but oh well..
+
+		// This is the data that gets exposed to error and assessment templates
+		templateData := struct {
+			Context map[string]any
+			Outputs map[string]any
+		}{
+			Context: evalContextValues,
+			Outputs: evalres.GetOutput().AsMap(),
 		}
 
-		// Carry over the assessment from the policy of not set by the engine
+		// Carry over the error from the policy if the runtime didn't add one
+		if evalres.Status != api.StatusPASS && evalres.Error == nil {
+			var b, b2 bytes.Buffer
+
+			tmplMsg, err := template.New("error_message").Parse(tenet.Error.GetMessage())
+			if err != nil {
+				return nil, fmt.Errorf("parsing tenet error template: %w", err)
+			}
+			if err := tmplMsg.Execute(&b, templateData); err != nil {
+				return nil, fmt.Errorf("executing error message template: %w", err)
+			}
+
+			tmpl, err := template.New("error_guidance").Parse(tenet.Error.GetGuidance())
+			if err != nil {
+				return nil, fmt.Errorf("parsing tenet guidance template: %w", err)
+			}
+			if err := tmpl.Execute(&b2, templateData); err != nil {
+				return nil, fmt.Errorf("executing error guidance template: %w", err)
+			}
+
+			evalres.Error = &api.Error{
+				Message:  b.String(),
+				Guidance: b2.String(),
+			}
+		}
+
+		// Carry over the assessment from the policy if not set by the runtime
 		if evalres.Status == api.StatusPASS && evalres.Assessment == nil {
-			evalres.Assessment = tenet.Assessment
+			tmpl, err := template.New("assessment").Parse(tenet.Assessment.GetMessage())
+			if err != nil {
+				return nil, fmt.Errorf("parsing tenet assessment: %w", err)
+			}
+			var b bytes.Buffer
+			if err := tmpl.Execute(&b, templateData); err != nil {
+				return nil, fmt.Errorf("executing assessment template: %w", err)
+			}
+			evalres.Assessment = &api.Assessment{
+				Message: b.String(),
+			}
 		}
 
 		rs.EvalResults = append(rs.EvalResults, evalres)
@@ -684,8 +734,8 @@ func (di *defaultIplementation) VerifySubject(
 
 // AttestResults writes an attestation captring the evaluation
 // results set.
-func (di *defaultIplementation) AttestResult(
-	ctx context.Context, opts *VerificationOptions, result *api.Result,
+func (di *defaultIplementation) AttestResults(
+	ctx context.Context, opts *VerificationOptions, results api.Results,
 ) error {
 	if !opts.AttestResults {
 		return nil
@@ -699,12 +749,19 @@ func (di *defaultIplementation) AttestResult(
 		return fmt.Errorf("opening results attestation file: %w", err)
 	}
 
-	// Write the statement to json
-	return di.AttestResultToWriter(f, result)
+	switch r := results.(type) {
+	case *api.Result:
+		// Write the statement to json
+		return di.AttestResultToWriter(f, r)
+	case *api.ResultSet:
+		return di.AttestResultSetToWriter(f, r)
+	default:
+		return fmt.Errorf("unable to cast result")
+	}
 }
 
-// AttestResults writes an attestation captring the evaluation
-// results set.
+// AttestResultToWriter writes an attestation capturing a evaluation
+// result set.
 func (di *defaultIplementation) AttestResultToWriter(
 	w io.Writer, result *api.Result,
 ) error {
