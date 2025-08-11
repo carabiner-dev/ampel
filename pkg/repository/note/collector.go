@@ -98,11 +98,11 @@ func (c *Collector) Fetch(ctx context.Context, opts attestation.FetchOptions) ([
 		// attestation per line
 		if envelopes[0].GetStatement() != nil &&
 			envelopes[0].GetStatement().GetPredicate() != nil &&
-			envelopes[0].GetStatement().GetPredicate().GetSource() != nil {
+			envelopes[0].GetStatement().GetPredicate().GetOrigin() != nil {
 			rd := &intoto.ResourceDescriptor{
 				Name:   fmt.Sprintf("jsonl:%s#%d", c.Options.Locator, i),
 				Uri:    fmt.Sprintf("jsonl:%s#%d", c.Options.Locator, i),
-				Digest: envelopes[0].GetStatement().GetPredicate().GetSource().GetDigest(),
+				Digest: envelopes[0].GetStatement().GetPredicate().GetOrigin().GetDigest(),
 			}
 			envelopes[0].GetStatement().GetPredicate().SetSource(rd)
 		}

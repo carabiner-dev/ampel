@@ -106,11 +106,11 @@ func parseJsonlFile(path string, filterset *attestation.FilterSet) ([]attestatio
 		// attestation per line
 		if envelopes[0].GetStatement() != nil &&
 			envelopes[0].GetStatement().GetPredicate() != nil &&
-			envelopes[0].GetStatement().GetPredicate().GetSource() != nil {
+			envelopes[0].GetStatement().GetPredicate().GetOrigin() != nil {
 			rd := &intoto.ResourceDescriptor{
 				Name:   fmt.Sprintf("jsonl:%s#%d", path, i),
 				Uri:    fmt.Sprintf("jsonl:%s#%d", path, i),
-				Digest: envelopes[0].GetStatement().GetPredicate().GetSource().GetDigest(),
+				Digest: envelopes[0].GetStatement().GetPredicate().GetOrigin().GetDigest(),
 			}
 			envelopes[0].GetStatement().GetPredicate().SetSource(rd)
 		}

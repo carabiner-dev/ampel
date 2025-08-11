@@ -10,6 +10,7 @@ import (
 
 	"github.com/carabiner-dev/vcslocator"
 	intoto "github.com/in-toto/attestation/go/v1"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 const (
@@ -209,4 +210,41 @@ func (p *Policy) Validate() error {
 	}
 
 	return errors.Join(errs...)
+}
+
+// The following functions allow the policy and policset to implement the predicate
+// interface te be able to be wrapped in an intoto statement
+
+func (p *Policy) GetOrigin() *ResourceDescriptor {
+	return nil
+}
+
+func (set *PolicySet) GetOrigin() *ResourceDescriptor {
+	return nil
+}
+
+func (p *Policy) GetParsed() any {
+	return p
+}
+
+func (set *PolicySet) GetParsed() any {
+	return set
+}
+
+// GetData returns thevsa
+func (p *Policy) GetData() []byte {
+	data, err := protojson.Marshal(p)
+	if err != nil {
+		return nil
+	}
+	return data
+}
+
+// GetData returns thevsa
+func (set *PolicySet) GetData() []byte {
+	data, err := protojson.Marshal(set)
+	if err != nil {
+		return nil
+	}
+	return data
 }

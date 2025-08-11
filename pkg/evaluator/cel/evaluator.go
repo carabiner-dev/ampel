@@ -183,10 +183,10 @@ func (e *Evaluator) ExecTenet(
 			Attestation: &api.ResourceDescriptor{},
 		}
 
-		if pred.GetSource() != nil {
-			sref.GetAttestation().Name = pred.GetSource().GetName()
-			sref.GetAttestation().Uri = pred.GetSource().GetUri()
-			sref.GetAttestation().Digest = pred.GetSource().GetDigest()
+		if pred.GetOrigin() != nil {
+			sref.GetAttestation().Name = pred.GetOrigin().GetName()
+			sref.GetAttestation().Uri = pred.GetOrigin().GetUri()
+			sref.GetAttestation().Digest = pred.GetOrigin().GetDigest()
 		}
 
 		statementRefs = append(statementRefs, sref)

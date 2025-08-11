@@ -28,7 +28,7 @@ func (p *Predicate) SetType(pt attestation.PredicateType) error {
 }
 func (p *Predicate) GetParsed() any                       { return p.Parsed }
 func (p *Predicate) GetData() []byte                      { return p.Data }
-func (p *Predicate) GetSource() attestation.Subject       { return p.Source }
+func (p *Predicate) GetOrigin() attestation.Subject       { return p.Source }
 func (p *Predicate) SetSource(src attestation.Subject)    { p.Source = src }
 func (p *Predicate) SetVerification(vf *api.Verification) { p.Verification = vf }
 

@@ -484,7 +484,7 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 			Destination: api.NewResourceDescriptor().FromSubject(newsubject),
 			Link: &api.ChainedSubjectLink{
 				Type:        string(attestations[0].GetStatement().GetPredicateType()),
-				Attestation: api.NewResourceDescriptor().FromSubject(attestations[0].GetStatement().GetPredicate().GetSource()),
+				Attestation: api.NewResourceDescriptor().FromSubject(attestations[0].GetStatement().GetPredicate().GetOrigin()),
 			},
 		})
 		subject = newsubject

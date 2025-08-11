@@ -47,7 +47,7 @@ func (p *Parser) ParseFile(path string) ([]attestation.Envelope, error) {
 	}
 
 	// Set the source data in the envelope
-	src := envs[0].GetStatement().GetPredicate().GetSource()
+	src := envs[0].GetStatement().GetPredicate().GetOrigin()
 	rd, ok := src.(*v1.ResourceDescriptor)
 	if rd != nil && !ok {
 		return nil, errors.New("unable to cast source as resource descriptor")
