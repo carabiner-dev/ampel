@@ -1,6 +1,6 @@
 module github.com/carabiner-dev/ampel
 
-go 1.24.3
+go 1.24.6
 
 require (
 	github.com/carabiner-dev/bnd v0.2.2
@@ -10,6 +10,7 @@ require (
 	github.com/carabiner-dev/jsonl v0.2.0
 	github.com/carabiner-dev/openeox v0.0.0-20250430212020-e3a5beb42ddd
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
+	github.com/carabiner-dev/signer v0.0.0-20250806155315-97a6ce352a59
 	github.com/carabiner-dev/vcslocator v0.3.1
 	github.com/fatih/color v1.18.0
 	github.com/go-git/go-billy/v5 v5.6.2
