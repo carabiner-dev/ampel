@@ -22,7 +22,7 @@ type Predicate interface {
 	GetParsed() any
 	GetData() []byte
 	GetVerification() *api.Verification
-	GetSource() Subject
+	GetOrigin() Subject
 	SetSource(Subject)
 	SetVerification(*api.Verification)
 }
