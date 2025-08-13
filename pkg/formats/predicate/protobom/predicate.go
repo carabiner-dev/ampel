@@ -4,9 +4,8 @@
 package protobom
 
 import (
+	"github.com/carabiner-dev/attestation"
 	"github.com/protobom/protobom/pkg/sbom"
-
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 type Predicate struct {

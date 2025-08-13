@@ -4,8 +4,8 @@
 package evalcontext
 
 import (
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/attestation"
+	papi "github.com/carabiner-dev/policy/api/v1"
 )
 
 // The evaluation context is the data structure we pass to the evaluators
@@ -21,9 +21,9 @@ type (
 		// Subject under evaluation
 		Subject attestation.Subject
 		// Policy in effect
-		Policy *api.Policy
+		Policy *papi.Policy
 		// Context definitions as distilled through inheritance
-		Context map[string]*api.ContextVal
+		Context map[string]*papi.ContextVal
 		// Context values from evaluation invocation
 		ContextValues map[string]any
 	}

@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/sirupsen/logrus"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/ampel"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/cyclonedx"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/json"

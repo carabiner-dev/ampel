@@ -4,19 +4,18 @@
 package dsse
 
 import (
+	"github.com/carabiner-dev/attestation"
 	sigstoreProtoDSSE "github.com/sigstore/protobuf-specs/gen/pb-go/dsse"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement"
 )
 
 var _ attestation.Envelope = (*Envelope)(nil)
 
 type Envelope struct {
-	Signatures   []attestation.Signature `json:"signatures"`
-	Statement    attestation.Statement   `json:"-"`
-	Verification *api.Verification       `json:"-"`
+	Signatures   []attestation.Signature  `json:"signatures"`
+	Statement    attestation.Statement    `json:"-"`
+	Verification attestation.Verification `json:"-"`
 	sigstoreProtoDSSE.Envelope
 }
 
@@ -50,7 +49,7 @@ func (env *Envelope) Verify() error {
 }
 
 // GetVerifications returns the envelop signtature verifications
-func (env *Envelope) GetVerification() *api.Verification {
+func (env *Envelope) GetVerification() attestation.Verification {
 	if env.GetStatement() == nil {
 		return nil
 	}

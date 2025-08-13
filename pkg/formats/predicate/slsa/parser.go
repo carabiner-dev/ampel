@@ -8,9 +8,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/carabiner-dev/attestation"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	v02 "github.com/carabiner-dev/ampel/pkg/formats/predicate/slsa/provenance/v02"
 	v10 "github.com/carabiner-dev/ampel/pkg/formats/predicate/slsa/provenance/v10"

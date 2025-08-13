@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"slices"
 
-	"sigs.k8s.io/release-utils/util"
+	"sigs.k8s.io/release-utils/helpers"
 )
 
 type Options struct {
@@ -23,7 +23,7 @@ var defaultOptions = Options{
 func (o *Options) Validate() error {
 	errs := []error{}
 	for _, p := range o.Paths {
-		if !util.Exists(p) {
+		if !helpers.Exists(p) {
 			errs = append(errs, fmt.Errorf("file not found: %q", p))
 		}
 	}

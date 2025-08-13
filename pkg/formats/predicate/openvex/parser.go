@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/carabiner-dev/attestation"
 	openvex "github.com/openvex/go-vex/pkg/vex"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 )
 

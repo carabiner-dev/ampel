@@ -3,7 +3,7 @@
 
 package collector
 
-import "github.com/carabiner-dev/ampel/pkg/attestation"
+import "github.com/carabiner-dev/attestation"
 
 var defaultOptions = Options{
 	UserAgentString:  "ampel-collector/v1",

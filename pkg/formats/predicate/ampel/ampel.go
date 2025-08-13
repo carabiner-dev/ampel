@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/carabiner-dev/attestation"
+	papi "github.com/carabiner-dev/policy/api/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 )
 
@@ -56,7 +56,7 @@ func (p *Parser) Parse(data []byte) (attestation.Predicate, error) {
 }
 
 func (p *Parser) ParsePolicySetPredicate(data []byte) (attestation.Predicate, error) {
-	policy := &api.PolicySet{}
+	policy := &papi.PolicySet{}
 	if err := protojson.Unmarshal(data, policy); err != nil {
 		return nil, fmt.Errorf("unmarshaling predicate data: %w", err)
 	}
@@ -68,7 +68,7 @@ func (p *Parser) ParsePolicySetPredicate(data []byte) (attestation.Predicate, er
 }
 
 func (p *Parser) ParsePolicyPredicate(data []byte) (attestation.Predicate, error) {
-	policy := &api.Policy{}
+	policy := &papi.Policy{}
 	if err := protojson.Unmarshal(data, policy); err != nil {
 		return nil, fmt.Errorf("unmarshaling predicate data: %w", err)
 	}
@@ -80,7 +80,7 @@ func (p *Parser) ParsePolicyPredicate(data []byte) (attestation.Predicate, error
 }
 
 func (p *Parser) ParseResultsPredicate(data []byte) (attestation.Predicate, error) {
-	set := &api.ResultSet{}
+	set := &papi.ResultSet{}
 	if err := protojson.Unmarshal(data, set); err != nil {
 		return nil, fmt.Errorf("unmarshaling predicate data: %w", err)
 	}

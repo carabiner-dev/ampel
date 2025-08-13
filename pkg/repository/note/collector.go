@@ -13,11 +13,11 @@ import (
 	"io"
 	"strings"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/jsonl"
 	"github.com/carabiner-dev/vcslocator"
 	intoto "github.com/in-toto/attestation/go/v1"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/filters"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope"
 )
@@ -98,13 +98,13 @@ func (c *Collector) Fetch(ctx context.Context, opts attestation.FetchOptions) ([
 		// attestation per line
 		if envelopes[0].GetStatement() != nil &&
 			envelopes[0].GetStatement().GetPredicate() != nil &&
-			envelopes[0].GetStatement().GetPredicate().GetSource() != nil {
+			envelopes[0].GetStatement().GetPredicate().GetOrigin() != nil {
 			rd := &intoto.ResourceDescriptor{
 				Name:   fmt.Sprintf("jsonl:%s#%d", c.Options.Locator, i),
 				Uri:    fmt.Sprintf("jsonl:%s#%d", c.Options.Locator, i),
-				Digest: envelopes[0].GetStatement().GetPredicate().GetSource().GetDigest(),
+				Digest: envelopes[0].GetStatement().GetPredicate().GetOrigin().GetDigest(),
 			}
-			envelopes[0].GetStatement().GetPredicate().SetSource(rd)
+			envelopes[0].GetStatement().GetPredicate().SetOrigin(rd)
 		}
 
 		ret = append(ret, envelopes...)

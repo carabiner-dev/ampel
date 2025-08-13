@@ -10,10 +10,11 @@ import (
 	"io"
 	"slices"
 
+	"github.com/carabiner-dev/attestation"
+	papi "github.com/carabiner-dev/policy/api/v1"
+	gointoto "github.com/in-toto/attestation/go/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 )
 
@@ -25,28 +26,28 @@ type PolicyError struct {
 // Verify checks a subject against a policy using the available evidence
 func (ampel *Ampel) Verify(
 	ctx context.Context, opts *VerificationOptions, policy any, subject attestation.Subject,
-) (api.Results, error) {
+) (papi.Results, error) {
 	switch v := policy.(type) {
-	case *api.Policy:
+	case *papi.Policy:
 		if len(opts.Policies) > 0 && !slices.Contains(opts.Policies, v.Id) {
-			return &api.ResultSet{}, nil
+			return &papi.ResultSet{}, nil
 		}
 		res, err := ampel.VerifySubjectWithPolicy(ctx, opts, v, subject)
 		if err != nil {
 			return nil, err
 		}
 		return res, nil
-	case *api.PolicySet:
-		rs := &api.ResultSet{
+	case *papi.PolicySet:
+		rs := &papi.ResultSet{
 			Id:        v.Id,
 			Meta:      v.Meta,
 			DateStart: timestamppb.Now(),
-			Subject: &api.ResourceDescriptor{
+			Subject: &gointoto.ResourceDescriptor{
 				Name:   subject.GetName(),
 				Uri:    subject.GetUri(),
 				Digest: subject.GetDigest(),
 			},
-			Results: []*api.Result{},
+			Results: []*papi.Result{},
 		}
 
 		// If the policyset has a context defined, load the definition in the
@@ -74,8 +75,8 @@ func (ampel *Ampel) Verify(
 			return nil, fmt.Errorf("asserting ResultSet: %w", err)
 		}
 		return rs, nil
-	case []*api.PolicySet:
-		rs := &api.ResultSet{}
+	case []*papi.PolicySet:
+		rs := &papi.ResultSet{}
 		for j, ps := range v {
 			for i, p := range ps.Policies {
 				if len(opts.Policies) > 0 && !slices.Contains(opts.Policies, p.Id) {
@@ -96,8 +97,8 @@ func (ampel *Ampel) Verify(
 
 // VerifySubjectWithPolicy verifies a subject against a single policy
 func (ampel *Ampel) VerifySubjectWithPolicy(
-	ctx context.Context, opts *VerificationOptions, policy *api.Policy, subject attestation.Subject,
-) (*api.Result, error) {
+	ctx context.Context, opts *VerificationOptions, policy *papi.Policy, subject attestation.Subject,
+) (*papi.Result, error) {
 	// Build the required evaluators
 	evaluators, err := ampel.impl.BuildEvaluators(opts, policy)
 	if err != nil {
@@ -118,7 +119,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	// Process chained subjects. These have access to all the read attestations
 	// even when some will be discarded in the next step. Computing the chain
 	// will use the configured repositories if more attestations are required.
-	var chain []*api.ChainedSubject
+	var chain []*papi.ChainedSubject
 	subject, chain, policyFail, err := ampel.impl.ProcessChainedSubjects(
 		ctx, opts, evaluators, ampel.Collector, policy, evalContext, subject, atts,
 	)
@@ -199,17 +200,17 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 }
 
 // AttestResult writes an attestation capturing an evaluation result
-func (ampel *Ampel) AttestResult(w io.Writer, result *api.Result) error {
+func (ampel *Ampel) AttestResult(w io.Writer, result *papi.Result) error {
 	return ampel.impl.AttestResultToWriter(w, result)
 }
 
 // AttestResult writes an attestation capturing an evaluation result
-func (ampel *Ampel) AttestResults(w io.Writer, results api.Results) error {
+func (ampel *Ampel) AttestResults(w io.Writer, results papi.Results) error {
 	switch r := results.(type) {
-	case *api.Result:
-		rs := &api.ResultSet{Results: []*api.Result{r}}
+	case *papi.Result:
+		rs := &papi.ResultSet{Results: []*papi.Result{r}}
 		return ampel.impl.AttestResultSetToWriter(w, rs)
-	case *api.ResultSet:
+	case *papi.ResultSet:
 		return ampel.impl.AttestResultSetToWriter(w, r)
 	default:
 		return fmt.Errorf("results are not result or resultset")
@@ -219,19 +220,23 @@ func (ampel *Ampel) AttestResults(w io.Writer, results api.Results) error {
 // failPolicyWithError returns a failed status result for the policicy where all
 // tennets are failed with error err. If err is a `PolicyError` then the result
 // error guidance for the tenets will be read from it.
-func failPolicyWithError(p *api.Policy, chain []*api.ChainedSubject, subject attestation.Subject, err error) *api.Result {
-	res := &api.Result{
-		Status:    api.StatusFAIL,
+func failPolicyWithError(p *papi.Policy, chain []*papi.ChainedSubject, subject attestation.Subject, err error) *papi.Result {
+	res := &papi.Result{
+		Status:    papi.StatusFAIL,
 		DateStart: timestamppb.Now(),
 		DateEnd:   timestamppb.Now(),
-		Policy: &api.PolicyRef{
+		Policy: &papi.PolicyRef{
 			Id:      p.Id,
 			Version: p.GetMeta().GetVersion(),
 		},
-		EvalResults: []*api.EvalResult{},
+		EvalResults: []*papi.EvalResult{},
 		Meta:        p.GetMeta(),
 		Chain:       chain,
-		Subject:     api.NewResourceDescriptor().FromSubject(subject),
+		Subject: &gointoto.ResourceDescriptor{
+			Name:   subject.GetName(),
+			Uri:    subject.GetUri(),
+			Digest: subject.GetDigest(),
+		},
 	}
 
 	guidance := ""
@@ -240,13 +245,13 @@ func failPolicyWithError(p *api.Policy, chain []*api.ChainedSubject, subject att
 		guidance = pe.Guidance
 	}
 	for _, t := range p.Tenets {
-		er := &api.EvalResult{
+		er := &papi.EvalResult{
 			Id:         t.Id,
-			Status:     api.StatusFAIL,
+			Status:     papi.StatusFAIL,
 			Date:       timestamppb.Now(),
 			Output:     nil,
 			Statements: nil, // Or do we define it?
-			Error: &api.Error{
+			Error: &papi.Error{
 				Message:  err.Error(),
 				Guidance: guidance,
 			},

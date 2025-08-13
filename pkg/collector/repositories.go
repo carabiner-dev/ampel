@@ -9,7 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/attestation"
+
 	"github.com/carabiner-dev/ampel/pkg/repository/filesystem"
 	"github.com/carabiner-dev/ampel/pkg/repository/github"
 	"github.com/carabiner-dev/ampel/pkg/repository/jsonl"

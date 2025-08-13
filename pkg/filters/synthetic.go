@@ -3,7 +3,7 @@
 
 package filters
 
-import "github.com/carabiner-dev/ampel/pkg/attestation"
+import "github.com/carabiner-dev/attestation"
 
 // The synthetic filters are mostly menat for testing but are freely usable
 // and exportable in case there is a valid use case for them.

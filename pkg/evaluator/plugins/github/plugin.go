@@ -4,10 +4,11 @@
 package github
 
 import (
+	"github.com/carabiner-dev/attestation"
+	papi "github.com/carabiner-dev/policy/api/v1"
 	"github.com/google/cel-go/cel"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 )
 
@@ -35,7 +36,7 @@ func (h *Plugin) Library() cel.EnvOption {
 	return cel.Lib(h.Util)
 }
 
-func (h *Plugin) VarValues(_ *api.Policy, _ attestation.Subject, _ []attestation.Predicate) map[string]any {
+func (h *Plugin) VarValues(_ *papi.Policy, _ attestation.Subject, _ []attestation.Predicate) map[string]any {
 	return map[string]any{
 		"github": h.Util,
 	}

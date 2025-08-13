@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/carabiner-dev/attestation"
 	posv "github.com/carabiner-dev/osv/go/osv"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/osv"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/trivy"

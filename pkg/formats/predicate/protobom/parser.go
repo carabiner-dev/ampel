@@ -6,7 +6,8 @@ package protobom
 import (
 	"slices"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/attestation"
+
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/cyclonedx"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/spdx"
 )

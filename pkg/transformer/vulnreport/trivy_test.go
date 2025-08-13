@@ -7,9 +7,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/stretchr/testify/require"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	posv "github.com/carabiner-dev/ampel/pkg/formats/predicate/osv"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/trivy"
 )

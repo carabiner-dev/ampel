@@ -7,8 +7,9 @@ import (
 	"context"
 	"fmt"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/attestation"
+	papi "github.com/carabiner-dev/policy/api/v1"
+
 	"github.com/carabiner-dev/ampel/pkg/evaluator/cel"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
@@ -30,6 +31,6 @@ func (f *Factory) Get(opts *options.EvaluatorOptions, c class.Class) (Evaluator,
 
 // Evaluator
 type Evaluator interface {
-	ExecTenet(context.Context, *options.EvaluatorOptions, *api.Tenet, []attestation.Predicate) (*api.EvalResult, error)
-	ExecChainedSelector(context.Context, *options.EvaluatorOptions, *api.ChainedPredicate, attestation.Predicate) (attestation.Subject, error)
+	ExecTenet(context.Context, *options.EvaluatorOptions, *papi.Tenet, []attestation.Predicate) (*papi.EvalResult, error)
+	ExecChainedSelector(context.Context, *options.EvaluatorOptions, *papi.ChainedPredicate, attestation.Predicate) (attestation.Subject, error)
 }

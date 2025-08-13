@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/carabiner-dev/attestation"
+	papi "github.com/carabiner-dev/policy/api/v1"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/ext"
@@ -23,8 +25,6 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
@@ -32,12 +32,12 @@ import (
 type CelEvaluatorImplementation interface {
 	CompileCode(*cel.Env, string) (*cel.Ast, error)
 	CreateEnvironment(*options.EvaluatorOptions, map[string]Plugin) (*cel.Env, error)
-	BuildVariables(*options.EvaluatorOptions, map[string]Plugin, *api.Tenet, *evalcontext.EvaluationContext, []attestation.Predicate) (*map[string]any, error)
-	EnsurePredicates(*api.Tenet, *map[string]any) (*api.EvalResult, error)
+	BuildVariables(*options.EvaluatorOptions, map[string]Plugin, *papi.Tenet, *evalcontext.EvaluationContext, []attestation.Predicate) (*map[string]any, error)
+	EnsurePredicates(*papi.Tenet, *map[string]any) (*papi.EvalResult, error)
 	EvaluateOutputs(*cel.Env, map[string]*cel.Ast, *map[string]any) (map[string]any, error)
-	Evaluate(*cel.Env, *cel.Ast, *map[string]any) (*api.EvalResult, error)
-	Assert(*api.ResultSet) bool
-	BuildSelectorVariables(*options.EvaluatorOptions, map[string]Plugin, *api.Policy, attestation.Subject, *api.ChainedPredicate, attestation.Predicate) (*map[string]any, error)
+	Evaluate(*cel.Env, *cel.Ast, *map[string]any) (*papi.EvalResult, error)
+	Assert(*papi.ResultSet) bool
+	BuildSelectorVariables(*options.EvaluatorOptions, map[string]Plugin, *papi.Policy, attestation.Subject, *papi.ChainedPredicate, attestation.Predicate) (*map[string]any, error)
 	EvaluateChainedSelector(*cel.Env, *cel.Ast, *map[string]any) (attestation.Subject, error)
 }
 
@@ -92,7 +92,7 @@ func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, pl
 //
 //nolint:gocritic // This passes around a large struct in vars
 func (dce *defaulCelEvaluator) BuildVariables(
-	opts *options.EvaluatorOptions, plugins map[string]Plugin, tenet *api.Tenet,
+	opts *options.EvaluatorOptions, plugins map[string]Plugin, tenet *papi.Tenet,
 	evalContext *evalcontext.EvaluationContext, predicates []attestation.Predicate,
 ) (*map[string]any, error) {
 	// List of variables to return
@@ -177,7 +177,7 @@ func extractSubjectData(subject attestation.Subject) *structpb.Struct {
 // for the tenet to evaluate against.
 //
 //nolint:gocritic // This passes around a large struct in vars
-func (dce *defaulCelEvaluator) EnsurePredicates(tenet *api.Tenet, vars *map[string]any) (*api.EvalResult, error) {
+func (dce *defaulCelEvaluator) EnsurePredicates(tenet *papi.Tenet, vars *map[string]any) (*papi.EvalResult, error) {
 	// Fiorst, check if the tenet needs them
 	if tenet.Predicates == nil {
 		return nil, nil
@@ -204,13 +204,13 @@ func (dce *defaulCelEvaluator) EnsurePredicates(tenet *api.Tenet, vars *map[stri
 	}
 
 	if predFail {
-		return &api.EvalResult{
+		return &papi.EvalResult{
 			Id:         tenet.Id,
-			Status:     api.StatusFAIL,
+			Status:     papi.StatusFAIL,
 			Date:       timestamppb.Now(),
 			Output:     &structpb.Struct{},
-			Statements: []*api.StatementRef{},
-			Error: &api.Error{
+			Statements: []*papi.StatementRef{},
+			Error: &papi.Error{
 				Message:  "No suitable predicates found",
 				Guidance: "None of the loaded attestations match the tenet requirements",
 			},
@@ -410,7 +410,7 @@ func (dce *defaulCelEvaluator) EvaluateChainedSelector(
 // Evaluate the precompiled ASTs
 //
 //nolint:gocritic // This is passing a potentially large data set
-func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *map[string]any) (*api.EvalResult, error) {
+func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *map[string]any) (*papi.EvalResult, error) {
 	program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
 	if err != nil {
 		return nil, fmt.Errorf("generating program from AST: %w", err)
@@ -435,21 +435,21 @@ func (dce *defaulCelEvaluator) Evaluate(env *cel.Env, ast *cel.Ast, variables *m
 		return nil, fmt.Errorf("eval error: tenet must evaluate to boolean")
 	}
 
-	st := api.StatusFAIL
+	st := papi.StatusFAIL
 	if evalResult {
-		st = api.StatusPASS
+		st = papi.StatusPASS
 	}
 
 	// Convert cel result to an api.Result
-	return &api.EvalResult{
+	return &papi.EvalResult{
 		Status: st,
 		Date:   timestamppb.New(time.Now()),
 		// Policy:     &api.PolicyRef{},
-		Statements: []*api.StatementRef{},
+		Statements: []*papi.StatementRef{},
 	}, nil
 }
 
-func (dce *defaulCelEvaluator) Assert(*api.ResultSet) bool {
+func (dce *defaulCelEvaluator) Assert(*papi.ResultSet) bool {
 	return false
 }
 
@@ -457,8 +457,8 @@ func (dce *defaulCelEvaluator) Assert(*api.ResultSet) bool {
 //
 //nolint:gocritic // This passes around a large struct in vars
 func (dce *defaulCelEvaluator) BuildSelectorVariables(
-	opts *options.EvaluatorOptions, plugins map[string]Plugin, policy *api.Policy,
-	subject attestation.Subject, _ *api.ChainedPredicate, predicate attestation.Predicate,
+	opts *options.EvaluatorOptions, plugins map[string]Plugin, policy *papi.Policy,
+	subject attestation.Subject, _ *papi.ChainedPredicate, predicate attestation.Predicate,
 ) (*map[string]any, error) {
 	ret := map[string]any{}
 

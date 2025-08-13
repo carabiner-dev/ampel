@@ -11,18 +11,18 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/hasher"
+	"github.com/carabiner-dev/policy"
+	papi "github.com/carabiner-dev/policy/api/v1"
 	"github.com/fatih/color"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/spf13/cobra"
-	"sigs.k8s.io/release-utils/util"
+	"sigs.k8s.io/release-utils/helpers"
 
 	"github.com/carabiner-dev/ampel/internal/render"
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/collector"
 	acontext "github.com/carabiner-dev/ampel/pkg/context"
-	"github.com/carabiner-dev/ampel/pkg/policy"
 	"github.com/carabiner-dev/ampel/pkg/verifier"
 )
 
@@ -243,7 +243,7 @@ using a collector.
 					} else if opts.SubjectHash != opts.Subject {
 						return fmt.Errorf("subject hash specified twice")
 					}
-				} else if util.Exists(opts.Subject) {
+				} else if helpers.Exists(opts.Subject) {
 					if opts.SubjectFile == "" {
 						opts.SubjectFile = opts.Subject
 					} else {
@@ -338,11 +338,11 @@ using a collector.
 			}
 
 			switch r := results.(type) {
-			case *api.Result:
+			case *papi.Result:
 				if err := eng.RenderResult(os.Stdout, r); err != nil {
 					return fmt.Errorf("rendering result: %w", err)
 				}
-			case *api.ResultSet:
+			case *papi.ResultSet:
 				if opts.PolicyOutput || len(opts.Policies) > 0 {
 					for _, r := range r.GetResults() {
 						if err := eng.RenderResult(os.Stdout, r); err != nil {
@@ -354,7 +354,7 @@ using a collector.
 				}
 			}
 
-			if results.GetStatus() == api.StatusFAIL && opts.SetExitCode {
+			if results.GetStatus() == papi.StatusFAIL && opts.SetExitCode {
 				os.Exit(1)
 			}
 

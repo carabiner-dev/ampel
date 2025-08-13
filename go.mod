@@ -1,15 +1,17 @@
 module github.com/carabiner-dev/ampel
 
-go 1.24.3
+go 1.24.6
 
 require (
+	github.com/carabiner-dev/attestation v0.1.1
 	github.com/carabiner-dev/bnd v0.2.2
 	github.com/carabiner-dev/ghrfs v0.3.2
 	github.com/carabiner-dev/github v0.2.2
 	github.com/carabiner-dev/hasher v0.2.2
-	github.com/carabiner-dev/jsonl v0.2.0
+	github.com/carabiner-dev/jsonl v0.2.1
 	github.com/carabiner-dev/openeox v0.0.0-20250430212020-e3a5beb42ddd
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
+	github.com/carabiner-dev/policy v0.0.0-20250812202510-fb6054f01ccd
 	github.com/carabiner-dev/vcslocator v0.3.1
 	github.com/fatih/color v1.18.0
 	github.com/go-git/go-billy/v5 v5.6.2
@@ -21,13 +23,13 @@ require (
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481
 	github.com/openvex/go-vex v0.2.5
 	github.com/protobom/cel v0.1.0
-	github.com/protobom/protobom v0.5.2
+	github.com/protobom/protobom v0.5.4
 	github.com/sigstore/protobuf-specs v0.5.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
-	google.golang.org/protobuf v1.36.6
-	sigs.k8s.io/release-utils v0.12.0
+	google.golang.org/protobuf v1.36.7
+	sigs.k8s.io/release-utils v0.12.1
 )
 
 require (
@@ -103,9 +105,9 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
-	github.com/olekukonko/errors v0.0.0-20250405072817-4e6d85265da6 // indirect
-	github.com/olekukonko/ll v0.0.8 // indirect
-	github.com/olekukonko/tablewriter v1.0.8 // indirect
+	github.com/olekukonko/errors v1.1.0 // indirect
+	github.com/olekukonko/ll v0.0.9 // indirect
+	github.com/olekukonko/tablewriter v1.0.9 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect

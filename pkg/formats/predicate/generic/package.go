@@ -8,16 +8,15 @@ package generic
 import (
 	"encoding/json"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/attestation"
 )
 
 type Predicate struct {
 	Type         attestation.PredicateType `json:"_type"`
 	Parsed       any
-	Source       attestation.Subject `json:"-"`
-	Data         []byte              `json:"-"`
-	Verification *api.Verification   `json:"-"`
+	Source       attestation.Subject      `json:"-"`
+	Data         []byte                   `json:"-"`
+	Verification attestation.Verification `json:"-"`
 }
 
 func (p *Predicate) GetType() attestation.PredicateType { return p.Type }
@@ -26,14 +25,14 @@ func (p *Predicate) SetType(pt attestation.PredicateType) error {
 	p.Type = pt
 	return nil
 }
-func (p *Predicate) GetParsed() any                       { return p.Parsed }
-func (p *Predicate) GetData() []byte                      { return p.Data }
-func (p *Predicate) GetSource() attestation.Subject       { return p.Source }
-func (p *Predicate) SetSource(src attestation.Subject)    { p.Source = src }
-func (p *Predicate) SetVerification(vf *api.Verification) { p.Verification = vf }
+func (p *Predicate) GetParsed() any                              { return p.Parsed }
+func (p *Predicate) GetData() []byte                             { return p.Data }
+func (p *Predicate) GetOrigin() attestation.Subject              { return p.Source }
+func (p *Predicate) SetOrigin(src attestation.Subject)           { p.Source = src }
+func (p *Predicate) SetVerification(vf attestation.Verification) { p.Verification = vf }
 
 // GetVerifications returns the signature verifications from the predicate
-func (p *Predicate) GetVerification() *api.Verification {
+func (p *Predicate) GetVerification() attestation.Verification {
 	return p.Verification
 }
 

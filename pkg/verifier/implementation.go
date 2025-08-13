@@ -15,13 +15,13 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/carabiner-dev/attestation"
+	papi "github.com/carabiner-dev/policy/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/collector"
 	acontext "github.com/carabiner-dev/ampel/pkg/context"
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
@@ -37,34 +37,34 @@ import (
 
 // AmpelImplementation
 type AmpelVerifier interface {
-	GatherAttestations(context.Context, *VerificationOptions, *collector.Agent, *api.Policy, attestation.Subject, []attestation.Envelope) ([]attestation.Envelope, error)
+	GatherAttestations(context.Context, *VerificationOptions, *collector.Agent, *papi.Policy, attestation.Subject, []attestation.Envelope) ([]attestation.Envelope, error)
 	ParseAttestations(context.Context, []string) ([]attestation.Envelope, error)
-	BuildEvaluators(*VerificationOptions, *api.Policy) (map[class.Class]evaluator.Evaluator, error)
-	BuildTransformers(*VerificationOptions, *api.Policy) (map[transformer.Class]transformer.Transformer, error)
-	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *api.Policy, attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
+	BuildEvaluators(*VerificationOptions, *papi.Policy) (map[class.Class]evaluator.Evaluator, error)
+	BuildTransformers(*VerificationOptions, *papi.Policy) (map[transformer.Class]transformer.Transformer, error)
+	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *papi.Policy, attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
 
 	// CheckIdentities verifies that attestations are signed by the policy identities
-	CheckIdentities(*VerificationOptions, []*api.Identity, []attestation.Envelope) (bool, []error, error)
+	CheckIdentities(*VerificationOptions, []*papi.Identity, []attestation.Envelope) (bool, []error, error)
 
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
-	AssertResult(*api.Policy, *api.Result) error
-	AttestResults(context.Context, *VerificationOptions, api.Results) error
+	AssertResult(*papi.Policy, *papi.Result) error
+	AttestResults(context.Context, *VerificationOptions, papi.Results) error
 
 	// AttestResultToWriter takes an evaluation result and writes an attestation to the supplied io.Writer
-	AttestResultToWriter(io.Writer, *api.Result) error
+	AttestResultToWriter(io.Writer, *papi.Result) error
 
 	// AttestResultSetToWriter takes an policy resultset and writes an attestation to the supplied io.Writer
-	AttestResultSetToWriter(io.Writer, *api.ResultSet) error
+	AttestResultSetToWriter(io.Writer, *papi.ResultSet) error
 
 	// VerifySubject runs the verification process.
-	VerifySubject(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *api.Policy, map[string]any, attestation.Subject, []attestation.Predicate) (*api.Result, error)
+	VerifySubject(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *papi.Policy, map[string]any, attestation.Subject, []attestation.Predicate) (*papi.Result, error)
 
 	// ProcessChainedSubjects proceses the chain of attestations to find the ultimate
 	// subject a policy is supposed to operate on
-	ProcessChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *api.Policy, map[string]any, attestation.Subject, []attestation.Envelope) (attestation.Subject, []*api.ChainedSubject, bool, error)
+	ProcessChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *papi.Policy, map[string]any, attestation.Subject, []attestation.Envelope) (attestation.Subject, []*papi.ChainedSubject, bool, error)
 
 	// AssemblePolicyEvalContext builds the policy context by mixing defaults and defined values
-	AssemblePolicyEvalContext(context.Context, *VerificationOptions, *api.Policy) (map[string]any, error)
+	AssemblePolicyEvalContext(context.Context, *VerificationOptions, *papi.Policy) (map[string]any, error)
 }
 
 type defaultIplementation struct{}
@@ -75,7 +75,7 @@ type defaultIplementation struct{}
 // a subject.
 func (di *defaultIplementation) GatherAttestations(
 	ctx context.Context, opts *VerificationOptions, agent *collector.Agent,
-	policy *api.Policy, subject attestation.Subject, attestations []attestation.Envelope,
+	policy *papi.Policy, subject attestation.Subject, attestations []attestation.Envelope,
 ) ([]attestation.Envelope, error) {
 	// First, any predefined attestations (from the command line) need to be
 	// filtered out as no subject matching is done. This is because we ingest
@@ -153,30 +153,30 @@ func (di *defaultIplementation) ParseAttestations(ctx context.Context, paths []s
 
 // AssertResult conducts the final assertion to allow/block based on the
 // result sets returned by the evaluators.
-func (di *defaultIplementation) AssertResult(policy *api.Policy, result *api.Result) error {
+func (di *defaultIplementation) AssertResult(policy *papi.Policy, result *papi.Result) error {
 	switch policy.GetMeta().GetAssertMode() {
 	case "OR", "":
 		for _, er := range result.EvalResults {
-			if er.Status == api.StatusPASS {
-				result.Status = api.StatusPASS
+			if er.Status == papi.StatusPASS {
+				result.Status = papi.StatusPASS
 				return nil
 			}
 		}
-		result.Status = api.StatusFAIL
+		result.Status = papi.StatusFAIL
 		if policy.Meta.Enforce == "OFF" {
-			result.Status = api.StatusSOFTFAIL
+			result.Status = papi.StatusSOFTFAIL
 		}
 	case "AND":
 		for _, er := range result.EvalResults {
-			if er.Status == api.StatusFAIL {
-				result.Status = api.StatusFAIL
+			if er.Status == papi.StatusFAIL {
+				result.Status = papi.StatusFAIL
 				if policy.Meta.Enforce == "OFF" {
-					result.Status = api.StatusSOFTFAIL
+					result.Status = papi.StatusSOFTFAIL
 				}
 				return nil
 			}
 		}
-		result.Status = api.StatusPASS
+		result.Status = papi.StatusPASS
 	default:
 		return fmt.Errorf("invalid policy assertion mode")
 	}
@@ -184,7 +184,7 @@ func (di *defaultIplementation) AssertResult(policy *api.Policy, result *api.Res
 }
 
 // BuildEvaluators checks a policy and build the required evaluators to run the tenets
-func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *api.Policy) (map[class.Class]evaluator.Evaluator, error) {
+func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *papi.Policy) (map[class.Class]evaluator.Evaluator, error) {
 	evaluators := map[class.Class]evaluator.Evaluator{}
 	factory := evaluator.Factory{}
 	// First, build the default evaluator
@@ -246,7 +246,7 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *ap
 }
 
 // BuildTransformers
-func (di *defaultIplementation) BuildTransformers(opts *VerificationOptions, policy *api.Policy) (map[transformer.Class]transformer.Transformer, error) {
+func (di *defaultIplementation) BuildTransformers(opts *VerificationOptions, policy *papi.Policy) (map[transformer.Class]transformer.Transformer, error) {
 	factory := transformer.Factory{}
 	transformers := map[transformer.Class]transformer.Transformer{}
 	for _, classString := range policy.Transformers {
@@ -264,7 +264,7 @@ func (di *defaultIplementation) BuildTransformers(opts *VerificationOptions, pol
 // defined in the policy
 func (di *defaultIplementation) Transform(
 	opts *VerificationOptions, transformers map[transformer.Class]transformer.Transformer,
-	policy *api.Policy, subject attestation.Subject, predicates []attestation.Predicate,
+	policy *papi.Policy, subject attestation.Subject, predicates []attestation.Predicate,
 ) (attestation.Subject, []attestation.Predicate, error) {
 	var err error
 	var newsubject attestation.Subject
@@ -289,11 +289,11 @@ func (di *defaultIplementation) Transform(
 
 // CheckIdentities checks that the ingested attestations are signed by one of the
 // identities defined in thew policy.
-func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, policyIdentities []*api.Identity, envelopes []attestation.Envelope) (bool, []error, error) {
+func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, policyIdentities []*papi.Identity, envelopes []attestation.Envelope) (bool, []error, error) {
 	// verification errors for the user
 	errs := make([]error, len(envelopes))
 
-	allIds := []*api.Identity{}
+	allIds := []*papi.Identity{}
 	allIds = append(allIds, policyIdentities...)
 
 	if len(policyIdentities) > 0 && len(opts.IdentityStrings) > 0 {
@@ -306,7 +306,7 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 	if len(opts.IdentityStrings) > 0 && len(policyIdentities) == 0 {
 		logrus.Debugf("Got %d identity strings from options", len(opts.IdentityStrings))
 		for _, idSlug := range opts.IdentityStrings {
-			ident, err := api.NewIdentityFromSlug(idSlug)
+			ident, err := papi.NewIdentityFromSlug(idSlug)
 			if err != nil {
 				return false, nil, fmt.Errorf("invalid identity slug %q: %w", idSlug, err)
 			}
@@ -338,7 +338,7 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 			continue
 		}
 
-		validSigners := []*api.Identity{}
+		validSigners := []*papi.Identity{}
 		if e.GetVerification() == nil {
 			errs[i] = errors.New("attestation not verified")
 			validIdentities = false
@@ -373,10 +373,10 @@ func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, su
 // SelectChainedSubject returns a new subkect from an ingested attestatom
 func (di *defaultIplementation) ProcessChainedSubjects(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
-	agent *collector.Agent, policy *api.Policy, evalContextValues map[string]any, subject attestation.Subject,
+	agent *collector.Agent, policy *papi.Policy, evalContextValues map[string]any, subject attestation.Subject,
 	attestations []attestation.Envelope,
-) (attestation.Subject, []*api.ChainedSubject, bool, error) {
-	chain := []*api.ChainedSubject{}
+) (attestation.Subject, []*papi.ChainedSubject, bool, error) {
+	chain := []*papi.ChainedSubject{}
 	// If there are no chained subjects, return the original
 	if policy.GetChain() == nil {
 		return subject, chain, false, nil
@@ -479,12 +479,12 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 		}
 
 		// Add to link history
-		chain = append(chain, &api.ChainedSubject{
-			Source:      api.NewResourceDescriptor().FromSubject(subject),
-			Destination: api.NewResourceDescriptor().FromSubject(newsubject),
-			Link: &api.ChainedSubjectLink{
+		chain = append(chain, &papi.ChainedSubject{
+			Source:      newResourceDescriptorFromSubject(subject),
+			Destination: newResourceDescriptorFromSubject(newsubject),
+			Link: &papi.ChainedSubjectLink{
 				Type:        string(attestations[0].GetStatement().GetPredicateType()),
-				Attestation: api.NewResourceDescriptor().FromSubject(attestations[0].GetStatement().GetPredicate().GetSource()),
+				Attestation: newResourceDescriptorFromSubject(attestations[0].GetStatement().GetPredicate().GetOrigin()),
 			},
 		})
 		subject = newsubject
@@ -492,13 +492,21 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 	return subject, chain, false, nil
 }
 
+func newResourceDescriptorFromSubject(s attestation.Subject) *gointoto.ResourceDescriptor {
+	return &gointoto.ResourceDescriptor{
+		Name:   s.GetName(),
+		Uri:    s.GetUri(),
+		Digest: s.GetDigest(),
+	}
+}
+
 // AssemblePolicyEvalContext puts together the context.
-func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, opts *VerificationOptions, p *api.Policy) (map[string]any, error) {
+func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, opts *VerificationOptions, p *papi.Policy) (map[string]any, error) {
 	errs := []error{}
 
 	// Load the context definitions as received from invocation
 	values := map[string]any{}
-	assembledContext := map[string]*api.ContextVal{}
+	assembledContext := map[string]*papi.ContextVal{}
 
 	// Context names can be any case, but they cannot clash when normalized
 	// to lower case. This means that both MyValue and myvalue are valid names
@@ -602,19 +610,19 @@ func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, o
 // all gathering, parsing, transforming and verification is performed.
 func (di *defaultIplementation) VerifySubject(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
-	p *api.Policy, evalContextValues map[string]any, subject attestation.Subject, predicates []attestation.Predicate,
-) (*api.Result, error) {
+	p *papi.Policy, evalContextValues map[string]any, subject attestation.Subject, predicates []attestation.Predicate,
+) (*papi.Result, error) {
 	evalContextValuesStruct, err := structpb.NewStruct(evalContextValues)
 	if err != nil {
 		return nil, fmt.Errorf("serializing evaluation context data: %w", err)
 	}
-	rs := &api.Result{
+	rs := &papi.Result{
 		DateStart: timestamppb.Now(),
-		Policy: &api.PolicyRef{
+		Policy: &papi.PolicyRef{
 			Id: p.Id,
 		},
 		Meta: p.GetMeta(),
-		Subject: &api.ResourceDescriptor{
+		Subject: &gointoto.ResourceDescriptor{
 			Name:   subject.GetName(),
 			Uri:    subject.GetUri(),
 			Digest: subject.GetDigest(),
@@ -683,7 +691,7 @@ func (di *defaultIplementation) VerifySubject(
 		}
 
 		// Carry over the error from the policy if the runtime didn't add one
-		if evalres.Status != api.StatusPASS && evalres.Error == nil {
+		if evalres.Status != papi.StatusPASS && evalres.Error == nil {
 			var b, b2 bytes.Buffer
 
 			tmplMsg, err := template.New("error_message").Parse(tenet.Error.GetMessage())
@@ -702,14 +710,14 @@ func (di *defaultIplementation) VerifySubject(
 				return nil, fmt.Errorf("executing error guidance template: %w", err)
 			}
 
-			evalres.Error = &api.Error{
+			evalres.Error = &papi.Error{
 				Message:  b.String(),
 				Guidance: b2.String(),
 			}
 		}
 
 		// Carry over the assessment from the policy if not set by the runtime
-		if evalres.Status == api.StatusPASS && evalres.Assessment == nil {
+		if evalres.Status == papi.StatusPASS && evalres.Assessment == nil {
 			tmpl, err := template.New("assessment").Parse(tenet.Assessment.GetMessage())
 			if err != nil {
 				return nil, fmt.Errorf("parsing tenet assessment: %w", err)
@@ -718,7 +726,7 @@ func (di *defaultIplementation) VerifySubject(
 			if err := tmpl.Execute(&b, templateData); err != nil {
 				return nil, fmt.Errorf("executing assessment template: %w", err)
 			}
-			evalres.Assessment = &api.Assessment{
+			evalres.Assessment = &papi.Assessment{
 				Message: b.String(),
 			}
 		}
@@ -735,7 +743,7 @@ func (di *defaultIplementation) VerifySubject(
 // AttestResults writes an attestation captring the evaluation
 // results set.
 func (di *defaultIplementation) AttestResults(
-	ctx context.Context, opts *VerificationOptions, results api.Results,
+	ctx context.Context, opts *VerificationOptions, results papi.Results,
 ) error {
 	if !opts.AttestResults {
 		return nil
@@ -750,10 +758,10 @@ func (di *defaultIplementation) AttestResults(
 	}
 
 	switch r := results.(type) {
-	case *api.Result:
+	case *papi.Result:
 		// Write the statement to json
 		return di.AttestResultToWriter(f, r)
-	case *api.ResultSet:
+	case *papi.ResultSet:
 		return di.AttestResultSetToWriter(f, r)
 	default:
 		return fmt.Errorf("unable to cast result")
@@ -763,7 +771,7 @@ func (di *defaultIplementation) AttestResults(
 // AttestResultToWriter writes an attestation capturing a evaluation
 // result set.
 func (di *defaultIplementation) AttestResultToWriter(
-	w io.Writer, result *api.Result,
+	w io.Writer, result *papi.Result,
 ) error {
 	if result == nil {
 		return fmt.Errorf("unable to attest results, set is nil")
@@ -778,8 +786,8 @@ func (di *defaultIplementation) AttestResultToWriter(
 
 	// Create the predicate file
 	pred := ampelPred.NewPredicate()
-	pred.Parsed = &api.ResultSet{
-		Results: []*api.Result{result},
+	pred.Parsed = &papi.ResultSet{
+		Results: []*papi.Result{result},
 	}
 
 	// Create the statement
@@ -805,7 +813,7 @@ func stringifyDigests(subject attestation.Subject) string {
 // AttestResults writes an attestation captring the evaluation
 // results set.
 func (di *defaultIplementation) AttestResultSetToWriter(
-	w io.Writer, resultset *api.ResultSet,
+	w io.Writer, resultset *papi.ResultSet,
 ) error {
 	if resultset == nil {
 		return fmt.Errorf("unable to attest results, set is nil")

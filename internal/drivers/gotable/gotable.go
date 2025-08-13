@@ -10,10 +10,10 @@ import (
 	"math"
 	"strings"
 
+	"github.com/carabiner-dev/attestation"
+	papi "github.com/carabiner-dev/policy/api/v1"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
-
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
 
 type TableBuilder struct {
@@ -24,17 +24,17 @@ type TableBuilder struct {
 // decoration of the tabular reports.
 type TableDecorator interface {
 	AmpelBanner(string) string
-	SubjectToString(*api.ResourceDescriptor, []*api.ChainedSubject) string
-	AssessmentToString(*api.Assessment) string
-	ErrorToString(*api.Error) string
+	SubjectToString(attestation.Subject, []*papi.ChainedSubject) string
+	AssessmentToString(*papi.Assessment) string
+	ErrorToString(*papi.Error) string
 	StatusToDot(string) string
-	ControlsToString(result *api.Result, checkID, def string) string
-	TenetsToString(result *api.Result) string
+	ControlsToString(result *papi.Result, checkID, def string) string
+	TenetsToString(result *papi.Result) string
 	Bold(string) string
 }
 
 // RenderResult renders a single evaluation result
-func (tb *TableBuilder) ResultsTable(result *api.Result) (table.Writer, error) {
+func (tb *TableBuilder) ResultsTable(result *papi.Result) (table.Writer, error) {
 	t := table.NewWriter()
 
 	rowConfigAutoMerge := table.RowConfig{
@@ -72,7 +72,7 @@ func (tb *TableBuilder) ResultsTable(result *api.Result) (table.Writer, error) {
 		if er.GetAssessment() != nil {
 			cell = tb.Decorator.AssessmentToString(er.GetAssessment())
 		}
-		if er.Status != api.StatusPASS {
+		if er.Status != papi.StatusPASS {
 			cell = tb.Decorator.ErrorToString(er.Error)
 		}
 		t.AppendRow(
@@ -87,7 +87,7 @@ func (tb *TableBuilder) ResultsTable(result *api.Result) (table.Writer, error) {
 }
 
 // RenderResult renders a single evaluation result
-func (tb *TableBuilder) ResultSetTable(set *api.ResultSet) (table.Writer, error) {
+func (tb *TableBuilder) ResultSetTable(set *papi.ResultSet) (table.Writer, error) {
 	t := table.NewWriter()
 
 	rowConfigAutoMerge := table.RowConfig{
@@ -124,7 +124,7 @@ func (tb *TableBuilder) ResultSetTable(set *api.ResultSet) (table.Writer, error)
 	for _, r := range set.GetResults() {
 		assessments := ""
 		for _, er := range r.GetEvalResults() {
-			if er.GetStatus() == api.StatusPASS {
+			if er.GetStatus() == papi.StatusPASS {
 				assessments += er.GetAssessment().GetMessage() + "\n"
 			} else {
 				assessments = er.GetError().GetMessage() + "\n"

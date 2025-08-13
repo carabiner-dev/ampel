@@ -4,7 +4,7 @@
 package filters
 
 import (
-	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/attestation"
 )
 
 // SubjectlessMatcher matches any attestation that does not have a subject.

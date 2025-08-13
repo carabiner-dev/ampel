@@ -7,13 +7,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/carabiner-dev/attestation"
+	papi "github.com/carabiner-dev/policy/api/v1"
 	"github.com/google/cel-go/cel"
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
@@ -117,7 +119,7 @@ type Plugin interface {
 	Library() cel.EnvOption
 
 	// VarValues returns the values of the variables handled by the plugin
-	VarValues(*api.Policy, attestation.Subject, []attestation.Predicate) map[string]any
+	VarValues(*papi.Policy, attestation.Subject, []attestation.Predicate) map[string]any
 }
 
 // RegisterPlugin registers a plugin expanding the CEL API available at eval time
@@ -143,7 +145,7 @@ func (e *Evaluator) RegisterPlugin(plugin api.Plugin) error {
 }
 
 func (e *Evaluator) ExecChainedSelector(
-	ctx context.Context, opts *options.EvaluatorOptions, chained *api.ChainedPredicate, predicate attestation.Predicate,
+	ctx context.Context, opts *options.EvaluatorOptions, chained *papi.ChainedPredicate, predicate attestation.Predicate,
 ) (attestation.Subject, error) {
 	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
 	if !ok {
@@ -173,20 +175,20 @@ func (e *Evaluator) ExecChainedSelector(
 
 // Exec executes each tenet and returns the combined results
 func (e *Evaluator) ExecTenet(
-	ctx context.Context, opts *options.EvaluatorOptions, tenet *api.Tenet, predicates []attestation.Predicate,
-) (*api.EvalResult, error) {
+	ctx context.Context, opts *options.EvaluatorOptions, tenet *papi.Tenet, predicates []attestation.Predicate,
+) (*papi.EvalResult, error) {
 	// Build the statement refs to add to the results
-	statementRefs := []*api.StatementRef{}
+	statementRefs := []*papi.StatementRef{}
 	for _, pred := range predicates {
-		sref := &api.StatementRef{
+		sref := &papi.StatementRef{
 			Type:        string(pred.GetType()),
-			Attestation: &api.ResourceDescriptor{},
+			Attestation: &intoto.ResourceDescriptor{},
 		}
 
-		if pred.GetSource() != nil {
-			sref.GetAttestation().Name = pred.GetSource().GetName()
-			sref.GetAttestation().Uri = pred.GetSource().GetUri()
-			sref.GetAttestation().Digest = pred.GetSource().GetDigest()
+		if pred.GetOrigin() != nil {
+			sref.GetAttestation().Name = pred.GetOrigin().GetName()
+			sref.GetAttestation().Uri = pred.GetOrigin().GetUri()
+			sref.GetAttestation().Digest = pred.GetOrigin().GetDigest()
 		}
 
 		statementRefs = append(statementRefs, sref)
@@ -231,13 +233,13 @@ func (e *Evaluator) ExecTenet(
 		//nolint:errorlint
 		ee, ok := err.(*EvaluationError)
 		if ok {
-			return &api.EvalResult{
+			return &papi.EvalResult{
 				Id:         tenet.Id,
-				Status:     api.StatusFAIL,
+				Status:     papi.StatusFAIL,
 				Date:       timestamppb.Now(),
 				Output:     &structpb.Struct{},
 				Statements: statementRefs,
-				Error: &api.Error{
+				Error: &papi.Error{
 					Message:  "Evaluating policy outputs: " + ee.Message,
 					Guidance: ee.EvalError.Error(),
 				},
@@ -252,13 +254,13 @@ func (e *Evaluator) ExecTenet(
 		//nolint:errorlint
 		ee, ok := err.(*EvaluationError)
 		if ok {
-			return &api.EvalResult{
+			return &papi.EvalResult{
 				Id:         tenet.Id,
-				Status:     api.StatusFAIL,
+				Status:     papi.StatusFAIL,
 				Date:       timestamppb.Now(),
 				Output:     &structpb.Struct{},
 				Statements: statementRefs,
-				Error: &api.Error{
+				Error: &papi.Error{
 					Message:  "Evaluating policy code: " + ee.Message,
 					Guidance: ee.EvalError.Error(),
 				},

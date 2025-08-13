@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/hasher"
 	"github.com/carabiner-dev/osv/go/osv"
 	gointoto "github.com/in-toto/attestation/go/v1"
@@ -23,7 +24,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/carabiner-dev/ampel/internal/index"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	aosv "github.com/carabiner-dev/ampel/pkg/formats/predicate/osv"
 )

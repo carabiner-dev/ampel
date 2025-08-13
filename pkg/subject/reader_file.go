@@ -14,9 +14,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/carabiner-dev/attestation"
 	gointoto "github.com/in-toto/attestation/go/v1"
-
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 func NewFileReader() *FileReader {
