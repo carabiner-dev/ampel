@@ -9,10 +9,9 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/nozzle/throttler"
 	"github.com/sirupsen/logrus"
-
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 var (

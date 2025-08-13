@@ -7,9 +7,9 @@ import (
 	"bytes"
 	"strings"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/protobom/protobom/pkg/formats"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/json"
 )
 

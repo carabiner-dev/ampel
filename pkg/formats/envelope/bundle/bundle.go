@@ -14,12 +14,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/hasher"
+	intoto "github.com/in-toto/attestation/go/v1"
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	"google.golang.org/protobuf/encoding/protojson"
-
-	v1 "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 type Parser struct{}
@@ -48,7 +47,7 @@ func (p *Parser) ParseFile(path string) ([]attestation.Envelope, error) {
 
 	// Set the source data in the envelope
 	src := envs[0].GetStatement().GetPredicate().GetOrigin()
-	rd, ok := src.(*v1.ResourceDescriptor)
+	rd, ok := src.(*intoto.ResourceDescriptor)
 	if rd != nil && !ok {
 		return nil, errors.New("unable to cast source as resource descriptor")
 	}
@@ -56,7 +55,7 @@ func (p *Parser) ParseFile(path string) ([]attestation.Envelope, error) {
 	if rd != nil {
 		rd.Name = filepath.Base(path)
 		rd.Uri = fmt.Sprintf("file:%s", path)
-		envs[0].GetStatement().GetPredicate().SetSource(rd)
+		envs[0].GetStatement().GetPredicate().SetOrigin(rd)
 	}
 	return envs, nil
 }
@@ -81,7 +80,7 @@ func (p *Parser) Parse(data []byte) ([]attestation.Envelope, error) {
 	}
 
 	// Reigster the attestation digests in its source
-	env.GetStatement().GetPredicate().SetSource(digests.ToResourceDescriptors()[0])
+	env.GetStatement().GetPredicate().SetOrigin(digests.ToResourceDescriptors()[0])
 
 	return []attestation.Envelope{env}, nil
 }

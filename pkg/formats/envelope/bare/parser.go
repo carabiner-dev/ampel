@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/hasher"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
@@ -63,7 +63,7 @@ func (p *Parser) ParseStream(r io.Reader) ([]attestation.Envelope, error) {
 
 	// Assign the new statement
 	s = intoto.NewStatement(intoto.WithPredicate(pred))
-	s.GetPredicate().SetSource(digests.ToResourceDescriptors()[0])
+	s.GetPredicate().SetOrigin(digests.ToResourceDescriptors()[0])
 	env.Statement = s
 	return []attestation.Envelope{env}, nil
 }

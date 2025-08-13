@@ -8,9 +8,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/stretchr/testify/require"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope/bare"
 )
 

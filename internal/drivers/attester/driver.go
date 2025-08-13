@@ -8,7 +8,8 @@ import (
 	"io"
 	"os"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
+	papi "github.com/carabiner-dev/policy/api/v1"
+
 	"github.com/carabiner-dev/ampel/pkg/verifier"
 )
 
@@ -26,10 +27,10 @@ type Driver struct {
 	Ampel *verifier.Ampel
 }
 
-func (d *Driver) RenderResultSet(w io.Writer, rset *api.ResultSet) error {
+func (d *Driver) RenderResultSet(w io.Writer, rset *papi.ResultSet) error {
 	return d.Ampel.AttestResults(w, rset)
 }
 
-func (d *Driver) RenderResult(w io.Writer, status *api.Result) error {
+func (d *Driver) RenderResult(w io.Writer, status *papi.Result) error {
 	return d.Ampel.AttestResults(w, status)
 }

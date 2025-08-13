@@ -7,9 +7,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/stretchr/testify/require"
-
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 func TestParse(t *testing.T) {

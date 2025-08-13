@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/attestation"
 )
 
 type Cache interface {

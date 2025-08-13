@@ -4,10 +4,8 @@
 package bare
 
 import (
+	"github.com/carabiner-dev/attestation"
 	"github.com/sirupsen/logrus"
-
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 var _ attestation.Envelope = (*Envelope)(nil)
@@ -32,7 +30,7 @@ func (*Envelope) GetSignatures() []attestation.Signature {
 }
 
 // GetVerifications returns always empty as they are by definition unsigned
-func (*Envelope) GetVerification() *api.Verification {
+func (*Envelope) GetVerification() attestation.Verification {
 	return nil
 }
 

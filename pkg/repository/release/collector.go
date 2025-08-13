@@ -7,9 +7,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/ghrfs"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/repository/filesystem"
 )
 

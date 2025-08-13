@@ -7,15 +7,15 @@ import (
 	"crypto/x509"
 	"fmt"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/bnd/pkg/bnd"
+	papi "github.com/carabiner-dev/policy/api/v1"
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	sgbundle "github.com/sigstore/sigstore-go/pkg/bundle"
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
 )
 
@@ -77,7 +77,7 @@ func (e *Envelope) GetSignatures() []attestation.Signature {
 
 // GetVerifications returns the signtature verifications stored in the
 // predicate (via the statement)
-func (env *Envelope) GetVerification() *api.Verification {
+func (env *Envelope) GetVerification() attestation.Verification {
 	if env.GetStatement() == nil {
 		return nil
 	}
@@ -132,13 +132,13 @@ func (e *Envelope) Verify() error {
 	logrus.Debugf("  Cert Issuer:  %s", summary.CertificateIssuer)
 
 	// Register the verification data
-	e.GetPredicate().SetVerification(&api.Verification{
-		Signature: &api.SignatureVerification{
+	e.GetPredicate().SetVerification(&papi.Verification{
+		Signature: &papi.SignatureVerification{
 			Date:     timestamppb.Now(),
 			Verified: true,
-			Identities: []*api.Identity{
+			Identities: []*papi.Identity{
 				{
-					Sigstore: &api.IdentitySigstore{
+					Sigstore: &papi.IdentitySigstore{
 						Issuer:   summary.Issuer,
 						Identity: summary.SubjectAlternativeName,
 					},

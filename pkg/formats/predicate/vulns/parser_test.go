@@ -7,10 +7,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/carabiner-dev/attestation"
 	v02 "github.com/in-toto/attestation/go/predicates/vulns/v02"
 	"github.com/stretchr/testify/require"
-
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 func TestParseV2(t *testing.T) {

@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/sirupsen/logrus"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope/bare"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope/bundle"
 	"github.com/carabiner-dev/ampel/pkg/formats/envelope/dsse"

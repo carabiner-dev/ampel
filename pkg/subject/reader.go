@@ -6,7 +6,7 @@ package subject
 import (
 	"io"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/attestation"
 )
 
 // SubjectMatter abstracts anything that con be converted to an attestation subject

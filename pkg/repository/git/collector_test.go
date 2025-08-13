@@ -7,11 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/release-utils/tar"
-
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 )
 
 func TestClone(t *testing.T) {

@@ -6,6 +6,8 @@ package protobom
 import (
 	"bytes"
 
+	"github.com/carabiner-dev/attestation"
+	papi "github.com/carabiner-dev/policy/api/v1"
 	"github.com/google/cel-go/cel"
 	"github.com/protobom/cel/pkg/elements"
 	"github.com/protobom/cel/pkg/library"
@@ -13,7 +15,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/cyclonedx"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/spdx"
@@ -39,7 +40,7 @@ func (p *Plugin) Library() cel.EnvOption {
 	return library.NewProtobom().EnvOption()
 }
 
-func (p *Plugin) VarValues(_ *api.Policy, _ attestation.Subject, preds []attestation.Predicate) map[string]any {
+func (p *Plugin) VarValues(_ *papi.Policy, _ attestation.Subject, preds []attestation.Predicate) map[string]any {
 	sbomList := []any{}
 	r := reader.New()
 	logrus.Debugf("Inserting protobom vars (from %d predicates)", len(preds))

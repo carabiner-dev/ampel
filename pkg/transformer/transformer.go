@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/sirupsen/logrus"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/transformer/protobom"
 	"github.com/carabiner-dev/ampel/pkg/transformer/vex"
 	"github.com/carabiner-dev/ampel/pkg/transformer/vulnreport"

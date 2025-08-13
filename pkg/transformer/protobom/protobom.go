@@ -9,10 +9,10 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/carabiner-dev/attestation"
 	"github.com/protobom/protobom/pkg/reader"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/carabiner-dev/ampel/pkg/attestation"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/cyclonedx"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
 	"github.com/carabiner-dev/ampel/pkg/formats/predicate/protobom"

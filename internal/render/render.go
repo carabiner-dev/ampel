@@ -8,11 +8,12 @@ import (
 	"io"
 	"sync"
 
+	papi "github.com/carabiner-dev/policy/api/v1"
+
 	"github.com/carabiner-dev/ampel/internal/drivers/attester"
 	"github.com/carabiner-dev/ampel/internal/drivers/html"
 	"github.com/carabiner-dev/ampel/internal/drivers/markdown"
 	"github.com/carabiner-dev/ampel/internal/drivers/tty"
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 )
 
 type driversList map[string]Driver
@@ -58,8 +59,8 @@ func NewEngine() *Engine {
 }
 
 type Driver interface {
-	RenderResultSet(w io.Writer, status *api.ResultSet) error
-	RenderResult(w io.Writer, status *api.Result) error
+	RenderResultSet(w io.Writer, status *papi.ResultSet) error
+	RenderResult(w io.Writer, status *papi.Result) error
 }
 
 type Engine struct {
@@ -77,11 +78,11 @@ func (e *Engine) SetDriver(format string) error {
 }
 
 // RenderResultSet calls the method of the same name of the configured driver
-func (e *Engine) RenderResultSet(w io.Writer, rset *api.ResultSet) error {
+func (e *Engine) RenderResultSet(w io.Writer, rset *papi.ResultSet) error {
 	return e.Driver.RenderResultSet(w, rset)
 }
 
 // RenderResult calls the method of the same name of the configured driver
-func (e *Engine) RenderResult(w io.Writer, result *api.Result) error {
+func (e *Engine) RenderResult(w io.Writer, result *papi.Result) error {
 	return e.Driver.RenderResult(w, result)
 }

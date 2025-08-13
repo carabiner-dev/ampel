@@ -4,7 +4,7 @@
 package collector
 
 import (
-	"github.com/carabiner-dev/ampel/pkg/attestation"
+	"github.com/carabiner-dev/attestation"
 )
 
 type repoFilter func([]attestation.Repository) any

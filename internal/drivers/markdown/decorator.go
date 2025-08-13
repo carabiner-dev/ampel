@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"strings"
 
-	api "github.com/carabiner-dev/ampel/pkg/api/v1"
+	"github.com/carabiner-dev/attestation"
+	papi "github.com/carabiner-dev/policy/api/v1"
 )
 
 // Decorator implements the tabnle decorator interface to style the output
 type Decorator struct{}
 
-func (d *Decorator) AssessmentToString(a *api.Assessment) string {
+func (d *Decorator) AssessmentToString(a *papi.Assessment) string {
 	return fmt.Sprintf("✔️ _%s_", a.GetMessage())
 }
 
@@ -30,18 +31,18 @@ func (d *Decorator) Bold(txt string) string {
 
 func (d *Decorator) StatusToDot(status string) string {
 	switch status {
-	case api.StatusFAIL:
+	case papi.StatusFAIL:
 		return "🔴"
-	case api.StatusPASS:
+	case papi.StatusPASS:
 		return "🟢"
-	case api.StatusSOFTFAIL:
+	case papi.StatusSOFTFAIL:
 		return "🟡"
 	default:
 		return "?"
 	}
 }
 
-func (d *Decorator) SubjectToString(subject *api.ResourceDescriptor, chain []*api.ChainedSubject) string {
+func (d *Decorator) SubjectToString(subject attestation.Subject, chain []*papi.ChainedSubject) string {
 	predata := ""
 	for _, subsubj := range chain {
 		predata += d.SubjectToString(subsubj.Source, nil) + "<br>\n↳ "
@@ -51,21 +52,21 @@ func (d *Decorator) SubjectToString(subject *api.ResourceDescriptor, chain []*ap
 		return predata + "(N/A)"
 	}
 
-	if subject.Name != "" {
-		return predata + subject.Name
+	if subject.GetName() != "" {
+		return predata + subject.GetName()
 	}
 
-	if subject.Uri != "" {
-		return predata + subject.Uri
+	if subject.GetUri() != "" {
+		return predata + subject.GetUri()
 	}
 
-	for algo, val := range subject.Digest {
+	for algo, val := range subject.GetDigest() {
 		return predata + fmt.Sprintf("%s:%s", algo, val)
 	}
 	return predata + ""
 }
 
-func (d *Decorator) ErrorToString(err *api.Error) string {
+func (d *Decorator) ErrorToString(err *papi.Error) string {
 	if err == nil {
 		return ""
 	}
@@ -77,7 +78,7 @@ func (d *Decorator) ErrorToString(err *api.Error) string {
 	return res
 }
 
-func (d *Decorator) ControlsToString(result *api.Result, checkID, def string) string {
+func (d *Decorator) ControlsToString(result *papi.Result, checkID, def string) string {
 	ret := ""
 	for _, c := range result.Meta.Controls {
 		if ret != "" {
@@ -98,29 +99,29 @@ func (d *Decorator) ControlsToString(result *api.Result, checkID, def string) st
 	return ret
 }
 
-func (d *Decorator) TenetsToString(result *api.Result) string {
+func (d *Decorator) TenetsToString(result *papi.Result) string {
 	ret := fmt.Sprintf("%d ", len(result.EvalResults))
 	var pass, fail, softfail int
 	for _, r := range result.EvalResults {
 		switch r.Status {
-		case api.StatusFAIL:
+		case papi.StatusFAIL:
 			fail++
-		case api.StatusSOFTFAIL:
+		case papi.StatusSOFTFAIL:
 			softfail++
-		case api.StatusPASS:
+		case papi.StatusPASS:
 			pass++
 		}
 	}
 
 	statuses := []string{}
 	if pass > 0 {
-		statuses = append(statuses, fmt.Sprintf("%d %s", pass, api.StatusPASS))
+		statuses = append(statuses, fmt.Sprintf("%d %s", pass, papi.StatusPASS))
 	}
 	if softfail > 0 {
-		statuses = append(statuses, fmt.Sprintf("%d %s", softfail, api.StatusSOFTFAIL))
+		statuses = append(statuses, fmt.Sprintf("%d %s", softfail, papi.StatusSOFTFAIL))
 	}
 	if fail > 0 {
-		statuses = append(statuses, fmt.Sprintf("%d %s", fail, api.StatusFAIL))
+		statuses = append(statuses, fmt.Sprintf("%d %s", fail, papi.StatusFAIL))
 	}
 	ret += fmt.Sprintf("(%s)", strings.Join(statuses, " | "))
 	ret += " Mode: " + result.Meta.AssertMode
