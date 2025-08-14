@@ -124,10 +124,12 @@ func (tb *TableBuilder) ResultSetTable(set *papi.ResultSet) (table.Writer, error
 	for _, r := range set.GetResults() {
 		assessments := ""
 		for _, er := range r.GetEvalResults() {
-			if er.GetStatus() == papi.StatusPASS {
+			if er.GetStatus() == papi.StatusPASS && r.GetStatus() == papi.StatusPASS {
 				assessments += er.GetAssessment().GetMessage() + "\n"
-			} else {
-				assessments = er.GetError().GetMessage() + "\n"
+			} else if er.GetStatus() != papi.StatusPASS && r.GetStatus() != papi.StatusPASS {
+				if !strings.Contains(assessments, er.GetError().GetMessage()+"\n") {
+					assessments += er.GetError().GetMessage() + "\n"
+				}
 			}
 		}
 		assessments = strings.TrimSuffix(assessments, "\n")
