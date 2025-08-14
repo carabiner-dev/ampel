@@ -221,6 +221,9 @@ func (ampel *Ampel) AttestResults(w io.Writer, results papi.Results) error {
 // tennets are failed with error err. If err is a `PolicyError` then the result
 // error guidance for the tenets will be read from it.
 func failPolicyWithError(p *papi.Policy, chain []*papi.ChainedSubject, subject attestation.Subject, err error) *papi.Result {
+	if subject == nil {
+		subject = &gointoto.ResourceDescriptor{}
+	}
 	res := &papi.Result{
 		Status:    papi.StatusFAIL,
 		DateStart: timestamppb.Now(),
