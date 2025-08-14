@@ -8,8 +8,9 @@ import (
 	"fmt"
 
 	"github.com/carabiner-dev/attestation"
-	"github.com/carabiner-dev/bnd/pkg/bnd"
 	papi "github.com/carabiner-dev/policy/api/v1"
+	"github.com/carabiner-dev/signer"
+	"github.com/carabiner-dev/signer/options"
 	sigstore "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	sgbundle "github.com/sigstore/sigstore-go/pkg/bundle"
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
@@ -94,16 +95,17 @@ func (e *Envelope) Verify() error {
 	}
 
 	// Verify the sigstore signatures
-	verifier := bnd.NewVerifier()
+	verifier := signer.NewVerifier()
 
 	// We skip the identity verification as the policy chekcs it at runtime:
 	verifier.Options.SkipIdentityCheck = true
 
 	// Verify the bundle. We discard the result for now as it does not include
 	// the signature. We may capture it at some point.
-	if _, err := verifier.VerifyParsedBundle(&sgbundle.Bundle{
-		Bundle: &e.Bundle,
-	}); err != nil {
+	if _, err := verifier.VerifyParsedBundle(
+		&sgbundle.Bundle{Bundle: &e.Bundle},
+		options.WithSkipIdentityCheck(true),
+	); err != nil {
 		return fmt.Errorf("verifying sigstore signatures: %w", err)
 	}
 
