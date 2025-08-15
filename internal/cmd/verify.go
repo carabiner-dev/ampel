@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/collector"
 	"github.com/carabiner-dev/hasher"
 	"github.com/carabiner-dev/policy"
 	papi "github.com/carabiner-dev/policy/api/v1"
@@ -21,7 +22,6 @@ import (
 	"sigs.k8s.io/release-utils/helpers"
 
 	"github.com/carabiner-dev/ampel/internal/render"
-	"github.com/carabiner-dev/ampel/pkg/collector"
 	acontext "github.com/carabiner-dev/ampel/pkg/context"
 	"github.com/carabiner-dev/ampel/pkg/verifier"
 )

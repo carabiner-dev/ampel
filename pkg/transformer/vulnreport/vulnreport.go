@@ -8,12 +8,11 @@ import (
 	"fmt"
 
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/collector/predicate/generic"
+	"github.com/carabiner-dev/collector/predicate/trivy"
 	v02 "github.com/in-toto/attestation/go/predicates/vulns/v02"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/trivy"
 )
 
 var ClassName = "vulnreport"

@@ -7,11 +7,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/carabiner-dev/collector/predicate"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/stretchr/testify/require"
 
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate"
 )
 
 func TestEvaluateChainedSelector(t *testing.T) {

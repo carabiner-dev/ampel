@@ -7,8 +7,8 @@ import (
 	"context"
 
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/collector"
 
-	"github.com/carabiner-dev/ampel/pkg/collector"
 	"github.com/carabiner-dev/ampel/pkg/oscal"
 )
 

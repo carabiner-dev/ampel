@@ -7,6 +7,8 @@ import (
 	"bytes"
 
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/collector/predicate/cyclonedx"
+	"github.com/carabiner-dev/collector/predicate/spdx"
 	papi "github.com/carabiner-dev/policy/api/v1"
 	"github.com/google/cel-go/cel"
 	"github.com/protobom/cel/pkg/elements"
@@ -16,8 +18,6 @@ import (
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/cyclonedx"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/spdx"
 )
 
 func New() *Plugin {
