@@ -24,8 +24,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/carabiner-dev/ampel/internal/index"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
-	aosv "github.com/carabiner-dev/ampel/pkg/formats/predicate/osv"
+	"github.com/carabiner-dev/collector/predicate/generic"
+	aosv "github.com/carabiner-dev/collector/predicate/osv"
 )
 
 const ClassName = "vex"

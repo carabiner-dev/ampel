@@ -16,8 +16,8 @@ import (
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/cyclonedx"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/spdx"
+	"github.com/carabiner-dev/collector/predicate/cyclonedx"
+	"github.com/carabiner-dev/collector/predicate/spdx"
 )
 
 func New() *Plugin {

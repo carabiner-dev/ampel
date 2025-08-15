@@ -12,8 +12,8 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/trivy"
+	"github.com/carabiner-dev/collector/predicate/generic"
+	"github.com/carabiner-dev/collector/predicate/trivy"
 )
 
 var ClassName = "vulnreport"

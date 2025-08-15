@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate"
+	"github.com/carabiner-dev/collector/predicate"
 )
 
 func TestEvaluateChainedSelector(t *testing.T) {

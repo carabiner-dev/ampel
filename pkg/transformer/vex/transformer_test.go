@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/openvex"
+	"github.com/carabiner-dev/collector/predicate/openvex"
 )
 
 func vexPathsToPredicates(t *testing.T, paths []string) []attestation.Predicate {

@@ -21,9 +21,9 @@ import (
 	"sigs.k8s.io/release-utils/helpers"
 
 	"github.com/carabiner-dev/ampel/internal/render"
-	"github.com/carabiner-dev/ampel/pkg/collector"
 	acontext "github.com/carabiner-dev/ampel/pkg/context"
 	"github.com/carabiner-dev/ampel/pkg/verifier"
+	"github.com/carabiner-dev/collector"
 )
 
 var (

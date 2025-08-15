@@ -13,9 +13,9 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/generic"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/osv"
-	"github.com/carabiner-dev/ampel/pkg/formats/predicate/trivy"
+	"github.com/carabiner-dev/collector/predicate/generic"
+	"github.com/carabiner-dev/collector/predicate/osv"
+	"github.com/carabiner-dev/collector/predicate/trivy"
 )
 
 // trivyToOSV converts a trivy v2 output to an OSV feed

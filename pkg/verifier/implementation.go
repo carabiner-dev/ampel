@@ -22,17 +22,17 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/carabiner-dev/ampel/pkg/collector"
 	acontext "github.com/carabiner-dev/ampel/pkg/context"
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
-	"github.com/carabiner-dev/ampel/pkg/filters"
-	"github.com/carabiner-dev/ampel/pkg/formats/envelope"
-	ampelPred "github.com/carabiner-dev/ampel/pkg/formats/predicate/ampel"
-	"github.com/carabiner-dev/ampel/pkg/formats/statement/intoto"
 	"github.com/carabiner-dev/ampel/pkg/transformer"
+	"github.com/carabiner-dev/collector"
+	"github.com/carabiner-dev/collector/envelope"
+	"github.com/carabiner-dev/collector/filters"
+	ampelPred "github.com/carabiner-dev/collector/predicate/ampel"
+	"github.com/carabiner-dev/collector/statement/intoto"
 )
 
 // AmpelImplementation
