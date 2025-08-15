@@ -7,9 +7,9 @@ import (
 	"context"
 
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/collector"
 
 	"github.com/carabiner-dev/ampel/pkg/oscal"
-	"github.com/carabiner-dev/collector"
 )
 
 type AmpelStatusChecker interface {

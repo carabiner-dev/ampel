@@ -16,6 +16,11 @@ import (
 	"text/template"
 
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/collector"
+	"github.com/carabiner-dev/collector/envelope"
+	"github.com/carabiner-dev/collector/filters"
+	ampelPred "github.com/carabiner-dev/collector/predicate/ampel"
+	"github.com/carabiner-dev/collector/statement/intoto"
 	papi "github.com/carabiner-dev/policy/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
@@ -28,11 +33,6 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 	"github.com/carabiner-dev/ampel/pkg/transformer"
-	"github.com/carabiner-dev/collector"
-	"github.com/carabiner-dev/collector/envelope"
-	"github.com/carabiner-dev/collector/filters"
-	ampelPred "github.com/carabiner-dev/collector/predicate/ampel"
-	"github.com/carabiner-dev/collector/statement/intoto"
 )
 
 // AmpelImplementation

@@ -15,6 +15,8 @@ import (
 	"strings"
 
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/collector/predicate/generic"
+	aosv "github.com/carabiner-dev/collector/predicate/osv"
 	"github.com/carabiner-dev/hasher"
 	"github.com/carabiner-dev/osv/go/osv"
 	gointoto "github.com/in-toto/attestation/go/v1"
@@ -24,8 +26,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/carabiner-dev/ampel/internal/index"
-	"github.com/carabiner-dev/collector/predicate/generic"
-	aosv "github.com/carabiner-dev/collector/predicate/osv"
 )
 
 const ClassName = "vex"

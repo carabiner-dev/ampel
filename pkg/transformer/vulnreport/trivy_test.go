@@ -8,10 +8,9 @@ import (
 	"testing"
 
 	"github.com/carabiner-dev/attestation"
-	"github.com/stretchr/testify/require"
-
 	posv "github.com/carabiner-dev/collector/predicate/osv"
 	"github.com/carabiner-dev/collector/predicate/trivy"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTrivyToOSV(t *testing.T) {

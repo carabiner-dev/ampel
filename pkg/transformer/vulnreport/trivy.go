@@ -9,13 +9,12 @@ import (
 	"time"
 
 	"github.com/carabiner-dev/attestation"
-	posv "github.com/carabiner-dev/osv/go/osv"
-	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"github.com/carabiner-dev/collector/predicate/generic"
 	"github.com/carabiner-dev/collector/predicate/osv"
 	"github.com/carabiner-dev/collector/predicate/trivy"
+	posv "github.com/carabiner-dev/osv/go/osv"
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // trivyToOSV converts a trivy v2 output to an OSV feed

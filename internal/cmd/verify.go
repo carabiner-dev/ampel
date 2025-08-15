@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/collector"
 	"github.com/carabiner-dev/hasher"
 	"github.com/carabiner-dev/policy"
 	papi "github.com/carabiner-dev/policy/api/v1"
@@ -23,7 +24,6 @@ import (
 	"github.com/carabiner-dev/ampel/internal/render"
 	acontext "github.com/carabiner-dev/ampel/pkg/context"
 	"github.com/carabiner-dev/ampel/pkg/verifier"
-	"github.com/carabiner-dev/collector"
 )
 
 var (

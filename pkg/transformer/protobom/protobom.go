@@ -10,13 +10,12 @@ import (
 	"strings"
 
 	"github.com/carabiner-dev/attestation"
-	"github.com/protobom/protobom/pkg/reader"
-	"google.golang.org/protobuf/encoding/protojson"
-
 	"github.com/carabiner-dev/collector/predicate/cyclonedx"
 	"github.com/carabiner-dev/collector/predicate/generic"
 	"github.com/carabiner-dev/collector/predicate/protobom"
 	"github.com/carabiner-dev/collector/predicate/spdx"
+	"github.com/protobom/protobom/pkg/reader"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type Transformer struct{}
