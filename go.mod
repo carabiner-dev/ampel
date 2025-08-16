@@ -4,10 +4,10 @@ go 1.24.6
 
 require (
 	github.com/carabiner-dev/attestation v0.1.1
-	github.com/carabiner-dev/collector v0.1.1
+	github.com/carabiner-dev/collector v0.1.2-0.20250816040159-9d460e4ef183
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
-	github.com/carabiner-dev/policy v0.1.0
+	github.com/carabiner-dev/policy v0.1.1-0.20250816052410-d7fc6b03449f
 	github.com/fatih/color v1.18.0
 	github.com/google/cel-go v0.26.0
 	github.com/in-toto/attestation v1.1.2

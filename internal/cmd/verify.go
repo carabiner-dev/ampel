@@ -271,14 +271,8 @@ using a collector.
 				return fmt.Errorf("resolving subject string: %w", err)
 			}
 
-			// Compile the policy
-			compiler, err := policy.NewCompiler()
-			if err != nil {
-				return fmt.Errorf("creating policy compiler: %w", err)
-			}
-
 			// Compile the policy or location
-			set, pcy, err := compiler.CompileLocation(opts.PolicyLocation)
+			set, pcy, err := policy.NewCompiler().CompileLocation(opts.PolicyLocation)
 			if err != nil {
 				return fmt.Errorf("compiling policy: %w", err)
 			}
