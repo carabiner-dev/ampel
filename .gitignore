@@ -1,2 +1,6 @@
 .git
 .DS_Store
+conformance
+tmp
+_test
+
