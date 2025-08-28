@@ -9,7 +9,7 @@ require (
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
 	github.com/carabiner-dev/policy v0.1.1-0.20250816052410-d7fc6b03449f
 	github.com/fatih/color v1.18.0
-	github.com/google/cel-go v0.26.0
+	github.com/google/cel-go v0.26.1
 	github.com/in-toto/attestation v1.1.2
 	github.com/jedib0t/go-pretty/v6 v6.6.8
 	github.com/mitchellh/go-wordwrap v1.0.1
@@ -19,7 +19,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
-	google.golang.org/protobuf v1.36.7
+	google.golang.org/protobuf v1.36.8
 	sigs.k8s.io/release-utils v0.12.1
 )
 
