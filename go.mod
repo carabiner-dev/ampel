@@ -18,7 +18,7 @@ require (
 	github.com/protobom/protobom v0.5.4
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.10.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	google.golang.org/protobuf v1.36.8
 	sigs.k8s.io/release-utils v0.12.1
 )
