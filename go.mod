@@ -3,8 +3,8 @@ module github.com/carabiner-dev/ampel
 go 1.24.6
 
 require (
-	github.com/carabiner-dev/attestation v0.1.1
-	github.com/carabiner-dev/collector v0.1.2-0.20250816040159-9d460e4ef183
+	github.com/carabiner-dev/attestation v0.1.2
+	github.com/carabiner-dev/collector v0.1.3
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
 	github.com/carabiner-dev/policy v0.1.1-0.20250816052410-d7fc6b03449f
@@ -13,7 +13,7 @@ require (
 	github.com/in-toto/attestation v1.1.2
 	github.com/jedib0t/go-pretty/v6 v6.6.8
 	github.com/mitchellh/go-wordwrap v1.0.1
-	github.com/openvex/go-vex v0.2.5
+	github.com/openvex/go-vex v0.2.6
 	github.com/protobom/cel v0.1.0
 	github.com/protobom/protobom v0.5.4
 	github.com/sirupsen/logrus v1.9.3
@@ -47,7 +47,7 @@ require (
 	github.com/carabiner-dev/github v0.2.2 // indirect
 	github.com/carabiner-dev/jsonl v0.2.1 // indirect
 	github.com/carabiner-dev/openeox v0.0.0-20250606202227-fd40810cda47 // indirect
-	github.com/carabiner-dev/signer v0.1.2-0.20250815182539-bd60f13ef383 // indirect
+	github.com/carabiner-dev/signer v0.1.2 // indirect
 	github.com/carabiner-dev/vcslocator v0.3.2 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -180,7 +180,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/package-url/packageurl-go v0.1.1 // indirect
+	github.com/package-url/packageurl-go v0.1.3 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/sigstore/sigstore-go v1.1.1 // indirect
 	github.com/spdx/tools-golang v0.5.5 // indirect
