@@ -33,6 +33,7 @@ var (
 
 type verifyOptions struct {
 	verifier.VerificationOptions
+	KeyOptions
 	PolicyLocation    string
 	Format            string
 	PolicyOutput      bool
@@ -47,6 +48,7 @@ type verifyOptions struct {
 
 // AddFlags adds the flags
 func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
+	o.KeyOptions.AddFlags(cmd)
 	cmd.PersistentFlags().StringVarP(
 		&o.Subject, "subject", "s", "", "subject hash (algo:value) or a path to a files to verify ",
 	)
@@ -130,7 +132,7 @@ func parseHash(estring string) (algo, value string, err error) {
 	return "", "", fmt.Errorf("error parsing hash string")
 }
 
-// SubjectDescriptor parses the subkect string read from the command line
+// SubjectDescriptor parses the subject string read from the command line
 // and returns a resource descriptor, either by synhesizing it from the specified
 // hash or by hashing a file.
 func (o *verifyOptions) SubjectDescriptor() (attestation.Subject, error) {
@@ -151,6 +153,17 @@ func (o *verifyOptions) SubjectDescriptor() (attestation.Subject, error) {
 		return nil, fmt.Errorf("hashing subject file: %w", err)
 	}
 	return hashes.ToResourceDescriptors()[0], nil
+}
+
+// LoadPublicKeys parses the public keys and loads them into the verification
+// options set.
+func (o *verifyOptions) LoadPublicKeys() error {
+	keys, err := o.ParseKeys()
+	if err != nil {
+		return err
+	}
+	o.Keys = keys
+	return nil
 }
 
 func (o *verifyOptions) Validate() error {
@@ -286,6 +299,10 @@ using a collector.
 			ampel, err := verifier.New(verifier.WithCollectorInits(opts.Collectors))
 			if err != nil {
 				return fmt.Errorf("creating verifier: %w", err)
+			}
+
+			if err := opts.LoadPublicKeys(); err != nil {
+				return fmt.Errorf("loading keys: %w", err)
 			}
 
 			// Pass the -x flags as a new StringMapList list provider
