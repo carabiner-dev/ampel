@@ -332,7 +332,7 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 		// Attestations are expected to be verified here already, but we want
 		// to make sure. This should not be an issue as the verification data
 		// should be already cached.
-		if err := e.Verify(); err != nil {
+		if err := e.Verify(opts.Keys); err != nil {
 			errs[i] = fmt.Errorf("verifying attestation signature: %w", err)
 			validIdentities = false
 			continue

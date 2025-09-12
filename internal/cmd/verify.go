@@ -13,6 +13,7 @@ import (
 
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector"
+	"github.com/carabiner-dev/command"
 	"github.com/carabiner-dev/hasher"
 	"github.com/carabiner-dev/policy"
 	papi "github.com/carabiner-dev/policy/api/v1"
@@ -33,7 +34,7 @@ var (
 
 type verifyOptions struct {
 	verifier.VerificationOptions
-	KeyOptions
+	command.KeyOptions
 	PolicyLocation    string
 	Format            string
 	PolicyOutput      bool
