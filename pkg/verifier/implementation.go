@@ -46,7 +46,7 @@ type AmpelVerifier interface {
 	// CheckIdentities verifies that attestations are signed by the policy identities
 	CheckIdentities(*VerificationOptions, []*papi.Identity, []attestation.Envelope) (bool, [][]*papi.Identity, []error, error)
 
-	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
+	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope, [][]*papi.Identity) ([]attestation.Predicate, error)
 	AssertResult(*papi.Policy, *papi.Result) error
 	AttestResults(context.Context, *VerificationOptions, papi.Results) error
 
@@ -292,7 +292,9 @@ func (di *defaultIplementation) Transform(
 func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, policyIdentities []*papi.Identity, envelopes []attestation.Envelope) (bool, [][]*papi.Identity, []error, error) {
 	// verification errors for the user
 	errs := make([]error, len(envelopes))
+	validSigners := make([][]*papi.Identity, len(envelopes))
 
+	// allIds are the allowed ids (from the policy + any from options)
 	allIds := []*papi.Identity{}
 	allIds = append(allIds, policyIdentities...)
 
@@ -317,7 +319,7 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 	// If there are no identities defined, return here
 	if len(allIds) == 0 {
 		logrus.Debug("No identities defined in policy. Not checking.")
-		return true, nil, nil, nil
+		return true, validSigners, nil, nil
 	} else {
 		logrus.Debug("Will look for signed attestations from:")
 		for _, i := range allIds {
@@ -326,7 +328,6 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 	}
 
 	validIdentities := true
-	validSigners := make([][]*papi.Identity, len(envelopes))
 
 	// First, verify the signatures on the envelopes
 	for i, e := range envelopes {
@@ -363,10 +364,23 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 	return validIdentities, validSigners, errs, nil
 }
 
-func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, subject attestation.Subject, envs []attestation.Envelope) ([]attestation.Predicate, error) {
+// FilterAttestations filters the attestations read to only those required by the
+// policy. This function also restamps the ingested predicates with the identities
+// verified against the policy when ingesting the attestations.
+//
+// TODO(puerco): Implement filtering before 1.0
+func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, subject attestation.Subject, envs []attestation.Envelope, ids [][]*papi.Identity) ([]attestation.Predicate, error) {
 	preds := []attestation.Predicate{}
-	for _, env := range envs {
-		preds = append(preds, env.GetStatement().GetPredicate())
+	for i, env := range envs {
+		pred := env.GetStatement().GetPredicate()
+		pred.SetVerification(&papi.Verification{
+			Signature: &papi.SignatureVerification{
+				Date:       timestamppb.Now(),
+				Verified:   true,
+				Identities: ids[i],
+			},
+		})
+		preds = append(preds, pred)
 	}
 	return preds, nil
 }
@@ -431,7 +445,7 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 		}
 		var pass bool
 		var err error
-		var ids = [][]*papi.Identity{}
+		var ids [][]*papi.Identity
 
 		// Check the attestation identities for now, we fallback to the identities
 		// defined in the policy if the link does not have its own. Probably this
