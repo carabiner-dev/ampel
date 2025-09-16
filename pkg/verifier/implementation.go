@@ -417,21 +417,29 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 			}
 		}
 
-		for _, a := range attestations {
-			if err := a.Verify(opts.Keys); err != nil {
-				return nil, nil, true, PolicyError{
-					error:    fmt.Errorf("signature verifying failed in chained subject: %w", err),
-					Guidance: "the signature verification in the loaded attestations failed, try resigning it",
-				}
+		// Here, we warn if we get more than one attestation for the chained
+		// predicate. Probably this should be limited to only one.
+		if len(attestations) > 1 {
+			logrus.Warn("Chained subject builder got more than one statement")
+		}
+
+		if err := attestations[0].Verify(opts.Keys); err != nil {
+			return nil, nil, true, PolicyError{
+				error:    fmt.Errorf("signature verifying failed in chained subject: %w", err),
+				Guidance: "the signature verification in the loaded attestations failed, try resigning it",
 			}
 		}
 		var pass bool
 		var err error
 		var ids = [][]*papi.Identity{}
+
+		// Check the attestation identities for now, we fallback to the identities
+		// defined in the policy if the link does not have its own. Probably this
+		// should have a better default.
 		if link.GetPredicate().GetIdentities() != nil {
-			pass, ids, _, err = di.CheckIdentities(opts, link.GetPredicate().GetIdentities(), attestations)
+			pass, ids, _, err = di.CheckIdentities(opts, link.GetPredicate().GetIdentities(), attestations[0:0])
 		} else {
-			pass, ids, _, err = di.CheckIdentities(opts, policy.GetIdentities(), attestations)
+			pass, ids, _, err = di.CheckIdentities(opts, policy.GetIdentities(), attestations[0:0])
 		}
 		if err != nil {
 			return nil, nil, false, fmt.Errorf("error checking attestation identity: %w", err)
