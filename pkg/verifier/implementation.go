@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector"
@@ -73,6 +74,17 @@ type defaultIplementation struct{}
 
 // CheckPolicy verifies the policy before evaluation to ensure it is fit to run.
 func (di *defaultIplementation) CheckPolicy(ctx context.Context, opts *VerificationOptions, p *papi.Policy) error {
+	if p.GetMeta() != nil &&
+		p.GetMeta().GetExpiration() != nil &&
+		p.GetMeta().GetExpiration().AsTime().Before(time.Now()) {
+		return PolicyError{
+			error: errors.New("the policy has expired"), // TODO(puerco): Const error
+			Guidance: fmt.Sprintf(
+				"The policy expired on %s, update the policy source",
+				p.GetMeta().GetExpiration().AsTime().Format(time.UnixDate),
+			),
+		}
+	}
 	return nil
 }
 
