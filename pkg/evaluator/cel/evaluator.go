@@ -185,6 +185,12 @@ func (e *Evaluator) ExecTenet(
 			Attestation: &intoto.ResourceDescriptor{},
 		}
 
+		if v, ok := pred.GetVerification().(*papi.Verification); ok {
+			if v.GetSignature() != nil {
+				sref.Identities = v.GetSignature().GetIdentities()
+			}
+		}
+
 		if pred.GetOrigin() != nil {
 			sref.GetAttestation().Name = pred.GetOrigin().GetName()
 			sref.GetAttestation().Uri = pred.GetOrigin().GetUri()

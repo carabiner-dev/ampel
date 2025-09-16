@@ -5,6 +5,7 @@ package verifier
 
 import (
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/signer/key"
 
 	"github.com/carabiner-dev/ampel/pkg/context"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
@@ -47,6 +48,15 @@ type VerificationOptions struct {
 	// IdentityStrings feeds the signature identities to add to the policy
 	// definitions when verifying signatures.
 	IdentityStrings []string
+
+	// Keys is a list of public key providers that will be used to verify signed
+	// items. These keys will be supplied to verifiers when checking signatures of
+	// signed stuff (ie DSSE envelopes). It is up to the policy to recognize any
+	// of the matched keys as valid identities.
+	//
+	// Note that each signature will be verified against all keys loaded, so clients
+	// are advised to load only those keys required for each policy evaluation.
+	Keys []key.PublicKeyProvider
 }
 
 var DefaultVerificationOptions = VerificationOptions{

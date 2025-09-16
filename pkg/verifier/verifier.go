@@ -152,8 +152,8 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 
 	// Check identities to see if the attestations can be admitted
 	// TODO(puerco)
-	// Option: Unmatched identities cause a:fail or b:ignore
-	allow, idErrors, err := ampel.impl.CheckIdentities(opts, policy.Identities, atts)
+	// Option: Unsigned statements cause a:fail or b:ignore
+	allow, ids, idErrors, err := ampel.impl.CheckIdentities(opts, policy.Identities, atts)
 	if err != nil {
 		return nil, fmt.Errorf("error validating signer identity: %w", err)
 	}
@@ -166,7 +166,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	}
 
 	// Filter attestations to those applicable to the subject
-	preds, err := ampel.impl.FilterAttestations(opts, subject, atts)
+	preds, err := ampel.impl.FilterAttestations(opts, subject, atts, ids)
 	if err != nil {
 		return nil, fmt.Errorf("filtering attestations: %w", err)
 	}
