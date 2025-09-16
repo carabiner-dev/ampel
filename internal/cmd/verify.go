@@ -113,6 +113,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringSliceVar(
 		&o.IdentityStrings, "signer", []string{}, "list of signer identities to verify attestations",
 	)
+
+	cmd.PersistentFlags().BoolVar(
+		&o.EnforceExpiration, "expiration", verifier.DefaultVerificationOptions.EnforceExpiration, "enforce policy expiration dates",
+	)
 }
 
 func parseHash(estring string) (algo, value string, err error) {
