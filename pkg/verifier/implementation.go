@@ -44,7 +44,7 @@ type AmpelVerifier interface {
 	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *papi.Policy, attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
 
 	// CheckIdentities verifies that attestations are signed by the policy identities
-	CheckIdentities(*VerificationOptions, []*papi.Identity, []attestation.Envelope) (bool, []error, error)
+	CheckIdentities(*VerificationOptions, []*papi.Identity, []attestation.Envelope) (bool, [][]*papi.Identity, []error, error)
 
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope) ([]attestation.Predicate, error)
 	AssertResult(*papi.Policy, *papi.Result) error
@@ -289,7 +289,7 @@ func (di *defaultIplementation) Transform(
 
 // CheckIdentities checks that the ingested attestations are signed by one of the
 // identities defined in thew policy.
-func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, policyIdentities []*papi.Identity, envelopes []attestation.Envelope) (bool, []error, error) {
+func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, policyIdentities []*papi.Identity, envelopes []attestation.Envelope) (bool, [][]*papi.Identity, []error, error) {
 	// verification errors for the user
 	errs := make([]error, len(envelopes))
 
@@ -308,7 +308,7 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 		for _, idSlug := range opts.IdentityStrings {
 			ident, err := papi.NewIdentityFromSlug(idSlug)
 			if err != nil {
-				return false, nil, fmt.Errorf("invalid identity slug %q: %w", idSlug, err)
+				return false, nil, nil, fmt.Errorf("invalid identity slug %q: %w", idSlug, err)
 			}
 			allIds = append(allIds, ident)
 		}
@@ -317,7 +317,7 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 	// If there are no identities defined, return here
 	if len(allIds) == 0 {
 		logrus.Debug("No identities defined in policy. Not checking.")
-		return true, nil, nil
+		return true, nil, nil, nil
 	} else {
 		logrus.Debug("Will look for signed attestations from:")
 		for _, i := range allIds {
@@ -326,20 +326,21 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 	}
 
 	validIdentities := true
+	validSigners := make([][]*papi.Identity, len(envelopes))
 
 	// First, verify the signatures on the envelopes
 	for i, e := range envelopes {
 		// Attestations are expected to be verified here already, but we want
 		// to make sure. This should not be an issue as the verification data
 		// should be already cached.
+
 		if err := e.Verify(opts.Keys); err != nil {
 			errs[i] = fmt.Errorf("verifying attestation signature: %w", err)
 			validIdentities = false
 			continue
 		}
 
-		validSigners := []*papi.Identity{}
-		if e.GetVerification() == nil {
+		if e.GetVerification() == nil || !e.GetVerification().GetVerified() {
 			errs[i] = errors.New("attestation not verified")
 			validIdentities = false
 			continue
@@ -347,7 +348,7 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 
 		for _, id := range allIds {
 			if e.GetVerification().MatchesIdentity(id) {
-				validSigners = append(validSigners, id)
+				validSigners[i] = append(validSigners[i], id)
 			}
 		}
 
@@ -359,7 +360,7 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 
 	// We don't use the errors yet, but at some point we should embed them into
 	// the attestation verification.
-	return validIdentities, errs, nil
+	return validIdentities, validSigners, errs, nil
 }
 
 func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, subject attestation.Subject, envs []attestation.Envelope) ([]attestation.Predicate, error) {
@@ -417,7 +418,7 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 		}
 
 		for _, a := range attestations {
-			if err := a.Verify(); err != nil {
+			if err := a.Verify(opts.Keys); err != nil {
 				return nil, nil, true, PolicyError{
 					error:    fmt.Errorf("signature verifying failed in chained subject: %w", err),
 					Guidance: "the signature verification in the loaded attestations failed, try resigning it",
@@ -426,10 +427,11 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 		}
 		var pass bool
 		var err error
+		var ids = [][]*papi.Identity{}
 		if link.GetPredicate().GetIdentities() != nil {
-			pass, _, err = di.CheckIdentities(opts, link.GetPredicate().GetIdentities(), attestations)
+			pass, ids, _, err = di.CheckIdentities(opts, link.GetPredicate().GetIdentities(), attestations)
 		} else {
-			pass, _, err = di.CheckIdentities(opts, policy.GetIdentities(), attestations)
+			pass, ids, _, err = di.CheckIdentities(opts, policy.GetIdentities(), attestations)
 		}
 		if err != nil {
 			return nil, nil, false, fmt.Errorf("error checking attestation identity: %w", err)
@@ -456,7 +458,6 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 			key = class.Class("default")
 		}
 		if _, ok := evaluators[key]; !ok {
-			fmt.Printf("Evals: %+v\n", evaluators)
 			return nil, nil, false, fmt.Errorf("no evaluator loaded for class %s", key)
 		}
 
@@ -474,17 +475,22 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 		if err != nil {
 			// TODO(puerco): The false here instructs ampel to return an error
 			// (not a policy fail) when there is a syntax error in the policy
-			// code (CEL or otherwise). Perhaps this shoul be configured
+			// code (CEL or otherwise). Perhaps this should be configurable.
 			return nil, nil, false, fmt.Errorf("evaluating chained subject code: %w", err)
 		}
 
 		// Add to link history
+		var goodIds []*papi.Identity
+		if len(ids) > 0 {
+			goodIds = ids[0]
+		}
 		chain = append(chain, &papi.ChainedSubject{
 			Source:      newResourceDescriptorFromSubject(subject),
 			Destination: newResourceDescriptorFromSubject(newsubject),
 			Link: &papi.ChainedSubjectLink{
 				Type:        string(attestations[0].GetStatement().GetPredicateType()),
 				Attestation: newResourceDescriptorFromSubject(attestations[0].GetStatement().GetPredicate().GetOrigin()),
+				Identities:  goodIds,
 			},
 		})
 		subject = newsubject
