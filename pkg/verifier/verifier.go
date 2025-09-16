@@ -9,10 +9,12 @@ import (
 	"fmt"
 	"io"
 	"slices"
+	"time"
 
 	"github.com/carabiner-dev/attestation"
 	papi "github.com/carabiner-dev/policy/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
@@ -74,6 +76,22 @@ func (ampel *Ampel) Verify(
 		if err := rs.Assert(); err != nil {
 			return nil, fmt.Errorf("asserting ResultSet: %w", err)
 		}
+
+		// Fail the evaluation if the PolicySet is expired:
+		if opts.EnforceExpiration && v.GetMeta() != nil &&
+			v.GetMeta().GetExpiration() != nil &&
+			v.GetMeta().GetExpiration().AsTime().Before(time.Now()) {
+			// TODO(puerco): The ResultSet object does not have a way to set
+			// error messages, we have no way to inform the user that the
+			// PolicySet is expired.
+			//
+			// See https://github.com/carabiner-dev/policy/issues/28
+			logrus.Debugf(
+				"FAIL: PolicySet expired on %s",
+				v.GetMeta().GetExpiration().AsTime().Format(time.UnixDate),
+			)
+			rs.Status = papi.StatusFAIL
+		}
 		return rs, nil
 	case []*papi.PolicySet:
 		rs := &papi.ResultSet{}
@@ -99,6 +117,17 @@ func (ampel *Ampel) Verify(
 func (ampel *Ampel) VerifySubjectWithPolicy(
 	ctx context.Context, opts *VerificationOptions, policy *papi.Policy, subject attestation.Subject,
 ) (*papi.Result, error) {
+	// Check if the policy is viable before
+	if err := ampel.impl.CheckPolicy(ctx, opts, policy); err != nil {
+		// If the policy failed validation, don't err. Fail the policy
+		perr := PolicyError{}
+		if errors.As(err, &perr) {
+			return failPolicyWithError(policy, nil, subject, perr), nil
+		}
+		// ..else something broke
+		return nil, fmt.Errorf("checking policy: %w", err)
+	}
+
 	// Build the required evaluators
 	evaluators, err := ampel.impl.BuildEvaluators(opts, policy)
 	if err != nil {
