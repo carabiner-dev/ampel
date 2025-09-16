@@ -20,9 +20,12 @@ func TestCheckPolicy(t *testing.T) {
 		opts    *VerificationOptions
 		policy  *papi.Policy
 	}{
-		{"normal", false, nil, &papi.Policy{Meta: &papi.Meta{Expiration: timestamppb.New(time.Now().Add(1 * time.Hour))}}},
-		{"expired", true, nil, &papi.Policy{Meta: &papi.Meta{Expiration: timestamppb.New(time.Now().Add(-1 * time.Hour))}}},
-		{"nil-expiration", false, nil, &papi.Policy{Meta: &papi.Meta{Expiration: nil}}},
+		{"normal", false, &DefaultVerificationOptions, &papi.Policy{Meta: &papi.Meta{Expiration: timestamppb.New(time.Now().Add(1 * time.Hour))}}},
+		{"expired", true, &DefaultVerificationOptions, &papi.Policy{Meta: &papi.Meta{Expiration: timestamppb.New(time.Now().Add(-1 * time.Hour))}}},
+		{"nil-expiration", false, &DefaultVerificationOptions, &papi.Policy{Meta: &papi.Meta{Expiration: nil}}},
+		{"expire-off-normal", false, &VerificationOptions{EnforceExpiration: false}, &papi.Policy{Meta: &papi.Meta{Expiration: timestamppb.New(time.Now().Add(1 * time.Hour))}}},
+		{"expire-off-expired", false, &VerificationOptions{EnforceExpiration: false}, &papi.Policy{Meta: &papi.Meta{Expiration: timestamppb.New(time.Now().Add(-1 * time.Hour))}}},
+		{"expire-off-nil-expiration", false, &VerificationOptions{EnforceExpiration: false}, &papi.Policy{Meta: &papi.Meta{Expiration: nil}}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()

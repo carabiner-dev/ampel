@@ -74,9 +74,13 @@ type defaultIplementation struct{}
 
 // CheckPolicy verifies the policy before evaluation to ensure it is fit to run.
 func (di *defaultIplementation) CheckPolicy(ctx context.Context, opts *VerificationOptions, p *papi.Policy) error {
+	if opts == nil {
+		return errors.New("verifier options are not set")
+	}
 	if p.GetMeta() != nil &&
 		p.GetMeta().GetExpiration() != nil &&
-		p.GetMeta().GetExpiration().AsTime().Before(time.Now()) {
+		p.GetMeta().GetExpiration().AsTime().Before(time.Now()) &&
+		opts.EnforceExpiration {
 		return PolicyError{
 			error: errors.New("the policy has expired"), // TODO(puerco): Const error
 			Guidance: fmt.Sprintf(
