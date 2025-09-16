@@ -37,6 +37,8 @@ import (
 
 // AmpelImplementation
 type AmpelVerifier interface {
+	// CheckPolicy verifies the policy is sound to evaluate before running it
+	CheckPolicy(context.Context, *VerificationOptions, *papi.Policy) error
 	GatherAttestations(context.Context, *VerificationOptions, *collector.Agent, *papi.Policy, attestation.Subject, []attestation.Envelope) ([]attestation.Envelope, error)
 	ParseAttestations(context.Context, []string) ([]attestation.Envelope, error)
 	BuildEvaluators(*VerificationOptions, *papi.Policy) (map[class.Class]evaluator.Evaluator, error)
@@ -68,6 +70,11 @@ type AmpelVerifier interface {
 }
 
 type defaultIplementation struct{}
+
+// CheckPolicy verifies the policy before evaluation to ensure it is fit to run.
+func (di *defaultIplementation) CheckPolicy(ctx context.Context, opts *VerificationOptions, p *papi.Policy) error {
+	return nil
+}
 
 // GatherAttestations assembles the attestations pack required to run the
 // evaluation. It first filters the attestations loaded manually by matching

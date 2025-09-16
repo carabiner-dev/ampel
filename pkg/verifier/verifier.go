@@ -99,6 +99,17 @@ func (ampel *Ampel) Verify(
 func (ampel *Ampel) VerifySubjectWithPolicy(
 	ctx context.Context, opts *VerificationOptions, policy *papi.Policy, subject attestation.Subject,
 ) (*papi.Result, error) {
+	// Check if the policy is viable before
+	if err := ampel.impl.CheckPolicy(ctx, opts, policy); err != nil {
+		// If the policy failed validation, don't err. Fail the policy
+		perr := PolicyError{}
+		if errors.As(err, &perr) {
+			return failPolicyWithError(policy, nil, subject, perr), nil
+		}
+		// ..else something broke
+		return nil, fmt.Errorf("checking policy: %w", err)
+	}
+
 	// Build the required evaluators
 	evaluators, err := ampel.impl.BuildEvaluators(opts, policy)
 	if err != nil {
