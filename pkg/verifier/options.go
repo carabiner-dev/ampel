@@ -57,6 +57,10 @@ type VerificationOptions struct {
 	// Note that each signature will be verified against all keys loaded, so clients
 	// are advised to load only those keys required for each policy evaluation.
 	Keys []key.PublicKeyProvider
+
+	// EnforceExpiration forces evaluations to fail when the policy or policy set
+	// expiration date has passed. If no expiration date is set, this setting is ignored.
+	EnforceExpiration bool
 }
 
 var DefaultVerificationOptions = VerificationOptions{
@@ -74,6 +78,9 @@ var DefaultVerificationOptions = VerificationOptions{
 
 	// Context providers, by default we enable the envvar provider
 	ContextProviders: []context.Provider{},
+
+	// EnforceExpiration is on to check expiration dates by default
+	EnforceExpiration: true,
 }
 
 func NewVerificationOptions() VerificationOptions {
