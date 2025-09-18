@@ -237,7 +237,14 @@ func (ampel *Ampel) AttestResult(w io.Writer, result *papi.Result) error {
 func (ampel *Ampel) AttestResults(w io.Writer, results papi.Results) error {
 	switch r := results.(type) {
 	case *papi.Result:
-		rs := &papi.ResultSet{Results: []*papi.Result{r}}
+		rs := &papi.ResultSet{
+			Results:   []*papi.Result{r},
+			DateStart: r.DateStart,
+			DateEnd:   r.DateEnd,
+		}
+		if err := rs.Assert(); err != nil {
+			return fmt.Errorf("asserting results set: %w", err)
+		}
 		return ampel.impl.AttestResultSetToWriter(w, rs)
 	case *papi.ResultSet:
 		return ampel.impl.AttestResultSetToWriter(w, r)
