@@ -146,7 +146,7 @@ func (e *Evaluator) RegisterPlugin(plugin api.Plugin) error {
 
 func (e *Evaluator) ExecChainedSelector(
 	ctx context.Context, opts *options.EvaluatorOptions, chained *papi.ChainedPredicate, predicate attestation.Predicate,
-) (attestation.Subject, error) {
+) ([]attestation.Subject, error) {
 	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
 	if !ok {
 		evalContext = evalcontext.EvaluationContext{}
@@ -165,12 +165,12 @@ func (e *Evaluator) ExecChainedSelector(
 		return nil, fmt.Errorf("compiling selector program: %w", err)
 	}
 
-	subject, err := e.impl.EvaluateChainedSelector(e.Environment, ast, vars)
+	subjects, err := e.impl.EvaluateChainedSelector(e.Environment, ast, vars)
 	if err != nil {
 		return nil, fmt.Errorf("evaluating chained subject: %w", err)
 	}
-	logrus.Debugf("chained subject from selector: %+v", subject)
-	return subject, nil
+	logrus.Debugf("chained subject from selector: %+v", subjects)
+	return subjects, nil
 }
 
 // Exec executes each tenet and returns the combined results
