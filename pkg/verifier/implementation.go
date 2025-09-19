@@ -620,6 +620,16 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 		return nil, nil, false, fmt.Errorf("unable to complete evidence chain, no subject returned")
 	}
 
+	// If we got a precomputed chain (from the policy set) it precedes the
+	// policy computed at the policy level.
+	// Add the (eval) context, to the (go) context :P
+	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+	if ok {
+		if evalContext.ChainedSubjects != nil {
+			chain = slices.Concat(evalContext.ChainedSubjects, chain)
+		}
+	}
+
 	return subjects[0], chain, fail, nil
 }
 
