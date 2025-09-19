@@ -18,6 +18,7 @@ import (
 
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 )
 
 type PolicyError struct {
@@ -110,18 +111,36 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 		return nil, fmt.Errorf("parsing single attestations: %w", err)
 	}
 
+	// Add the (eval) context, to the (go) context :P
+	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+	if !ok {
+		evalContext = evalcontext.EvaluationContext{}
+	}
+
+	// If the policy set has an eval context definition, then parse it and add
+	// it to the the Go context payload
+	if policySet.GetCommon() != nil && policySet.GetCommon().GetContext() != nil {
+		var ok bool
+		evalContext, ok = ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+		if !ok {
+			evalContext = evalcontext.EvaluationContext{}
+		}
+		evalContext.Context = policySet.GetCommon().GetContext()
+	}
+
+	// Build the context to pass to the policy evaluations
+	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext)
+
 	// Here we build the context that will be common for all policies as defined
 	// in the policy set.
-	evalContext, err := ampel.impl.AssembleEvalContext(ctx, opts, policySet.Common.Context)
+	evalContextValues, err := ampel.impl.AssembleEvalContextValues(ctx, opts, policySet.Common.Context)
 	if err != nil {
 		return nil, fmt.Errorf("assembling policy context: %w", err)
 	}
 
-	// Now process the chain
-	// FIXME: The chain (second arg) needs to be passed along and composed in
-	// the policy eval.
-	subjects, _, policyFail, err := ampel.impl.ProcessPolicySetChainedSubjects(
-		ctx, opts, evaluators, ampel.Collector, policySet, evalContext, subject, atts,
+	// Process policySet chain
+	subjects, chain, policyFail, err := ampel.impl.ProcessPolicySetChainedSubjects(
+		ctx, opts, evaluators, ampel.Collector, policySet, evalContextValues, subject, atts,
 	)
 	if err != nil {
 		// If policyFail is true, then we don't return an error but rather
@@ -131,6 +150,11 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 		}
 		return nil, fmt.Errorf("processing chained subject: %w", err)
 	}
+
+	evalContext.ChainedSubjects = chain
+
+	// Rebuild the go context as we are now shipping the chained subjects.
+	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext)
 
 	// Now cycle each policy....
 	for i, pcy := range policySet.GetPolicies() {
@@ -182,7 +206,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("parsing single attestations: %w", err)
 	}
 
-	evalContext, err := ampel.impl.AssembleEvalContext(ctx, opts, policy.GetContext())
+	evalContext, err := ampel.impl.AssembleEvalContextValues(ctx, opts, policy.GetContext())
 	if err != nil {
 		return nil, fmt.Errorf("assembling policy context: %w", err)
 	}

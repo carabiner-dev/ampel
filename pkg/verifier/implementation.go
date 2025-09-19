@@ -71,8 +71,8 @@ type AmpelVerifier interface {
 	// the resulting list of subjects from the evaluator.
 	ProcessPolicySetChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *papi.PolicySet, map[string]any, attestation.Subject, []attestation.Envelope) ([]attestation.Subject, []*papi.ChainedSubject, bool, error)
 
-	// AssembleEvalContext builds the policy context by mixing defaults and defined values
-	AssembleEvalContext(context.Context, *VerificationOptions, map[string]*papi.ContextVal) (map[string]any, error)
+	// AssembleEvalContextValues builds the policy context values by mixing defaults and defined values
+	AssembleEvalContextValues(context.Context, *VerificationOptions, map[string]*papi.ContextVal) (map[string]any, error)
 }
 
 type defaultIplementation struct{}
@@ -631,8 +631,9 @@ func newResourceDescriptorFromSubject(s attestation.Subject) *gointoto.ResourceD
 	}
 }
 
-// AssembleEvalContext puts together the context.
-func (di *defaultIplementation) AssembleEvalContext(ctx context.Context, opts *VerificationOptions, contextValues map[string]*papi.ContextVal) (map[string]any, error) {
+// AssembleEvalContextValues puts together the context values by assembling the context
+// considering its defaults, received values from upstream and value providers.
+func (di *defaultIplementation) AssembleEvalContextValues(ctx context.Context, opts *VerificationOptions, contextValues map[string]*papi.ContextVal) (map[string]any, error) {
 	errs := []error{}
 
 	// Load the context definitions as received from invocation
