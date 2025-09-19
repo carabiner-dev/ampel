@@ -62,7 +62,9 @@ func TestPolicySetExpiration(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			ampel := &Ampel{}
+			ampel := &Ampel{
+				impl: &defaultIplementation{},
+			}
 			res, err := ampel.Verify(t.Context(), tt.opts, tt.policySet, sub)
 			if tt.mustErr {
 				require.Error(t, err)
