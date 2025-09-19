@@ -353,7 +353,7 @@ func decodeValue(val ref.Val) (attestation.Subject, error) {
 	case map[ref.Val]ref.Val, *structpb.Struct:
 		res, err := val.ConvertToNative(reflect.TypeOf(&intoto.ResourceDescriptor{}))
 		if err != nil {
-			return nil, fmt.Errorf("converting eval result to Subject: %w", err)
+			return nil, fmt.Errorf("converting eval result to Subject %+v: %w", v, err)
 		}
 		subj, ok := res.(*intoto.ResourceDescriptor)
 		if !ok {
