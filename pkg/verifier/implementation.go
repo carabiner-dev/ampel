@@ -461,7 +461,7 @@ func (di *defaultIplementation) evaluateChain(
 		}
 
 		// Only fetch more attestations from the configured sources if we need more:
-		if len(attestations) == 0 {
+		if len(attestations) == 0 && agent != nil {
 			moreatts, err := agent.FetchAttestationsBySubject(
 				ctx, []attestation.Subject{subject}, collector.WithQuery(q),
 			)
@@ -481,7 +481,7 @@ func (di *defaultIplementation) evaluateChain(
 		// Here, we warn if we get more than one attestation for the chained
 		// predicate. Probably this should be limited to only one.
 		if len(attestations) > 1 {
-			logrus.Warn("Chained subject builder got more than one statement")
+			logrus.Warn("Chained subject builder got more than one matching statement")
 		}
 
 		if err := attestations[0].Verify(opts.Keys); err != nil {
