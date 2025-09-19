@@ -133,7 +133,7 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 
 	// Here we build the context that will be common for all policies as defined
 	// in the policy set.
-	evalContextValues, err := ampel.impl.AssembleEvalContextValues(ctx, opts, policySet.Common.Context)
+	evalContextValues, err := ampel.impl.AssembleEvalContextValues(ctx, opts, policySet.GetCommon().GetContext())
 	if err != nil {
 		return nil, fmt.Errorf("assembling policy context: %w", err)
 	}
