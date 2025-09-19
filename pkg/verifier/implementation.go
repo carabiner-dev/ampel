@@ -40,6 +40,7 @@ import (
 type AmpelVerifier interface {
 	// CheckPolicy verifies the policy is sound to evaluate before running it
 	CheckPolicy(context.Context, *VerificationOptions, *papi.Policy) error
+	CheckPolicySet(context.Context, *VerificationOptions, *papi.PolicySet) error
 	GatherAttestations(context.Context, *VerificationOptions, *collector.Agent, *papi.Policy, attestation.Subject, []attestation.Envelope) ([]attestation.Envelope, error)
 	ParseAttestations(context.Context, []string) ([]attestation.Envelope, error)
 	BuildEvaluators(*VerificationOptions, *papi.Policy) (map[class.Class]evaluator.Evaluator, error)
@@ -66,8 +67,12 @@ type AmpelVerifier interface {
 	// subject a policy is supposed to operate on
 	ProcessChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *papi.Policy, map[string]any, attestation.Subject, []attestation.Envelope) (attestation.Subject, []*papi.ChainedSubject, bool, error)
 
-	// AssemblePolicyEvalContext builds the policy context by mixing defaults and defined values
-	AssemblePolicyEvalContext(context.Context, *VerificationOptions, *papi.Policy) (map[string]any, error)
+	// ProcessPolicySetChainedSubjects executesd a PolicySet's ChainLink and returns
+	// the resulting list of subjects from the evaluator.
+	ProcessPolicySetChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *papi.PolicySet, map[string]any, attestation.Subject, []attestation.Envelope) ([]attestation.Subject, []*papi.ChainedSubject, bool, error)
+
+	// AssembleEvalContext builds the policy context by mixing defaults and defined values
+	AssembleEvalContext(context.Context, *VerificationOptions, map[string]*papi.ContextVal) (map[string]any, error)
 }
 
 type defaultIplementation struct{}
@@ -86,6 +91,27 @@ func (di *defaultIplementation) CheckPolicy(ctx context.Context, opts *Verificat
 			Guidance: fmt.Sprintf(
 				"The policy expired on %s, update the policy source",
 				p.GetMeta().GetExpiration().AsTime().Format(time.UnixDate),
+			),
+		}
+	}
+	return nil
+}
+
+// CheckPolicySet verifies the policySet before evaluating its policies to ensure
+// it is fit to run.
+func (di *defaultIplementation) CheckPolicySet(ctx context.Context, opts *VerificationOptions, set *papi.PolicySet) error {
+	if opts == nil {
+		return errors.New("verifier options are not set")
+	}
+	if set.GetMeta() != nil &&
+		set.GetMeta().GetExpiration() != nil &&
+		set.GetMeta().GetExpiration().AsTime().Before(time.Now()) &&
+		opts.EnforceExpiration {
+		return PolicyError{
+			error: errors.New("the policy has expired"), // TODO(puerco): Const error
+			Guidance: fmt.Sprintf(
+				"The policySet expired on %s, update the policy source",
+				set.GetMeta().GetExpiration().AsTime().Format(time.UnixDate),
 			),
 		}
 	}
@@ -311,7 +337,7 @@ func (di *defaultIplementation) Transform(
 }
 
 // CheckIdentities checks that the ingested attestations are signed by one of the
-// identities defined in thew policy.
+// identities defined in the policy.
 func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, policyIdentities []*papi.Identity, envelopes []attestation.Envelope) (bool, [][]*papi.Identity, []error, error) {
 	// verification errors for the user
 	errs := make([]error, len(envelopes))
@@ -408,20 +434,18 @@ func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, su
 	return preds, nil
 }
 
-// SelectChainedSubject returns a new subkect from an ingested attestatom
-func (di *defaultIplementation) ProcessChainedSubjects(
+// evaluateChain evaluates an evidence chain and returns the resulting subject
+func (di *defaultIplementation) evaluateChain(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
-	agent *collector.Agent, policy *papi.Policy, evalContextValues map[string]any, subject attestation.Subject,
-	attestations []attestation.Envelope,
-) (attestation.Subject, []*papi.ChainedSubject, bool, error) {
+	agent *collector.Agent, chainLinks []*papi.ChainLink, evalContextValues map[string]any, subject attestation.Subject,
+	attestations []attestation.Envelope, globalIdentities []*papi.Identity, defaultEvalClass string,
+) ([]attestation.Subject, []*papi.ChainedSubject, bool, error) {
 	chain := []*papi.ChainedSubject{}
-	// If there are no chained subjects, return the original
-	if policy.GetChain() == nil {
-		return subject, chain, false, nil
-	}
-
 	logrus.Debug("Processing evidence chain")
-	for i, link := range policy.GetChain() {
+	var subjectsList []attestation.Subject
+
+	// Cycle all links and eval
+	for i, link := range chainLinks {
 		logrus.Debugf(" Link needs %s", link.GetPredicate().GetType())
 		// Build an attestation query for the type we need
 		q := attestation.NewQuery().WithFilter(
@@ -476,7 +500,7 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 		if link.GetPredicate().GetIdentities() != nil {
 			pass, ids, _, err = di.CheckIdentities(opts, link.GetPredicate().GetIdentities(), attestations[0:0])
 		} else {
-			pass, ids, _, err = di.CheckIdentities(opts, policy.GetIdentities(), attestations[0:0])
+			pass, ids, _, err = di.CheckIdentities(opts, globalIdentities, attestations[0:0])
 		}
 		if err != nil {
 			return nil, nil, false, fmt.Errorf("error checking attestation identity: %w", err)
@@ -490,8 +514,8 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 
 		// TODO: Mueve a metodos en policy.go
 		classString := link.GetPredicate().GetRuntime()
-		if classString == "" && policy.GetMeta() != nil {
-			classString = policy.GetMeta().GetRuntime()
+		if classString == "" {
+			classString = defaultEvalClass
 		}
 		if classString == "" {
 			classString = string(opts.DefaultEvaluator)
@@ -507,13 +531,16 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 		}
 
 		// Populate the context data
-		ctx := context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalcontext.EvaluationContext{
-			Subject:       subject,
-			Policy:        policy,
-			ContextValues: evalContextValues,
-		})
+		ectx, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+		if !ok {
+			ectx = evalcontext.EvaluationContext{}
+		}
+		ectx.Subject = subject
+		ectx.ContextValues = evalContextValues
+		ctx := context.WithValue(ctx, evalcontext.EvaluationContextKey{}, ectx)
+
 		// Execute the selector
-		newsubject, err := evaluators[key].ExecChainedSelector(
+		subjectsList, err = evaluators[key].ExecChainedSelector(
 			ctx, &opts.EvaluatorOptions, link.GetPredicate(),
 			attestations[0].GetStatement().GetPredicate(),
 		)
@@ -524,6 +551,17 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 			return nil, nil, false, fmt.Errorf("evaluating chained subject code: %w", err)
 		}
 
+		if len(subjectsList) == 0 {
+			return nil, nil, false, fmt.Errorf("failed to obtain a subject to fullfil predicate chain")
+		}
+
+		// All intermediate links MUST return only one subject because they point
+		// to a new subject. Only the last link can return many subjects as
+		// a PolicySet can fan out to point to many,
+		if i+1 != len(chainLinks) && len(subjectsList) != 1 {
+			return nil, nil, false, fmt.Errorf("chained selector must return exactly one subject (got %d)", len(subjectsList))
+		}
+
 		// Add to link history
 		var goodIds []*papi.Identity
 		if len(ids) > 0 {
@@ -531,16 +569,58 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 		}
 		chain = append(chain, &papi.ChainedSubject{
 			Source:      newResourceDescriptorFromSubject(subject),
-			Destination: newResourceDescriptorFromSubject(newsubject),
+			Destination: newResourceDescriptorFromSubject(subjectsList[0]),
 			Link: &papi.ChainedSubjectLink{
 				Type:        string(attestations[0].GetStatement().GetPredicateType()),
 				Attestation: newResourceDescriptorFromSubject(attestations[0].GetStatement().GetPredicate().GetOrigin()),
 				Identities:  goodIds,
 			},
 		})
-		subject = newsubject
+		subject = subjectsList[0]
 	}
-	return subject, chain, false, nil
+	return subjectsList, chain, false, nil
+}
+
+// SelectChainedSubject returns a new subkect from an ingested attestatom
+func (di *defaultIplementation) ProcessChainedSubjects(
+	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
+	agent *collector.Agent, policy *papi.Policy, evalContextValues map[string]any, subject attestation.Subject,
+	attestations []attestation.Envelope,
+) (attestation.Subject, []*papi.ChainedSubject, bool, error) {
+	chain := []*papi.ChainedSubject{}
+
+	// If there are no chained subjects, return the original
+	if policy.GetChain() == nil {
+		return subject, chain, false, nil
+	}
+
+	// Get the default evaluator from the policy
+	defaultEvalClass := ""
+	if policy.GetMeta() != nil {
+		defaultEvalClass = policy.GetMeta().GetRuntime()
+	}
+
+	// Here, we only pass the policy, the context will be completed on each eval
+	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalcontext.EvaluationContext{
+		Policy: policy,
+	})
+	subjects, chain, fail, err := di.evaluateChain(
+		ctx, opts, evaluators, agent, policy.GetChain(), evalContextValues, subject,
+		attestations, policy.GetIdentities(), defaultEvalClass,
+	)
+	if err != nil {
+		return nil, nil, false, err
+	}
+
+	if len(subjects) > 1 {
+		return nil, nil, false, fmt.Errorf("processing chained subjects returned more than one subject")
+	}
+
+	if len(subjects) == 0 {
+		return nil, nil, false, fmt.Errorf("unable to complete evidence chain, no subject returned")
+	}
+
+	return subjects[0], chain, fail, nil
 }
 
 func newResourceDescriptorFromSubject(s attestation.Subject) *gointoto.ResourceDescriptor {
@@ -551,8 +631,8 @@ func newResourceDescriptorFromSubject(s attestation.Subject) *gointoto.ResourceD
 	}
 }
 
-// AssemblePolicyEvalContext puts together the context.
-func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, opts *VerificationOptions, p *papi.Policy) (map[string]any, error) {
+// AssembleEvalContext puts together the context.
+func (di *defaultIplementation) AssembleEvalContext(ctx context.Context, opts *VerificationOptions, contextValues map[string]*papi.ContextVal) (map[string]any, error) {
 	errs := []error{}
 
 	// Load the context definitions as received from invocation
@@ -591,7 +671,7 @@ func (di *defaultIplementation) AssemblePolicyEvalContext(ctx context.Context, o
 
 	// Override the ancestor context structure with the policy context
 	// definition (if any)
-	for k, def := range p.GetContext() {
+	for k, def := range contextValues {
 		// Check if there is an existing value name that clashed with this one
 		// when normalized to lowercase
 		if existingName, ok := lcnames[strings.ToLower(k)]; ok {
@@ -912,4 +992,41 @@ func (di *defaultIplementation) AttestResultSetToWriter(
 
 	// Write the statement to json
 	return stmt.WriteJson(w)
+}
+
+// ProcessPolicySetChainedSubjects executes a PolicySet's ChainLink and returns
+// the resulting list of subjects from the evaluator.
+func (di *defaultIplementation) ProcessPolicySetChainedSubjects(
+	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
+	agent *collector.Agent, policySet *papi.PolicySet, evalContextValues map[string]any, subject attestation.Subject,
+	attestations []attestation.Envelope,
+) ([]attestation.Subject, []*papi.ChainedSubject, bool, error) {
+	chain := []*papi.ChainedSubject{}
+
+	// If there are no chained subjects, then the list of subject contains only
+	// the original subject. If there is a chain defined, then the subject will
+	// be replaced with the list of data extracted from the chain's attesations.
+	if policySet.GetChain() == nil {
+		return []attestation.Subject{subject}, chain, false, nil
+	}
+
+	// Get the default evaluator from the policy
+	defaultEvalClass := ""
+	if policySet.GetMeta() != nil {
+		defaultEvalClass = policySet.GetMeta().GetRuntime()
+	}
+
+	subjects, chain, fail, err := di.evaluateChain(
+		ctx, opts, evaluators, agent, policySet.GetChain(), evalContextValues, subject,
+		attestations, policySet.GetCommon().GetIdentities(), defaultEvalClass,
+	)
+	if err != nil {
+		return nil, nil, false, err
+	}
+
+	if len(subjects) == 0 {
+		return nil, nil, false, fmt.Errorf("unable to complete evidence chain, no subject returned")
+	}
+
+	return subjects, chain, fail, nil
 }
