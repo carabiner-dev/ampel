@@ -17,21 +17,22 @@ import (
 func TestEvaluateChainedSelector(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
-		name          string
-		code          string
-		predicatePath string
-		expected      *intoto.ResourceDescriptor
-		mustErr       bool
+		name           string
+		code           string
+		predicatePath  string
+		expectedLength int
+		expected       *intoto.ResourceDescriptor
+		mustErr        bool
 	}{
-		{"slsa", "predicate.data.materials[0]", "testdata/slsa-v0.2.json", &intoto.ResourceDescriptor{
+		{"slsa", "predicate.data.materials[0]", "testdata/slsa-v0.2.json", 1, &intoto.ResourceDescriptor{
 			Uri:    "git+https://github.com/slsa-framework/slsa-verifier@refs/tags/v2.6.0",
 			Digest: map[string]string{"sha1": "3714a2a4684014deb874a0e737dffa0ee02dd647", "gitCommit": "3714a2a4684014deb874a0e737dffa0ee02dd647"},
 		}, false},
-		{"string", "\"sha1:\"+predicate.data.materials[0].digest[\"sha1\"]", "testdata/slsa-v0.2.json", &intoto.ResourceDescriptor{
+		{"string", "\"sha1:\"+predicate.data.materials[0].digest[\"sha1\"]", "testdata/slsa-v0.2.json", 1, &intoto.ResourceDescriptor{
 			Digest: map[string]string{"sha1": "3714a2a4684014deb874a0e737dffa0ee02dd647"},
 		}, false},
-		{"bad-string", "\"bad string\"", "testdata/slsa-v0.2.json", nil, true},
-		{"bad-structure", "[1,2,3]", "testdata/slsa-v0.2.json", nil, true},
+		{"bad-string", "\"bad string\"", "testdata/slsa-v0.2.json", 1, nil, true},
+		{"bad-structure", "[1,2,3]", "testdata/slsa-v0.2.json", 1, nil, true},
 	} {
 		ev := &defaulCelEvaluator{}
 
@@ -62,9 +63,10 @@ func TestEvaluateChainedSelector(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.NotNil(t, res)
-			require.Equal(t, tc.expected.GetUri(), res.GetUri())
-			require.Equal(t, tc.expected.GetName(), res.GetName())
-			require.Equal(t, tc.expected.GetDigest(), res.GetDigest())
+			require.Len(t, res, tc.expectedLength)
+			require.Equal(t, tc.expected.GetUri(), res[0].GetUri())
+			require.Equal(t, tc.expected.GetName(), res[0].GetName())
+			require.Equal(t, tc.expected.GetDigest(), res[0].GetDigest())
 		})
 	}
 }

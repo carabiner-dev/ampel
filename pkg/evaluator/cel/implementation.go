@@ -38,7 +38,7 @@ type CelEvaluatorImplementation interface {
 	Evaluate(*cel.Env, *cel.Ast, *map[string]any) (*papi.EvalResult, error)
 	Assert(*papi.ResultSet) bool
 	BuildSelectorVariables(*options.EvaluatorOptions, map[string]Plugin, *papi.Policy, attestation.Subject, *papi.ChainedPredicate, attestation.Predicate) (*map[string]any, error)
-	EvaluateChainedSelector(*cel.Env, *cel.Ast, *map[string]any) (attestation.Subject, error)
+	EvaluateChainedSelector(*cel.Env, *cel.Ast, *map[string]any) ([]attestation.Subject, error)
 }
 
 type defaulCelEvaluator struct{}
@@ -336,30 +336,9 @@ func deRefList(refList []ref.Val) []any {
 	return r
 }
 
-// EvaluateChainedSelector
-func (dce *defaulCelEvaluator) EvaluateChainedSelector(
-	//nolint:gocritic // This is passing a potentially large data set
-	env *cel.Env, ast *cel.Ast, vars *map[string]any,
-) (attestation.Subject, error) {
-	if env == nil {
-		return nil, fmt.Errorf("CEL environment not set")
-	}
-	if vars == nil {
-		return nil, fmt.Errorf("variable set undefined")
-	}
-
-	program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
-	if err != nil {
-		return nil, fmt.Errorf("generating program from AST: %w", err)
-	}
-
-	// First evaluate the tenet.
-	result, _, err := program.Eval(*vars)
-	if err != nil {
-		return nil, fmt.Errorf("evaluation error: %w", err)
-	}
-
-	switch v := result.Value().(type) {
+// decodeValue
+func decodeValue(val ref.Val) (attestation.Subject, error) {
+	switch v := val.Value().(type) {
 	case string:
 		algo, val, ok := strings.Cut(v, ":")
 		if !ok {
@@ -369,14 +348,12 @@ func (dce *defaulCelEvaluator) EvaluateChainedSelector(
 			return nil, fmt.Errorf("invalid hash algorithm returned from selector (%q)", v)
 		}
 		return &intoto.ResourceDescriptor{
-			Digest: map[string]string{
-				strings.ToLower(algo): val,
-			},
+			Digest: map[string]string{strings.ToLower(algo): val},
 		}, nil
 	case map[ref.Val]ref.Val, *structpb.Struct:
-		res, err := result.ConvertToNative(reflect.TypeOf(&intoto.ResourceDescriptor{}))
+		res, err := val.ConvertToNative(reflect.TypeOf(&intoto.ResourceDescriptor{}))
 		if err != nil {
-			return nil, fmt.Errorf("converting eval result to Subject: %w", err)
+			return nil, fmt.Errorf("converting eval result to Subject %+v: %w", v, err)
 		}
 		subj, ok := res.(*intoto.ResourceDescriptor)
 		if !ok {
@@ -403,8 +380,52 @@ func (dce *defaulCelEvaluator) EvaluateChainedSelector(
 		}
 		return subj, nil
 	default:
-		return nil, fmt.Errorf("predicate selector must return string or resource descr (got %T)", result.Value())
+		return nil, fmt.Errorf("predicate selector must return string or resource descr (got %T)", val.Value())
 	}
+}
+
+// EvaluateChainedSelector runs the cahin selector and returns the list of subjects
+// extracted from the attestation data. This function returns a list of subjects,
+// depending on the context used it must only one, or a list.
+func (dce *defaulCelEvaluator) EvaluateChainedSelector(
+	//nolint:gocritic // This is passing a potentially large data set
+	env *cel.Env, ast *cel.Ast, vars *map[string]any,
+) ([]attestation.Subject, error) {
+	if env == nil {
+		return nil, fmt.Errorf("CEL environment not set")
+	}
+	if vars == nil {
+		return nil, fmt.Errorf("variable set undefined")
+	}
+
+	program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
+	if err != nil {
+		return nil, fmt.Errorf("generating program from AST: %w", err)
+	}
+
+	// First evaluate the tenet.
+	result, _, err := program.Eval(*vars)
+	if err != nil {
+		return nil, fmt.Errorf("evaluation error: %w", err)
+	}
+	ret := []attestation.Subject{}
+	switch v := result.Value().(type) {
+	case []ref.Val:
+		for _, val := range v {
+			sub, err := decodeValue(val)
+			if err != nil {
+				return nil, err
+			}
+			ret = append(ret, sub)
+		}
+	default:
+		s, err := decodeValue(result)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, s)
+	}
+	return ret, nil
 }
 
 // Evaluate the precompiled ASTs
