@@ -70,8 +70,12 @@ func (ampel *Ampel) Verify(
 
 // VerifySubjectWithPolicySet runs a subject through a policy set.
 func (ampel *Ampel) VerifySubjectWithPolicySet(
-	ctx context.Context, opts *VerificationOptions, policySet *papi.PolicySet, subject attestation.Subject,
+	ctx context.Context, originalOptions *VerificationOptions, policySet *papi.PolicySet, subject attestation.Subject,
 ) (*papi.ResultSet, error) {
+	// Copy the options as we will mutate them after parsing the initial
+	// attestations set.
+	opts := *originalOptions
+
 	// This is the resultSet to be returned
 	resultSet := &papi.ResultSet{
 		Id:        policySet.GetId(),
@@ -86,7 +90,7 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	}
 
 	// Check if the policy is viable before
-	if err := ampel.impl.CheckPolicySet(ctx, opts, policySet); err != nil {
+	if err := ampel.impl.CheckPolicySet(ctx, &opts, policySet); err != nil {
 		// If the policy failed validation, don't err. Fail the policy
 		perr := PolicyError{}
 		if errors.As(err, &perr) {
@@ -100,7 +104,7 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	evaluators := map[class.Class]evaluator.Evaluator{}
 	// TODO(puerco): We should BuildEvaluators to get the already built evaluators
 	for _, p := range policySet.Policies {
-		policyEvals, err := ampel.impl.BuildEvaluators(opts, p)
+		policyEvals, err := ampel.impl.BuildEvaluators(&opts, p)
 		if err != nil {
 			return nil, fmt.Errorf("building evaluators: %w", err)
 		}
@@ -108,10 +112,14 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	}
 
 	// Parse any extra attestation files defined in the options
-	atts, err := ampel.impl.ParseAttestations(ctx, opts.AttestationFiles)
+	atts, err := ampel.impl.ParseAttestations(ctx, &opts)
 	if err != nil {
 		return nil, fmt.Errorf("parsing single attestations: %w", err)
 	}
+
+	// Mutate the options set to avoid reparsing the paths
+	opts.AttestationFiles = []string{}
+	opts.Attestations = atts
 
 	// Add the (eval) context, to the (go) context :P
 	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
@@ -135,14 +143,14 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 
 	// Here we build the context that will be common for all policies as defined
 	// in the policy set.
-	evalContextValues, err := ampel.impl.AssembleEvalContextValues(ctx, opts, policySet.GetCommon().GetContext())
+	evalContextValues, err := ampel.impl.AssembleEvalContextValues(ctx, &opts, policySet.GetCommon().GetContext())
 	if err != nil {
 		return nil, fmt.Errorf("assembling policy context: %w", err)
 	}
 
 	// Process policySet chain
 	subjects, chain, policyFail, err := ampel.impl.ProcessPolicySetChainedSubjects(
-		ctx, opts, evaluators, ampel.Collector, policySet, evalContextValues, subject, atts,
+		ctx, &opts, evaluators, ampel.Collector, policySet, evalContextValues, subject, atts,
 	)
 	if err != nil {
 		// If policyFail is true, then we don't return an error but rather
@@ -165,7 +173,7 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 		// ... and evaluate against each subject
 		for _, subsubject := range subjects {
 			go func() {
-				res, err := ampel.VerifySubjectWithPolicy(ctx, opts, pcy, subsubject)
+				res, err := ampel.VerifySubjectWithPolicy(ctx, &opts, pcy, subsubject)
 				if err != nil {
 					t.Done(fmt.Errorf("evaluating policy #%d: %w", i, err))
 					return
@@ -215,7 +223,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	}
 
 	// Parse any extra attestation files defined in the options
-	atts, err := ampel.impl.ParseAttestations(ctx, opts.AttestationFiles)
+	atts, err := ampel.impl.ParseAttestations(ctx, opts)
 	if err != nil {
 		return nil, fmt.Errorf("parsing single attestations: %w", err)
 	}
