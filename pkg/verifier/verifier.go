@@ -10,10 +10,12 @@ import (
 	"io"
 	"maps"
 	"slices"
+	"sync"
 
 	"github.com/carabiner-dev/attestation"
 	papi "github.com/carabiner-dev/policy/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
+	"github.com/nozzle/throttler"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
@@ -156,15 +158,27 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	// Rebuild the go context as we are now shipping the chained subjects.
 	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext)
 
+	var mtx sync.Mutex
+	t := throttler.New(int(opts.ParallelWorkers), len(policySet.Policies)*len(subjects))
 	// Now cycle each policy....
 	for i, pcy := range policySet.GetPolicies() {
 		// ... and evaluate against each subject
 		for _, subsubject := range subjects {
-			res, err := ampel.VerifySubjectWithPolicy(ctx, opts, pcy, subsubject)
-			if err != nil {
-				return nil, fmt.Errorf("evaluating policy #%d: %w", i, err)
+			go func() {
+				res, err := ampel.VerifySubjectWithPolicy(ctx, opts, pcy, subsubject)
+				if err != nil {
+					t.Done(fmt.Errorf("evaluating policy #%d: %w", i, err))
+					return
+				}
+				mtx.Lock()
+				resultSet.Results = append(resultSet.Results, res)
+				mtx.Unlock()
+				t.Done(nil)
+			}()
+			// Break and return on the first error
+			if numErrs := t.Throttle(); numErrs != 0 {
+				return nil, t.Err()
 			}
-			resultSet.Results = append(resultSet.Results, res)
 		}
 	}
 

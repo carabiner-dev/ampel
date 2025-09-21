@@ -11,6 +11,8 @@ import (
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
 
 func TestPolicySetExpiration(t *testing.T) {
@@ -42,7 +44,7 @@ func TestPolicySetExpiration(t *testing.T) {
 			},
 		},
 		{
-			"valid-with-opts-disabled", true, false, &VerificationOptions{EnforceExpiration: false},
+			"valid-with-opts-disabled", true, false, &VerificationOptions{EnforceExpiration: false, EvaluatorOptions: options.Default},
 			&papi.PolicySet{
 				Meta: &papi.PolicySetMeta{
 					Expiration: timestamppb.New(time.Now().Add(1 * time.Hour)),
@@ -51,7 +53,7 @@ func TestPolicySetExpiration(t *testing.T) {
 			},
 		},
 		{
-			"expired-with-opts-disabled", true, false, &VerificationOptions{EnforceExpiration: false},
+			"expired-with-opts-disabled", true, false, &VerificationOptions{EnforceExpiration: false, EvaluatorOptions: options.Default},
 			&papi.PolicySet{
 				Meta: &papi.PolicySetMeta{
 					Expiration: timestamppb.New(time.Now().Add(-1 * time.Hour)),

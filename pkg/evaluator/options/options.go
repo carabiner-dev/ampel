@@ -7,10 +7,12 @@ package options
 // the evaluator when executing the policy tenets.
 type EvaluatorOptions struct {
 	LoadDefaultPlugins bool
+	ParallelWorkers    int8
 }
 
 var Default = EvaluatorOptions{
 	LoadDefaultPlugins: true,
+	ParallelWorkers:    4,
 }
 
 type OptFunc func(*EvaluatorOptions) error
