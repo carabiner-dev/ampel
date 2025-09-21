@@ -25,6 +25,10 @@ type VerificationOptions struct {
 	// AttestationFiles are additional attestations passed manually
 	AttestationFiles []string
 
+	// Attestations are preparsed attestations the policy evaluator receives
+	// when called, usually preparsed by the PolicySet evaluator.
+	Attestations []attestation.Envelope
+
 	// DefaultEvaluator is the default evaluator we use when a policy does
 	// not define one.
 	DefaultEvaluator class.Class

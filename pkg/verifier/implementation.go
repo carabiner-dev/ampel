@@ -42,7 +42,7 @@ type AmpelVerifier interface {
 	CheckPolicy(context.Context, *VerificationOptions, *papi.Policy) error
 	CheckPolicySet(context.Context, *VerificationOptions, *papi.PolicySet) error
 	GatherAttestations(context.Context, *VerificationOptions, *collector.Agent, *papi.Policy, attestation.Subject, []attestation.Envelope) ([]attestation.Envelope, error)
-	ParseAttestations(context.Context, []string) ([]attestation.Envelope, error)
+	ParseAttestations(context.Context, *VerificationOptions) ([]attestation.Envelope, error)
 	BuildEvaluators(*VerificationOptions, *papi.Policy) (map[class.Class]evaluator.Evaluator, error)
 	BuildTransformers(*VerificationOptions, *papi.Policy) (map[transformer.Class]transformer.Transformer, error)
 	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *papi.Policy, attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
@@ -173,12 +173,14 @@ func (di *defaultIplementation) GatherAttestations(
 	return append(attestations, res...), nil
 }
 
-// ParseAttestations parses additional attestations defined to support the
-// subject verification
-func (di *defaultIplementation) ParseAttestations(ctx context.Context, paths []string) ([]attestation.Envelope, error) {
+// ParseAttestations parses attestations loaded directly into the verifier to
+// support the subject verification.
+func (di *defaultIplementation) ParseAttestations(ctx context.Context, opts *VerificationOptions) ([]attestation.Envelope, error) {
 	errs := []error{}
-	res := []attestation.Envelope{}
-	for _, path := range paths {
+
+	// Initialize the attestations set with any passed from the PolicySet verifier.
+	res := opts.Attestations
+	for _, path := range opts.AttestationFiles {
 		f, err := os.Open(path)
 		if err != nil {
 			errs = append(errs, err)
