@@ -162,7 +162,7 @@ func TestEvaluateChain(t *testing.T) {
 			// Load the attestations required by the test
 			opts := &DefaultVerificationOptions
 			opts.AttestationFiles = tt.attestationPaths
-			attestations, err := di.ParseAttestations(t.Context(), opts)
+			attestations, err := di.ParseAttestations(t.Context(), opts, tt.subject)
 			require.NoError(t, err)
 
 			// Check if there is an evaluator foe the link's runtime

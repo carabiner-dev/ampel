@@ -112,7 +112,7 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	}
 
 	// Parse any extra attestation files defined in the options
-	atts, err := ampel.impl.ParseAttestations(ctx, &opts)
+	atts, err := ampel.impl.ParseAttestations(ctx, &opts, subject)
 	if err != nil {
 		return nil, fmt.Errorf("parsing single attestations: %w", err)
 	}
@@ -223,7 +223,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	}
 
 	// Parse any extra attestation files defined in the options
-	atts, err := ampel.impl.ParseAttestations(ctx, opts)
+	atts, err := ampel.impl.ParseAttestations(ctx, opts, subject)
 	if err != nil {
 		return nil, fmt.Errorf("parsing single attestations: %w", err)
 	}

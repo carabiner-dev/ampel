@@ -19,6 +19,7 @@ import (
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector"
 	"github.com/carabiner-dev/collector/envelope"
+	"github.com/carabiner-dev/collector/envelope/bare"
 	"github.com/carabiner-dev/collector/filters"
 	ampelPred "github.com/carabiner-dev/collector/predicate/ampel"
 	"github.com/carabiner-dev/collector/statement/intoto"
@@ -42,7 +43,7 @@ type AmpelVerifier interface {
 	CheckPolicy(context.Context, *VerificationOptions, *papi.Policy) error
 	CheckPolicySet(context.Context, *VerificationOptions, *papi.PolicySet) error
 	GatherAttestations(context.Context, *VerificationOptions, *collector.Agent, *papi.Policy, attestation.Subject, []attestation.Envelope) ([]attestation.Envelope, error)
-	ParseAttestations(context.Context, *VerificationOptions) ([]attestation.Envelope, error)
+	ParseAttestations(context.Context, *VerificationOptions, attestation.Subject) ([]attestation.Envelope, error)
 	BuildEvaluators(*VerificationOptions, *papi.Policy) (map[class.Class]evaluator.Evaluator, error)
 	BuildTransformers(*VerificationOptions, *papi.Policy) (map[transformer.Class]transformer.Transformer, error)
 	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *papi.Policy, attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
@@ -175,7 +176,7 @@ func (di *defaultIplementation) GatherAttestations(
 
 // ParseAttestations parses attestations loaded directly into the verifier to
 // support the subject verification.
-func (di *defaultIplementation) ParseAttestations(ctx context.Context, opts *VerificationOptions) ([]attestation.Envelope, error) {
+func (di *defaultIplementation) ParseAttestations(ctx context.Context, opts *VerificationOptions, subject attestation.Subject) ([]attestation.Envelope, error) {
 	errs := []error{}
 
 	// Initialize the attestations set with any passed from the PolicySet verifier.
@@ -197,7 +198,33 @@ func (di *defaultIplementation) ParseAttestations(ctx context.Context, opts *Ver
 		if env == nil {
 			return nil, fmt.Errorf("unable to obtain envelope from: %q", path)
 		}
-		res = append(res, env...)
+
+		// If the envelope is a bare JSON, we synthesize it by copying the
+		// subject under verification as they were deemed applicable by the
+		// user via the verifier flags.
+		for _, e := range env {
+			bareEnvelope, ok := e.(*bare.Envelope)
+			if !ok {
+				res = append(res, e)
+				continue
+			}
+			// Since the statement interface has no set methods, we
+			// need to cast it to set the data.
+			s, ok := bareEnvelope.GetStatement().(*intoto.Statement)
+			if !ok {
+				res = append(res, e)
+				continue
+			}
+			s.Subject = []*gointoto.ResourceDescriptor{
+				{
+					Name:   subject.GetName(),
+					Uri:    subject.GetUri(),
+					Digest: subject.GetDigest(),
+				},
+			}
+			bareEnvelope.Statement = s
+			res = append(res, bareEnvelope)
+		}
 	}
 	return res, errors.Join(errs...)
 }
