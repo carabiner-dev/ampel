@@ -1,0 +1,14 @@
+{
+  "predicateType": "https://example.com/",
+  "predicate": {
+    "data": "yes please"
+  },
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "digest": {
+        "sha1": "93836eee21527f010b77faa3379ccba2f3dbc1b3"
+      }
+    }
+  ]
+}
