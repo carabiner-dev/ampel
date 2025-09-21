@@ -159,7 +159,7 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext)
 
 	var mtx sync.Mutex
-	t := throttler.New(4, len(policySet.Policies)*len(subjects))
+	t := throttler.New(int(opts.ParallelWorkers), len(policySet.Policies)*len(subjects))
 	// Now cycle each policy....
 	for i, pcy := range policySet.GetPolicies() {
 		// ... and evaluate against each subject

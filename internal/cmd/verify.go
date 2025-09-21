@@ -134,6 +134,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringSliceVar(
 		&o.PolicyKeyPaths, "policy-key", []string{}, "path to public keys to verify policies",
 	)
+
+	cmd.PersistentFlags().Int8Var(
+		&o.ParallelWorkers, "workers", verifier.DefaultVerificationOptions.ParallelWorkers, "number of evaluation threads to run in parallel",
+	)
 }
 
 func parseHash(estring string) (algo, value string, err error) {
@@ -208,6 +212,10 @@ func (o *verifyOptions) Validate() error {
 		if err := render.GetDriverBytType(o.Format); err != nil {
 			errs = append(errs, errors.New("invalid format"))
 		}
+	}
+
+	if o.ParallelWorkers <= 0 {
+		errs = append(errs, errors.New("parallel workers must be larger than 0"))
 	}
 
 	if len(o.AttestationFiles) == 0 && len(o.Collectors) == 0 {
