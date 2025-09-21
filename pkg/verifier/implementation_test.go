@@ -127,28 +127,32 @@ func TestEvaluateChain(t *testing.T) {
 		},
 		{
 			"ensure-final-can-be-multi", false, 2, defaultSubject,
-			[]string{"testdata/wtf-frontend.spdx.json"},
+			[]string{
+				"testdata/wtf-frontend.spdx.json",
+				"testdata/link1.json",
+				"testdata/link2.json",
+			},
 			[]*papi.ChainLink{
 				{
 					Source: &papi.ChainLink_Predicate{
 						Predicate: &papi.ChainedPredicate{
 							Type:     "https://spdx.dev/Document",
-							Selector: "'sha256:cdd80609c252ba5336de7033518cfe15f9e466a53c1de14545cc6ec22e56252b'",
+							Selector: "'sha1:856314ba21181a746186c24f1647d06e45048964'",
 						},
 					},
 				},
 				{
 					Source: &papi.ChainLink_Predicate{
 						Predicate: &papi.ChainedPredicate{
-							Type:     "https://spdx.dev/Document",
-							Selector: "'sha256:cdd80609c252ba5336de7033518cfe15f9e466a53c1de14545cc6ec22e56252b'",
+							Type:     "https://example.com/",
+							Selector: "'sha1:93836eee21527f010b77faa3379ccba2f3dbc1b3'",
 						},
 					},
 				},
 				{
 					Source: &papi.ChainLink_Predicate{
 						Predicate: &papi.ChainedPredicate{
-							Type:     "https://spdx.dev/Document",
+							Type:     "https://example.com/",
 							Selector: `["sha256:cdd80609c252ba5336de7033518cfe15f9e466a53c1de14545cc6ec22e56252b", "sha256:0d413b00f20df75f452cdd3562edfa85983bde65917004be299902b734d24d8b"]`,
 						},
 					},
@@ -162,7 +166,7 @@ func TestEvaluateChain(t *testing.T) {
 			// Load the attestations required by the test
 			opts := &DefaultVerificationOptions
 			opts.AttestationFiles = tt.attestationPaths
-			attestations, err := di.ParseAttestations(t.Context(), opts)
+			attestations, err := di.ParseAttestations(t.Context(), opts, tt.subject)
 			require.NoError(t, err)
 
 			// Check if there is an evaluator foe the link's runtime

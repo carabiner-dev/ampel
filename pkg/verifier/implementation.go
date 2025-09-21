@@ -19,6 +19,7 @@ import (
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector"
 	"github.com/carabiner-dev/collector/envelope"
+	"github.com/carabiner-dev/collector/envelope/bare"
 	"github.com/carabiner-dev/collector/filters"
 	ampelPred "github.com/carabiner-dev/collector/predicate/ampel"
 	"github.com/carabiner-dev/collector/statement/intoto"
@@ -42,7 +43,7 @@ type AmpelVerifier interface {
 	CheckPolicy(context.Context, *VerificationOptions, *papi.Policy) error
 	CheckPolicySet(context.Context, *VerificationOptions, *papi.PolicySet) error
 	GatherAttestations(context.Context, *VerificationOptions, *collector.Agent, *papi.Policy, attestation.Subject, []attestation.Envelope) ([]attestation.Envelope, error)
-	ParseAttestations(context.Context, *VerificationOptions) ([]attestation.Envelope, error)
+	ParseAttestations(context.Context, *VerificationOptions, attestation.Subject) ([]attestation.Envelope, error)
 	BuildEvaluators(*VerificationOptions, *papi.Policy) (map[class.Class]evaluator.Evaluator, error)
 	BuildTransformers(*VerificationOptions, *papi.Policy) (map[transformer.Class]transformer.Transformer, error)
 	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *papi.Policy, attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
@@ -175,31 +176,49 @@ func (di *defaultIplementation) GatherAttestations(
 
 // ParseAttestations parses attestations loaded directly into the verifier to
 // support the subject verification.
-func (di *defaultIplementation) ParseAttestations(ctx context.Context, opts *VerificationOptions) ([]attestation.Envelope, error) {
-	errs := []error{}
-
+func (di *defaultIplementation) ParseAttestations(ctx context.Context, opts *VerificationOptions, subject attestation.Subject) ([]attestation.Envelope, error) {
 	// Initialize the attestations set with any passed from the PolicySet verifier.
 	res := opts.Attestations
-	for _, path := range opts.AttestationFiles {
-		f, err := os.Open(path)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
 
-		logrus.Debugf("parsing %s (%d envelope drivers loaded)", path, len(envelope.Parsers))
-		env, err := envelope.Parsers.Parse(f)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("parsing %q: %w", path, err))
-			continue
-		}
-
-		if env == nil {
-			return nil, fmt.Errorf("unable to obtain envelope from: %q", path)
-		}
-		res = append(res, env...)
+	parsed, err := envelope.Parsers.ParseFiles(opts.AttestationFiles)
+	if err != nil {
+		return nil, fmt.Errorf("parsing attestations: %w", err)
 	}
-	return res, errors.Join(errs...)
+
+	// If the envelope is a bare JSON, we synthesize it by copying the
+	// subject under verification as they were deemed applicable by the
+	// user via the verifier flags.
+	//
+	// TODO(puerco): this should be an option passed to the collector parser
+	for _, e := range parsed {
+		if len(e.GetStatement().GetSubjects()) > 0 {
+			res = append(res, e)
+			continue
+		}
+		bareEnvelope, ok := e.(*bare.Envelope)
+		if !ok {
+			res = append(res, e)
+			continue
+		}
+		// Since the statement interface has no set methods, we
+		// need to cast it to set the data.
+		s, ok := bareEnvelope.GetStatement().(*intoto.Statement)
+		if !ok {
+			res = append(res, e)
+			continue
+		}
+		s.Subject = []*gointoto.ResourceDescriptor{
+			{
+				Name:   subject.GetName(),
+				Uri:    subject.GetUri(),
+				Digest: subject.GetDigest(),
+			},
+		}
+		bareEnvelope.Statement = s
+		res = append(res, bareEnvelope)
+	}
+
+	return res, nil
 }
 
 // AssertResult conducts the final assertion to allow/block based on the
@@ -448,32 +467,36 @@ func (di *defaultIplementation) evaluateChain(
 
 	// Cycle all links and eval
 	for i, link := range chainLinks {
+		var lattestation []attestation.Envelope
 		logrus.Debugf(" Link needs %s", link.GetPredicate().GetType())
-		// Build an attestation query for the type we need
+		// Build an attestation query for the type we need but filter
+		// the attestations to only the current computed subject.
 		q := attestation.NewQuery().WithFilter(
 			&filters.PredicateTypeMatcher{
 				PredicateTypes: map[attestation.PredicateType]struct{}{
 					attestation.PredicateType(link.GetPredicate().GetType()): {},
 				},
 			},
+			// TODO(puerco): Filter on the whole subject (not just hashes).
+			&filters.SubjectHashMatcher{
+				HashSets: []map[string]string{subject.GetDigest()},
+			},
 		)
 
-		if len(attestations) > 0 {
-			attestations = q.Run(attestations)
-		}
+		lattestation = q.Run(attestations)
 
 		// Only fetch more attestations from the configured sources if we need more:
-		if len(attestations) == 0 && agent != nil {
+		if len(lattestation) == 0 && agent != nil {
 			moreatts, err := agent.FetchAttestationsBySubject(
 				ctx, []attestation.Subject{subject}, collector.WithQuery(q),
 			)
 			if err != nil {
 				return nil, nil, false, fmt.Errorf("collecting attestations: %w", err)
 			}
-			attestations = append(attestations, moreatts...)
+			lattestation = append(lattestation, moreatts...)
 		}
 
-		if len(attestations) == 0 {
+		if len(lattestation) == 0 {
 			return nil, nil, true, PolicyError{
 				error:    fmt.Errorf("no matching attestations to read the chained subject #%d", i),
 				Guidance: "make sure the collector has access to attestations to satisfy the subject chain as defined in the policy.",
@@ -482,11 +505,11 @@ func (di *defaultIplementation) evaluateChain(
 
 		// Here, we warn if we get more than one attestation for the chained
 		// predicate. Probably this should be limited to only one.
-		if len(attestations) > 1 {
-			logrus.Warn("Chained subject builder got more than one matching statement")
+		if len(lattestation) > 1 {
+			logrus.Debugf("WARN: Chained subject builder got more than one matching statement")
 		}
 
-		if err := attestations[0].Verify(opts.Keys); err != nil {
+		if err := lattestation[0].Verify(opts.Keys); err != nil {
 			return nil, nil, true, PolicyError{
 				error:    fmt.Errorf("signature verifying failed in chained subject: %w", err),
 				Guidance: "the signature verification in the loaded attestations failed, try resigning it",
@@ -500,9 +523,9 @@ func (di *defaultIplementation) evaluateChain(
 		// defined in the policy if the link does not have its own. Probably this
 		// should have a better default.
 		if link.GetPredicate().GetIdentities() != nil {
-			pass, ids, _, err = di.CheckIdentities(opts, link.GetPredicate().GetIdentities(), attestations[0:0])
+			pass, ids, _, err = di.CheckIdentities(opts, link.GetPredicate().GetIdentities(), lattestation[0:0])
 		} else {
-			pass, ids, _, err = di.CheckIdentities(opts, globalIdentities, attestations[0:0])
+			pass, ids, _, err = di.CheckIdentities(opts, globalIdentities, lattestation[0:0])
 		}
 		if err != nil {
 			return nil, nil, false, fmt.Errorf("error checking attestation identity: %w", err)
@@ -523,10 +546,9 @@ func (di *defaultIplementation) evaluateChain(
 			classString = string(opts.DefaultEvaluator)
 		}
 
-		// TODO(puerco): Options here should come from the verifier options
 		key := class.Class(classString)
 		if key == "" {
-			key = class.Class("default")
+			key = opts.DefaultEvaluator
 		}
 		if _, ok := evaluators[key]; !ok {
 			return nil, nil, false, fmt.Errorf("no evaluator loaded for class %s", key)
@@ -544,7 +566,7 @@ func (di *defaultIplementation) evaluateChain(
 		// Execute the selector
 		subjectsList, err = evaluators[key].ExecChainedSelector(
 			ctx, &opts.EvaluatorOptions, link.GetPredicate(),
-			attestations[0].GetStatement().GetPredicate(),
+			lattestation[0].GetStatement().GetPredicate(),
 		)
 		if err != nil {
 			// TODO(puerco): The false here instructs ampel to return an error
@@ -573,8 +595,8 @@ func (di *defaultIplementation) evaluateChain(
 			Source:      newResourceDescriptorFromSubject(subject),
 			Destination: newResourceDescriptorFromSubject(subjectsList[0]),
 			Link: &papi.ChainedSubjectLink{
-				Type:        string(attestations[0].GetStatement().GetPredicateType()),
-				Attestation: newResourceDescriptorFromSubject(attestations[0].GetStatement().GetPredicate().GetOrigin()),
+				Type:        string(lattestation[0].GetStatement().GetPredicateType()),
+				Attestation: newResourceDescriptorFromSubject(lattestation[0].GetPredicate().GetOrigin()),
 				Identities:  goodIds,
 			},
 		})
@@ -606,6 +628,7 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalcontext.EvaluationContext{
 		Policy: policy,
 	})
+
 	subjects, chain, fail, err := di.evaluateChain(
 		ctx, opts, evaluators, agent, policy.GetChain(), evalContextValues, subject,
 		attestations, policy.GetIdentities(), defaultEvalClass,
@@ -636,6 +659,9 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 }
 
 func newResourceDescriptorFromSubject(s attestation.Subject) *gointoto.ResourceDescriptor {
+	if s == nil {
+		return nil
+	}
 	return &gointoto.ResourceDescriptor{
 		Name:   s.GetName(),
 		Uri:    s.GetUri(),
