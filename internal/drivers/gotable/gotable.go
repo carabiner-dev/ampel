@@ -135,12 +135,12 @@ func (tb *TableBuilder) ResultSetTable(set *papi.ResultSet) (table.Writer, error
 		assessments = strings.TrimSuffix(assessments, "\n")
 
 		controls := "-"
-		if len(r.GetMeta().Controls) > 0 {
+		if len(r.GetMeta().GetControls()) > 0 {
 			controls = tb.Decorator.ControlsToString(r, "", "")
 		}
 		t.AppendRow(
 			table.Row{
-				r.Policy.Id,
+				r.GetPolicy().GetId(),
 				controls,
 				fmt.Sprintf("%s %s", tb.Decorator.StatusToDot(r.Status), tb.Decorator.Bold(r.Status)),
 				assessments,

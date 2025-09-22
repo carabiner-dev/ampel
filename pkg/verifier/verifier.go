@@ -16,6 +16,7 @@ import (
 	papi "github.com/carabiner-dev/policy/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/nozzle/throttler"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
@@ -143,6 +144,11 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 		return nil, fmt.Errorf("assembling policy context: %w", err)
 	}
 
+	structVals, err := structpb.NewStruct(evalContext.ContextValues)
+	if err != nil {
+		return nil, fmt.Errorf("structuring context data: %w", err)
+	}
+
 	// Process policySet chain
 	subjects, chain, policyFail, err := ampel.impl.ProcessPolicySetChainedSubjects(
 		ctx, &opts, evaluators, ampel.Collector, policySet, evalContextValues, subject, atts,
@@ -154,6 +160,47 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 			return failPolicySetWithError(resultSet, err), nil
 		}
 		return nil, fmt.Errorf("processing chained subject: %w", err)
+	}
+
+	// If the chain returned not subjects, then we return an error unless
+	// the verifier was explicitly set to allow empty chains.
+	if len(policySet.GetChain()) > 0 && len(subjects) == 0 {
+		if !opts.AllowEmptySetChains {
+			return nil, fmt.Errorf("unable to complete evidence chain, no subject returned from selectors")
+		}
+		resultSet.Error = &papi.Error{
+			Message:  "unable to complete evidence chain",
+			Guidance: "PolicySet selectors did not return any subjects when evaluated",
+		}
+		resultSet.Status = papi.StatusPASS
+		resultSet.DateEnd = timestamppb.Now()
+		for _, pcy := range policySet.Policies {
+			resultSet.Results = append(resultSet.Results, &papi.Result{
+				Status:    papi.StatusSOFTFAIL,
+				DateStart: resultSet.GetDateStart(),
+				DateEnd:   timestamppb.Now(),
+				Policy: &papi.PolicyRef{
+					Id:       pcy.GetId(),
+					Version:  pcy.GetMeta().GetVersion(),
+					Location: pcy.GetSource().GetLocation(),
+				},
+				EvalResults: []*papi.EvalResult{
+					{
+						Status: papi.StatusSOFTFAIL,
+						Date:   timestamppb.Now(),
+						Error: &papi.Error{
+							Message:  "Policy not evaluated, empty chain",
+							Guidance: "The policySet selectors did not return subject to verify",
+						},
+					},
+				},
+				Meta:    pcy.GetMeta(),
+				Context: structVals,
+				Chain:   chain,
+			})
+		}
+
+		return resultSet, nil
 	}
 
 	evalContext.ChainedSubjects = chain
