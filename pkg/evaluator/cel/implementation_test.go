@@ -11,6 +11,7 @@ import (
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/stretchr/testify/require"
 
+	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
 
@@ -53,7 +54,7 @@ func TestEvaluateChainedSelector(t *testing.T) {
 			ast, err := ev.CompileCode(env, tc.code)
 			require.NoError(t, err)
 
-			vars, err := ev.BuildSelectorVariables(&options.EvaluatorOptions{}, nil, nil, nil, nil, pred)
+			vars, err := ev.BuildSelectorVariables(&options.EvaluatorOptions{}, nil, &evalcontext.EvaluationContext{}, nil, nil, nil, pred)
 			require.NoError(t, err)
 
 			res, err := ev.EvaluateChainedSelector(env, ast, vars)

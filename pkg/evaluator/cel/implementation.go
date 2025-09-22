@@ -37,7 +37,7 @@ type CelEvaluatorImplementation interface {
 	EvaluateOutputs(*cel.Env, map[string]*cel.Ast, *map[string]any) (map[string]any, error)
 	Evaluate(*cel.Env, *cel.Ast, *map[string]any) (*papi.EvalResult, error)
 	Assert(*papi.ResultSet) bool
-	BuildSelectorVariables(*options.EvaluatorOptions, map[string]Plugin, *papi.Policy, attestation.Subject, *papi.ChainedPredicate, attestation.Predicate) (*map[string]any, error)
+	BuildSelectorVariables(*options.EvaluatorOptions, map[string]Plugin, *evalcontext.EvaluationContext, *papi.Policy, attestation.Subject, *papi.ChainedPredicate, attestation.Predicate) (*map[string]any, error)
 	EvaluateChainedSelector(*cel.Env, *cel.Ast, *map[string]any) ([]attestation.Subject, error)
 }
 
@@ -478,8 +478,10 @@ func (dce *defaulCelEvaluator) Assert(*papi.ResultSet) bool {
 //
 //nolint:gocritic // This passes around a large struct in vars
 func (dce *defaulCelEvaluator) BuildSelectorVariables(
-	opts *options.EvaluatorOptions, plugins map[string]Plugin, policy *papi.Policy,
-	subject attestation.Subject, _ *papi.ChainedPredicate, predicate attestation.Predicate,
+	opts *options.EvaluatorOptions, plugins map[string]Plugin,
+	evalContext *evalcontext.EvaluationContext,
+	policy *papi.Policy, subject attestation.Subject, _ *papi.ChainedPredicate,
+	predicate attestation.Predicate,
 ) (*map[string]any, error) {
 	ret := map[string]any{}
 
@@ -503,16 +505,11 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 	ret[VarNameSubject] = extractSubjectData(subject)
 
 	// // Add the context to the runtime environment
-	// contextData := map[string]any{}
-	// if opts.Context != nil {
-	// 	contextData = opts.Context
-	// }
-
-	// s, err := structpb.NewStruct(contextData)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("structuring context data: %w", err)
-	// }
-	// ret[VarNameContext] = s
+	s, err := structpb.NewStruct(evalContext.ContextValues)
+	if err != nil {
+		return nil, fmt.Errorf("structuring context data: %w", err)
+	}
+	ret[VarNameContext] = s
 
 	logrus.Debugf("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
 	for _, p := range plugins {

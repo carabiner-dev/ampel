@@ -130,11 +130,6 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	// If the policy set has an eval context definition, then parse it and add
 	// it to the the Go context payload
 	if policySet.GetCommon() != nil && policySet.GetCommon().GetContext() != nil {
-		var ok bool
-		evalContext, ok = ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
-		if !ok {
-			evalContext = evalcontext.EvaluationContext{}
-		}
 		evalContext.Context = policySet.GetCommon().GetContext()
 	}
 
