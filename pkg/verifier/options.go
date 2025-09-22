@@ -65,6 +65,10 @@ type VerificationOptions struct {
 	// EnforceExpiration forces evaluations to fail when the policy or policy set
 	// expiration date has passed. If no expiration date is set, this setting is ignored.
 	EnforceExpiration bool
+
+	// AllowEmptySetChains prevents the policy from failing if the chain selectors
+	// don't return any mutated subjects.
+	AllowEmptySetChains bool
 }
 
 var DefaultVerificationOptions = VerificationOptions{
@@ -85,6 +89,10 @@ var DefaultVerificationOptions = VerificationOptions{
 
 	// EnforceExpiration is on to check expiration dates by default
 	EnforceExpiration: true,
+
+	// AllowEmptySetChains is set to true. This means that if no subjects
+	// result from the selectors, the set passes with the policies softfailed.
+	AllowEmptySetChains: true,
 }
 
 func NewVerificationOptions() VerificationOptions {

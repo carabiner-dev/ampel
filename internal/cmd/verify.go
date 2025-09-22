@@ -138,6 +138,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().Int8Var(
 		&o.ParallelWorkers, "workers", verifier.DefaultVerificationOptions.ParallelWorkers, "number of evaluation threads to run in parallel",
 	)
+
+	cmd.PersistentFlags().BoolVar(
+		&o.AllowEmptySetChains, "allow-empty-set-chain", verifier.DefaultVerificationOptions.AllowEmptySetChains, "don't fail PolicySets when chains are empty",
+	)
 }
 
 func parseHash(estring string) (algo, value string, err error) {
