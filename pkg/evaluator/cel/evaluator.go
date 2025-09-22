@@ -154,7 +154,7 @@ func (e *Evaluator) ExecChainedSelector(
 
 	// Build the variable values for the runtime
 	vars, err := e.impl.BuildSelectorVariables(
-		opts, e.Plugins, evalContext.Policy, evalContext.Subject, chained, predicate,
+		opts, e.Plugins, &evalContext, evalContext.Policy, evalContext.Subject, chained, predicate,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("building selector variable set: %w", err)
