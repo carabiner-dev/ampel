@@ -358,7 +358,7 @@ using a collector.
 			}
 
 			// Build the context providers as specified in the options
-			if err := buildContextProviders(&opts); err != nil {
+			if err := opts.buildContextProviders(); err != nil {
 				return fmt.Errorf("building context providers: %w", err)
 			}
 
@@ -414,7 +414,9 @@ using a collector.
 	parentCmd.AddCommand(evalCmd)
 }
 
-func buildContextProviders(opts *verifyOptions) error {
+// buildContextProviders initializes the context providers defined in the
+// options set.
+func (opts *verifyOptions) buildContextProviders() (err error) {
 	// Pass the -x flags as a new StringMapList list provider
 	if len(opts.ContextStringVals) > 0 {
 		l := acontext.StringMapList(opts.ContextStringVals)
@@ -423,9 +425,19 @@ func buildContextProviders(opts *verifyOptions) error {
 
 	// Read the evaluation context data from JSON:
 	if opts.ContextJSON != "" {
-		provider, err := acontext.NewProviderFromJSONFile(opts.ContextJSON)
-		if err != nil {
-			return fmt.Errorf("processing JSON context: %w", err)
+		var provider acontext.Provider
+		// If the JSON file starts with an @, then we read from a file (curl style)
+		path, ok := strings.CutPrefix(opts.ContextJSON, "@")
+		if ok {
+			provider, err = acontext.NewProviderFromJSONFile(path)
+			if err != nil {
+				return fmt.Errorf("processing JSON context file: %w", err)
+			}
+		} else {
+			provider, err = acontext.NewProviderFromJSON(strings.NewReader(opts.ContextJSON))
+			if err != nil {
+				return fmt.Errorf("processing JSON context: %w", err)
+			}
 		}
 		opts.WithContextProvider(provider)
 	}
