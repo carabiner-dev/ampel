@@ -397,6 +397,17 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 		}
 	}
 
+	// The keys to use are the ones in the options...
+	keys := opts.Keys
+	// Plus any defined in the policy
+	for _, id := range policyIdentities {
+		k, err := id.PublicKey()
+		if err != nil {
+			return false, nil, nil, fmt.Errorf("parsing key")
+		}
+		keys = append(keys, k)
+	}
+
 	validIdentities := true
 
 	// First, verify the signatures on the envelopes
@@ -405,7 +416,7 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 		// to make sure. This should not be an issue as the verification data
 		// should be already cached.
 
-		if err := e.Verify(opts.Keys); err != nil {
+		if err := e.Verify(keys); err != nil {
 			errs[i] = fmt.Errorf("verifying attestation signature: %w", err)
 			validIdentities = false
 			continue
