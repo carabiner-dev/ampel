@@ -79,7 +79,12 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 
 	// This is the resultSet to be returned
 	resultSet := &papi.ResultSet{
-		Id:        policySet.GetId(),
+		PolicySet: &papi.PolicyRef{
+			Id:      policySet.GetId(),
+			Version: policySet.GetMeta().GetVersion(),
+			//Identity: &papi.Identity{},
+			//Location: &gointoto.ResourceDescriptor{},
+		},
 		Meta:      policySet.GetMeta(),
 		DateStart: timestamppb.Now(),
 		Subject: &gointoto.ResourceDescriptor{
