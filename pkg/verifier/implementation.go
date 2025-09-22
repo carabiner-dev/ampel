@@ -575,7 +575,12 @@ func (di *defaultIplementation) evaluateChain(
 			return nil, nil, false, fmt.Errorf("evaluating chained subject code: %w", err)
 		}
 
+		// If we've evaluated the chain until the end, we return the empty list
+		// and don't err. Throwing an error is up to the calling function.
 		if len(subjectsList) == 0 {
+			if i == len(chainLinks)-1 {
+				return subjectsList, chain, false, nil
+			}
 			return nil, nil, false, fmt.Errorf("failed to obtain a subject to fullfil predicate chain")
 		}
 
@@ -1061,10 +1066,6 @@ func (di *defaultIplementation) ProcessPolicySetChainedSubjects(
 	)
 	if err != nil {
 		return nil, nil, false, err
-	}
-
-	if len(subjects) == 0 {
-		return nil, nil, false, fmt.Errorf("unable to complete evidence chain, no subject returned")
 	}
 
 	return subjects, chain, fail, nil
