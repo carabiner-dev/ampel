@@ -97,7 +97,7 @@ func (tb *TableBuilder) ResultSetTable(set *papi.ResultSet) (table.Writer, error
 	banner := tb.Decorator.AmpelBanner("Evaluation Results")
 	t.AppendRow(table.Row{banner, banner, banner, banner}, rowConfigAutoMerge)
 	t.AppendSeparator()
-	t.AppendRow(table.Row{tb.Decorator.Bold("PolicySet"), set.Id, tb.Decorator.Bold("Date"), set.DateEnd.AsTime().Local()})
+	t.AppendRow(table.Row{tb.Decorator.Bold("PolicySet"), set.GetPolicySet().GetId(), tb.Decorator.Bold("Date"), set.DateEnd.AsTime().Local()})
 	t.AppendSeparator()
 	if s := set.GetSubject(); s != nil {
 		st := ""

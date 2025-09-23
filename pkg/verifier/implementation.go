@@ -49,7 +49,7 @@ type AmpelVerifier interface {
 	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *papi.Policy, attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
 
 	// CheckIdentities verifies that attestations are signed by the policy identities
-	CheckIdentities(*VerificationOptions, []*papi.Identity, []attestation.Envelope) (bool, [][]*papi.Identity, []error, error)
+	CheckIdentities(context.Context, *VerificationOptions, []*papi.Identity, []attestation.Envelope) (bool, [][]*papi.Identity, []error, error)
 
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope, [][]*papi.Identity) ([]attestation.Predicate, error)
 	AssertResult(*papi.Policy, *papi.Result) error
@@ -359,13 +359,20 @@ func (di *defaultIplementation) Transform(
 
 // CheckIdentities checks that the ingested attestations are signed by one of the
 // identities defined in the policy.
-func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, policyIdentities []*papi.Identity, envelopes []attestation.Envelope) (bool, [][]*papi.Identity, []error, error) {
+func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *VerificationOptions, policyIdentities []*papi.Identity, envelopes []attestation.Envelope) (bool, [][]*papi.Identity, []error, error) {
 	// verification errors for the user
 	errs := make([]error, len(envelopes))
 	validSigners := make([][]*papi.Identity, len(envelopes))
 
 	// allIds are the allowed ids (from the policy + any from options)
 	allIds := []*papi.Identity{}
+
+	// Extract any identities received in the context
+	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+	if ok {
+		allIds = evalContext.Identities
+	}
+
 	allIds = append(allIds, policyIdentities...)
 
 	if len(policyIdentities) > 0 && len(opts.IdentityStrings) > 0 {
@@ -397,6 +404,19 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 		}
 	}
 
+	// The keys to use are the ones in the options...
+	keys := opts.Keys
+	// Plus any defined in the policy
+	for _, id := range policyIdentities {
+		k, err := id.PublicKey()
+		if err != nil {
+			return false, nil, nil, fmt.Errorf("parsing identity key: %w", err)
+		}
+		if k != nil {
+			keys = append(keys, k)
+		}
+	}
+
 	validIdentities := true
 
 	// First, verify the signatures on the envelopes
@@ -405,7 +425,7 @@ func (di *defaultIplementation) CheckIdentities(opts *VerificationOptions, polic
 		// to make sure. This should not be an issue as the verification data
 		// should be already cached.
 
-		if err := e.Verify(opts.Keys); err != nil {
+		if err := e.Verify(keys); err != nil {
 			errs[i] = fmt.Errorf("verifying attestation signature: %w", err)
 			validIdentities = false
 			continue
@@ -523,9 +543,9 @@ func (di *defaultIplementation) evaluateChain(
 		// defined in the policy if the link does not have its own. Probably this
 		// should have a better default.
 		if link.GetPredicate().GetIdentities() != nil {
-			pass, ids, _, err = di.CheckIdentities(opts, link.GetPredicate().GetIdentities(), lattestation[0:0])
+			pass, ids, _, err = di.CheckIdentities(ctx, opts, link.GetPredicate().GetIdentities(), lattestation[0:0])
 		} else {
-			pass, ids, _, err = di.CheckIdentities(opts, globalIdentities, lattestation[0:0])
+			pass, ids, _, err = di.CheckIdentities(ctx, opts, globalIdentities, lattestation[0:0])
 		}
 		if err != nil {
 			return nil, nil, false, fmt.Errorf("error checking attestation identity: %w", err)
