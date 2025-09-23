@@ -878,11 +878,19 @@ func (di *defaultIplementation) VerifySubject(
 
 		// This is the data that gets exposed to error and assessment templates
 		templateData := struct {
+			Status  string
 			Context map[string]any
 			Outputs map[string]any
+			Subject *gointoto.ResourceDescriptor
 		}{
+			Status:  evalres.Status,
 			Context: evalContextValues,
 			Outputs: evalres.GetOutput().AsMap(),
+			Subject: &gointoto.ResourceDescriptor{
+				Name:   subject.GetName(),
+				Uri:    subject.GetUri(),
+				Digest: subject.GetDigest(),
+			},
 		}
 
 		// Carry over the error from the policy if the runtime didn't add one
