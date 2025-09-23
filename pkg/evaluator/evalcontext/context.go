@@ -20,15 +20,22 @@ type (
 	EvaluationContext    struct {
 		// Subject under evaluation
 		Subject attestation.Subject
+
 		// Policy in effect
 		Policy *papi.Policy
+
 		// Context definitions as distilled through inheritance
 		Context map[string]*papi.ContextVal
+
 		// Context values from evaluation invocation
 		ContextValues map[string]any
+
 		// ChainedSubjects is a precomputed chain that informs the
 		// policy evaluator how the subject was obtained, typically
 		// by the policy set.
 		ChainedSubjects []*papi.ChainedSubject
+
+		// Recognized identities for attestation validation.
+		Identities []*papi.Identity
 	}
 )

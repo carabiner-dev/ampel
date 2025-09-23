@@ -77,13 +77,21 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	// attestations set.
 	opts := *originalOptions
 
+	// Now that we have a clone of the options, parse and add the
+	// policySet's keys to the options set to reuse in the policies
+	keys, err := policySet.PublicKeys()
+	if err != nil {
+		return nil, fmt.Errorf("reading PolicySet keys: %w", err)
+	}
+	opts.Keys = append(opts.Keys, keys...)
+
 	// This is the resultSet to be returned
 	resultSet := &papi.ResultSet{
 		PolicySet: &papi.PolicyRef{
 			Id:      policySet.GetId(),
 			Version: policySet.GetMeta().GetVersion(),
-			//Identity: &papi.Identity{},
-			//Location: &gointoto.ResourceDescriptor{},
+			// Identity: &papi.Identity{},
+			// Location: &gointoto.ResourceDescriptor{},
 		},
 		Meta:      policySet.GetMeta(),
 		DateStart: timestamppb.Now(),
@@ -138,6 +146,9 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	if policySet.GetCommon() != nil && policySet.GetCommon().GetContext() != nil {
 		evalContext.Context = policySet.GetCommon().GetContext()
 	}
+
+	// Pass the policySet identities to the individual policy evaluations
+	evalContext.Identities = policySet.GetCommon().GetIdentities()
 
 	// Build the context to pass to the policy evaluations
 	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext)
@@ -317,7 +328,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	// Check identities to see if the attestations can be admitted
 	// TODO(puerco)
 	// Option: Unsigned statements cause a:fail or b:ignore
-	allow, ids, idErrors, err := ampel.impl.CheckIdentities(opts, policy.Identities, atts)
+	allow, ids, idErrors, err := ampel.impl.CheckIdentities(ctx, opts, policy.GetIdentities(), atts)
 	if err != nil {
 		return nil, fmt.Errorf("error validating signer identity: %w", err)
 	}
