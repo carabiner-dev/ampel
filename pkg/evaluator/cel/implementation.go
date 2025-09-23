@@ -133,7 +133,11 @@ func (dce *defaulCelEvaluator) BuildVariables(
 	}
 	ret[VarNameContext] = s
 
-	ret[VarNameSubject] = extractSubjectData(evalContext.Subject)
+	subdata, err := extractSubjectData(evalContext.Subject)
+	if err != nil {
+		return nil, fmt.Errorf("loading subject data to runtime: %w", err)
+	}
+	ret[VarNameSubject] = subdata
 
 	logrus.Debugf("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
 	for _, p := range plugins {
@@ -142,21 +146,22 @@ func (dce *defaulCelEvaluator) BuildVariables(
 	return &ret, nil
 }
 
-func extractSubjectData(subject attestation.Subject) *structpb.Struct {
+func extractSubjectData(subject attestation.Subject) (*structpb.Struct, error) {
 	// Add the subject data to the runtime variables
 	subjectData := map[string]any{
 		"name":              "",
 		"uri":               "",
 		"download_location": "",
-		"digest":            map[string]string{},
+		"digest":            map[string]any{},
 	}
 
 	// If the context has the subject add it to the environment
 	if subject != nil {
 		subjectData["name"] = subject.GetName()
 		subjectData["uri"] = subject.GetUri()
-		if subject.GetDigest() != nil {
-			subjectData["digest"] = subject.GetDigest()
+
+		for algo, val := range subject.GetDigest() {
+			subjectData["digest"].(map[string]any)[algo] = val //nolint:errcheck,forcetypeassert
 		}
 	}
 
@@ -166,11 +171,10 @@ func extractSubjectData(subject attestation.Subject) *structpb.Struct {
 
 	sd, err := structpb.NewStruct(subjectData)
 	if err != nil {
-		logrus.Debugf("Error structuring context data: %v", err)
-		return nil
+		return nil, fmt.Errorf("structuring subject data: %w", err)
 	}
 
-	return sd
+	return sd, nil
 }
 
 // EnsurePredicates ensures variable processing produced at least one predicate
@@ -502,7 +506,11 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 
 	ret[VarNamePredicates] = preds
 	ret[VarNamePredicate] = val
-	ret[VarNameSubject] = extractSubjectData(subject)
+	subdata, err := extractSubjectData(subject)
+	if err != nil {
+		return nil, fmt.Errorf("loading subject data onto selector evaluation runtime: %w", err)
+	}
+	ret[VarNameSubject] = subdata
 
 	// // Add the context to the runtime environment
 	s, err := structpb.NewStruct(evalContext.ContextValues)
