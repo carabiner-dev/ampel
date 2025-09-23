@@ -726,8 +726,8 @@ github.com/bradleyjkemp/cupaloy/v2 v2.8.0 h1:any4BmKE+jGIaMpnU8YgH/I2LPiLBufr6oM
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0/go.mod h1:bm7JXdkRd4BHJk9HpwqAI8BoAY1lps46Enkdqw6aRX0=
 github.com/carabiner-dev/attestation v0.2.0 h1:vEqAIapcHjIoEQad9GrKtEx2czeu7t4cun+1bCEtN1o=
 github.com/carabiner-dev/attestation v0.2.0/go.mod h1:dLPe3DPL/0YpKJpNDCQJZdtkZIuWTAH1G0N8V5LJ41c=
-github.com/carabiner-dev/collector v0.2.2-0.20250922135348-f5afd3a16faf h1:pHMeFIlTYdsecXqvJpZxmSCQklcgrr1H8rtVdPYV1RM=
-github.com/carabiner-dev/collector v0.2.2-0.20250922135348-f5afd3a16faf/go.mod h1:xwqbCXoLima6696/S+9W/IFJq7LP2HRzfNYP8PvqA1Y=
+github.com/carabiner-dev/collector v0.2.2-0.20250923010030-b23d00e31c53 h1:D32LAb5btMZNidUcvX0iYgJT3KRw7DI24d2Qh7sJkyI=
+github.com/carabiner-dev/collector v0.2.2-0.20250923010030-b23d00e31c53/go.mod h1:hSlM9Q1MQjAyJRjmfIJRjMWzClZeAlRPF2fYtvuIxys=
 github.com/carabiner-dev/command v0.1.1 h1:Vl68ekV2YYtrLukVpTX20YC9aDS37k2EYKYUZbRsVP4=
 github.com/carabiner-dev/command v0.1.1/go.mod h1:svMEE2UmWE6ITNQ1HeFS/MFh/LfhFVDSWsRwRmQzWQ8=
 github.com/carabiner-dev/ghrfs v0.3.2 h1:SBxmC7H2efJzebzrpZNsXB/03eZTeBORguXvKftpif4=
@@ -742,8 +742,8 @@ github.com/carabiner-dev/openeox v0.0.0-20250606202227-fd40810cda47 h1:UTr5vQ7nS
 github.com/carabiner-dev/openeox v0.0.0-20250606202227-fd40810cda47/go.mod h1:40KVT1ee6L8VoWT44RvAQ0AtG91MFr5/zBzTmNiXQWY=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 h1:BJ9+OCNezZGkU8SrGC3oB7Tj+J0JsonwfZztcgUav6c=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92/go.mod h1:o7jXwi/fFZ9mQlvVlog0kcvyEkwQT3eWmVQmrorBGpE=
-github.com/carabiner-dev/policy v0.2.1-0.20250919015927-5cc363d0a0bc h1:dUJ3cgjxifBFGzua3+HwHoE9rFsDUoKydD8Ymm7Ah5U=
-github.com/carabiner-dev/policy v0.2.1-0.20250919015927-5cc363d0a0bc/go.mod h1:87aK4EjCvxcF/aJ+EwNyRINCsbtCXKtBG7c4dBuf3Y4=
+github.com/carabiner-dev/policy v0.2.1-0.20250923010748-bd6ba141f214 h1:S+OXyLM8guS19QWf0RuZ2GtYNstxMbERqhljfZulI7Y=
+github.com/carabiner-dev/policy v0.2.1-0.20250923010748-bd6ba141f214/go.mod h1:87aK4EjCvxcF/aJ+EwNyRINCsbtCXKtBG7c4dBuf3Y4=
 github.com/carabiner-dev/signer v0.2.1 h1:qNRzDFnG+uLWHPTIC36hrh572bs66hYhBOwkGLcsq1I=
 github.com/carabiner-dev/signer v0.2.1/go.mod h1:VvN+m//2sBUQuZUnVie0WpIy+D9+v8+eJDoMG8nugA8=
 github.com/carabiner-dev/vcslocator v0.3.2 h1:/rfhELG1mvqFq0xi8LQSkfpAVoQDCGlWoL6J5tX9Inw=
