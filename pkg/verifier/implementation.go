@@ -835,21 +835,21 @@ func (di *defaultIplementation) VerifySubject(
 		policyPredMap[attestation.PredicateType(tp)] = struct{}{}
 	}
 
+	// Populate the context data
+	ctx = context.WithValue(
+		ctx, evalcontext.EvaluationContextKey{},
+		evalcontext.EvaluationContext{
+			Subject:       subject,
+			Policy:        p,
+			ContextValues: evalContextValues,
+		},
+	)
+
 	for i, tenet := range p.Tenets {
 		key := class.Class(tenet.Runtime)
 		if key == "" {
 			key = class.Class("default")
 		}
-
-		// Populate the context data
-		ctx := context.WithValue(
-			ctx, evalcontext.EvaluationContextKey{},
-			evalcontext.EvaluationContext{
-				Subject:       subject,
-				Policy:        p,
-				ContextValues: evalContextValues,
-			},
-		)
 
 		// Filter the predicates to those requested by the tenet or the policy:
 		npredicates := []attestation.Predicate{}
@@ -878,7 +878,7 @@ func (di *defaultIplementation) VerifySubject(
 				Date:       timestamppb.Now(),
 				Statements: []*papi.StatementRef{},
 				Error: &papi.Error{
-					Message:  "no attestations found to verify subject",
+					Message:  ErrMissingAttestations.Error(),
 					Guidance: fmt.Sprintf("Missing attestations to evaluate the policy on %s", subjectToString(subject)),
 				},
 			}
@@ -895,6 +895,7 @@ func (di *defaultIplementation) VerifySubject(
 		logrus.WithField("tenet", i).Debugf("Result: %+v", evalres)
 
 		// TODO(puerco): Ideally, we should not reach here with unparseable templates but oh well..
+		// See https://github.com/carabiner-dev/policy/issues/4
 
 		// This is the data that gets exposed to error and assessment templates
 		templateData := struct {
