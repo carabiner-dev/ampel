@@ -5,12 +5,15 @@ package verifier
 
 import (
 	"context"
+	"errors"
 
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector"
 
 	"github.com/carabiner-dev/ampel/pkg/oscal"
 )
+
+var ErrMissingAttestations = errors.New("required attestations missing to verify subject")
 
 type AmpelStatusChecker interface {
 	GatherResults(context.Context, *StatusOptions, attestation.Subject) ([]attestation.Envelope, error)

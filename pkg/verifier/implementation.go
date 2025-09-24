@@ -828,37 +828,37 @@ func (di *defaultIplementation) VerifySubject(
 	evalOpts := &options.EvaluatorOptions{}
 
 	errs := []error{}
+
+	// Start building the required policy types extracting those at the policy level
+	policyPredMap := map[attestation.PredicateType]struct{}{}
+	for _, tp := range p.GetPredicates().GetTypes() {
+		policyPredMap[attestation.PredicateType(tp)] = struct{}{}
+	}
+
+	// Populate the context data
+	ctx = context.WithValue(
+		ctx, evalcontext.EvaluationContextKey{},
+		evalcontext.EvaluationContext{
+			Subject:       subject,
+			Policy:        p,
+			ContextValues: evalContextValues,
+		},
+	)
+
 	for i, tenet := range p.Tenets {
 		key := class.Class(tenet.Runtime)
 		if key == "" {
 			key = class.Class("default")
 		}
 
-		// Populate the context data
-		ctx := context.WithValue(
-			ctx, evalcontext.EvaluationContextKey{},
-			evalcontext.EvaluationContext{
-				Subject:       subject,
-				Policy:        p,
-				ContextValues: evalContextValues,
-			},
-		)
-
 		// Filter the predicates to those requested by the tenet or the policy:
 		npredicates := []attestation.Predicate{}
 		idx := map[attestation.PredicateType]struct{}{}
+		maps.Insert(idx, maps.All(policyPredMap))
 
-		// If the tenet has a set of predicate types defined, it supersedes
-		// those defined at the policy level:
-		if len(tenet.GetPredicates().GetTypes()) > 0 {
-			for _, tp := range tenet.GetPredicates().GetTypes() {
-				idx[attestation.PredicateType(tp)] = struct{}{}
-			}
-		} else {
-			// Tenet has no predicate types defined, filter using the policy types
-			for _, tp := range p.GetPredicates().GetTypes() {
-				idx[attestation.PredicateType(tp)] = struct{}{}
-			}
+		// Add any predicate types defined at the tenet level
+		for _, tp := range tenet.GetPredicates().GetTypes() {
+			idx[attestation.PredicateType(tp)] = struct{}{}
 		}
 
 		for _, pred := range predicates {
@@ -867,14 +867,35 @@ func (di *defaultIplementation) VerifySubject(
 			}
 		}
 
-		evalres, err := evaluators[key].ExecTenet(ctx, evalOpts, tenet, npredicates)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("executing tenet #%d: %w", i, err))
-			continue
+		skipEval := false
+		var evalres *papi.EvalResult
+
+		// If the tenet requires predicates but we don't have any, then
+		// error here and skip the eval altogether.
+		if len(idx) > 0 && len(npredicates) == 0 {
+			evalres = &papi.EvalResult{
+				Status:     papi.StatusFAIL,
+				Date:       timestamppb.Now(),
+				Statements: []*papi.StatementRef{},
+				Error: &papi.Error{
+					Message:  ErrMissingAttestations.Error(),
+					Guidance: fmt.Sprintf("Missing attestations to evaluate the policy on %s", subjectToString(subject)),
+				},
+			}
+			skipEval = true
+		}
+
+		if !skipEval {
+			evalres, err = evaluators[key].ExecTenet(ctx, evalOpts, tenet, npredicates)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("executing tenet #%d: %w", i, err))
+				continue
+			}
 		}
 		logrus.WithField("tenet", i).Debugf("Result: %+v", evalres)
 
-		// Ideally, we should not reach here with unparseabke templates but oh well..
+		// TODO(puerco): Ideally, we should not reach here with unparseable templates but oh well..
+		// See https://github.com/carabiner-dev/policy/issues/4
 
 		// This is the data that gets exposed to error and assessment templates
 		templateData := struct {
@@ -883,7 +904,7 @@ func (di *defaultIplementation) VerifySubject(
 			Outputs map[string]any
 			Subject *gointoto.ResourceDescriptor
 		}{
-			Status:  evalres.Status,
+			Status:  evalres.GetStatus(),
 			Context: evalContextValues,
 			Outputs: evalres.GetOutput().AsMap(),
 			Subject: &gointoto.ResourceDescriptor{
@@ -894,7 +915,7 @@ func (di *defaultIplementation) VerifySubject(
 		}
 
 		// Carry over the error from the policy if the runtime didn't add one
-		if evalres.Status != papi.StatusPASS && evalres.Error == nil {
+		if evalres.GetStatus() != papi.StatusPASS && evalres.GetError() == nil {
 			var b, b2 bytes.Buffer
 
 			tmplMsg, err := template.New("error_message").Parse(tenet.Error.GetMessage())
@@ -920,7 +941,7 @@ func (di *defaultIplementation) VerifySubject(
 		}
 
 		// Carry over the assessment from the policy if not set by the runtime
-		if evalres.Status == papi.StatusPASS && evalres.Assessment == nil {
+		if evalres.GetStatus() == papi.StatusPASS && evalres.Assessment == nil {
 			tmpl, err := template.New("assessment").Parse(tenet.Assessment.GetMessage())
 			if err != nil {
 				return nil, fmt.Errorf("parsing tenet assessment: %w", err)
