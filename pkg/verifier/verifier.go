@@ -321,7 +321,10 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	if len(atts) == 0 {
 		return failPolicyWithError(
 			policy, chain, subject,
-			errors.New("no attestations found to evaluate policy"),
+			PolicyError{
+				error:    errors.New("no attestations found to verify subject"),
+				Guidance: fmt.Sprintf("Missing attestations to evaluate the policy on %s", subjectToString(subject)),
+			},
 		), nil
 	}
 
@@ -372,6 +375,29 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 
 	// Generate outputs
 	return result, nil
+}
+
+// subjectToString builds a string to make a subject more human-readable
+func subjectToString(subject attestation.Subject) string {
+	vals := []string{}
+	for algo, val := range subject.GetDigest() {
+		if len(val) < 7 {
+			continue
+		}
+		vals = append(vals, fmt.Sprintf("%s:%s", algo, val[0:6]))
+	}
+	var str string
+
+	if subject.GetName() != "" {
+		str = subject.GetName()
+	} else if subject.GetUri() != "" {
+		str = subject.GetUri()
+	}
+
+	if len(vals) > 0 {
+		str = str + fmt.Sprintf(" %+v", vals)
+	}
+	return str
 }
 
 // AttestResult writes an attestation capturing an evaluation result
