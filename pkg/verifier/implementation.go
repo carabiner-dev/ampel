@@ -828,6 +828,13 @@ func (di *defaultIplementation) VerifySubject(
 	evalOpts := &options.EvaluatorOptions{}
 
 	errs := []error{}
+
+	// Start building the required policy types extracting those at the policy level
+	policyPredMap := map[attestation.PredicateType]struct{}{}
+	for _, tp := range p.GetPredicates().GetTypes() {
+		policyPredMap[attestation.PredicateType(tp)] = struct{}{}
+	}
+
 	for i, tenet := range p.Tenets {
 		key := class.Class(tenet.Runtime)
 		if key == "" {
@@ -847,18 +854,11 @@ func (di *defaultIplementation) VerifySubject(
 		// Filter the predicates to those requested by the tenet or the policy:
 		npredicates := []attestation.Predicate{}
 		idx := map[attestation.PredicateType]struct{}{}
+		maps.Insert(idx, maps.All(policyPredMap))
 
-		// If the tenet has a set of predicate types defined, it supersedes
-		// those defined at the policy level:
-		if len(tenet.GetPredicates().GetTypes()) > 0 {
-			for _, tp := range tenet.GetPredicates().GetTypes() {
-				idx[attestation.PredicateType(tp)] = struct{}{}
-			}
-		} else {
-			// Tenet has no predicate types defined, filter using the policy types
-			for _, tp := range p.GetPredicates().GetTypes() {
-				idx[attestation.PredicateType(tp)] = struct{}{}
-			}
+		// Add any predicate types defined at the tenet level
+		for _, tp := range tenet.GetPredicates().GetTypes() {
+			idx[attestation.PredicateType(tp)] = struct{}{}
 		}
 
 		for _, pred := range predicates {
@@ -894,7 +894,7 @@ func (di *defaultIplementation) VerifySubject(
 		}
 		logrus.WithField("tenet", i).Debugf("Result: %+v", evalres)
 
-		// Ideally, we should not reach here with unparseable templates but oh well..
+		// TODO(puerco): Ideally, we should not reach here with unparseable templates but oh well..
 
 		// This is the data that gets exposed to error and assessment templates
 		templateData := struct {
