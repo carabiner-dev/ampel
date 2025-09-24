@@ -316,18 +316,6 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("gathering evidence: %w", err)
 	}
 
-	// Here, the policy may not require attestations (noop) but it's a corner
-	// case, we'll fix it later.
-	if len(atts) == 0 {
-		return failPolicyWithError(
-			policy, chain, subject,
-			PolicyError{
-				error:    errors.New("no attestations found to verify subject"),
-				Guidance: fmt.Sprintf("Missing attestations to evaluate the policy on %s", subjectToString(subject)),
-			},
-		), nil
-	}
-
 	// Check identities to see if the attestations can be admitted
 	// TODO(puerco)
 	// Option: Unsigned statements cause a:fail or b:ignore
@@ -389,13 +377,13 @@ func subjectToString(subject attestation.Subject) string {
 	var str string
 
 	if subject.GetName() != "" {
-		str = subject.GetName()
+		str = subject.GetName() + " "
 	} else if subject.GetUri() != "" {
-		str = subject.GetUri()
+		str = subject.GetUri() + " "
 	}
 
 	if len(vals) > 0 {
-		str = str + fmt.Sprintf(" %+v", vals)
+		str += fmt.Sprintf("%+v", vals)
 	}
 	return str
 }

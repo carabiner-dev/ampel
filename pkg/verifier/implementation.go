@@ -867,14 +867,34 @@ func (di *defaultIplementation) VerifySubject(
 			}
 		}
 
-		evalres, err := evaluators[key].ExecTenet(ctx, evalOpts, tenet, npredicates)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("executing tenet #%d: %w", i, err))
-			continue
+		skipEval := false
+		var evalres *papi.EvalResult
+
+		// If the tenet requires predicates but we don't have any, then
+		// error here and skip the eval altogether.
+		if len(idx) > 0 && len(npredicates) == 0 {
+			evalres = &papi.EvalResult{
+				Status:     papi.StatusFAIL,
+				Date:       timestamppb.Now(),
+				Statements: []*papi.StatementRef{},
+				Error: &papi.Error{
+					Message:  "no attestations found to verify subject",
+					Guidance: fmt.Sprintf("Missing attestations to evaluate the policy on %s", subjectToString(subject)),
+				},
+			}
+			skipEval = true
+		}
+
+		if !skipEval {
+			evalres, err = evaluators[key].ExecTenet(ctx, evalOpts, tenet, npredicates)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("executing tenet #%d: %w", i, err))
+				continue
+			}
 		}
 		logrus.WithField("tenet", i).Debugf("Result: %+v", evalres)
 
-		// Ideally, we should not reach here with unparseabke templates but oh well..
+		// Ideally, we should not reach here with unparseable templates but oh well..
 
 		// This is the data that gets exposed to error and assessment templates
 		templateData := struct {
@@ -883,7 +903,7 @@ func (di *defaultIplementation) VerifySubject(
 			Outputs map[string]any
 			Subject *gointoto.ResourceDescriptor
 		}{
-			Status:  evalres.Status,
+			Status:  evalres.GetStatus(),
 			Context: evalContextValues,
 			Outputs: evalres.GetOutput().AsMap(),
 			Subject: &gointoto.ResourceDescriptor{
@@ -894,7 +914,7 @@ func (di *defaultIplementation) VerifySubject(
 		}
 
 		// Carry over the error from the policy if the runtime didn't add one
-		if evalres.Status != papi.StatusPASS && evalres.Error == nil {
+		if evalres.GetStatus() != papi.StatusPASS && evalres.GetError() == nil {
 			var b, b2 bytes.Buffer
 
 			tmplMsg, err := template.New("error_message").Parse(tenet.Error.GetMessage())
@@ -920,7 +940,7 @@ func (di *defaultIplementation) VerifySubject(
 		}
 
 		// Carry over the assessment from the policy if not set by the runtime
-		if evalres.Status == papi.StatusPASS && evalres.Assessment == nil {
+		if evalres.GetStatus() == papi.StatusPASS && evalres.Assessment == nil {
 			tmpl, err := template.New("assessment").Parse(tenet.Assessment.GetMessage())
 			if err != nil {
 				return nil, fmt.Errorf("parsing tenet assessment: %w", err)
