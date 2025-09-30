@@ -211,7 +211,7 @@ func (o *verifyOptions) Validate() error {
 	}
 
 	if o.Format == "" {
-		errs = append(errs, errors.New("no format defined"))
+		errs = append(errs, errors.New("no output format defined"))
 	} else {
 		if err := render.GetDriverBytType(o.Format); err != nil {
 			errs = append(errs, errors.New("invalid format"))

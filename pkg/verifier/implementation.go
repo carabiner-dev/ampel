@@ -406,6 +406,7 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 
 	// The keys to use are the ones in the options...
 	keys := opts.Keys
+
 	// Plus any defined in the policy
 	for _, id := range policyIdentities {
 		k, err := id.PublicKey()
@@ -417,23 +418,22 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 		}
 	}
 
-	validIdentities := true
+	allow := true
 
 	// First, verify the signatures on the envelopes
 	for i, e := range envelopes {
 		// Attestations are expected to be verified here already, but we want
 		// to make sure. This should not be an issue as the verification data
 		// should be already cached.
-
 		if err := e.Verify(keys); err != nil {
-			errs[i] = fmt.Errorf("verifying attestation signature: %w", err)
-			validIdentities = false
+			errs[i] = fmt.Errorf("verifying attestation %d (type %s) signature failed: %w", i, e.GetStatement().GetType(), err)
+			allow = false
 			continue
 		}
 
 		if e.GetVerification() == nil || !e.GetVerification().GetVerified() {
-			errs[i] = errors.New("attestation not verified")
-			validIdentities = false
+			errs[i] = fmt.Errorf("attestation %d (type %s) not verified", i, e.GetStatement().GetType())
+			allow = false
 			continue
 		}
 
@@ -443,15 +443,13 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 			}
 		}
 
-		if len(validSigners) == 0 {
-			validIdentities = false
+		if len(validSigners[i]) == 0 {
+			allow = false
 			errs[i] = fmt.Errorf("attestation %d (type %s) has no recognized signer identities", i, e.GetStatement().GetType())
 		}
 	}
 
-	// We don't use the errors yet, but at some point we should embed them into
-	// the attestation verification.
-	return validIdentities, validSigners, errs, nil
+	return allow, validSigners, errs, nil
 }
 
 // FilterAttestations filters the attestations read to only those required by the

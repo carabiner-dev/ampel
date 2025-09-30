@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/collector/statement/intoto"
 	papi "github.com/carabiner-dev/policy/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/stretchr/testify/require"
@@ -228,6 +229,103 @@ func TestCheckPolicy(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+		})
+	}
+}
+
+type fakeEnvelope struct {
+	ver attestation.Verification
+}
+
+func (fe *fakeEnvelope) GetStatement() attestation.Statement       { return &intoto.Statement{} }
+func (fe *fakeEnvelope) GetPredicate() attestation.Predicate       { return nil }
+func (fe *fakeEnvelope) GetSignatures() []attestation.Signature    { return nil }
+func (fe *fakeEnvelope) GetCertificate() attestation.Certificate   { return nil }
+func (fe *fakeEnvelope) GetVerification() attestation.Verification { return fe.ver }
+func (fe *fakeEnvelope) Verify(...any) error                       { return nil }
+
+var _ attestation.Envelope = &fakeEnvelope{}
+
+func TestCheckIdentities(t *testing.T) {
+	t.Parallel()
+	idSigstore := &papi.Identity{
+		Id: "abc",
+		Sigstore: &papi.IdentitySigstore{
+			Issuer:   "https://example.com",
+			Identity: "joe@example.com",
+		},
+	}
+	idSigstoreOther := &papi.Identity{
+		Id: "abc",
+		Sigstore: &papi.IdentitySigstore{
+			Issuer:   "https://nonexistent.com",
+			Identity: "mark@hami-ll.com",
+		},
+	}
+	di := defaultIplementation{}
+	for _, tt := range []struct {
+		name             string
+		opts             VerificationOptions
+		policyIdentities []*papi.Identity
+		envelopes        []attestation.Envelope
+		mustErr          bool
+		mustAllow        bool
+	}{
+		{"no-allowedIdentities-defined", DefaultVerificationOptions, []*papi.Identity{}, []attestation.Envelope{
+			&fakeEnvelope{
+				ver: &papi.Verification{Signature: &papi.SignatureVerification{Verified: true, Identities: []*papi.Identity{idSigstore}}},
+			},
+		}, false, true},
+		{"no-matching-identities-opts", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*papi.Identity{}, []attestation.Envelope{
+			&fakeEnvelope{
+				ver: &papi.Verification{Signature: &papi.SignatureVerification{Verified: true, Identities: []*papi.Identity{idSigstoreOther}}},
+			},
+		}, false, false},
+		{"no-matching-identities-policy", VerificationOptions{IdentityStrings: []string{}}, []*papi.Identity{idSigstore}, []attestation.Envelope{
+			&fakeEnvelope{
+				ver: &papi.Verification{Signature: &papi.SignatureVerification{Verified: true, Identities: []*papi.Identity{idSigstoreOther}}},
+			},
+		}, false, false},
+		{"ids-in-opts", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*papi.Identity{}, []attestation.Envelope{
+			&fakeEnvelope{
+				ver: &papi.Verification{Signature: &papi.SignatureVerification{Verified: true, Identities: []*papi.Identity{idSigstore}}},
+			},
+		}, false, true},
+		{"ids-in-policy", VerificationOptions{IdentityStrings: []string{}}, []*papi.Identity{idSigstore}, []attestation.Envelope{
+			&fakeEnvelope{
+				ver: &papi.Verification{
+					Signature: &papi.SignatureVerification{Verified: true, Identities: []*papi.Identity{idSigstore}},
+				},
+			},
+		}, false, true},
+		{"ids-in-policy-over-opts-pass", VerificationOptions{IdentityStrings: []string{idSigstoreOther.Slug()}}, []*papi.Identity{idSigstore}, []attestation.Envelope{
+			&fakeEnvelope{
+				ver: &papi.Verification{
+					Signature: &papi.SignatureVerification{Verified: true, Identities: []*papi.Identity{idSigstore}},
+				},
+			},
+		}, false, true},
+		{"ids-in-policy-over-opts-fail", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*papi.Identity{idSigstoreOther}, []attestation.Envelope{
+			&fakeEnvelope{
+				ver: &papi.Verification{
+					Signature: &papi.SignatureVerification{Verified: true, Identities: []*papi.Identity{idSigstore}},
+				},
+			},
+		}, false, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			// allow, ids, errs, err
+			allow, _, _, err := di.CheckIdentities(
+				t.Context(), &tt.opts, tt.policyIdentities, tt.envelopes,
+			)
+
+			if tt.mustErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tt.mustAllow, allow)
 		})
 	}
 }
