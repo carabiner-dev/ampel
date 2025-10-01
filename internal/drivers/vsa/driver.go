@@ -4,14 +4,18 @@
 package vsa
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"slices"
 	"strings"
 
 	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/collector/predicate/generic"
+	"github.com/carabiner-dev/collector/statement/intoto"
 	papi "github.com/carabiner-dev/policy/api/v1"
 	v1 "github.com/in-toto/attestation/go/predicates/vsa/v1"
+	gointoto "github.com/in-toto/attestation/go/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -26,10 +30,33 @@ func New() *Driver {
 
 type Driver struct{}
 
-func renderAttestation(w io.Writer, att *v1.VerificationSummary) error {
-	jsonData, err := protojson.Marshal(att)
+func renderAttestation(w io.Writer, subject attestation.Subject, att *v1.VerificationSummary) error {
+	vsaJsonData, err := protojson.Marshal(att)
 	if err != nil {
 		return fmt.Errorf("marshaling vsa: %w", err)
+	}
+
+	// Generate the generica predicate
+	pred := &generic.Predicate{
+		Type:   attestation.PredicateType("https://slsa.dev/verification_summary/v1"),
+		Parsed: att,
+		Data:   vsaJsonData,
+	}
+
+	// Add the intoto wrapper
+	statement := intoto.NewStatement(
+		intoto.WithPredicate(pred),
+		intoto.WithSubject(&gointoto.ResourceDescriptor{
+			Name:   subject.GetName(),
+			Uri:    subject.GetUri(),
+			Digest: subject.GetDigest(),
+		}),
+	)
+
+	// Now serialize the attestation
+	jsonData, err := json.Marshal(statement)
+	if err != nil {
+		return fmt.Errorf("serializing VSA: %w", err)
 	}
 
 	if _, err := w.Write(jsonData); err != nil {
@@ -113,7 +140,7 @@ func (d *Driver) RenderResultSet(w io.Writer, set *papi.ResultSet) error {
 	}
 
 	vsaData.InputAttestations = subjectsToSummaryInputs(inputs)
-	return renderAttestation(w, vsaData)
+	return renderAttestation(w, set.GetSubject(), vsaData)
 }
 
 // RenderResult renders a policy evaluation result into a VSA
@@ -157,7 +184,7 @@ func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
 	}
 	vsaData.InputAttestations = subjectsToSummaryInputs(inputs)
 
-	return renderAttestation(w, vsaData)
+	return renderAttestation(w, result.GetSubject(), vsaData)
 }
 
 func subjectsToSummaryInputs(inputs []attestation.Subject) []*v1.VerificationSummary_InputAttestation {

@@ -724,12 +724,8 @@ github.com/boombuler/barcode v1.0.0/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl
 github.com/boombuler/barcode v1.0.1/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0 h1:any4BmKE+jGIaMpnU8YgH/I2LPiLBufr6oMMlVBbn9M=
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0/go.mod h1:bm7JXdkRd4BHJk9HpwqAI8BoAY1lps46Enkdqw6aRX0=
-github.com/carabiner-dev/attestation v0.2.0 h1:vEqAIapcHjIoEQad9GrKtEx2czeu7t4cun+1bCEtN1o=
-github.com/carabiner-dev/attestation v0.2.0/go.mod h1:dLPe3DPL/0YpKJpNDCQJZdtkZIuWTAH1G0N8V5LJ41c=
 github.com/carabiner-dev/attestation v0.2.1-0.20251001041625-bb99ace51432 h1:0NS1D5dXcH4UCoo14agPpl8WE2nuTsvr/L3KzNLUGQ8=
 github.com/carabiner-dev/attestation v0.2.1-0.20251001041625-bb99ace51432/go.mod h1:dLPe3DPL/0YpKJpNDCQJZdtkZIuWTAH1G0N8V5LJ41c=
-github.com/carabiner-dev/collector v0.2.2 h1:nsrFu2YNCMDYyyioW+qfslDpSr3BefEw5C+lp1XWGTc=
-github.com/carabiner-dev/collector v0.2.2/go.mod h1:RZIZVqNuShBQOpFyzN3TwsXKrnpxpzEV81PBsBgLnQs=
 github.com/carabiner-dev/collector v0.2.3-0.20250930230641-f92162e029c6 h1:rket0y1TJNmsWbkSgO0vHeHIlbhzRyPhMJng3OikEOQ=
 github.com/carabiner-dev/collector v0.2.3-0.20250930230641-f92162e029c6/go.mod h1:RZIZVqNuShBQOpFyzN3TwsXKrnpxpzEV81PBsBgLnQs=
 github.com/carabiner-dev/command v0.1.1 h1:Vl68ekV2YYtrLukVpTX20YC9aDS37k2EYKYUZbRsVP4=
@@ -746,10 +742,6 @@ github.com/carabiner-dev/openeox v0.0.0-20250606202227-fd40810cda47 h1:UTr5vQ7nS
 github.com/carabiner-dev/openeox v0.0.0-20250606202227-fd40810cda47/go.mod h1:40KVT1ee6L8VoWT44RvAQ0AtG91MFr5/zBzTmNiXQWY=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 h1:BJ9+OCNezZGkU8SrGC3oB7Tj+J0JsonwfZztcgUav6c=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92/go.mod h1:o7jXwi/fFZ9mQlvVlog0kcvyEkwQT3eWmVQmrorBGpE=
-github.com/carabiner-dev/policy v0.2.1-0.20250923010748-bd6ba141f214 h1:S+OXyLM8guS19QWf0RuZ2GtYNstxMbERqhljfZulI7Y=
-github.com/carabiner-dev/policy v0.2.1-0.20250923010748-bd6ba141f214/go.mod h1:87aK4EjCvxcF/aJ+EwNyRINCsbtCXKtBG7c4dBuf3Y4=
-github.com/carabiner-dev/policy v0.2.1-0.20251001013941-3f553942a7c2 h1:+oPpAd5iYP1BWDjH7HnTnPKjHbJQWaNKE1qLryYfZw0=
-github.com/carabiner-dev/policy v0.2.1-0.20251001013941-3f553942a7c2/go.mod h1:Vy9V3jGv3huEOX3at+t2kRX/FoG3S/sdRhQT5e/rWxI=
 github.com/carabiner-dev/policy v0.2.1-0.20251001043056-48cc1759d7d2 h1:VSXRlY6i62BqysdKSehqX/Mtm+ET7UaBE2DUH8P2+Ms=
 github.com/carabiner-dev/policy v0.2.1-0.20251001043056-48cc1759d7d2/go.mod h1:Vy9V3jGv3huEOX3at+t2kRX/FoG3S/sdRhQT5e/rWxI=
 github.com/carabiner-dev/signer v0.2.1 h1:qNRzDFnG+uLWHPTIC36hrh572bs66hYhBOwkGLcsq1I=
