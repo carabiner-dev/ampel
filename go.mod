@@ -3,12 +3,12 @@ module github.com/carabiner-dev/ampel
 go 1.24.6
 
 require (
-	github.com/carabiner-dev/attestation v0.2.0
-	github.com/carabiner-dev/collector v0.2.2
+	github.com/carabiner-dev/attestation v0.2.1-0.20251001041625-bb99ace51432
+	github.com/carabiner-dev/collector v0.2.3-0.20250930230641-f92162e029c6
 	github.com/carabiner-dev/command v0.1.1
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
-	github.com/carabiner-dev/policy v0.2.1-0.20250923010748-bd6ba141f214
+	github.com/carabiner-dev/policy v0.2.1-0.20251001043056-48cc1759d7d2
 	github.com/fatih/color v1.18.0
 	github.com/google/cel-go v0.26.1
 	github.com/in-toto/attestation v1.1.2

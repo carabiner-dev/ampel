@@ -14,6 +14,7 @@ import (
 	"github.com/carabiner-dev/ampel/internal/drivers/html"
 	"github.com/carabiner-dev/ampel/internal/drivers/markdown"
 	"github.com/carabiner-dev/ampel/internal/drivers/tty"
+	"github.com/carabiner-dev/ampel/internal/drivers/vsa"
 )
 
 type driversList map[string]Driver
@@ -25,10 +26,11 @@ var (
 
 func LoadDefaultDrivers() {
 	drMtx.Lock()
-	drivers["tty"] = tty.New()
-	drivers["markdown"] = markdown.New()
-	drivers["html"] = html.New()
 	drivers["attestation"] = attester.New()
+	drivers["html"] = html.New()
+	drivers["markdown"] = markdown.New()
+	drivers["tty"] = tty.New()
+	drivers["vsa"] = vsa.New()
 	drMtx.Unlock()
 }
 
