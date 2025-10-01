@@ -15,7 +15,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-const ampelId = "https://carabiner.dev/ampel"
+const ampelId = "https://carabiner.dev/ampel@v1"
 
 // slsaVersion version used as base to compute the VSA
 const slsaVersion = "1.1"
@@ -134,6 +134,15 @@ func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
 		VerifiedLevels:     []string{},
 		DependencyLevels:   nil,
 		SlsaVersion:        slsaVersion,
+	}
+
+	// Add the verified level if its a slsa control
+	for _, ctl := range result.GetMeta().GetControls() {
+		label := strings.ReplaceAll(ctl.Label(), "-", "_")
+		if !strings.HasPrefix(label, "SLSA_") {
+			continue
+		}
+		vsaData.VerifiedLevels = append(vsaData.VerifiedLevels, label)
 	}
 
 	// Add the input attestations recorded in the result
