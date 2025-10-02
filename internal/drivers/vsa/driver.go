@@ -86,8 +86,8 @@ func (d *Driver) RenderResultSet(w io.Writer, set *papi.ResultSet) error {
 		TimeVerified: set.GetDateEnd(),
 		ResourceUri:  set.GetSubject().GetUri(),
 		Policy: &v1.VerificationSummary_Policy{
-			Uri:    set.GetPolicySet().GetSourceURL(),
-			Digest: set.GetPolicySet().GetLocation().GetDigest(),
+			Uri:    set.GetMeta().GetOrigin().GetUri(),
+			Digest: set.GetMeta().GetOrigin().GetDigest(),
 		},
 		InputAttestations:  []*v1.VerificationSummary_InputAttestation{},
 		VerificationResult: resultStringToSLSAResult(set.GetStatus()),
@@ -152,8 +152,8 @@ func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
 		TimeVerified: result.GetDateEnd(),
 		ResourceUri:  result.GetSubject().GetUri(),
 		Policy: &v1.VerificationSummary_Policy{
-			Uri:    result.GetPolicy().GetLocation().GetUri(),
-			Digest: result.GetPolicy().GetLocation().GetDigest(),
+			Uri:    result.GetMeta().GetOrigin().GetUri(),
+			Digest: result.GetMeta().GetOrigin().GetDigest(),
 		},
 		// Populated later
 		InputAttestations:  []*v1.VerificationSummary_InputAttestation{},
