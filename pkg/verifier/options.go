@@ -4,6 +4,10 @@
 package verifier
 
 import (
+	"errors"
+	"fmt"
+	"slices"
+
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/signer/key"
 
@@ -11,6 +15,11 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
+
+var ResultsAttestationFormats = []string{
+	"ampel", // Regular ampel resultSet
+	"vsa",   // Verification Summary Attestation
+}
 
 type VerificationOptions struct {
 	// Embed the evaluator options
@@ -35,6 +44,9 @@ type VerificationOptions struct {
 
 	// AttestResults will generate an attestation of the evaluation results
 	AttestResults bool
+
+	// AttestFormat specifies the format used when AttestResults is true
+	AttestFormat string
 
 	// ResultsAttestationPath stores the path to write the results attestation
 	ResultsAttestationPath string
@@ -71,6 +83,16 @@ type VerificationOptions struct {
 	AllowEmptySetChains bool
 }
 
+// Validate checks the options set
+func (opts *VerificationOptions) Validate() error {
+	errs := []error{}
+	if opts.AttestFormat != "" && !slices.Contains(ResultsAttestationFormats, opts.AttestFormat) {
+		errs = append(errs, fmt.Errorf("invalid results attestation format: %q", opts.AttestFormat))
+	}
+
+	return errors.Join(errs...)
+}
+
 var DefaultVerificationOptions = VerificationOptions{
 	EvaluatorOptions: options.Default,
 
@@ -93,6 +115,9 @@ var DefaultVerificationOptions = VerificationOptions{
 	// AllowEmptySetChains is set to true. This means that if no subjects
 	// result from the selectors, the set passes with the policies softfailed.
 	AllowEmptySetChains: true,
+
+	// By default, we attesta results in the ampel format
+	AttestFormat: "ampel",
 }
 
 func NewVerificationOptions() VerificationOptions {

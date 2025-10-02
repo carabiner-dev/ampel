@@ -79,6 +79,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 		&o.AttestResults, "attest-results", o.AttestResults, "write an attestation with the evaluation results to --results-path",
 	)
 
+	cmd.PersistentFlags().StringVar(
+		&o.AttestFormat, "attest-format", verifier.DefaultVerificationOptions.AttestFormat, fmt.Sprintf("format used when attest-results is true %v", verifier.ResultsAttestationFormats),
+	)
+
 	cmd.PersistentFlags().StringSliceVarP(
 		&o.ContextStringVals, "context", "x", []string{}, "evaluation context value definitions",
 	)
@@ -197,7 +201,9 @@ func (o *verifyOptions) LoadPublicKeys() error {
 }
 
 func (o *verifyOptions) Validate() error {
-	errs := []error{}
+	errs := []error{
+		o.VerificationOptions.Validate(),
+	}
 	if o.SubjectFile == "" && o.SubjectHash == "" {
 		errs = append(errs, fmt.Errorf("no subject specified (use --subject, --subject-file or --subject-hash)"))
 	}
@@ -368,16 +374,8 @@ using a collector.
 				return fmt.Errorf("running subject verification: %w", err)
 			}
 
-			// Generate the results attestation
-			if opts.AttestResults {
-				attFile, err := os.Create(opts.ResultsAttestationPath)
-				if err != nil {
-					return fmt.Errorf("unable to open results attestation path")
-				}
-
-				if err := ampel.AttestResults(attFile, results); err != nil {
-					return fmt.Errorf("writing results attestation: %w", err)
-				}
+			if err := attestResults(&opts, ampel, results); err != nil {
+				return fmt.Errorf("attesting results: %w", err)
 			}
 
 			eng := render.NewEngine()
@@ -412,6 +410,43 @@ using a collector.
 
 	opts.AddFlags(evalCmd)
 	parentCmd.AddCommand(evalCmd)
+}
+
+func attestResults(opts *verifyOptions, ampel *verifier.Ampel, results papi.Results) error {
+	// Generate the results attestation
+	if !opts.AttestResults {
+		return nil
+	}
+	attFile, err := os.Create(opts.ResultsAttestationPath)
+	if err != nil {
+		return fmt.Errorf("unable to open results attestation path")
+	}
+
+	switch opts.AttestFormat {
+	case "ampel", "":
+		if err := ampel.AttestResults(attFile, results); err != nil {
+			return fmt.Errorf("writing results attestation: %w", err)
+		}
+	default:
+		eng := render.NewEngine()
+		if err := eng.SetDriver(opts.AttestFormat); err != nil {
+			return fmt.Errorf("loading VSA attestation driver: %w", err)
+		}
+		switch r := results.(type) {
+		case *papi.Result:
+			if err := eng.RenderResult(attFile, r); err != nil {
+				return err
+			}
+		case *papi.ResultSet:
+			if err := eng.RenderResultSet(attFile, r); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("unable to determine results type to attest")
+		}
+	}
+
+	return nil
 }
 
 // buildContextProviders initializes the context providers defined in the
