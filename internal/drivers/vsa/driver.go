@@ -93,12 +93,12 @@ func (d *Driver) RenderResultSet(w io.Writer, set *papi.ResultSet) error {
 		VerificationResult: resultStringToSLSAResult(set.GetStatus()),
 		VerifiedLevels:     []string{},
 		DependencyLevels:   nil,
-		SlsaVersion:        slsaVersion,
 	}
 
 	inputs := []attestation.Subject{}
 	depLevels := map[string]uint64{}
 
+	var verifiedSomeSlsa bool
 	for _, a := range set.Results {
 		for _, er := range a.EvalResults {
 			for _, stRef := range er.GetStatements() {
@@ -123,6 +123,8 @@ func (d *Driver) RenderResultSet(w io.Writer, set *papi.ResultSet) error {
 				continue
 			}
 
+			verifiedSomeSlsa = true
+
 			// Here, we add the level to the verified levels when the result
 			// subject matches the policyset subject. If not, then we assume the
 			// policyset was chained to verify dependencies.
@@ -140,6 +142,9 @@ func (d *Driver) RenderResultSet(w io.Writer, set *papi.ResultSet) error {
 	}
 
 	vsaData.InputAttestations = subjectsToSummaryInputs(inputs)
+	if verifiedSomeSlsa {
+		vsaData.SlsaVersion = slsaVersion
+	}
 	return renderAttestation(w, set.GetSubject(), vsaData)
 }
 
@@ -160,15 +165,16 @@ func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
 		VerificationResult: resultStringToSLSAResult(result.GetStatus()),
 		VerifiedLevels:     []string{},
 		DependencyLevels:   nil,
-		SlsaVersion:        slsaVersion,
 	}
 
+	var verifiedSomeSlsa bool
 	// Add the verified level if its a slsa control
 	for _, ctl := range result.GetMeta().GetControls() {
 		label := strings.ReplaceAll(ctl.Label(), "-", "_")
 		if !strings.HasPrefix(label, "SLSA_") {
 			continue
 		}
+		verifiedSomeSlsa = true
 		vsaData.VerifiedLevels = append(vsaData.VerifiedLevels, label)
 	}
 
@@ -183,7 +189,9 @@ func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
 		}
 	}
 	vsaData.InputAttestations = subjectsToSummaryInputs(inputs)
-
+	if verifiedSomeSlsa {
+		vsaData.SlsaVersion = slsaVersion
+	}
 	return renderAttestation(w, result.GetSubject(), vsaData)
 }
 

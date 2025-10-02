@@ -3,7 +3,7 @@ module github.com/carabiner-dev/ampel
 go 1.24.6
 
 require (
-	github.com/carabiner-dev/attestation v0.2.1-0.20251001041625-bb99ace51432
+	github.com/carabiner-dev/attestation v0.2.1-0.20251002222424-9a7f9c888176
 	github.com/carabiner-dev/collector v0.2.3-0.20250930230641-f92162e029c6
 	github.com/carabiner-dev/command v0.1.1
 	github.com/carabiner-dev/hasher v0.2.2
