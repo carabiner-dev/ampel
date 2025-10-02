@@ -128,7 +128,7 @@ func (tb *TableBuilder) ResultSetTable(set *papi.ResultSet) (table.Writer, error
 				assessments += er.GetAssessment().GetMessage() + "\n"
 			} else if er.GetStatus() != papi.StatusPASS && r.GetStatus() != papi.StatusPASS {
 				if !strings.Contains(assessments, er.GetError().GetMessage()+"\n") {
-					assessments += er.GetError().GetMessage() + "\n" + er.GetError().GetGuidance() + "\n"
+					tb.Decorator.ErrorToString(er.GetError())
 				}
 			}
 		}
