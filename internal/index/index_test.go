@@ -130,7 +130,7 @@ func TestIndexStatements(t *testing.T) {
 			si := &StatementIndex{}
 			si.IndexStatements(list)
 
-			require.Len(t, si.ProdIndex, 5)
+			require.Len(t, si.ProdIndex, 12)
 			require.Len(t, si.VulnIndex, 4)
 			require.Len(t, si.SubIndex, 4)
 		})

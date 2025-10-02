@@ -4,8 +4,10 @@
 package index
 
 import (
+	"fmt"
 	"slices"
 
+	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/openvex/go-vex/pkg/vex"
 )
 
@@ -45,6 +47,32 @@ type StatementIndex struct {
 	SubIndex  map[string][]*vex.Statement
 }
 
+func vexAlgoToInTotoAlgo(vexAlgo vex.Algorithm) string {
+	//nolint:exhaustive // The blake family are not in intoto
+	switch vexAlgo {
+	case vex.SHA256:
+		return gointoto.AlgorithmSHA256.String()
+	case vex.SHA512:
+		return gointoto.AlgorithmSHA512.String()
+	case vex.SHA1:
+		return gointoto.AlgorithmSHA1.String()
+	case vex.MD5:
+		return gointoto.AlgorithmMD5.String()
+	case vex.SHA384:
+		return gointoto.AlgorithmSHA384.String()
+	case vex.SHA3224:
+		return gointoto.AlgorithmSHA3_224.String()
+	case vex.SHA3256:
+		return gointoto.AlgorithmSHA3_256.String()
+	case vex.SHA3384:
+		return gointoto.AlgorithmSHA3_384.String()
+	case vex.SHA3512:
+		return gointoto.AlgorithmSHA3_512.String()
+	default:
+		return ""
+	}
+}
+
 // IndexStatements
 func (si *StatementIndex) IndexStatements(statements []*vex.Statement) {
 	si.VulnIndex = map[string][]*vex.Statement{}
@@ -53,14 +81,27 @@ func (si *StatementIndex) IndexStatements(statements []*vex.Statement) {
 
 	for _, s := range statements {
 		for _, p := range s.Products {
+			if p.ID != "" {
+				si.ProdIndex[p.ID] = append(si.ProdIndex[p.ID], s)
+			}
 			for _, id := range p.Identifiers {
 				if !slices.Contains(si.ProdIndex[id], s) {
 					si.ProdIndex[id] = append(si.ProdIndex[id], s)
 				}
 			}
-			for _, h := range p.Hashes {
+			for algo, h := range p.Hashes {
 				if !slices.Contains(si.ProdIndex[string(h)], s) {
 					si.ProdIndex[string(h)] = append(si.ProdIndex[string(h)], s)
+				}
+				if !slices.Contains(si.ProdIndex[fmt.Sprintf("%s:%s", algo, h)], s) {
+					si.ProdIndex[fmt.Sprintf("%s:%s", algo, h)] = append(si.ProdIndex[fmt.Sprintf("%s:%s", algo, h)], s)
+				}
+				intotoAlgo := vexAlgoToInTotoAlgo(algo)
+				if intotoAlgo == "" {
+					continue
+				}
+				if !slices.Contains(si.ProdIndex[fmt.Sprintf("%s:%s", intotoAlgo, h)], s) {
+					si.ProdIndex[fmt.Sprintf("%s:%s", intotoAlgo, h)] = append(si.ProdIndex[fmt.Sprintf("%s:%s", intotoAlgo, h)], s)
 				}
 			}
 
@@ -125,6 +166,9 @@ func WithProduct(prod *vex.Product) FilterFunc {
 		return func() map[*vex.Statement]struct{} {
 			ret := map[*vex.Statement]struct{}{}
 			ids := []string{}
+			if prod.ID != "" {
+				ids = append(ids, prod.ID)
+			}
 			for _, id := range prod.Identifiers {
 				ids = append(ids, id)
 			}
