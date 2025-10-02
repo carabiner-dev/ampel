@@ -36,6 +36,9 @@ type VerificationOptions struct {
 	// AttestResults will generate an attestation of the evaluation results
 	AttestResults bool
 
+	// AttestFormat specifies the format used when AttestResults is true
+	AttestFormat string
+
 	// ResultsAttestationPath stores the path to write the results attestation
 	ResultsAttestationPath string
 
@@ -93,6 +96,9 @@ var DefaultVerificationOptions = VerificationOptions{
 	// AllowEmptySetChains is set to true. This means that if no subjects
 	// result from the selectors, the set passes with the policies softfailed.
 	AllowEmptySetChains: true,
+
+	// By default, we attesta results in the ampel format
+	AttestFormat: "ampel",
 }
 
 func NewVerificationOptions() VerificationOptions {
