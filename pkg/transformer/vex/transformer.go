@@ -80,6 +80,9 @@ func (t *Transformer) classifyAttestations(predicates []attestation.Predicate) (
 			if ok {
 				report = t
 				continue
+			} else {
+				fmt.Printf("%+T", p.GetParsed())
+				logrus.Debugf("found OSV predicate but could not find results")
 			}
 		}
 
@@ -154,21 +157,42 @@ func (t *Transformer) ApplyVEX(
 
 	// Create the vex product from the policy subject
 	hashes := map[openvex.Algorithm]openvex.Hash{}
+	var pAlgo, pVal string
 	for algo, val := range subj.GetDigest() {
+		if pAlgo == "" && pVal == "" {
+			pAlgo = algo
+			pVal = val
+		}
 		h := hashToHash(algo)
 		if h == "" {
 			continue
 		}
 		hashes[openvex.Algorithm(h)] = openvex.Hash(val)
 	}
+
+	// Sythesize the product to match
 	product := openvex.Product{}
 	product.Hashes = hashes
+
+	if subj.GetUri() != "" {
+		product.ID = subj.GetUri()
+		if strings.HasPrefix(subj.GetUri(), "pkg:") {
+			product.Identifiers = map[openvex.IdentifierType]string{
+				openvex.PURL: subj.GetUri(),
+			}
+		}
+	}
+
+	if product.ID == "" && pAlgo != "" {
+		product.ID = fmt.Sprintf("%s:%s", pAlgo, pVal)
+	}
 
 	// Index the statements and get those that apply
 	si, err := index.New(index.WithStatements(statements))
 	if err != nil {
 		return nil, fmt.Errorf("creating statement index")
 	}
+
 	logrus.Debugf("VEX Index: %+v", si)
 	statements = si.Matches(index.WithProduct(&product))
 	logrus.Debugf("Got %d statatements back applicable to product %+v", len(statements), product)
