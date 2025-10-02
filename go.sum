@@ -726,6 +726,8 @@ github.com/bradleyjkemp/cupaloy/v2 v2.8.0 h1:any4BmKE+jGIaMpnU8YgH/I2LPiLBufr6oM
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0/go.mod h1:bm7JXdkRd4BHJk9HpwqAI8BoAY1lps46Enkdqw6aRX0=
 github.com/carabiner-dev/attestation v0.2.1-0.20251001041625-bb99ace51432 h1:0NS1D5dXcH4UCoo14agPpl8WE2nuTsvr/L3KzNLUGQ8=
 github.com/carabiner-dev/attestation v0.2.1-0.20251001041625-bb99ace51432/go.mod h1:dLPe3DPL/0YpKJpNDCQJZdtkZIuWTAH1G0N8V5LJ41c=
+github.com/carabiner-dev/attestation v0.2.1-0.20251002222424-9a7f9c888176 h1:Iojyg/Yp2UouxwHkpAXLgdFQRW0/VCso/+o0xJ8KD/Y=
+github.com/carabiner-dev/attestation v0.2.1-0.20251002222424-9a7f9c888176/go.mod h1:dLPe3DPL/0YpKJpNDCQJZdtkZIuWTAH1G0N8V5LJ41c=
 github.com/carabiner-dev/collector v0.2.3-0.20250930230641-f92162e029c6 h1:rket0y1TJNmsWbkSgO0vHeHIlbhzRyPhMJng3OikEOQ=
 github.com/carabiner-dev/collector v0.2.3-0.20250930230641-f92162e029c6/go.mod h1:RZIZVqNuShBQOpFyzN3TwsXKrnpxpzEV81PBsBgLnQs=
 github.com/carabiner-dev/command v0.1.1 h1:Vl68ekV2YYtrLukVpTX20YC9aDS37k2EYKYUZbRsVP4=
