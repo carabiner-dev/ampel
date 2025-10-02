@@ -79,6 +79,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 		&o.AttestResults, "attest-results", o.AttestResults, "write an attestation with the evaluation results to --results-path",
 	)
 
+	cmd.PersistentFlags().StringVar(
+		&o.AttestFormat, "attest-format", verifier.DefaultVerificationOptions.AttestFormat, fmt.Sprintf("format used when attest-results is true %v", verifier.ResultsAttestationFormats),
+	)
+
 	cmd.PersistentFlags().StringSliceVarP(
 		&o.ContextStringVals, "context", "x", []string{}, "evaluation context value definitions",
 	)
@@ -197,7 +201,9 @@ func (o *verifyOptions) LoadPublicKeys() error {
 }
 
 func (o *verifyOptions) Validate() error {
-	errs := []error{}
+	errs := []error{
+		o.VerificationOptions.Validate(),
+	}
 	if o.SubjectFile == "" && o.SubjectHash == "" {
 		errs = append(errs, fmt.Errorf("no subject specified (use --subject, --subject-file or --subject-hash)"))
 	}
