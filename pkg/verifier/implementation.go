@@ -796,6 +796,27 @@ func (di *defaultIplementation) AssembleEvalContextValues(ctx context.Context, o
 		}
 	}
 
+	if err := errors.Join(errs...); err != nil {
+		return nil, err
+	}
+
+	// Ensure context values are in the correct type when typed. For now, we
+	// enforce and cross convert simple types: string, int and bool and
+	// force-convert between them. This means that if a value is typed in
+	// the context definition, the evaluator is guaranteed to get it in
+	// that type or ampel will return an error before evaluating.
+	//
+	// Ideally, context providers will return these in their correct types
+	// but we ensure they are correct here to guarantee evaluators get the
+	// context values in the right types.
+	for k, contextDef := range assembledContext {
+		typedVal, err := ensureContextType(values[k], contextDef)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		values[k] = typedVal
+	}
+
 	return values, errors.Join(errs...)
 }
 
