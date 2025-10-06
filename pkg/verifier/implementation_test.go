@@ -225,7 +225,7 @@ func TestCheckPolicy(t *testing.T) {
 			err := di.CheckPolicy(t.Context(), tt.opts, tt.policy)
 			if tt.mustErr {
 				require.Error(t, err)
-				require.IsType(t, PolicyError{}, err)
+				require.IsType(t, PolicyError{}, err) //nolint:testifylint // Checking for type, not value
 				return
 			}
 			require.NoError(t, err)
