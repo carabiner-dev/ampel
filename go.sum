@@ -742,10 +742,8 @@ github.com/carabiner-dev/openeox v0.0.0-20250606202227-fd40810cda47 h1:UTr5vQ7nS
 github.com/carabiner-dev/openeox v0.0.0-20250606202227-fd40810cda47/go.mod h1:40KVT1ee6L8VoWT44RvAQ0AtG91MFr5/zBzTmNiXQWY=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 h1:BJ9+OCNezZGkU8SrGC3oB7Tj+J0JsonwfZztcgUav6c=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92/go.mod h1:o7jXwi/fFZ9mQlvVlog0kcvyEkwQT3eWmVQmrorBGpE=
-github.com/carabiner-dev/policy v0.2.1 h1:AIQzZ+pa6tN9KhmbgY3irNvd9ITQX7FZoxXp8pOJ/oc=
-github.com/carabiner-dev/policy v0.2.1/go.mod h1:7FOMrXNiWBa9ni9l3MzbRmFO61laBtLEGdKuuBg7lNU=
-github.com/carabiner-dev/policy v0.2.2-0.20251006203331-d23dccc93823 h1:jLltaxxAS7Fk7BurQeTbF+wavCqYhz/46AzUClk760U=
-github.com/carabiner-dev/policy v0.2.2-0.20251006203331-d23dccc93823/go.mod h1:7FOMrXNiWBa9ni9l3MzbRmFO61laBtLEGdKuuBg7lNU=
+github.com/carabiner-dev/policy v0.3.0 h1:6pGM+JUdQUg5SOPxiqxhr8rVDzAXHMVGvPmxmvUI980=
+github.com/carabiner-dev/policy v0.3.0/go.mod h1:25UmIXXaYxEK1x+XpnzInXeL7poZywrzIEheGuKUrxA=
 github.com/carabiner-dev/signer v0.2.1 h1:qNRzDFnG+uLWHPTIC36hrh572bs66hYhBOwkGLcsq1I=
 github.com/carabiner-dev/signer v0.2.1/go.mod h1:VvN+m//2sBUQuZUnVie0WpIy+D9+v8+eJDoMG8nugA8=
 github.com/carabiner-dev/vcslocator v0.3.2 h1:/rfhELG1mvqFq0xi8LQSkfpAVoQDCGlWoL6J5tX9Inw=
@@ -1100,6 +1098,8 @@ github.com/hashicorp/hcl v1.0.1-vault-7 h1:ag5OxFVy3QYTFTJODRzTKVZ6xvdfLLCA1cy/Y
 github.com/hashicorp/hcl v1.0.1-vault-7/go.mod h1:XYhtn6ijBSAj6n4YqAaf7RBPS4I06AItNorpy+MoQNM=
 github.com/hashicorp/vault/api v1.16.0 h1:nbEYGJiAPGzT9U4oWgaaB0g+Rj8E59QuHKyA5LhwQN4=
 github.com/hashicorp/vault/api v1.16.0/go.mod h1:KhuUhzOD8lDSk29AtzNjgAu2kxRA9jL9NAbkFlqvkBA=
+github.com/hjson/hjson-go/v4 v4.5.0 h1:ZHLiZ+HaGqPOtEe8T6qY8QHnoEsAeBv8wqxniQAp+CY=
+github.com/hjson/hjson-go/v4 v4.5.0/go.mod h1:4zx6c7Y0vWcm8IRyVoQJUHAPJLXLvbG6X8nk1RLigSo=
 github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef h1:A9HsByNhogrvm9cWb28sjiS3i7tcKCkflWFEkHfuAgM=
 github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef/go.mod h1:lADxMC39cJJqL93Duh1xhAs4I2Zs8mKS89XWXFGp9cs=
 github.com/iancoleman/strcase v0.2.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
