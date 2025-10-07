@@ -56,7 +56,7 @@ type verifyOptions struct {
 func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	o.KeyOptions.AddFlags(cmd)
 	cmd.PersistentFlags().StringVarP(
-		&o.Subject, "subject", "s", "", "subject hash (algo:value) or a path to a files to verify ",
+		&o.Subject, "subject", "s", "", "subject hash (algo:value) or path to file (alternative to positional argument)",
 	)
 
 	cmd.PersistentFlags().StringVar(
@@ -274,7 +274,7 @@ using a collector.
 			color.New(color.FgHiWhite).Sprint("The Policy"),
 			color.New(color.FgHiWhite).Sprint("Attested Evidence"),
 		),
-		Use:               "verify",
+		Use:               "verify [subject]",
 		SilenceUsage:      false,
 		SilenceErrors:     false,
 		PersistentPreRunE: initLogging,
@@ -283,7 +283,7 @@ using a collector.
 				if opts.Subject == "" {
 					opts.Subject = args[0]
 				} else if opts.Subject != args[0] {
-					return fmt.Errorf("subject specified twice (as argument and flag)")
+					return fmt.Errorf("subject specified twice: got %q from positional argument and %q from -s flag (use only one)", args[0], opts.Subject)
 				}
 			}
 
