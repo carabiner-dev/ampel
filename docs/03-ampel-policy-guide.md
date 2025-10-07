@@ -35,9 +35,27 @@ Runtimes are sepcified in the policy framework. While AMPEL supports swappable
 runtimes, at the time of writing it only ships with the default CEL (Common
 Expression Language) runtime. See appendix a for details and examples.
 
+## Policy File Format
+
+AMPEL policies can be written in either **JSON** or **HJSON** format. Both formats
+are fully supported and can be used interchangeably.
+
+### JSON Format
+Standard JSON format with strict syntax requirements. Example: `examples/sbom/policy.json`
+
+### HJSON Format (Recommended for Readability)
+HJSON (Human JSON) is a more user-friendly configuration format that supports:
+- **Comments**: Add inline and block comments to explain policy logic
+- **Unquoted keys**: Write `id: value` instead of `"id": "value"`
+- **Trailing commas**: No need to remove the last comma in lists
+- **Multiline strings**: Easier to read and maintain
+
+Both `.json` and `.hjson` file extensions are supported. See `examples/sbom/policy.hjson`
+for a complete HJSON example with detailed comments.
+
 ## General Policy Structure
 
-An AMPEL policy can be extgremely simply but the structure is flexible enough to
+An AMPEL policy can be extremely simple but the structure is flexible enough to
 support complex use cases. A simple but sufficiently secure policy should have
 the following parts:
 

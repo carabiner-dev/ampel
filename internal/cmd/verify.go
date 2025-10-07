@@ -68,7 +68,7 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	)
 
 	cmd.PersistentFlags().StringVarP(
-		&o.PolicyLocation, "policy", "p", "", "policy/policySet location (can be a file URL or VCS locator)",
+		&o.PolicyLocation, "policy", "p", "", "policy/policySet location (can be a file URL or VCS locator). Supports both .json and .hjson formats",
 	)
 
 	cmd.PersistentFlags().StringSliceVarP(
