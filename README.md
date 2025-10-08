@@ -47,9 +47,11 @@ SBOM visualization and generation capabilities.
 
 ## Policies
 
-Ampel uses a model of policies as code. The Policy frame is written in JSON while
-the evaluation code in a supported runtime. At present Ampel ships with a CEL
-(Common Expression Language) runtime and more runtimes are in the roadmap.
+Ampel uses a model of policies as code. The policy frame can be written in either
+**JSON** or **HJSON** format (HJSON is recommended for better readability with
+support for comments and relaxed syntax). The evaluation code is written in a
+supported runtime. At present Ampel ships with a CEL (Common Expression Language)
+runtime and more runtimes are in the roadmap.
 
 ### Policy Structure
 
