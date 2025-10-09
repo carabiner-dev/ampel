@@ -19,10 +19,16 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-const ampelId = "https://carabiner.dev/ampel@v1"
+const (
+	// AMPEL verifier ID
+	ampelId = "https://carabiner.dev/ampel@v1"
 
-// slsaVersion version used as base to compute the VSA
-const slsaVersion = "1.1"
+	// slsaVersion version used as base to compute the VSA
+	slsaVersion = "1.1"
+
+	// Recognized context keys for the VSA fields
+	vsaContextResourceURIKey = "vsa.resourceUri"
+)
 
 func New() *Driver {
 	return &Driver{}
@@ -92,7 +98,9 @@ func (d *Driver) RenderResultSet(w io.Writer, set *papi.ResultSet) error {
 			Id: ampelId,
 		},
 		TimeVerified: set.GetDateEnd(),
-		ResourceUri:  set.GetSubject().GetUri(),
+		// We set the resource URI here to the resource URI of the verified subject
+		// but if the policyset common context defines one, we'll override it later.
+		ResourceUri: set.GetSubject().GetUri(),
 		Policy: &v1.VerificationSummary_Policy{
 			Uri:    set.GetMeta().GetOrigin().GetUri(),
 			Digest: set.GetMeta().GetOrigin().GetDigest(),
@@ -105,6 +113,14 @@ func (d *Driver) RenderResultSet(w io.Writer, set *papi.ResultSet) error {
 
 	inputs := []attestation.Subject{}
 	depLevels := map[string]uint64{}
+
+	// Check if the policyset defined a resourceURI for the VSA and replace the
+	// value we got from the subject resource locator.
+	if setContext := set.GetCommon().GetContext(); setContext != nil {
+		if s, ok := setContext.AsMap()[vsaContextResourceURIKey].(string); ok && s != "" {
+			vsaData.ResourceUri = s
+		}
+	}
 
 	var verifiedSomeSlsa bool
 	for _, a := range set.Results {
@@ -163,9 +179,8 @@ func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
 			Id: ampelId,
 		},
 		TimeVerified: result.GetDateEnd(),
-		// We fix the resource URI here to the resource URI of the
-		// verification subject but if the policy defines one, we
-		// override it.
+		// We fix the resource URI here to the resource URI of the verification
+		// subject, but if the policy context defines one, we'll override it.
 		ResourceUri: result.GetSubject().GetUri(),
 		Policy: &v1.VerificationSummary_Policy{
 			Uri:    result.GetMeta().GetOrigin().GetUri(),
@@ -179,8 +194,8 @@ func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
 	}
 
 	if resContext := result.GetContext(); resContext != nil {
-		if v, ok := resContext.AsMap()["vsa.resourceUri"]; ok {
-			if s, ok2 := v.(string); ok2 {
+		if v, ok := resContext.AsMap()[vsaContextResourceURIKey]; ok && v != nil {
+			if s, ok2 := v.(string); ok2 && s != "" {
 				vsaData.ResourceUri = s
 			}
 		}
