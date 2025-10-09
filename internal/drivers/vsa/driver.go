@@ -19,10 +19,16 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-const ampelId = "https://carabiner.dev/ampel@v1"
+const (
+	// AMPEL verifier ID
+	ampelId = "https://carabiner.dev/ampel@v1"
 
-// slsaVersion version used as base to compute the VSA
-const slsaVersion = "1.1"
+	// slsaVersion version used as base to compute the VSA
+	slsaVersion = "1.1"
+
+	// Recognized context keys for the VSA fields
+	vsaContextResourceURIKey = "vsa.resourceUri"
+)
 
 func New() *Driver {
 	return &Driver{}
@@ -77,14 +83,24 @@ func resultStringToSLSAResult(status string) string {
 	}
 }
 
-// RenderResultSet renders a results set in a VSA
+// RenderResultSet renders a results set in a VSA.
+//
+// We map the result of the VSA (VerificationResult) to the PolicySet
+// assesment result. The SLSA level captured in the the VerifiedLevels
+// field is transferred from the common controls.
+//
+// Dependency levels are computed by extracting the results of policies
+// chained to a different subject. Those policies are expected to have
+// their own controls section, defining the SLSA level they check.
 func (d *Driver) RenderResultSet(w io.Writer, set *papi.ResultSet) error {
 	vsaData := &v1.VerificationSummary{
 		Verifier: &v1.VerificationSummary_Verifier{
 			Id: ampelId,
 		},
 		TimeVerified: set.GetDateEnd(),
-		ResourceUri:  set.GetSubject().GetUri(),
+		// We set the resource URI here to the resource URI of the verified subject
+		// but if the policyset common context defines one, we'll override it later.
+		ResourceUri: set.GetSubject().GetUri(),
 		Policy: &v1.VerificationSummary_Policy{
 			Uri:    set.GetMeta().GetOrigin().GetUri(),
 			Digest: set.GetMeta().GetOrigin().GetDigest(),
@@ -97,6 +113,14 @@ func (d *Driver) RenderResultSet(w io.Writer, set *papi.ResultSet) error {
 
 	inputs := []attestation.Subject{}
 	depLevels := map[string]uint64{}
+
+	// Check if the policyset defined a resourceURI for the VSA and replace the
+	// value we got from the subject resource locator.
+	if setContext := set.GetCommon().GetContext(); setContext != nil {
+		if s, ok := setContext.AsMap()[vsaContextResourceURIKey].(string); ok && s != "" {
+			vsaData.ResourceUri = s
+		}
+	}
 
 	var verifiedSomeSlsa bool
 	for _, a := range set.Results {
@@ -155,7 +179,9 @@ func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
 			Id: ampelId,
 		},
 		TimeVerified: result.GetDateEnd(),
-		ResourceUri:  result.GetSubject().GetUri(),
+		// We fix the resource URI here to the resource URI of the verification
+		// subject, but if the policy context defines one, we'll override it.
+		ResourceUri: result.GetSubject().GetUri(),
 		Policy: &v1.VerificationSummary_Policy{
 			Uri:    result.GetMeta().GetOrigin().GetUri(),
 			Digest: result.GetMeta().GetOrigin().GetDigest(),
@@ -165,6 +191,14 @@ func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
 		VerificationResult: resultStringToSLSAResult(result.GetStatus()),
 		VerifiedLevels:     []string{},
 		DependencyLevels:   nil,
+	}
+
+	if resContext := result.GetContext(); resContext != nil {
+		if v, ok := resContext.AsMap()[vsaContextResourceURIKey]; ok && v != nil {
+			if s, ok2 := v.(string); ok2 && s != "" {
+				vsaData.ResourceUri = s
+			}
+		}
 	}
 
 	var verifiedSomeSlsa bool
