@@ -160,6 +160,28 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 		return nil, fmt.Errorf("assembling policy context: %w", err)
 	}
 
+	// Now  that we have the computed context, populate the resultset common context
+	// with the computed values. The common context is guaranteed to have an entry
+	// matching the definition un the policySet common, even if nil.
+	commonContext := map[string]any{}
+	for contextValName := range policySet.GetCommon().GetContext() {
+		if v, ok := evalContextValues[contextValName]; ok {
+			commonContext[contextValName] = v
+		} else {
+			commonContext[contextValName] = nil
+		}
+	}
+
+	if len(commonContext) > 0 {
+		spb, err := structpb.NewStruct(commonContext)
+		if err != nil {
+			return nil, fmt.Errorf("building computed common context proto: %w", err)
+		}
+		resultSet.Common = &papi.ResultSetCommon{
+			Context: spb,
+		}
+	}
+
 	structVals, err := structpb.NewStruct(evalContext.ContextValues)
 	if err != nil {
 		return nil, fmt.Errorf("structuring context data: %w", err)
