@@ -34,6 +34,8 @@ func convertToString(value any) string {
 	switch v := value.(type) {
 	case string:
 		return v
+	case nil:
+		return ""
 	case bool:
 		if v {
 			return "true"
