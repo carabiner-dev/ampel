@@ -77,7 +77,15 @@ func resultStringToSLSAResult(status string) string {
 	}
 }
 
-// RenderResultSet renders a results set in a VSA
+// RenderResultSet renders a results set in a VSA.
+//
+// We map the result of the VSA (VerificationResult) to the PolicySet
+// assesment result. The SLSA level captured in the the VerifiedLevels
+// field is transferred from the common controls.
+//
+// Dependency levels are computed by extracting the results of policies
+// chained to a different subject. Those policies are expected to have
+// their own controls section, defining the SLSA level they check.
 func (d *Driver) RenderResultSet(w io.Writer, set *papi.ResultSet) error {
 	vsaData := &v1.VerificationSummary{
 		Verifier: &v1.VerificationSummary_Verifier{
@@ -155,7 +163,10 @@ func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
 			Id: ampelId,
 		},
 		TimeVerified: result.GetDateEnd(),
-		ResourceUri:  result.GetSubject().GetUri(),
+		// We fix the resource URI here to the resource URI of the
+		// verification subject but if the policy defines one, we
+		// override it.
+		ResourceUri: result.GetSubject().GetUri(),
 		Policy: &v1.VerificationSummary_Policy{
 			Uri:    result.GetMeta().GetOrigin().GetUri(),
 			Digest: result.GetMeta().GetOrigin().GetDigest(),
@@ -165,6 +176,14 @@ func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
 		VerificationResult: resultStringToSLSAResult(result.GetStatus()),
 		VerifiedLevels:     []string{},
 		DependencyLevels:   nil,
+	}
+
+	if resContext := result.GetContext(); resContext != nil {
+		if v, ok := resContext.AsMap()["vsa.resourceUri"]; ok {
+			if s, ok2 := v.(string); ok2 {
+				vsaData.ResourceUri = s
+			}
+		}
 	}
 
 	var verifiedSomeSlsa bool
