@@ -48,8 +48,7 @@ type StatementIndex struct {
 }
 
 func vexAlgoToInTotoAlgo(vexAlgo vex.Algorithm) string {
-	//nolint:exhaustive // The blake family are not in intoto
-	switch vexAlgo {
+	switch vexAlgo { //nolint:exhaustive // The blake family are not in intoto
 	case vex.SHA256:
 		return gointoto.AlgorithmSHA256.String()
 	case vex.SHA512:
