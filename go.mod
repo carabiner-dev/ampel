@@ -15,6 +15,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.6.8
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/openvex/go-vex v0.2.7
+	github.com/package-url/packageurl-go v0.1.3
 	github.com/protobom/cel v0.1.0
 	github.com/protobom/protobom v0.5.4
 	github.com/sirupsen/logrus v1.9.3
@@ -48,7 +49,7 @@ require (
 	github.com/carabiner-dev/github v0.2.2 // indirect
 	github.com/carabiner-dev/jsonl v0.2.1 // indirect
 	github.com/carabiner-dev/openeox v0.0.0-20250606202227-fd40810cda47 // indirect
-	github.com/carabiner-dev/signer v0.2.1
+	github.com/carabiner-dev/signer v0.3.0
 	github.com/carabiner-dev/vcslocator v0.3.2 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -158,7 +159,7 @@ require (
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/term v0.35.0 // indirect
+	golang.org/x/term v0.36.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	google.golang.org/api v0.248.0 // indirect
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
@@ -200,7 +201,6 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
-	github.com/package-url/packageurl-go v0.1.3 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/sigstore/sigstore-go v1.1.3 // indirect
 	github.com/spdx/tools-golang v0.5.5 // indirect
@@ -208,7 +208,7 @@ require (
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/vbatts/tar-split v0.12.1 // indirect
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
-	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250818200422-3122310a409c // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250818200422-3122310a409c // indirect
