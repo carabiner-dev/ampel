@@ -5,39 +5,39 @@
 Ampel is a lightweight supply chain policy engine designed to be embedded
 across the software development lifecycle to make sure that source code,
 tools and the build environment can be trusted by verifying unforgeable
-metadata captured in signed attestations
+metadata captured in signed attestations.
 
 ![Image](https://github.com/user-attachments/assets/c3794605-ff84-48dd-be3f-ccefd702f301)
 
 ## Attesting Metadata
 
-Ampel works with attestations in the In-Toto format and has native verification
-support for sigstore bundles. Signing schemes are pluggable meaning other
+Ampel works with attestations in the [in-toto](https://in-toto.io/) format and has native verification
+support for sigstore bundles. Signing schemes are pluggable, meaning other
 signature verification mechanisms can be added.
 
 As a supply chain security tool, Ampel can work with common formats like 
 [SLSA](https://slsa.dev) to check software provenance and SBOMs to gate on depedndency data, but policies can be written against any custom data in JSON.
 
-The policy engine also supports __transformers__ that can read and verify attestations to then convert them to other formats simplify policy
+The policy engine also supports __transformers__ that can read and verify attestations to then convert them to other formats, simplifying policy
 authoring.
 
 [Diagram]
 
 For example, by loading the vulnerability report transformer, Ampel
-can transform the output of the common vulnerability scanners to a common format,such as OSV, allowing you to write a single policy to verify the findings of any scanner.
+can transform the output of the common vulnerability scanners to a common format, such as OSV, allowing you to write a single policy to verify the findings of any scanner.
 
 ## Installing
 
 TBD
 
-## The Ampel Ecosysten
+## The Ampel Ecosystem
 
 Ampel is part of a growing ecosystem of tools that let software developers and
-security engineers harden their SLDC processes. The more mature siblings of 
+security engineers harden their SDLC processes. The more mature siblings of 
 Ampel are:
 
 - [bnd](https://github.com/carabiner-dev/bnd): A tool to attest, sign and verify 
-data. It also has some features to work with attestations and sigstore bundles.
+data. It also has features that work with attestations and sigstore bundles.
 
 - [snappy](https://github.com/carabiner-dev/snappy): Takes snapshots of APIs to
 attest their state.
@@ -72,7 +72,7 @@ policy. Each tenet represents a check Ampel will perform on the avilable evidenc
 The tenet structure contains the evaluation code that will be executed to check
 if the tenet holds true.
 
-A policiy's tenets can be evaluated in two modes:
+A policy's tenets can be evaluated in two modes:
 
 - `AND` a policy will evaluate to PASS when all tenets are true.
 - `OR` a policy will `PASS` if at least one tenet evaluates to true. Useful when 
@@ -88,8 +88,8 @@ Think of tenets as questions to ask your attested data:
 
 ## Link to Compliance Controls
 
-A policy can be linked to a security framework control. WHen evaluating the 
-compliance status iof artifacts againsta a security framework, Ampel can 
+A policy can be linked to a security framework control. When evaluating the 
+compliance status of artifacts against a security framework, Ampel can 
 link the policies to controls and checks defined in OSCAL catalogs and profiles.
 
 ## Results and Results Attestations
@@ -101,7 +101,7 @@ webpages, CI/CD systems, etc.
 
 A powerful feature of Ampel is that evaluation results can also be attested.
 This means that results can be used as input attestations for further policies,
-making it simple to check for complex processes further downstream after the
+making it simple to check for complex processes further downstream after they
 have been checked once.
 
 ### Policy Sets
@@ -113,8 +113,8 @@ in a PolicySet can also be reported together in a ResultsSet.
 
 ## Copyright
 
-Ampel is released under the Apache 2.0 license by Carabiner Systems, Inc. Feel
-free to contribute patches or open an issue if you find a problem. Feedback 
+Ampel is released under the Apache 2.0 license by Carabiner Systems, Inc. 
+Feel free to contribute patches or open an issue if you find a problem. Feedback 
 always welcome!
 
 
