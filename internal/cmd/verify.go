@@ -331,7 +331,7 @@ using a collector.
 			}
 
 			// Compile the policy or location
-			set, pcy, ver, err := policy.NewCompiler().CompileVerifyLocation(
+			set, pcy, grp, ver, err := policy.NewCompiler().CompileVerifyLocation(
 				opts.PolicyLocation,
 				options.WithIdentityString(opts.PolicyIdentityStrings...),
 				options.WithPublicKey(keys...),
@@ -369,7 +369,7 @@ using a collector.
 			}
 
 			// Run the evaluation:
-			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, policy.PolicyOrSet(set, pcy), subject)
+			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, policy.PolicyOrSetOrGroup(set, pcy, grp), subject)
 			if err != nil {
 				return fmt.Errorf("running subject verification: %w", err)
 			}

@@ -49,6 +49,8 @@ func (ampel *Ampel) Verify(
 			return nil, fmt.Errorf("evaluating policy set: %w", err)
 		}
 		return rs, nil
+	case *papi.PolicyGroup:
+		return nil, fmt.Errorf("PolicyGroups are not yet supported")
 	case []*papi.PolicySet:
 		rs := &papi.ResultSet{}
 		for j, ps := range v {

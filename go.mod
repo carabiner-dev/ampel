@@ -1,6 +1,6 @@
 module github.com/carabiner-dev/ampel
 
-go 1.24.8
+go 1.25.5
 
 require (
 	github.com/carabiner-dev/attestation v0.2.1-0.20251002222424-9a7f9c888176
@@ -8,7 +8,7 @@ require (
 	github.com/carabiner-dev/command v0.2.0
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
-	github.com/carabiner-dev/policy v0.3.1
+	github.com/carabiner-dev/policy v0.4.0
 	github.com/fatih/color v1.18.0
 	github.com/google/cel-go v0.26.1
 	github.com/in-toto/attestation v1.1.2
