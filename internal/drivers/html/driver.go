@@ -52,3 +52,16 @@ func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
 	t.RenderHTML()
 	return nil
 }
+
+func (d *Driver) RenderResultGroup(w io.Writer, result *papi.ResultGroup) error {
+	t, err := d.TableWriter.ResultGroupTable(result)
+	if err != nil {
+		return fmt.Errorf("building table: %w", err)
+	}
+	t.SetOutputMirror(w)
+	t.Style().HTML = table.HTMLOptions{
+		EscapeText: false,
+	}
+	t.RenderHTML()
+	return nil
+}

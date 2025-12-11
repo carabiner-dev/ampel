@@ -63,6 +63,7 @@ func NewEngine() *Engine {
 type Driver interface {
 	RenderResultSet(w io.Writer, status *papi.ResultSet) error
 	RenderResult(w io.Writer, status *papi.Result) error
+	RenderResultGroup(w io.Writer, status *papi.ResultGroup) error
 }
 
 type Engine struct {
