@@ -50,7 +50,11 @@ func (ampel *Ampel) Verify(
 		}
 		return rs, nil
 	case *papi.PolicyGroup:
-		return nil, fmt.Errorf("PolicyGroups are not yet supported")
+		rs, err := ampel.VerifySubjectWithPolicyGroup(ctx, opts, v, subject)
+		if err != nil {
+			return nil, fmt.Errorf("evaluating policy group: %w", err)
+		}
+		return rs, nil
 	case []*papi.PolicySet:
 		rs := &papi.ResultSet{}
 		for j, ps := range v {
@@ -137,23 +141,8 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	opts.AttestationFiles = []string{}
 	opts.Attestations = atts
 
-	// Add the (eval) context, to the (go) context :P
-	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
-	if !ok {
-		evalContext = evalcontext.EvaluationContext{}
-	}
-
-	// If the policy set has an eval context definition, then parse it and add
-	// it to the the Go context payload
-	if policySet.GetCommon() != nil && policySet.GetCommon().GetContext() != nil {
-		evalContext.Context = policySet.GetCommon().GetContext()
-	}
-
-	// Pass the policySet identities to the individual policy evaluations
-	evalContext.Identities = policySet.GetCommon().GetIdentities()
-
-	// Build the context to pass to the policy evaluations
-	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext)
+	// Load the policyset eval ctx definition into the go contect
+	ctx, evalContext := ampel.loadElementEvalContextDef(ctx, policySet)
 
 	// Here we build the context that will be common for all policies as defined
 	// in the policy set.
@@ -184,11 +173,6 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 		}
 	}
 
-	structVals, err := structpb.NewStruct(evalContext.ContextValues)
-	if err != nil {
-		return nil, fmt.Errorf("structuring context data: %w", err)
-	}
-
 	// Process policySet chain
 	subjects, chain, policyFail, err := ampel.impl.ProcessPolicySetChainedSubjects(
 		ctx, &opts, evaluators, ampel.Collector, policySet, evalContextValues, subject, atts,
@@ -202,51 +186,19 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 		return nil, fmt.Errorf("processing chained subject: %w", err)
 	}
 
-	// If the chain returned not subjects, then we return an error unless
+	evalContext.ChainedSubjects = chain
+
+	// Rebuild the go context as we are now shipping the chained subjects.
+	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext)
+
+	// If the chain returned no subjects, then we return an error unless
 	// the verifier was explicitly set to allow empty chains.
 	if len(policySet.GetChain()) > 0 && len(subjects) == 0 {
 		if !opts.AllowEmptySetChains {
 			return nil, fmt.Errorf("unable to complete evidence chain, no subject returned from selectors")
 		}
-		resultSet.Error = &papi.Error{
-			Message:  "unable to complete evidence chain",
-			Guidance: "PolicySet selectors did not return any subjects when evaluated",
-		}
-		resultSet.Status = papi.StatusPASS
-		resultSet.DateEnd = timestamppb.Now()
-		for _, pcy := range policySet.Policies {
-			resultSet.Results = append(resultSet.Results, &papi.Result{
-				Status:    papi.StatusSOFTFAIL,
-				DateStart: resultSet.GetDateStart(),
-				DateEnd:   timestamppb.Now(),
-				Policy: &papi.PolicyRef{
-					Id:       pcy.GetId(),
-					Version:  pcy.GetMeta().GetVersion(),
-					Location: pcy.GetSource().GetLocation(),
-				},
-				EvalResults: []*papi.EvalResult{
-					{
-						Status: papi.StatusSOFTFAIL,
-						Date:   timestamppb.Now(),
-						Error: &papi.Error{
-							Message:  "Policy not evaluated, empty chain",
-							Guidance: "The policySet selectors did not return subject to verify",
-						},
-					},
-				},
-				Meta:    pcy.GetMeta(),
-				Context: structVals,
-				Chain:   chain,
-			})
-		}
-
-		return resultSet, nil
+		return softPassPolicySet(ctx, policySet, resultSet)
 	}
-
-	evalContext.ChainedSubjects = chain
-
-	// Rebuild the go context as we are now shipping the chained subjects.
-	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext)
 
 	var mtx sync.Mutex
 	t := throttler.New(int(opts.ParallelWorkers), len(policySet.Policies)*len(subjects))
@@ -389,6 +341,197 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	return result, nil
 }
 
+// VerifySubjectWithPolicyGroup evaluates a policy group and its blocks
+func (ampel *Ampel) VerifySubjectWithPolicyGroup(
+	ctx context.Context, oOpts *VerificationOptions, group *papi.PolicyGroup, subject attestation.Subject,
+) (*papi.ResultGroup, error) {
+	// DeepCopy the options as we will mutate them after parsing the initial
+	// attestations set.
+	opts := *oOpts
+
+	// Now that we have a clone of the options, parse and add the
+	// policySet's keys to the options set to reuse in the policies
+	keys, err := group.PublicKeys()
+	if err != nil {
+		return nil, fmt.Errorf("reading PolicySet keys: %w", err)
+	}
+	opts.Keys = append(opts.Keys, keys...)
+
+	// Resuktset to return
+	res := &papi.ResultGroup{
+		Status:    papi.StatusPASS,
+		DateStart: timestamppb.Now(),
+		DateEnd:   timestamppb.Now(),
+		Group: &papi.PolicyGroupRef{
+			Id:      group.GetId(),
+			Version: group.GetMeta().GetVersion(),
+			// Identity: &papi.Identity{},
+			Location: group.GetSource().GetLocation(),
+		},
+		EvalResults: []*papi.BlockEvalResult{},
+		Meta:        group.GetMeta(),
+		Context:     &structpb.Struct{},
+		Chain:       []*papi.ChainedSubject{},
+		Common: &papi.ResultSetCommon{
+			Context: &structpb.Struct{},
+		},
+	}
+
+	// Check if the policy is viable before
+	if err := ampel.impl.CheckPolicyGroup(ctx, &opts, group); err != nil {
+		// If the policygroup failed validation, don't err. Fail the evaluation
+		perr := PolicyError{}
+		if errors.As(err, &perr) {
+			return failPolicyGroupWithError(group, nil, subject, err), nil
+		}
+		// else something broke
+		return nil, fmt.Errorf("checking policy: %w", err)
+	}
+
+	// Build the required evaluators
+	evaluators, err := ampel.impl.BuildGroupEvaluators(&opts, group)
+	if err != nil {
+		return nil, fmt.Errorf("building evaluators: %w", err)
+	}
+
+	// Parse any extra attestation files defined in the options
+	atts, err := ampel.impl.ParseAttestations(ctx, &opts, subject)
+	if err != nil {
+		return nil, fmt.Errorf("parsing single attestations: %w", err)
+	}
+
+	// Load the policyset eval ctx definition into the go contect
+	ctx, evalContext := ampel.loadElementEvalContextDef(ctx, group)
+
+	// Here we build the context that will be common for all policies as defined
+	// in the policy group.
+	evalContextValues, err := ampel.impl.AssembleEvalContextValues(ctx, &opts, group.GetCommon().GetContext())
+	if err != nil {
+		return nil, fmt.Errorf("assembling policy context: %w", err)
+	}
+	// Process chained subjects. These have access to all the read attestations
+	// even when some will be discarded in the next step. Computing the chain
+	// will use the configured repositories if more attestations are required.
+	var chain []*papi.ChainedSubject
+
+	subject, chain, policyFail, err := ampel.impl.ProcessChainedSubjects(
+		ctx, &opts, evaluators, ampel.Collector, group, evalContextValues, subject, atts,
+	)
+	if err != nil {
+		// If policyFail is true, then we don't return an error but rather
+		// a policy fail result based on the error
+		if policyFail {
+			return failPolicyGroupWithError(group, chain, subject, err), nil
+		}
+		return nil, fmt.Errorf("processing chained subject: %w", err)
+	}
+
+	res.Subject = &gointoto.ResourceDescriptor{
+		Name:   subject.GetName(),
+		Uri:    subject.GetUri(),
+		Digest: subject.GetDigest(),
+	}
+
+	evalContext.ChainedSubjects = chain
+
+	// Rebuild the go context as we are now shipping the chained subjects.
+	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext)
+
+	// Now  that we have the computed context, populate the resultset common context
+	// with the computed values. The common context is guaranteed to have an entry
+	// matching the definition un the policySet common, even if nil.
+	commonContext := map[string]any{}
+	for contextValName := range group.GetCommon().GetContext() {
+		if v, ok := evalContextValues[contextValName]; ok {
+			commonContext[contextValName] = v
+		} else {
+			commonContext[contextValName] = nil
+		}
+	}
+
+	if len(commonContext) > 0 {
+		spb, err := structpb.NewStruct(commonContext)
+		if err != nil {
+			return nil, fmt.Errorf("building computed common context proto: %w", err)
+		}
+		res.Common = &papi.ResultSetCommon{
+			Context: spb,
+		}
+	}
+
+	// Extract context values
+	for i := range group.GetBlocks() {
+		rs, err := ampel.verifySubjectWithBlock(ctx, &opts, group.GetBlocks()[i], subject)
+		if err != nil {
+			return nil, fmt.Errorf("verifying block: %w", err)
+		}
+
+		res.EvalResults = append(res.EvalResults, rs)
+	}
+
+	// Assert the group results. For the group to pass all blocks
+	// need to pass.
+	fails := []string{}
+	for i := range res.EvalResults {
+		if res.EvalResults[i].GetStatus() == papi.StatusFAIL {
+			res.Status = papi.StatusFAIL
+			if res.EvalResults[i].GetId() != "" {
+				fails = append(fails, res.EvalResults[i].GetId())
+			} else {
+				fails = append(fails, fmt.Sprintf("group #%d", i))
+			}
+		}
+	}
+	if len(fails) > 0 && res.Status == papi.StatusFAIL {
+		res.Error = fmt.Sprintf("Evaluation failed by blocks %v", fails)
+	}
+
+	// Record the end of the group eval
+	res.DateEnd = timestamppb.Now()
+	return res, nil
+}
+
+func (ampel *Ampel) verifySubjectWithBlock(
+	ctx context.Context, opts *VerificationOptions, block *papi.PolicyBlock, subject attestation.Subject,
+) (*papi.BlockEvalResult, error) {
+	rset := &papi.BlockEvalResult{
+		Status:  papi.StatusPASS,
+		Meta:    block.GetMeta(),
+		Id:      block.GetId(),
+		Results: []*papi.Result{},
+		Error:   &papi.Error{},
+	}
+
+	if block.GetMeta().GetAssertMode() == "OR" {
+		rset.Status = papi.StatusFAIL
+	}
+
+	// Evaluate the block's policies
+	// TODO(puerco): Parallelize this thing
+	for i := range block.GetPolicies() {
+		res, err := ampel.VerifySubjectWithPolicy(ctx, opts, block.GetPolicies()[i], subject)
+		if err != nil {
+			return nil, fmt.Errorf("verifying policy #%d: %w", i, err)
+		}
+		rset.Results = append(rset.Results, res)
+
+		if res.GetStatus() == papi.StatusFAIL && block.GetMeta().GetAssertMode() == "" || block.GetMeta().GetAssertMode() == "AND" {
+			rset.Status = papi.StatusFAIL
+			if opts.LazyBlockEval {
+				break
+			}
+		}
+
+		if res.GetStatus() == papi.StatusPASS && block.GetMeta().GetAssertMode() == "OR" {
+			rset.Status = papi.StatusPASS
+			if opts.LazyBlockEval {
+				break
+			}
+		}
+	}
+	return rset, nil
+}
+
 // subjectToString builds a string to make a subject more human-readable
 func subjectToString(subject attestation.Subject) string {
 	vals := []string{}
@@ -432,6 +575,16 @@ func (ampel *Ampel) AttestResults(w io.Writer, results papi.Results) error {
 		return ampel.impl.AttestResultSetToWriter(w, rs)
 	case *papi.ResultSet:
 		return ampel.impl.AttestResultSetToWriter(w, r)
+	case *papi.ResultGroup:
+		rs := &papi.ResultSet{
+			Groups:    []*papi.ResultGroup{r},
+			DateStart: r.DateStart,
+			DateEnd:   r.DateEnd,
+		}
+		if err := rs.Assert(); err != nil {
+			return fmt.Errorf("asserting results set: %w", err)
+		}
+		return ampel.impl.AttestResultSetToWriter(w, rs)
 	default:
 		return fmt.Errorf("results are not result or resultset")
 	}
@@ -500,4 +653,112 @@ func failPolicyWithError(p *papi.Policy, chain []*papi.ChainedSubject, subject a
 		res.EvalResults = append(res.EvalResults, er)
 	}
 	return res
+}
+
+// failPolicyGroupWithError returns a failed status result for the policyGroup
+func failPolicyGroupWithError(p *papi.PolicyGroup, chain []*papi.ChainedSubject, subject attestation.Subject, err error) *papi.ResultGroup {
+	if subject == nil {
+		subject = &gointoto.ResourceDescriptor{}
+	}
+	res := &papi.ResultGroup{
+		Status:    papi.StatusFAIL,
+		DateStart: timestamppb.Now(),
+		DateEnd:   timestamppb.Now(),
+		Group: &papi.PolicyGroupRef{
+			Id:      p.Id,
+			Version: p.GetMeta().GetVersion(),
+		},
+		// TODO
+		EvalResults: []*papi.BlockEvalResult{},
+		Meta:        p.GetMeta(),
+		Chain:       chain,
+		Subject: &gointoto.ResourceDescriptor{
+			Name:   subject.GetName(),
+			Uri:    subject.GetUri(),
+			Digest: subject.GetDigest(),
+		},
+		Error: err.Error(),
+	}
+
+	return res
+}
+
+// loadElementEvalContextDef adds the evaluation context definition from the element
+// into the Go context (many context, I know :P)  If there is already an eval context
+// in the go context, we add the new definitions from the policy material element.
+//
+// Returns the new go context loaded with the augmented eval ctx definition and the
+// new evaluation context.
+func (ampel *Ampel) loadElementEvalContextDef(ctx context.Context, element papi.CommonProvider) (context.Context, evalcontext.EvaluationContext) {
+	// First, extract any existing evaluation context
+	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+	if !ok {
+		evalContext = evalcontext.EvaluationContext{
+			Context:    map[string]*papi.ContextVal{},
+			Identities: []*papi.Identity{},
+		}
+	}
+
+	// If the policy material has an eval context definition, then parse it and add
+	// it to the the Go context payload
+	if element.GetCommon() != nil && element.GetCommon().GetContext() != nil {
+		for key, val := range element.GetCommon().GetContext() {
+			evalContext.Context[key] = val
+		}
+	}
+
+	// Pass the policySet identities to the individual policy evaluations
+	if element.GetCommon() != nil && element.GetCommon().GetIdentities() != nil {
+		// TODO(puerco): Here we should check if the context already has the same
+		// identity to avoid duplication
+		evalContext.Identities = append(evalContext.Identities, element.GetCommon().GetIdentities()...)
+	}
+
+	return context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext), evalContext
+}
+
+func softPassPolicySet(ctx context.Context, policySet *papi.PolicySet, resultSet *papi.ResultSet) (*papi.ResultSet, error) {
+	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+	if !ok {
+		evalContext = evalcontext.EvaluationContext{}
+	}
+
+	structVals, err := structpb.NewStruct(evalContext.ContextValues)
+	if err != nil {
+		return nil, fmt.Errorf("structuring context data: %w", err)
+	}
+
+	resultSet.Error = &papi.Error{
+		Message:  "unable to complete evidence chain",
+		Guidance: "PolicySet selectors did not return any subjects when evaluated",
+	}
+	resultSet.Status = papi.StatusPASS
+	resultSet.DateEnd = timestamppb.Now()
+	for _, pcy := range policySet.Policies {
+		resultSet.Results = append(resultSet.Results, &papi.Result{
+			Status:    papi.StatusSOFTFAIL,
+			DateStart: resultSet.GetDateStart(),
+			DateEnd:   timestamppb.Now(),
+			Policy: &papi.PolicyRef{
+				Id:       pcy.GetId(),
+				Version:  pcy.GetMeta().GetVersion(),
+				Location: pcy.GetSource().GetLocation(),
+			},
+			EvalResults: []*papi.EvalResult{
+				{
+					Status: papi.StatusSOFTFAIL,
+					Date:   timestamppb.Now(),
+					Error: &papi.Error{
+						Message:  "Policy not evaluated, chain is empty",
+						Guidance: "The policySet selectors did not return any subjects to verify",
+					},
+				},
+			},
+			Meta:    pcy.GetMeta(),
+			Context: structVals,
+			Chain:   evalContext.ChainedSubjects,
+		})
+	}
+
+	return resultSet, nil
 }
