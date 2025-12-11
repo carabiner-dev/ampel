@@ -388,6 +388,10 @@ using a collector.
 				if err := eng.RenderResult(os.Stdout, r); err != nil {
 					return fmt.Errorf("rendering result: %w", err)
 				}
+			case *papi.ResultGroup:
+				if err := eng.Driver.RenderResultGroup(os.Stdout, r); err != nil {
+					return fmt.Errorf("rendering result: %w", err)
+				}
 			case *papi.ResultSet:
 				if opts.PolicyOutput || len(opts.Policies) > 0 {
 					for _, r := range r.GetResults() {
