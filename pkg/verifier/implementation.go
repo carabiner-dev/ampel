@@ -21,9 +21,10 @@ import (
 	"github.com/carabiner-dev/collector/envelope"
 	"github.com/carabiner-dev/collector/envelope/bare"
 	"github.com/carabiner-dev/collector/filters"
-	ampelPred "github.com/carabiner-dev/collector/predicate/ampel"
 	"github.com/carabiner-dev/collector/statement/intoto"
 	papi "github.com/carabiner-dev/policy/api/v1"
+	"github.com/carabiner-dev/predicates"
+	sapi "github.com/carabiner-dev/signer/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -49,9 +50,9 @@ type AmpelVerifier interface {
 	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *papi.Policy, attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
 
 	// CheckIdentities verifies that attestations are signed by the policy identities
-	CheckIdentities(context.Context, *VerificationOptions, []*papi.Identity, []attestation.Envelope) (bool, [][]*papi.Identity, []error, error)
+	CheckIdentities(context.Context, *VerificationOptions, []*sapi.Identity, []attestation.Envelope) (bool, [][]*sapi.Identity, []error, error)
 
-	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope, [][]*papi.Identity) ([]attestation.Predicate, error)
+	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope, [][]*sapi.Identity) ([]attestation.Predicate, error)
 	AssertResult(*papi.Policy, *papi.Result) error
 	AttestResults(context.Context, *VerificationOptions, papi.Results) error
 
@@ -356,13 +357,13 @@ func (di *defaultIplementation) BuildTransformers(opts *VerificationOptions, pol
 // defined in the policy
 func (di *defaultIplementation) Transform(
 	opts *VerificationOptions, transformers map[transformer.Class]transformer.Transformer,
-	policy *papi.Policy, subject attestation.Subject, predicates []attestation.Predicate,
+	policy *papi.Policy, subject attestation.Subject, prepredicates []attestation.Predicate,
 ) (attestation.Subject, []attestation.Predicate, error) {
 	var err error
 	var newsubject attestation.Subject
 	i := 0
 	for _, t := range transformers {
-		newsubject, predicates, err = t.Mutate(subject, predicates)
+		newsubject, prepredicates, err = t.Mutate(subject, prepredicates)
 		if newsubject != nil {
 			subject = newsubject
 		}
@@ -372,22 +373,22 @@ func (di *defaultIplementation) Transform(
 		i++
 	}
 	ts := []string{}
-	for _, s := range predicates {
+	for _, s := range prepredicates {
 		ts = append(ts, string(s.GetType()))
 	}
 	logrus.Debugf("Predicate types after transform: %v", ts)
-	return subject, predicates, nil
+	return subject, prepredicates, nil
 }
 
 // CheckIdentities checks that the ingested attestations are signed by one of the
 // identities defined in the policy.
-func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *VerificationOptions, policyIdentities []*papi.Identity, envelopes []attestation.Envelope) (bool, [][]*papi.Identity, []error, error) {
+func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *VerificationOptions, policyIdentities []*sapi.Identity, envelopes []attestation.Envelope) (bool, [][]*sapi.Identity, []error, error) {
 	// verification errors for the user
 	errs := make([]error, len(envelopes))
-	validSigners := make([][]*papi.Identity, len(envelopes))
+	validSigners := make([][]*sapi.Identity, len(envelopes))
 
 	// allIds are the allowed ids (from the policy + any from options)
-	allIds := []*papi.Identity{}
+	allIds := []*sapi.Identity{}
 
 	// Extract any identities received in the context
 	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
@@ -407,7 +408,7 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 	if len(opts.IdentityStrings) > 0 && len(policyIdentities) == 0 {
 		logrus.Debugf("Got %d identity strings from options", len(opts.IdentityStrings))
 		for _, idSlug := range opts.IdentityStrings {
-			ident, err := papi.NewIdentityFromSlug(idSlug)
+			ident, err := sapi.NewIdentityFromSlug(idSlug)
 			if err != nil {
 				return false, nil, nil, fmt.Errorf("invalid identity slug %q: %w", idSlug, err)
 			}
@@ -479,12 +480,12 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 // verified against the policy when ingesting the attestations.
 //
 // TODO(puerco): Implement filtering before 1.0
-func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, subject attestation.Subject, envs []attestation.Envelope, ids [][]*papi.Identity) ([]attestation.Predicate, error) {
+func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, subject attestation.Subject, envs []attestation.Envelope, ids [][]*sapi.Identity) ([]attestation.Predicate, error) {
 	preds := []attestation.Predicate{}
 	for i, env := range envs {
 		pred := env.GetStatement().GetPredicate()
-		pred.SetVerification(&papi.Verification{
-			Signature: &papi.SignatureVerification{
+		pred.SetVerification(&sapi.Verification{
+			Signature: &sapi.SignatureVerification{
 				Date:       timestamppb.Now(),
 				Verified:   true,
 				Identities: ids[i],
@@ -499,7 +500,7 @@ func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, su
 func (di *defaultIplementation) evaluateChain(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
 	agent *collector.Agent, chainLinks []*papi.ChainLink, evalContextValues map[string]any, subject attestation.Subject,
-	attestations []attestation.Envelope, globalIdentities []*papi.Identity, defaultEvalClass string,
+	attestations []attestation.Envelope, globalIdentities []*sapi.Identity, defaultEvalClass string,
 ) ([]attestation.Subject, []*papi.ChainedSubject, bool, error) {
 	chain := []*papi.ChainedSubject{}
 	logrus.Debug("Processing evidence chain")
@@ -562,7 +563,7 @@ func (di *defaultIplementation) evaluateChain(
 		}
 		var pass bool
 		var err error
-		var ids [][]*papi.Identity
+		var ids [][]*sapi.Identity
 
 		// Check the attestation identities for now, we fallback to the identities
 		// defined in the policy if the link does not have its own. Probably this
@@ -637,7 +638,7 @@ func (di *defaultIplementation) evaluateChain(
 		}
 
 		// Add to link history
-		var goodIds []*papi.Identity
+		var goodIds []*sapi.Identity
 		if len(ids) > 0 {
 			goodIds = ids[0]
 		}
@@ -851,7 +852,7 @@ func (di *defaultIplementation) AssembleEvalContextValues(ctx context.Context, o
 // all gathering, parsing, transforming and verification is performed.
 func (di *defaultIplementation) VerifySubject(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
-	p *papi.Policy, evalContextValues map[string]any, subject attestation.Subject, predicates []attestation.Predicate,
+	p *papi.Policy, evalContextValues map[string]any, subject attestation.Subject, prepredicates []attestation.Predicate,
 ) (*papi.Result, error) {
 	evalContextValuesStruct, err := structpb.NewStruct(evalContextValues)
 	if err != nil {
@@ -907,7 +908,7 @@ func (di *defaultIplementation) VerifySubject(
 			idx[attestation.PredicateType(tp)] = struct{}{}
 		}
 
-		for _, pred := range predicates {
+		for _, pred := range prepredicates {
 			if _, ok := idx[pred.GetType()]; ok {
 				npredicates = append(npredicates, pred)
 			}
@@ -1055,14 +1056,15 @@ func (di *defaultIplementation) AttestResultToWriter(
 	}
 
 	// Create the predicate file
-	pred := ampelPred.NewPredicate()
-	pred.Parsed = &papi.ResultSet{
-		Results: []*papi.Result{result},
+	pred := &predicates.ResultSet{
+		Parsed: &papi.ResultSet{
+			Results: []*papi.Result{result},
+		},
 	}
 
 	// Create the statement
 	stmt := intoto.NewStatement()
-	stmt.PredicateType = ampelPred.PredicateTypeResults
+	stmt.PredicateType = predicates.PredicateTypeResultSet
 	stmt.AddSubject(subject)
 	stmt.Predicate = pred
 
@@ -1123,10 +1125,11 @@ func (di *defaultIplementation) AttestResultSetToWriter(
 	}
 
 	// Create the predicate file
-	pred := ampelPred.NewPredicate()
-	pred.Parsed = resultset
+	pred := &predicates.ResultSet{
+		Parsed: resultset,
+	}
 
-	stmt.PredicateType = ampelPred.PredicateTypeResults
+	stmt.PredicateType = predicates.PredicateTypeResultSet
 	stmt.Predicate = pred
 
 	// Write the statement to json
