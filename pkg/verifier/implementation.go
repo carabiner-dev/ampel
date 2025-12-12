@@ -78,6 +78,45 @@ type AmpelVerifier interface {
 
 type defaultIplementation struct{}
 
+// normalizeSubjectDigests applies gitCommit<->sha1 normalization to ensure
+// that subjects specified with sha1: prefix match attestations using gitCommit:
+// digest type and vice versa. This enables evidence chain matching for git
+// commits regardless of which digest type identifier is used.
+//
+// The function creates a copy of the subject with normalized digests when
+// normalization is enabled, leaving the original subject unchanged otherwise.
+func normalizeSubjectDigests(subject attestation.Subject, enableHack bool) attestation.Subject {
+	if !enableHack {
+		return subject
+	}
+
+	digest := subject.GetDigest()
+	_, hasCommit := digest[string(gointoto.AlgorithmGitCommit)]
+	_, hasSHA1 := digest[string(gointoto.AlgorithmSHA1)]
+
+	// Only apply normalization if we have one but not the other and it looks like
+	// a git commit SHA (40 hex characters)
+	needsNormalization := false
+	if hasCommit && !hasSHA1 && len(digest[string(gointoto.AlgorithmGitCommit)]) == 40 {
+		digest[string(gointoto.AlgorithmSHA1)] = digest[string(gointoto.AlgorithmGitCommit)]
+		needsNormalization = true
+	} else if hasSHA1 && !hasCommit && len(digest[string(gointoto.AlgorithmSHA1)]) == 40 {
+		digest[string(gointoto.AlgorithmGitCommit)] = digest[string(gointoto.AlgorithmSHA1)]
+		needsNormalization = true
+	}
+
+	if !needsNormalization {
+		return subject
+	}
+
+	// Clone the subject with the normalized digests
+	return &gointoto.ResourceDescriptor{
+		Name:   subject.GetName(),
+		Uri:    subject.GetUri(),
+		Digest: digest,
+	}
+}
+
 // CheckPolicy verifies the policy before evaluation to ensure it is fit to run.
 func (di *defaultIplementation) CheckPolicy(ctx context.Context, opts *VerificationOptions, p *papi.Policy) error {
 	if opts == nil {
@@ -131,26 +170,9 @@ func (di *defaultIplementation) GatherAttestations(
 	// filtered out as no subject matching is done. This is because we ingest
 	// all of them in case they are needed when computing the chained subjects.
 
+	// Apply gitCommit<->sha1 normalization to enable matching
+	subject = normalizeSubjectDigests(subject, opts.GitCommitShaHack)
 	digest := subject.GetDigest()
-
-	// Here we apply the gitCommit hack if it's tuned on
-	if opts.GitCommitShaHack {
-		_, hasCommit := digest[string(gointoto.AlgorithmGitCommit)]
-		_, hasSHA1 := digest[string(gointoto.AlgorithmSHA1)]
-
-		if hasCommit && !hasSHA1 && len(digest[string(gointoto.AlgorithmGitCommit)]) == 40 {
-			digest[string(gointoto.AlgorithmSHA1)] = digest[string(gointoto.AlgorithmGitCommit)]
-		} else if hasSHA1 && !hasCommit {
-			digest[string(gointoto.AlgorithmGitCommit)] = digest[string(gointoto.AlgorithmSHA1)]
-		}
-
-		// Clone the subject with te updated digests
-		subject = &gointoto.ResourceDescriptor{
-			Name:   subject.GetName(),
-			Uri:    subject.GetUri(),
-			Digest: digest,
-		}
-	}
 
 	// ... but we also need to keep the specified attestations that don't
 	// have a subject. These come from bare json files, such as unsigned SBOMs
@@ -487,6 +509,11 @@ func (di *defaultIplementation) evaluateChain(
 	for i, link := range chainLinks {
 		var lattestation []attestation.Envelope
 		logrus.Debugf(" Link needs %s", link.GetPredicate().GetType())
+
+		// Apply gitCommit<->sha1 normalization to the subject before matching
+		// This ensures evidence chains work with both sha1: and gitCommit: digest types
+		normalizedSubject := normalizeSubjectDigests(subject, opts.GitCommitShaHack)
+
 		// Build an attestation query for the type we need but filter
 		// the attestations to only the current computed subject.
 		q := attestation.NewQuery().WithFilter(
@@ -497,7 +524,7 @@ func (di *defaultIplementation) evaluateChain(
 			},
 			// TODO(puerco): Filter on the whole subject (not just hashes).
 			&filters.SubjectHashMatcher{
-				HashSets: []map[string]string{subject.GetDigest()},
+				HashSets: []map[string]string{normalizedSubject.GetDigest()},
 			},
 		)
 
@@ -506,7 +533,7 @@ func (di *defaultIplementation) evaluateChain(
 		// Only fetch more attestations from the configured sources if we need more:
 		if len(lattestation) == 0 && agent != nil {
 			moreatts, err := agent.FetchAttestationsBySubject(
-				ctx, []attestation.Subject{subject}, collector.WithQuery(q),
+				ctx, []attestation.Subject{normalizedSubject}, collector.WithQuery(q),
 			)
 			if err != nil {
 				return nil, nil, false, fmt.Errorf("collecting attestations: %w", err)

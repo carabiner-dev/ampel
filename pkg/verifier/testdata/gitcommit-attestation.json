@@ -1,0 +1,16 @@
+{
+  "predicateType": "https://github.com/slsa-framework/slsa-source-poc/source-provenance/v1-draft",
+  "predicate": {
+    "data": {
+      "repoUri": "https://github.com/example-org/example-repo"
+    }
+  },
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "digest": {
+        "gitCommit": "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6"
+      }
+    }
+  ]
+}

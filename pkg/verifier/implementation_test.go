@@ -160,6 +160,35 @@ func TestEvaluateChain(t *testing.T) {
 				},
 			},
 		},
+		{
+			// Test that sha1: subject prefix works with gitCommit: attestation digest type
+			// This is the exact bug reported in the GitHub issue: https://github.com/carabiner-dev/ampel/issues/175
+			// Subject with sha1: should match attestations with gitCommit: digest
+			"gitCommit-sha1-matching-bug-fix", false, 1, &gointoto.ResourceDescriptor{
+				Name: "commit",
+				Digest: map[string]string{
+					// User specifies subject with sha1: prefix (as with ampel verify --subject=sha1:...)
+					"sha1": "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+				},
+			},
+			[]string{
+				// Attestation file has subject with gitCommit digest type
+				"testdata/gitcommit-attestation.json",
+			},
+			[]*papi.ChainLink{
+				{
+					// Chain selector returns a simple subject
+					// The key test is that the initial subject (sha1:...) matches
+					// the attestation (gitCommit:...) to trigger this selector
+					Source: &papi.ChainLink_Predicate{
+						Predicate: &papi.ChainedPredicate{
+							Type:     "https://github.com/slsa-framework/slsa-source-poc/source-provenance/v1-draft",
+							Selector: `[{ "name": "test-repo-output" }]`,
+						},
+					},
+				},
+			},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -245,6 +274,122 @@ func (fe *fakeEnvelope) GetVerification() attestation.Verification { return fe.v
 func (fe *fakeEnvelope) Verify(...any) error                       { return nil }
 
 var _ attestation.Envelope = &fakeEnvelope{}
+
+func TestNormalizeSubjectDigests(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name           string
+		subject        attestation.Subject
+		enableHack     bool
+		expectedDigest map[string]string
+	}{
+		{
+			name: "gitCommit-to-sha1-hack-enabled",
+			subject: &gointoto.ResourceDescriptor{
+				Name: "commit",
+				Digest: map[string]string{
+					"gitCommit": "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+				},
+			},
+			enableHack: true,
+			expectedDigest: map[string]string{
+				"gitCommit": "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+				"sha1":      "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+			},
+		},
+		{
+			name: "sha1-to-gitCommit-hack-enabled",
+			subject: &gointoto.ResourceDescriptor{
+				Name: "commit",
+				Digest: map[string]string{
+					"sha1": "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+				},
+			},
+			enableHack: true,
+			expectedDigest: map[string]string{
+				"sha1":      "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+				"gitCommit": "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+			},
+		},
+		{
+			name: "gitCommit-to-sha1-hack-disabled",
+			subject: &gointoto.ResourceDescriptor{
+				Name: "commit",
+				Digest: map[string]string{
+					"gitCommit": "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+				},
+			},
+			enableHack: false,
+			expectedDigest: map[string]string{
+				"gitCommit": "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+			},
+		},
+		{
+			name: "both-present-no-normalization",
+			subject: &gointoto.ResourceDescriptor{
+				Name: "commit",
+				Digest: map[string]string{
+					"gitCommit": "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+					"sha1":      "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+				},
+			},
+			enableHack: true,
+			expectedDigest: map[string]string{
+				"gitCommit": "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+				"sha1":      "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+			},
+		},
+		{
+			name: "invalid-length-sha1-no-normalization",
+			subject: &gointoto.ResourceDescriptor{
+				Name: "commit",
+				Digest: map[string]string{
+					"sha1": "tooshort",
+				},
+			},
+			enableHack: true,
+			expectedDigest: map[string]string{
+				"sha1": "tooshort",
+			},
+		},
+		{
+			name: "sha256-no-normalization",
+			subject: &gointoto.ResourceDescriptor{
+				Name: "artifact",
+				Digest: map[string]string{
+					"sha256": "851074691728c479a4c83628de8310eaca792cc7851074691728c479a4c83628",
+				},
+			},
+			enableHack: true,
+			expectedDigest: map[string]string{
+				"sha256": "851074691728c479a4c83628de8310eaca792cc7851074691728c479a4c83628",
+			},
+		},
+		{
+			name: "multiple-digests-with-gitCommit",
+			subject: &gointoto.ResourceDescriptor{
+				Name: "multi",
+				Digest: map[string]string{
+					"gitCommit": "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+					"sha256":    "851074691728c479a4c83628de8310eaca792cc7851074691728c479a4c83628",
+				},
+			},
+			enableHack: true,
+			expectedDigest: map[string]string{
+				"gitCommit": "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+				"sha1":      "93ef1a1a5a955e23cbe0ffacc4db8da11b0cc2e6",
+				"sha256":    "851074691728c479a4c83628de8310eaca792cc7851074691728c479a4c83628",
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			result := normalizeSubjectDigests(tt.subject, tt.enableHack)
+			require.Equal(t, tt.expectedDigest, result.GetDigest())
+		})
+	}
+}
 
 func TestCheckIdentities(t *testing.T) {
 	t.Parallel()
