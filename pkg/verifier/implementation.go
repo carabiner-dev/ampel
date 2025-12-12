@@ -357,13 +357,13 @@ func (di *defaultIplementation) BuildTransformers(opts *VerificationOptions, pol
 // defined in the policy
 func (di *defaultIplementation) Transform(
 	opts *VerificationOptions, transformers map[transformer.Class]transformer.Transformer,
-	policy *papi.Policy, subject attestation.Subject, predicates []attestation.Predicate,
+	policy *papi.Policy, subject attestation.Subject, prepredicates []attestation.Predicate,
 ) (attestation.Subject, []attestation.Predicate, error) {
 	var err error
 	var newsubject attestation.Subject
 	i := 0
 	for _, t := range transformers {
-		newsubject, predicates, err = t.Mutate(subject, predicates)
+		newsubject, prepredicates, err = t.Mutate(subject, prepredicates)
 		if newsubject != nil {
 			subject = newsubject
 		}
@@ -373,11 +373,11 @@ func (di *defaultIplementation) Transform(
 		i++
 	}
 	ts := []string{}
-	for _, s := range predicates {
+	for _, s := range prepredicates {
 		ts = append(ts, string(s.GetType()))
 	}
 	logrus.Debugf("Predicate types after transform: %v", ts)
-	return subject, predicates, nil
+	return subject, prepredicates, nil
 }
 
 // CheckIdentities checks that the ingested attestations are signed by one of the
@@ -852,7 +852,7 @@ func (di *defaultIplementation) AssembleEvalContextValues(ctx context.Context, o
 // all gathering, parsing, transforming and verification is performed.
 func (di *defaultIplementation) VerifySubject(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
-	p *papi.Policy, evalContextValues map[string]any, subject attestation.Subject, predicates []attestation.Predicate,
+	p *papi.Policy, evalContextValues map[string]any, subject attestation.Subject, prepredicates []attestation.Predicate,
 ) (*papi.Result, error) {
 	evalContextValuesStruct, err := structpb.NewStruct(evalContextValues)
 	if err != nil {
@@ -908,7 +908,7 @@ func (di *defaultIplementation) VerifySubject(
 			idx[attestation.PredicateType(tp)] = struct{}{}
 		}
 
-		for _, pred := range predicates {
+		for _, pred := range prepredicates {
 			if _, ok := idx[pred.GetType()]; ok {
 				npredicates = append(npredicates, pred)
 			}
