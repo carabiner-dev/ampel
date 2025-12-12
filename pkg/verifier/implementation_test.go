@@ -10,6 +10,7 @@ import (
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector/statement/intoto"
 	papi "github.com/carabiner-dev/policy/api/v1"
+	sapi "github.com/carabiner-dev/signer/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -217,7 +218,7 @@ func TestEvaluateChain(t *testing.T) {
 				nil, // the vollector agent should not be required
 				tt.chainLinks,
 				nil, // no context values in tests
-				tt.subject, attestations, []*papi.Identity{}, "",
+				tt.subject, attestations, []*sapi.Identity{}, "",
 			)
 			if tt.mustErr {
 				require.Error(t, err)
@@ -393,16 +394,16 @@ func TestNormalizeSubjectDigests(t *testing.T) {
 
 func TestCheckIdentities(t *testing.T) {
 	t.Parallel()
-	idSigstore := &papi.Identity{
+	idSigstore := &sapi.Identity{
 		Id: "abc",
-		Sigstore: &papi.IdentitySigstore{
+		Sigstore: &sapi.IdentitySigstore{
 			Issuer:   "https://example.com",
 			Identity: "joe@example.com",
 		},
 	}
-	idSigstoreOther := &papi.Identity{
+	idSigstoreOther := &sapi.Identity{
 		Id: "abc",
-		Sigstore: &papi.IdentitySigstore{
+		Sigstore: &sapi.IdentitySigstore{
 			Issuer:   "https://nonexistent.com",
 			Identity: "mark@hami-ll.com",
 		},
@@ -411,49 +412,49 @@ func TestCheckIdentities(t *testing.T) {
 	for _, tt := range []struct {
 		name             string
 		opts             VerificationOptions
-		policyIdentities []*papi.Identity
+		policyIdentities []*sapi.Identity
 		envelopes        []attestation.Envelope
 		mustErr          bool
 		mustAllow        bool
 	}{
-		{"no-allowedIdentities-defined", DefaultVerificationOptions, []*papi.Identity{}, []attestation.Envelope{
+		{"no-allowedIdentities-defined", DefaultVerificationOptions, []*sapi.Identity{}, []attestation.Envelope{
 			&fakeEnvelope{
-				ver: &papi.Verification{Signature: &papi.SignatureVerification{Verified: true, Identities: []*papi.Identity{idSigstore}}},
+				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}}},
 			},
 		}, false, true},
-		{"no-matching-identities-opts", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*papi.Identity{}, []attestation.Envelope{
+		{"no-matching-identities-opts", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*sapi.Identity{}, []attestation.Envelope{
 			&fakeEnvelope{
-				ver: &papi.Verification{Signature: &papi.SignatureVerification{Verified: true, Identities: []*papi.Identity{idSigstoreOther}}},
+				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstoreOther}}},
 			},
 		}, false, false},
-		{"no-matching-identities-policy", VerificationOptions{IdentityStrings: []string{}}, []*papi.Identity{idSigstore}, []attestation.Envelope{
+		{"no-matching-identities-policy", VerificationOptions{IdentityStrings: []string{}}, []*sapi.Identity{idSigstore}, []attestation.Envelope{
 			&fakeEnvelope{
-				ver: &papi.Verification{Signature: &papi.SignatureVerification{Verified: true, Identities: []*papi.Identity{idSigstoreOther}}},
+				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstoreOther}}},
 			},
 		}, false, false},
-		{"ids-in-opts", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*papi.Identity{}, []attestation.Envelope{
+		{"ids-in-opts", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*sapi.Identity{}, []attestation.Envelope{
 			&fakeEnvelope{
-				ver: &papi.Verification{Signature: &papi.SignatureVerification{Verified: true, Identities: []*papi.Identity{idSigstore}}},
+				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}}},
 			},
 		}, false, true},
-		{"ids-in-policy", VerificationOptions{IdentityStrings: []string{}}, []*papi.Identity{idSigstore}, []attestation.Envelope{
+		{"ids-in-policy", VerificationOptions{IdentityStrings: []string{}}, []*sapi.Identity{idSigstore}, []attestation.Envelope{
 			&fakeEnvelope{
-				ver: &papi.Verification{
-					Signature: &papi.SignatureVerification{Verified: true, Identities: []*papi.Identity{idSigstore}},
+				ver: &sapi.Verification{
+					Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}},
 				},
 			},
 		}, false, true},
-		{"ids-in-policy-over-opts-pass", VerificationOptions{IdentityStrings: []string{idSigstoreOther.Slug()}}, []*papi.Identity{idSigstore}, []attestation.Envelope{
+		{"ids-in-policy-over-opts-pass", VerificationOptions{IdentityStrings: []string{idSigstoreOther.Slug()}}, []*sapi.Identity{idSigstore}, []attestation.Envelope{
 			&fakeEnvelope{
-				ver: &papi.Verification{
-					Signature: &papi.SignatureVerification{Verified: true, Identities: []*papi.Identity{idSigstore}},
+				ver: &sapi.Verification{
+					Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}},
 				},
 			},
 		}, false, true},
-		{"ids-in-policy-over-opts-fail", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*papi.Identity{idSigstoreOther}, []attestation.Envelope{
+		{"ids-in-policy-over-opts-fail", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*sapi.Identity{idSigstoreOther}, []attestation.Envelope{
 			&fakeEnvelope{
-				ver: &papi.Verification{
-					Signature: &papi.SignatureVerification{Verified: true, Identities: []*papi.Identity{idSigstore}},
+				ver: &sapi.Verification{
+					Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}},
 				},
 			},
 		}, false, false},

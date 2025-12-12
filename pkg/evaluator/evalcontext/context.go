@@ -6,6 +6,7 @@ package evalcontext
 import (
 	"github.com/carabiner-dev/attestation"
 	papi "github.com/carabiner-dev/policy/api/v1"
+	sapi "github.com/carabiner-dev/signer/api/v1"
 )
 
 // The evaluation context is the data structure we pass to the evaluators
@@ -36,6 +37,6 @@ type (
 		ChainedSubjects []*papi.ChainedSubject
 
 		// Recognized identities for attestation validation.
-		Identities []*papi.Identity
+		Identities []*sapi.Identity
 	}
 )

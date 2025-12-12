@@ -9,6 +9,7 @@ import (
 
 	"github.com/carabiner-dev/attestation"
 	papi "github.com/carabiner-dev/policy/api/v1"
+	sapi "github.com/carabiner-dev/signer/api/v1"
 	"github.com/google/cel-go/cel"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
@@ -190,7 +191,7 @@ func (e *Evaluator) ExecTenet(
 			Attestation: &intoto.ResourceDescriptor{},
 		}
 
-		if v, ok := pred.GetVerification().(*papi.Verification); ok {
+		if v, ok := pred.GetVerification().(*sapi.Verification); ok {
 			if v.GetSignature() != nil {
 				sref.Identities = v.GetSignature().GetIdentities()
 			}
