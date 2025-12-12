@@ -8,7 +8,8 @@ require (
 	github.com/carabiner-dev/command v0.2.0
 	github.com/carabiner-dev/hasher v0.2.2
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
-	github.com/carabiner-dev/policy v0.4.0
+	github.com/carabiner-dev/policy v0.4.1-0.20251211203139-302be2dfaf0d
+	github.com/carabiner-dev/predicates v0.1.0
 	github.com/fatih/color v1.18.0
 	github.com/google/cel-go v0.26.1
 	github.com/in-toto/attestation v1.1.2
@@ -21,7 +22,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
-	google.golang.org/protobuf v1.36.10
+	google.golang.org/protobuf v1.36.11
 	sigs.k8s.io/release-utils v0.12.2
 )
 

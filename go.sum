@@ -740,8 +740,10 @@ github.com/carabiner-dev/openeox v0.0.0-20250606202227-fd40810cda47 h1:UTr5vQ7nS
 github.com/carabiner-dev/openeox v0.0.0-20250606202227-fd40810cda47/go.mod h1:40KVT1ee6L8VoWT44RvAQ0AtG91MFr5/zBzTmNiXQWY=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 h1:BJ9+OCNezZGkU8SrGC3oB7Tj+J0JsonwfZztcgUav6c=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92/go.mod h1:o7jXwi/fFZ9mQlvVlog0kcvyEkwQT3eWmVQmrorBGpE=
-github.com/carabiner-dev/policy v0.4.0 h1:pgfoPxIWnYR+DYuQfiC2lUjhDR62mF9A1dapOqnYjAM=
-github.com/carabiner-dev/policy v0.4.0/go.mod h1:wecMGbJC5xYQ4ppGeUibEgc9BYiGPdQhq6UlD30tqOQ=
+github.com/carabiner-dev/policy v0.4.1-0.20251211203139-302be2dfaf0d h1:nfzLqV09Ray2NvjUxH//o5NE/jP/AnCKOmj/xEixvZk=
+github.com/carabiner-dev/policy v0.4.1-0.20251211203139-302be2dfaf0d/go.mod h1:ufVsPpVkUZPxsdI8yxokSSd5dqqDhp1nebbVpjLvvqg=
+github.com/carabiner-dev/predicates v0.1.0 h1:t6tQF9gFdr6TIccWtuNk3kFasx8eu88INFVGkCUnjL4=
+github.com/carabiner-dev/predicates v0.1.0/go.mod h1:jL6EAD+LiI6GW/rOdRYAJF4HaA88/V2Q4n7yUGNQ7XM=
 github.com/carabiner-dev/signer v0.3.4-0.20251212024602-9646a825fec9 h1:aA1HiCBcrwaBXtQleCSlEzXJesYNl6Lh28dTgERR53Y=
 github.com/carabiner-dev/signer v0.3.4-0.20251212024602-9646a825fec9/go.mod h1:ajyQ8HHnPAFn08sx7g4WgaiVxSM/naeaNIVWkuFoUVQ=
 github.com/carabiner-dev/vcslocator v0.3.2 h1:/rfhELG1mvqFq0xi8LQSkfpAVoQDCGlWoL6J5tX9Inw=
@@ -2066,8 +2068,8 @@ google.golang.org/protobuf v1.28.0/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqw
 google.golang.org/protobuf v1.28.1/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
 google.golang.org/protobuf v1.29.1/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
 google.golang.org/protobuf v1.30.0/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
-google.golang.org/protobuf v1.36.10 h1:AYd7cD/uASjIL6Q9LiTjz8JLcrh/88q5UObnmY3aOOE=
-google.golang.org/protobuf v1.36.10/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
+google.golang.org/protobuf v1.36.11 h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=
+google.golang.org/protobuf v1.36.11/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=

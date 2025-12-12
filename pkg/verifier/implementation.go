@@ -21,9 +21,9 @@ import (
 	"github.com/carabiner-dev/collector/envelope"
 	"github.com/carabiner-dev/collector/envelope/bare"
 	"github.com/carabiner-dev/collector/filters"
-	ampelPred "github.com/carabiner-dev/collector/predicate/ampel"
 	"github.com/carabiner-dev/collector/statement/intoto"
 	papi "github.com/carabiner-dev/policy/api/v1"
+	"github.com/carabiner-dev/predicates"
 	sapi "github.com/carabiner-dev/signer/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
@@ -1056,14 +1056,15 @@ func (di *defaultIplementation) AttestResultToWriter(
 	}
 
 	// Create the predicate file
-	pred := ampelPred.NewPredicate()
-	pred.Parsed = &papi.ResultSet{
-		Results: []*papi.Result{result},
+	pred := &predicates.ResultSet{
+		Parsed: &papi.ResultSet{
+			Results: []*papi.Result{result},
+		},
 	}
 
 	// Create the statement
 	stmt := intoto.NewStatement()
-	stmt.PredicateType = ampelPred.PredicateTypeResults
+	stmt.PredicateType = predicates.PredicateTypeResultSet
 	stmt.AddSubject(subject)
 	stmt.Predicate = pred
 
@@ -1124,10 +1125,11 @@ func (di *defaultIplementation) AttestResultSetToWriter(
 	}
 
 	// Create the predicate file
-	pred := ampelPred.NewPredicate()
-	pred.Parsed = resultset
+	pred := &predicates.ResultSet{
+		Parsed: resultset,
+	}
 
-	stmt.PredicateType = ampelPred.PredicateTypeResults
+	stmt.PredicateType = predicates.PredicateTypeResultSet
 	stmt.Predicate = pred
 
 	// Write the statement to json
