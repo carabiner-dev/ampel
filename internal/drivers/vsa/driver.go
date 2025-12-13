@@ -5,6 +5,7 @@ package vsa
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"slices"
@@ -170,6 +171,10 @@ func (d *Driver) RenderResultSet(w io.Writer, set *papi.ResultSet) error {
 		vsaData.SlsaVersion = slsaVersion
 	}
 	return renderAttestation(w, set.GetSubject(), vsaData)
+}
+
+func (d *Driver) RenderResultGroup(w io.Writer, result *papi.ResultGroup) error {
+	return errors.New("rendering result groups as VSAs is not supported yet")
 }
 
 // RenderResult renders a policy evaluation result into a VSA

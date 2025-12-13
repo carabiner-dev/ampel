@@ -34,3 +34,7 @@ func (d *Driver) RenderResultSet(w io.Writer, rset *papi.ResultSet) error {
 func (d *Driver) RenderResult(w io.Writer, status *papi.Result) error {
 	return d.Ampel.AttestResults(w, status)
 }
+
+func (d *Driver) RenderResultGroup(w io.Writer, status *papi.ResultGroup) error {
+	return d.Ampel.AttestResults(w, status)
+}

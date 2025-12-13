@@ -149,3 +149,74 @@ func (tb *TableBuilder) ResultSetTable(set *papi.ResultSet) (table.Writer, error
 	}
 	return t, nil
 }
+
+// ResultGroupTable renders a single group evaluation result
+func (tb *TableBuilder) ResultGroupTable(grp *papi.ResultGroup) (table.Writer, error) {
+	t := table.NewWriter()
+
+	rowConfigAutoMerge := table.RowConfig{
+		AutoMerge:      true,
+		AutoMergeAlign: text.AlignLeft,
+	}
+	banner := tb.Decorator.AmpelBanner("Evaluation Results")
+	t.AppendRow(table.Row{banner, banner, banner, banner}, rowConfigAutoMerge)
+	t.AppendSeparator()
+	t.AppendRow(table.Row{tb.Decorator.Bold("PolicyGroup"), grp.GetGroup().GetId(), tb.Decorator.Bold("Date"), grp.DateEnd.AsTime().Local()})
+	t.AppendSeparator()
+	if s := grp.GetSubject(); s != nil {
+		st := ""
+		if s.GetName() != "" {
+			st += s.GetName() + "\n"
+		}
+		for algo, val := range s.GetDigest() {
+			// This will prevent a panic if the subject hash is short, but it should never
+			strlen := math.Min(32, float64(len(val)))
+			st += fmt.Sprintf("- %s:%s...\n", algo, val[0:int(strlen)])
+		}
+		st = strings.TrimSuffix(st, "\n")
+		t.AppendRow(
+			table.Row{
+				tb.Decorator.Bold("Status:") + fmt.Sprintf(" %s %s", tb.Decorator.StatusToDot(grp.GetStatus()), tb.Decorator.Bold(grp.GetStatus())),
+				tb.Decorator.Bold("Subject"), st, st,
+			},
+			rowConfigAutoMerge,
+		)
+	}
+	t.AppendSeparator()
+	t.AppendRow(table.Row{tb.Decorator.Bold("Policy Block"), tb.Decorator.Bold("Controls"), tb.Decorator.Bold("Status"), tb.Decorator.Bold("Details")})
+	t.AppendSeparator()
+	for i, r := range grp.GetEvalResults() {
+		id := r.GetId()
+		if id == "" {
+			id = fmt.Sprintf("Block #%d", i)
+		}
+
+		var message string
+		if r.GetStatus() == papi.StatusPASS {
+			message = fmt.Sprintf("(%d policies)", len(r.Results))
+		} else {
+			message = r.GetError().GetMessage()
+			if r.GetError().GetGuidance() != "" {
+				message = "\n" + r.GetError().GetGuidance()
+			}
+		}
+
+		controls := "-"
+		if len(r.GetMeta().GetControls()) > 0 {
+			controls = tb.Decorator.ControlsToString(&papi.Result{
+				Meta: &papi.Meta{
+					Controls: r.GetMeta().GetControls(),
+				},
+			}, "", "")
+		}
+		t.AppendRow(
+			table.Row{
+				id,
+				controls,
+				fmt.Sprintf("%s %s", tb.Decorator.StatusToDot(r.Status), tb.Decorator.Bold(r.Status)),
+				message,
+			},
+		)
+	}
+	return t, nil
+}

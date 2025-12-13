@@ -81,6 +81,11 @@ type VerificationOptions struct {
 	// AllowEmptySetChains prevents the policy from failing if the chain selectors
 	// don't return any mutated subjects.
 	AllowEmptySetChains bool
+
+	// LazyBlockEval causes block evaluations to stop as soon as the blocks status
+	// is known. This makes evaluation faster but also means that some policies in
+	// the block may not be evaluated (and missing from the group's resultSet)
+	LazyBlockEval bool
 }
 
 // Validate checks the options set
@@ -118,6 +123,9 @@ var DefaultVerificationOptions = VerificationOptions{
 
 	// By default, we attesta results in the ampel format
 	AttestFormat: "ampel",
+
+	// Don't do LazyBlockEval by default
+	LazyBlockEval: false,
 }
 
 func NewVerificationOptions() VerificationOptions {

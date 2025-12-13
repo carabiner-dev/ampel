@@ -43,9 +43,11 @@ type AmpelVerifier interface {
 	// CheckPolicy verifies the policy is sound to evaluate before running it
 	CheckPolicy(context.Context, *VerificationOptions, *papi.Policy) error
 	CheckPolicySet(context.Context, *VerificationOptions, *papi.PolicySet) error
+	CheckPolicyGroup(context.Context, *VerificationOptions, *papi.PolicyGroup) error
 	GatherAttestations(context.Context, *VerificationOptions, *collector.Agent, *papi.Policy, attestation.Subject, []attestation.Envelope) ([]attestation.Envelope, error)
 	ParseAttestations(context.Context, *VerificationOptions, attestation.Subject) ([]attestation.Envelope, error)
 	BuildEvaluators(*VerificationOptions, *papi.Policy) (map[class.Class]evaluator.Evaluator, error)
+	BuildGroupEvaluators(*VerificationOptions, *papi.PolicyGroup) (map[class.Class]evaluator.Evaluator, error)
 	BuildTransformers(*VerificationOptions, *papi.Policy) (map[transformer.Class]transformer.Transformer, error)
 	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *papi.Policy, attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
 
@@ -67,7 +69,7 @@ type AmpelVerifier interface {
 
 	// ProcessChainedSubjects proceses the chain of attestations to find the ultimate
 	// subject a policy is supposed to operate on
-	ProcessChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *papi.Policy, map[string]any, attestation.Subject, []attestation.Envelope) (attestation.Subject, []*papi.ChainedSubject, bool, error)
+	ProcessChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, papi.ChainProvider, map[string]any, attestation.Subject, []attestation.Envelope) (attestation.Subject, []*papi.ChainedSubject, bool, error)
 
 	// ProcessPolicySetChainedSubjects executesd a PolicySet's ChainLink and returns
 	// the resulting list of subjects from the evaluator.
@@ -153,6 +155,33 @@ func (di *defaultIplementation) CheckPolicySet(ctx context.Context, opts *Verifi
 			Guidance: fmt.Sprintf(
 				"The policySet expired on %s, update the policy source",
 				set.GetMeta().GetExpiration().AsTime().Format(time.UnixDate),
+			),
+		}
+	}
+	return nil
+}
+
+// CheckPolicySet verifies the policySet before evaluating its policies to ensure
+// it is fit to run.
+func (di *defaultIplementation) CheckPolicyGroup(ctx context.Context, opts *VerificationOptions, grp *papi.PolicyGroup) error {
+	if opts == nil {
+		return errors.New("verifier options are not set")
+	}
+	if err := grp.Validate(); err != nil {
+		return PolicyError{
+			error:    err,
+			Guidance: "PolicyGroup failed validation",
+		}
+	}
+	if grp.GetMeta() != nil &&
+		grp.GetMeta().GetExpiration() != nil &&
+		grp.GetMeta().GetExpiration().AsTime().Before(time.Now()) &&
+		opts.EnforceExpiration {
+		return PolicyError{
+			error: errors.New("the policy has expired"), // TODO(puerco): Const error
+			Guidance: fmt.Sprintf(
+				"The policyGroup expired on %s, update the policy source",
+				grp.GetMeta().GetExpiration().AsTime().Format(time.UnixDate),
 			),
 		}
 	}
@@ -659,30 +688,41 @@ func (di *defaultIplementation) evaluateChain(
 // SelectChainedSubject returns a new subkect from an ingested attestatom
 func (di *defaultIplementation) ProcessChainedSubjects(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
-	agent *collector.Agent, policy *papi.Policy, evalContextValues map[string]any, subject attestation.Subject,
+	agent *collector.Agent, material papi.ChainProvider, evalContextValues map[string]any, subject attestation.Subject,
 	attestations []attestation.Envelope,
 ) (attestation.Subject, []*papi.ChainedSubject, bool, error) {
-	chain := []*papi.ChainedSubject{}
-
 	// If there are no chained subjects, return the original
-	if policy.GetChain() == nil {
-		return subject, chain, false, nil
+	if material.GetChain() == nil {
+		return subject, []*papi.ChainedSubject{}, false, nil
 	}
 
-	// Get the default evaluator from the policy
 	defaultEvalClass := ""
-	if policy.GetMeta() != nil {
-		defaultEvalClass = policy.GetMeta().GetRuntime()
-	}
+	ids := []*sapi.Identity{}
 
-	// Here, we only pass the policy, the context will be completed on each eval
-	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalcontext.EvaluationContext{
-		Policy: policy,
-	})
+	switch p := material.(type) {
+	case *papi.Policy:
+		// Get the default evaluator from the policy
+		if p.GetMeta() != nil {
+			defaultEvalClass = p.GetMeta().GetRuntime()
+		}
+
+		// Here, we only pass the policy, the context will be completed on each eval
+		ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalcontext.EvaluationContext{
+			Policy: p,
+		})
+
+		ids = p.GetIdentities()
+	case *papi.PolicyGroup:
+		// Get the default evaluator from the policy
+		if p.GetMeta() != nil {
+			defaultEvalClass = p.GetMeta().GetRuntime()
+		}
+		ids = p.GetCommon().GetIdentities()
+	}
 
 	subjects, chain, fail, err := di.evaluateChain(
-		ctx, opts, evaluators, agent, policy.GetChain(), evalContextValues, subject,
-		attestations, policy.GetIdentities(), defaultEvalClass,
+		ctx, opts, evaluators, agent, material.GetChain(), evalContextValues, subject,
+		attestations, ids, defaultEvalClass,
 	)
 	if err != nil {
 		return nil, nil, false, err
@@ -720,9 +760,12 @@ func newResourceDescriptorFromSubject(s attestation.Subject) *gointoto.ResourceD
 	}
 }
 
-// AssembleEvalContextValues puts together the context values by assembling the context
-// considering its defaults, received values from upstream and value providers.
-func (di *defaultIplementation) AssembleEvalContextValues(ctx context.Context, opts *VerificationOptions, contextValues map[string]*papi.ContextVal) (map[string]any, error) {
+// AssembleEvalContextValues puts together the context values map by assembling
+// the context definition starting with its defaults, received values from
+// upstream and context value providers.
+func (di *defaultIplementation) AssembleEvalContextValues(
+	ctx context.Context, opts *VerificationOptions, contextValues map[string]*papi.ContextVal,
+) (map[string]any, error) {
 	errs := []error{}
 
 	// Load the context definitions as received from invocation
@@ -1167,4 +1210,20 @@ func (di *defaultIplementation) ProcessPolicySetChainedSubjects(
 	}
 
 	return subjects, chain, fail, nil
+}
+
+func (di *defaultIplementation) BuildGroupEvaluators(opts *VerificationOptions, grp *papi.PolicyGroup) (map[class.Class]evaluator.Evaluator, error) {
+	// Build the required evaluators
+	evaluators := map[class.Class]evaluator.Evaluator{}
+
+	for _, block := range grp.GetBlocks() {
+		for _, p := range block.GetPolicies() {
+			policyEvals, err := di.BuildEvaluators(opts, p)
+			if err != nil {
+				return nil, fmt.Errorf("building evaluators: %w", err)
+			}
+			maps.Insert(evaluators, maps.All(policyEvals))
+		}
+	}
+	return evaluators, nil
 }

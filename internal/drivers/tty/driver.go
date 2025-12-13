@@ -36,6 +36,18 @@ func (d *Driver) RenderResultSet(w io.Writer, rset *papi.ResultSet) error {
 	return nil
 }
 
+// RenderResultSet takes a resultset
+func (d *Driver) RenderResultGroup(w io.Writer, rset *papi.ResultGroup) error {
+	t, err := d.TableWriter.ResultGroupTable(rset)
+	if err != nil {
+		return fmt.Errorf("rendering ResultSet table: %w", err)
+	}
+
+	t.SetOutputMirror(w)
+	t.Render()
+	return nil
+}
+
 func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
 	t, err := d.TableWriter.ResultsTable(result)
 	if err != nil {
