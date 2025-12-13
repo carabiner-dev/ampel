@@ -14,6 +14,7 @@ import (
 
 	"github.com/carabiner-dev/attestation"
 	papi "github.com/carabiner-dev/policy/api/v1"
+	sapi "github.com/carabiner-dev/signer/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/nozzle/throttler"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -695,7 +696,7 @@ func (ampel *Ampel) loadElementEvalContextDef(ctx context.Context, element papi.
 	if !ok {
 		evalContext = evalcontext.EvaluationContext{
 			Context:    map[string]*papi.ContextVal{},
-			Identities: []*papi.Identity{},
+			Identities: []*sapi.Identity{},
 		}
 	}
 

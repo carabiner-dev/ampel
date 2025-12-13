@@ -697,7 +697,7 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 	}
 
 	defaultEvalClass := ""
-	ids := []*papi.Identity{}
+	ids := []*sapi.Identity{}
 
 	switch p := material.(type) {
 	case *papi.Policy:
