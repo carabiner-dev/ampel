@@ -67,7 +67,7 @@ func (tb *TableBuilder) ResultsTable(result *papi.Result) (table.Writer, error) 
 	t.AppendRow(table.Row{tb.Decorator.Bold("Check"), tb.Decorator.Bold("Status"), tb.Decorator.Bold("Message")})
 	t.AppendSeparator()
 
-	for i, er := range result.EvalResults {
+	for i, er := range result.GetEvalResults() {
 		cell := ""
 		if er.GetAssessment() != nil {
 			cell = tb.Decorator.AssessmentToString(er.GetAssessment())
@@ -128,7 +128,7 @@ func (tb *TableBuilder) ResultSetTable(set *papi.ResultSet) (table.Writer, error
 				assessments += er.GetAssessment().GetMessage() + "\n"
 			} else if er.GetStatus() != papi.StatusPASS && r.GetStatus() != papi.StatusPASS {
 				if !strings.Contains(assessments, er.GetError().GetMessage()+"\n") {
-					tb.Decorator.ErrorToString(er.GetError())
+					assessments += tb.Decorator.ErrorToString(er.GetError())
 				}
 			}
 		}
