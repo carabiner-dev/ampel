@@ -206,11 +206,11 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	// Prealocate the results array to ensure the results are ordered
 	allResults := make([]*papi.Result, len(policySet.GetPolicies())*len(subjects))
 
-	// Now cycle each policy and subject and evaluate....
+	// Now cycle each subject and evaluate....
 	resCounter := 0
-	for i, pcy := range policySet.GetPolicies() {
-		// ... and evaluate against each subject
-		for _, subsubject := range subjects {
+	for _, subsubject := range subjects {
+		for i, pcy := range policySet.GetPolicies() {
+			// ... and evaluate against each policy in the set
 			go func(policy *papi.Policy, subject attestation.Subject, policyIndex, c int) {
 				res, err := ampel.VerifySubjectWithPolicy(ctx, &opts, policy, subject)
 				if err != nil {
@@ -219,7 +219,7 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 				}
 
 				if res == nil {
-					t.Done(fmt.Errorf("eval of policy #%d returned nil"))
+					t.Done(fmt.Errorf("eval of policy #%d returned nil", i))
 					return
 				}
 				mtx.Lock()
