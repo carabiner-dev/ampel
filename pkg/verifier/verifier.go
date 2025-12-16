@@ -207,17 +207,17 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	for i, pcy := range policySet.GetPolicies() {
 		// ... and evaluate against each subject
 		for _, subsubject := range subjects {
-			go func() {
-				res, err := ampel.VerifySubjectWithPolicy(ctx, &opts, pcy, subsubject)
+			go func(policy *papi.Policy, subject attestation.Subject, policyIndex int) {
+				res, err := ampel.VerifySubjectWithPolicy(ctx, &opts, policy, subject)
 				if err != nil {
-					t.Done(fmt.Errorf("evaluating policy #%d: %w", i, err))
+					t.Done(fmt.Errorf("evaluating policy #%d: %w", policyIndex, err))
 					return
 				}
 				mtx.Lock()
 				resultSet.Results = append(resultSet.Results, res)
 				mtx.Unlock()
 				t.Done(nil)
-			}()
+			}(pcy, subsubject, i)
 			// Break and return on the first error
 			if numErrs := t.Throttle(); numErrs != 0 {
 				return nil, t.Err()
