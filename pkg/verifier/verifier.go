@@ -107,7 +107,6 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 			Uri:    subject.GetUri(),
 			Digest: subject.GetDigest(),
 		},
-		Results: []*papi.Result{},
 	}
 
 	// Check if the policy is viable before
@@ -203,28 +202,41 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 
 	var mtx sync.Mutex
 	t := throttler.New(int(opts.ParallelWorkers), len(policySet.Policies)*len(subjects))
-	// Now cycle each policy....
+
+	// Prealocate the results array to ensure the results are ordered
+	allResults := make([]*papi.Result, len(policySet.GetPolicies())*len(subjects))
+
+	// Now cycle each policy and subject and evaluate....
+	resCounter := 0
 	for i, pcy := range policySet.GetPolicies() {
 		// ... and evaluate against each subject
 		for _, subsubject := range subjects {
-			go func(policy *papi.Policy, subject attestation.Subject, policyIndex int) {
+			go func(policy *papi.Policy, subject attestation.Subject, policyIndex, c int) {
 				res, err := ampel.VerifySubjectWithPolicy(ctx, &opts, policy, subject)
 				if err != nil {
 					t.Done(fmt.Errorf("evaluating policy #%d: %w", policyIndex, err))
 					return
 				}
+
+				if res == nil {
+					t.Done(fmt.Errorf("eval of policy #%d returned nil"))
+					return
+				}
 				mtx.Lock()
-				resultSet.Results = append(resultSet.Results, res)
+				allResults[c] = res
 				mtx.Unlock()
 				t.Done(nil)
-			}(pcy, subsubject, i)
-			// Break and return on the first error
+			}(pcy, subsubject, i, resCounter)
+
+			// Return en the first eval error
 			if numErrs := t.Throttle(); numErrs != 0 {
-				return nil, t.Err()
+				return nil, fmt.Errorf("errors during evaluation: %w", t.Err())
 			}
+			resCounter++
 		}
 	}
 
+	resultSet.Results = allResults
 	resultSet.DateEnd = timestamppb.Now()
 
 	// Assert the policy set
