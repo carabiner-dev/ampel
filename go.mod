@@ -37,7 +37,7 @@ require (
 	github.com/carabiner-dev/github v0.2.2 // indirect
 	github.com/carabiner-dev/jsonl v0.2.1 // indirect
 	github.com/carabiner-dev/openeox v0.0.0-20251126193927-142e907140f5 // indirect
-	github.com/carabiner-dev/signer v0.3.5
+	github.com/carabiner-dev/signer v0.3.6
 	github.com/carabiner-dev/vcslocator v0.3.3-0.20260110024210-a5602e9845b5 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cloudflare/circl v1.6.2 // indirect
@@ -108,7 +108,7 @@ require (
 	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/oauth2 v0.33.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/term v0.38.0 // indirect
+	golang.org/x/term v0.39.0 // indirect
 	google.golang.org/grpc v1.76.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
