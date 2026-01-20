@@ -195,26 +195,34 @@ func TestEvaluateChain(t *testing.T) {
 			t.Parallel()
 
 			// Load the attestations required by the test
-			opts := &DefaultVerificationOptions
+			// Copy the struct to avoid races when parallel subtests modify AttestationFiles
+			opts := DefaultVerificationOptions
 			opts.AttestationFiles = tt.attestationPaths
-			attestations, err := di.ParseAttestations(t.Context(), opts, tt.subject)
+			attestations, err := di.ParseAttestations(t.Context(), &opts, tt.subject)
 			require.NoError(t, err)
 
-			// Check if there is an evaluator foe the link's runtime
+			// Create a local copy of evaluators to avoid races when parallel subtests
+			// add new evaluators for different runtimes
+			localEvaluators := make(map[class.Class]evaluator.Evaluator, len(evaluators))
+			for k, v := range evaluators {
+				localEvaluators[k] = v
+			}
+
+			// Check if there is an evaluator for the link's runtime
 			for _, l := range tt.chainLinks {
 				if runtime := l.GetPredicate().GetRuntime(); runtime != "" {
-					if _, ok := evaluators[class.Class(runtime)]; ok {
+					if _, ok := localEvaluators[class.Class(runtime)]; ok {
 						continue
 					}
 					ev, err := factory.Get(&eoptions.Default, class.Class(runtime))
 					require.NoError(t, err)
-					evaluators[class.Class(runtime)] = ev
+					localEvaluators[class.Class(runtime)] = ev
 				}
 			}
 
 			// should we test policyFail?
 			subjects, chain, _, err := di.evaluateChain(
-				t.Context(), &DefaultVerificationOptions, evaluators,
+				t.Context(), &opts, localEvaluators,
 				nil, // the vollector agent should not be required
 				tt.chainLinks,
 				nil, // no context values in tests

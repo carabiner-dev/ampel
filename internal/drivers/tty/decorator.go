@@ -88,7 +88,7 @@ func (d *Decorator) ErrorToString(err *papi.Error) string {
 }
 
 func (d *Decorator) ControlsToString(result *papi.Result, checkID, def string) string {
-	checks := []string{}
+	checks := make([]string, 0, len(result.Meta.Controls))
 	for _, c := range result.Meta.Controls {
 		ret := ""
 		ret += c.Class

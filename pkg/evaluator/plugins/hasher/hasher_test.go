@@ -29,7 +29,7 @@ func TestHasher(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NotNil(t, result)
-		official := []string{}
+		official := make([]string, 0, len(intoto.HashAlgorithms))
 		for algo := range intoto.HashAlgorithms {
 			official = append(official, algo)
 		}

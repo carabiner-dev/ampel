@@ -184,7 +184,7 @@ func (e *Evaluator) ExecTenet(
 	ctx context.Context, opts *options.EvaluatorOptions, tenet *papi.Tenet, predicates []attestation.Predicate,
 ) (*papi.EvalResult, error) {
 	// Build the statement refs to add to the results
-	statementRefs := []*papi.StatementRef{}
+	statementRefs := make([]*papi.StatementRef, 0, len(predicates))
 	for _, pred := range predicates {
 		sref := &papi.StatementRef{
 			Type:        string(pred.GetType()),
