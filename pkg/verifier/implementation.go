@@ -93,23 +93,32 @@ func normalizeSubjectDigests(subject attestation.Subject, enableHack bool) attes
 		return subject
 	}
 
-	digest := subject.GetDigest()
-	_, hasCommit := digest[string(gointoto.AlgorithmGitCommit)]
-	_, hasSHA1 := digest[string(gointoto.AlgorithmSHA1)]
+	origDigest := subject.GetDigest()
+	_, hasCommit := origDigest[string(gointoto.AlgorithmGitCommit)]
+	_, hasSHA1 := origDigest[string(gointoto.AlgorithmSHA1)]
 
 	// Only apply normalization if we have one but not the other and it looks like
 	// a git commit SHA (40 hex characters)
 	needsNormalization := false
-	if hasCommit && !hasSHA1 && len(digest[string(gointoto.AlgorithmGitCommit)]) == 40 {
-		digest[string(gointoto.AlgorithmSHA1)] = digest[string(gointoto.AlgorithmGitCommit)]
+	if hasCommit && !hasSHA1 && len(origDigest[string(gointoto.AlgorithmGitCommit)]) == 40 {
 		needsNormalization = true
-	} else if hasSHA1 && !hasCommit && len(digest[string(gointoto.AlgorithmSHA1)]) == 40 {
-		digest[string(gointoto.AlgorithmGitCommit)] = digest[string(gointoto.AlgorithmSHA1)]
+	} else if hasSHA1 && !hasCommit && len(origDigest[string(gointoto.AlgorithmSHA1)]) == 40 {
 		needsNormalization = true
 	}
 
 	if !needsNormalization {
 		return subject
+	}
+
+	// Clone the digest map to avoid concurrent map writes when multiple
+	// goroutines normalize the same subject simultaneously
+	digest := maps.Clone(origDigest)
+
+	// Now apply normalization to the cloned map
+	if hasCommit && !hasSHA1 {
+		digest[string(gointoto.AlgorithmSHA1)] = digest[string(gointoto.AlgorithmGitCommit)]
+	} else if hasSHA1 && !hasCommit {
+		digest[string(gointoto.AlgorithmGitCommit)] = digest[string(gointoto.AlgorithmSHA1)]
 	}
 
 	// Clone the subject with the normalized digests
