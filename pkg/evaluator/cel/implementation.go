@@ -59,7 +59,8 @@ func (dce *defaulCelEvaluator) CompileCode(env *cel.Env, code string) (*cel.Ast,
 
 // CreateEnvironment
 func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, plugins map[string]Plugin) (*cel.Env, error) {
-	envOpts := []cel.EnvOption{
+	envOpts := make([]cel.EnvOption, 0, 11+len(plugins))
+	envOpts = append(envOpts,
 		cel.Variable(VarNamePredicates, cel.ListType(cel.AnyType)),
 		cel.Variable(VarNamePredicate, cel.AnyType),
 		cel.Variable(VarNameContext, cel.AnyType),
@@ -71,7 +72,7 @@ func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, pl
 		ext.Lists(),
 		ext.Encoders(),
 		ext.TwoVarComprehensions(),
-	}
+	)
 
 	for _, plugin := range plugins {
 		envOpts = append(envOpts, plugin.Library())
@@ -490,7 +491,7 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 	ret := map[string]any{}
 
 	// Collected predicates
-	preds := []*structpb.Value{}
+	preds := make([]*structpb.Value, 0, 1)
 	d := map[string]any{}
 	if err := json.Unmarshal(predicate.GetData(), &d); err != nil {
 		return nil, fmt.Errorf("unmarshaling predicate data: %w", err)

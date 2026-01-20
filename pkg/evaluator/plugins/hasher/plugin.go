@@ -38,7 +38,7 @@ func (h *Plugin) Library() cel.EnvOption {
 }
 
 func (h *Plugin) VarValues(_ *papi.Policy, _ attestation.Subject, _ []attestation.Predicate) map[string]any {
-	algos := []string{}
+	algos := make([]string, 0, len(intoto.HashAlgorithms))
 	for algo := range intoto.HashAlgorithms {
 		algos = append(algos, algo)
 	}

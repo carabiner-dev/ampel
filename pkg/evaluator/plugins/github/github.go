@@ -307,12 +307,14 @@ func (TypeAdapter) NativeToValue(value any) ref.Val {
 // CompileOptions and ProgramOptions implement the cel.Library interface
 
 func (ut *GitHubUtil) CompileOptions() []cel.EnvOption {
-	ret := []cel.EnvOption{
+	funcs := ut.Functions()
+	ret := make([]cel.EnvOption, 0, 3+len(funcs))
+	ret = append(ret,
 		cel.Types(GitHubType),
 		cel.CustomTypeAdapter(&TypeAdapter{}),
 		cel.Variable("github", GitHubType),
-	}
-	ret = append(ret, ut.Functions()...)
+	)
+	ret = append(ret, funcs...)
 	return ret
 }
 

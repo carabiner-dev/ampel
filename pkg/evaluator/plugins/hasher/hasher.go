@@ -143,11 +143,15 @@ func (h *Hasher) Types() []cel.EnvOption {
 // CompileOptions and ProgramOptions implement the library
 
 func (h *Hasher) CompileOptions() []cel.EnvOption {
-	ret := []cel.EnvOption{}
-	ret = append(ret, h.Types()...)
-	ret = append(ret, h.Variables()...)
-	ret = append(ret, h.Functions()...)
-	ret = append(ret, h.TypeAdapters()...)
+	typesList := h.Types()
+	vars := h.Variables()
+	funcs := h.Functions()
+	adapters := h.TypeAdapters()
+	ret := make([]cel.EnvOption, 0, len(typesList)+len(vars)+len(funcs)+len(adapters))
+	ret = append(ret, typesList...)
+	ret = append(ret, vars...)
+	ret = append(ret, funcs...)
+	ret = append(ret, adapters...)
 	return ret
 }
 

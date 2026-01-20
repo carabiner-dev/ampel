@@ -25,7 +25,7 @@ type constructorFunc func(*StatementIndex) error
 
 func WithDocument(doc *vex.VEX) constructorFunc {
 	return func(si *StatementIndex) error {
-		statements := []*vex.Statement{}
+		statements := make([]*vex.Statement, 0, len(doc.Statements))
 		for i := range doc.Statements {
 			statements = append(statements, &doc.Statements[i])
 		}
@@ -190,7 +190,7 @@ func WithSubcomponent(subc *vex.Subcomponent) FilterFunc {
 	return func(si *StatementIndex) Filter {
 		return func() map[*vex.Statement]struct{} {
 			ret := map[*vex.Statement]struct{}{}
-			ids := []string{}
+			ids := make([]string, 0, len(subc.Identifiers)+len(subc.Hashes))
 			for _, id := range subc.Identifiers {
 				ids = append(ids, id)
 			}
@@ -252,7 +252,7 @@ func unionIndexResults(results []map[*vex.Statement]struct{}) []*vex.Statement {
 
 // Matches applies filters to the index to look for matching statements
 func (si *StatementIndex) Matches(filterfunc ...FilterFunc) []*vex.Statement {
-	lists := []map[*vex.Statement]struct{}{}
+	lists := make([]map[*vex.Statement]struct{}, 0, len(filterfunc))
 	for _, ffunc := range filterfunc {
 		filter := ffunc(si)
 		lists = append(lists, filter())

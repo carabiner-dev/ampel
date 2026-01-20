@@ -519,7 +519,7 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 //
 // TODO(puerco): Implement filtering before 1.0
 func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, subject attestation.Subject, envs []attestation.Envelope, ids [][]*sapi.Identity) ([]attestation.Predicate, error) {
-	preds := []attestation.Predicate{}
+	preds := make([]attestation.Predicate, 0, len(envs))
 	for i, env := range envs {
 		pred := env.GetStatement().GetPredicate()
 		pred.SetVerification(&sapi.Verification{
@@ -1125,8 +1125,9 @@ func (di *defaultIplementation) AttestResultToWriter(
 }
 
 func stringifyDigests(subject attestation.Subject) string {
-	s := []string{}
-	for algo, val := range subject.GetDigest() {
+	digest := subject.GetDigest()
+	s := make([]string, 0, len(digest))
+	for algo, val := range digest {
 		s = append(s, fmt.Sprintf("%s:%s", algo, val))
 	}
 

@@ -17,7 +17,7 @@ import (
 
 func vexPathsToPredicates(t *testing.T, paths []string) []attestation.Predicate {
 	t.Helper()
-	ret := []attestation.Predicate{}
+	ret := make([]attestation.Predicate, 0, len(paths))
 	for _, path := range paths {
 		data, err := os.ReadFile(path)
 		require.NoError(t, err)

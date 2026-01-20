@@ -235,7 +235,7 @@ func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
 }
 
 func subjectsToSummaryInputs(inputs []attestation.Subject) []*v1.VerificationSummary_InputAttestation {
-	ret := []*v1.VerificationSummary_InputAttestation{}
+	ret := make([]*v1.VerificationSummary_InputAttestation, 0, len(inputs))
 	for _, s := range inputs {
 		i := &v1.VerificationSummary_InputAttestation{
 			Uri:    s.GetUri(),
