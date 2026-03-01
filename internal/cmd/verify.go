@@ -42,6 +42,7 @@ type verifyOptions struct {
 	PolicyOutput          bool
 	ContextEnv            bool
 	ContextJSON           string
+	ContextYAML           string
 	ContextStringVals     []string
 	Collectors            []string
 	Subject               string
@@ -89,6 +90,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 
 	cmd.PersistentFlags().StringVar(
 		&o.ContextJSON, "context-json", "", "JSON struct with the context definition or prefix with @ to read from a file",
+	)
+
+	cmd.PersistentFlags().StringVar(
+		&o.ContextYAML, "context-yaml", "", "YAML struct with the context definition or prefix with @ to read from a file",
 	)
 
 	cmd.PersistentFlags().BoolVar(
@@ -476,6 +481,25 @@ func (opts *verifyOptions) buildContextProviders() (err error) {
 			provider, err = acontext.NewProviderFromJSON(strings.NewReader(opts.ContextJSON))
 			if err != nil {
 				return fmt.Errorf("processing JSON context: %w", err)
+			}
+		}
+		opts.WithContextProvider(provider)
+	}
+
+	// Read the evaluation context data from YAML:
+	if opts.ContextYAML != "" {
+		var provider acontext.Provider
+		// If the YAML file starts with an @, then we read from a file (curl style)
+		path, ok := strings.CutPrefix(opts.ContextYAML, "@")
+		if ok {
+			provider, err = acontext.NewProviderFromYAMLFile(path)
+			if err != nil {
+				return fmt.Errorf("processing YAML context file: %w", err)
+			}
+		} else {
+			provider, err = acontext.NewProviderFromYAML(strings.NewReader(opts.ContextYAML))
+			if err != nil {
+				return fmt.Errorf("processing YAML context: %w", err)
 			}
 		}
 		opts.WithContextProvider(provider)
