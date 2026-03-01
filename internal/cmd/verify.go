@@ -13,7 +13,7 @@ import (
 
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector"
-	"github.com/carabiner-dev/command"
+	keyOpts "github.com/carabiner-dev/command/keys"
 	"github.com/carabiner-dev/hasher"
 	"github.com/carabiner-dev/policy"
 	papi "github.com/carabiner-dev/policy/api/v1"
@@ -36,7 +36,7 @@ var (
 
 type verifyOptions struct {
 	verifier.VerificationOptions
-	command.KeyOptions
+	keyOpts.Options
 	PolicyLocation        string
 	Format                string
 	PolicyOutput          bool
@@ -54,7 +54,7 @@ type verifyOptions struct {
 
 // AddFlags adds the flags
 func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
-	o.KeyOptions.AddFlags(cmd)
+	o.Options.AddFlags(cmd)
 	cmd.PersistentFlags().StringVarP(
 		&o.Subject, "subject", "s", "", "subject hash (algo:value) or path to file (alternative to positional argument)",
 	)
