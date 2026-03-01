@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 // MapAnyProvider adds the Provider interface functions on top of a standard map
@@ -35,6 +37,30 @@ func NewProviderFromJSONFile(path string) (Provider, error) {
 		return nil, fmt.Errorf("opening json file: %w", err)
 	}
 	return NewProviderFromJSON(f)
+}
+
+// NewProviderFromYAML returns a new context provider from YAML data
+// ingested from a reader.
+//
+// The data needs to be able to be parsed to a map[string]any.
+func NewProviderFromYAML(r io.Reader) (Provider, error) {
+	// Decode into a plain map[string]any to ensure nested maps use the
+	// same type as the JSON provider (map[string]any, not MapAnyProvider).
+	raw := map[string]any{}
+	decoder := yaml.NewDecoder(r)
+	if err := decoder.Decode(&raw); err != nil {
+		return nil, fmt.Errorf("unmarshaling context data: %w", err)
+	}
+	ret := MapAnyProvider(raw)
+	return &ret, nil
+}
+
+func NewProviderFromYAMLFile(path string) (Provider, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("opening yaml file: %w", err)
+	}
+	return NewProviderFromYAML(f)
 }
 
 func (mapr *MapAnyProvider) GetContextValue(key string) (any, error) {

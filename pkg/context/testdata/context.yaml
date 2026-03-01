@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: Copyright 2026 Carabiner Systems, Inc
+# SPDX-License-Identifier: Apache-2.0
+
+name: test-project
+version: 3
+enabled: true
+tags:
+  - alpha
+  - beta
+nested:
+  key: value
