@@ -44,12 +44,15 @@ func NewProviderFromJSONFile(path string) (Provider, error) {
 //
 // The data needs to be able to be parsed to a map[string]any.
 func NewProviderFromYAML(r io.Reader) (Provider, error) {
-	ret := &MapAnyProvider{}
+	// Decode into a plain map[string]any to ensure nested maps use the
+	// same type as the JSON provider (map[string]any, not MapAnyProvider).
+	raw := map[string]any{}
 	decoder := yaml.NewDecoder(r)
-	if err := decoder.Decode(ret); err != nil {
+	if err := decoder.Decode(&raw); err != nil {
 		return nil, fmt.Errorf("unmarshaling context data: %w", err)
 	}
-	return ret, nil
+	ret := MapAnyProvider(raw)
+	return &ret, nil
 }
 
 func NewProviderFromYAMLFile(path string) (Provider, error) {

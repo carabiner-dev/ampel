@@ -1,0 +1,9 @@
+{
+  "name": "test-project",
+  "version": 3,
+  "enabled": true,
+  "tags": ["alpha", "beta"],
+  "nested": {
+    "key": "value"
+  }
+}
