@@ -152,7 +152,30 @@ func (tb *TableBuilder) ResultSetTable(set *papi.ResultSet) (table.Writer, error
 
 		var message string
 		if grp.GetStatus() == papi.StatusPASS {
-			message = fmt.Sprintf("(%d blocks)", len(grp.GetEvalResults()))
+			msgs := []string{}
+			seen := map[string]struct{}{}
+			for _, block := range grp.GetEvalResults() {
+				prefix := ""
+				if ctls := block.GetMeta().GetControls(); len(ctls) > 0 {
+					labels := []string{}
+					for _, ctl := range ctls {
+						labels = append(labels, ctl.Label())
+					}
+					prefix = "[" + strings.Join(labels, ", ") + "] "
+				}
+				for _, res := range block.GetResults() {
+					for _, er := range res.GetEvalResults() {
+						if msg := er.GetAssessment().GetMessage(); msg != "" {
+							line := prefix + msg
+							if _, ok := seen[line]; !ok {
+								seen[line] = struct{}{}
+								msgs = append(msgs, line)
+							}
+						}
+					}
+				}
+			}
+			message = strings.Join(msgs, "\n")
 		} else {
 			msgs := []string{}
 			seen := map[string]struct{}{}
