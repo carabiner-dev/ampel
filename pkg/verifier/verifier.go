@@ -582,6 +582,52 @@ func (ampel *Ampel) verifySubjectWithBlock(
 			}
 		}
 	}
+
+	// Populate the block error from failed policy results
+	if rset.Status != papi.StatusPASS {
+		assertMode := block.GetMeta().GetAssertMode()
+		switch assertMode {
+		case "OR":
+			// Copy the error from the last failed policy
+			for i := len(rset.Results) - 1; i >= 0; i-- {
+				if rset.Results[i].GetStatus() == papi.StatusFAIL {
+					for _, er := range rset.Results[i].GetEvalResults() {
+						if er.GetError() != nil && er.GetError().GetMessage() != "" {
+							rset.Error = &papi.Error{
+								Message:  er.GetError().GetMessage(),
+								Guidance: er.GetError().GetGuidance(),
+							}
+							break
+						}
+					}
+					break
+				}
+			}
+		default: // AND or empty (default AND behavior)
+			msgs := []string{}
+			seen := map[string]struct{}{}
+			for _, res := range rset.Results {
+				if res.GetStatus() != papi.StatusFAIL {
+					continue
+				}
+				for _, er := range res.GetEvalResults() {
+					if er.GetError() != nil && er.GetError().GetMessage() != "" {
+						msg := er.GetError().GetMessage()
+						if _, ok := seen[msg]; !ok {
+							seen[msg] = struct{}{}
+							msgs = append(msgs, msg)
+						}
+					}
+				}
+			}
+			if len(msgs) > 0 {
+				rset.Error = &papi.Error{
+					Message: strings.Join(msgs, "\n"),
+				}
+			}
+		}
+	}
+
 	return rset, nil
 }
 

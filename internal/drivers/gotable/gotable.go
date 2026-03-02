@@ -155,11 +155,17 @@ func (tb *TableBuilder) ResultSetTable(set *papi.ResultSet) (table.Writer, error
 			message = fmt.Sprintf("(%d blocks)", len(grp.GetEvalResults()))
 		} else {
 			msgs := []string{}
+			seen := map[string]struct{}{}
 			for _, block := range grp.GetEvalResults() {
 				if block.GetStatus() != papi.StatusFAIL {
 					continue
 				}
-				msgs = append(msgs, block.GetError().GetMessage())
+				if msg := block.GetError().GetMessage(); msg != "" {
+					if _, ok := seen[msg]; !ok {
+						seen[msg] = struct{}{}
+						msgs = append(msgs, msg)
+					}
+				}
 			}
 			message = strings.Join(msgs, "\n")
 		}
