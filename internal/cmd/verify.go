@@ -404,6 +404,11 @@ using a collector.
 							return fmt.Errorf("rendering results: %w", err)
 						}
 					}
+					for _, g := range r.GetGroups() {
+						if err := eng.Driver.RenderResultGroup(os.Stdout, g); err != nil {
+							return fmt.Errorf("rendering group results: %w", err)
+						}
+					}
 				} else if err := eng.RenderResultSet(os.Stdout, r); err != nil {
 					return fmt.Errorf("rendering results: %w", err)
 				}

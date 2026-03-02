@@ -147,6 +147,39 @@ func (tb *TableBuilder) ResultSetTable(set *papi.ResultSet) (table.Writer, error
 			},
 		)
 	}
+	for _, grp := range set.GetGroups() {
+		id := grp.GetGroup().GetId()
+
+		var message string
+		if grp.GetStatus() == papi.StatusPASS {
+			message = fmt.Sprintf("(%d blocks)", len(grp.GetEvalResults()))
+		} else {
+			msgs := []string{}
+			for _, block := range grp.GetEvalResults() {
+				if block.GetStatus() != papi.StatusFAIL {
+					continue
+				}
+				msgs = append(msgs, block.GetError().GetMessage())
+			}
+			message = strings.Join(msgs, "\n")
+		}
+
+		controls := "-"
+		if len(grp.GetMeta().GetControls()) > 0 {
+			controls = tb.Decorator.ControlsToString(&papi.Result{
+				Meta: &papi.Meta{
+					Controls: grp.GetMeta().GetControls(),
+				},
+			}, "", "")
+		}
+		t.AppendRow(
+			table.Row{
+				id, controls,
+				fmt.Sprintf("%s %s", tb.Decorator.StatusToDot(grp.GetStatus()), tb.Decorator.Bold(grp.GetStatus())),
+				message,
+			},
+		)
+	}
 	return t, nil
 }
 

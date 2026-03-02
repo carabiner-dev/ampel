@@ -10,6 +10,7 @@ import (
 	"io"
 	"maps"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/carabiner-dev/attestation"
@@ -130,6 +131,13 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 		}
 		maps.Insert(evaluators, maps.All(policyEvals))
 	}
+	for _, g := range policySet.GetGroups() {
+		groupEvals, err := ampel.impl.BuildGroupEvaluators(&opts, g)
+		if err != nil {
+			return nil, fmt.Errorf("building group evaluators: %w", err)
+		}
+		maps.Insert(evaluators, maps.All(groupEvals))
+	}
 
 	// Parse any extra attestation files defined in the options
 	atts, err := ampel.impl.ParseAttestations(ctx, &opts, subject)
@@ -237,6 +245,38 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	}
 
 	resultSet.Results = allResults
+
+	// Evaluate any groups in the policy set
+	allGroups := make([]*papi.ResultGroup, len(policySet.GetGroups())*len(subjects))
+	groupCounter := 0
+	gt := throttler.New(int(opts.ParallelWorkers), len(policySet.GetGroups())*len(subjects))
+	for _, subsubject := range subjects {
+		for i, grp := range policySet.GetGroups() {
+			go func(group *papi.PolicyGroup, subject attestation.Subject, groupIndex, c int) {
+				res, err := ampel.VerifySubjectWithPolicyGroup(ctx, &opts, group, subject)
+				if err != nil {
+					gt.Done(fmt.Errorf("evaluating group #%d: %w", groupIndex, err))
+					return
+				}
+
+				if res == nil {
+					gt.Done(fmt.Errorf("eval of group #%d returned nil", groupIndex))
+					return
+				}
+				mtx.Lock()
+				allGroups[c] = res
+				mtx.Unlock()
+				gt.Done(nil)
+			}(grp, subsubject, i, groupCounter)
+
+			if numErrs := gt.Throttle(); numErrs != 0 {
+				return nil, fmt.Errorf("errors during group evaluation: %w", gt.Err())
+			}
+			groupCounter++
+		}
+	}
+	resultSet.Groups = allGroups
+
 	resultSet.DateEnd = timestamppb.Now()
 
 	// Assert the policy set
@@ -491,12 +531,12 @@ func (ampel *Ampel) VerifySubjectWithPolicyGroup(
 			if res.EvalResults[i].GetId() != "" {
 				fails = append(fails, res.EvalResults[i].GetId())
 			} else {
-				fails = append(fails, fmt.Sprintf("group #%d", i))
+				fails = append(fails, fmt.Sprintf("#%d", i))
 			}
 		}
 	}
 	if len(fails) > 0 && res.Status == papi.StatusFAIL {
-		res.Error = fmt.Sprintf("Evaluation failed by blocks %v", fails)
+		res.Error = fmt.Sprintf("Evaluation failed by blocks [%s]", strings.Join(fails, ", "))
 	}
 
 	// Record the end of the group eval
