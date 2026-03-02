@@ -147,6 +147,68 @@ func (tb *TableBuilder) ResultSetTable(set *papi.ResultSet) (table.Writer, error
 			},
 		)
 	}
+	for _, grp := range set.GetGroups() {
+		id := grp.GetGroup().GetId()
+
+		var message string
+		if grp.GetStatus() == papi.StatusPASS {
+			msgs := []string{}
+			seen := map[string]struct{}{}
+			for _, block := range grp.GetEvalResults() {
+				prefix := ""
+				if ctls := block.GetMeta().GetControls(); len(ctls) > 0 {
+					labels := []string{}
+					for _, ctl := range ctls {
+						labels = append(labels, ctl.Label())
+					}
+					prefix = "[" + strings.Join(labels, ", ") + "] "
+				}
+				for _, res := range block.GetResults() {
+					for _, er := range res.GetEvalResults() {
+						if msg := er.GetAssessment().GetMessage(); msg != "" {
+							line := prefix + msg
+							if _, ok := seen[line]; !ok {
+								seen[line] = struct{}{}
+								msgs = append(msgs, line)
+							}
+						}
+					}
+				}
+			}
+			message = strings.Join(msgs, "\n")
+		} else {
+			msgs := []string{}
+			seen := map[string]struct{}{}
+			for _, block := range grp.GetEvalResults() {
+				if block.GetStatus() != papi.StatusFAIL {
+					continue
+				}
+				if msg := block.GetError().GetMessage(); msg != "" {
+					if _, ok := seen[msg]; !ok {
+						seen[msg] = struct{}{}
+						msgs = append(msgs, msg)
+					}
+				}
+			}
+			message = strings.Join(msgs, "\n")
+		}
+
+		controls := "-"
+		if len(grp.GetMeta().GetControls()) > 0 {
+			controls = tb.Decorator.ControlsToString(&papi.Result{
+				Meta: &papi.Meta{
+					Controls: grp.GetMeta().GetControls(),
+				},
+			}, "", "")
+		}
+		t.AppendRow(
+			table.Row{
+				id, controls,
+				fmt.Sprintf("%s %s", tb.Decorator.StatusToDot(grp.GetStatus()), tb.Decorator.Bold(grp.GetStatus())),
+				message,
+			},
+		)
+	}
 	return t, nil
 }
 

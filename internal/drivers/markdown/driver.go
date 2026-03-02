@@ -26,10 +26,19 @@ type Driver struct {
 
 // RenderResultSet takes a resultset
 func (d *Driver) RenderResultSet(w io.Writer, rset *papi.ResultSet) error {
-	for _, result := range rset.Results {
+	for _, result := range rset.GetResults() {
 		t, err := d.TableWriter.ResultsTable(result)
 		if err != nil {
 			return fmt.Errorf("building table: %w", err)
+		}
+
+		t.SetOutputMirror(w)
+		t.RenderMarkdown()
+	}
+	for _, grp := range rset.GetGroups() {
+		t, err := d.TableWriter.ResultGroupTable(grp)
+		if err != nil {
+			return fmt.Errorf("building group table: %w", err)
 		}
 
 		t.SetOutputMirror(w)

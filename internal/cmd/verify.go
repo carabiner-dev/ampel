@@ -314,111 +314,119 @@ using a collector.
 
 			return nil
 		},
-		RunE: func(c *cobra.Command, args []string) error {
-			// Validate options
-			if err := opts.Validate(); err != nil {
-				return err
-			}
-
-			// Suppress output from here as options are correct
+		RunE: func(c *cobra.Command, _ []string) error {
 			c.SilenceUsage = true
-
-			// Read the subject from the specified string:
-			subject, err := opts.SubjectDescriptor()
-			if err != nil {
-				return fmt.Errorf("resolving subject string: %w", err)
-			}
-
-			// Parse any keys for the policy check
-			keys, err := parsePolicyKeys(&opts)
-			if err != nil {
-				return err
-			}
-
-			// Compile the policy or location
-			set, pcy, grp, ver, err := policy.NewCompiler().CompileVerifyLocation(
-				opts.PolicyLocation,
-				options.WithIdentityString(opts.PolicyIdentityStrings...),
-				options.WithPublicKey(keys...),
-				options.WithVerifySignatures(opts.PolicyVerify),
-			)
-			if err != nil {
-				return fmt.Errorf("compiling policy: %w", err)
-			}
-
-			if opts.PolicyVerify && ver != nil {
-				if !ver.GetVerified() {
-					//nolint:errcheck,forcetypeassert
-					return fmt.Errorf("policy signature verification failed: %w", ver.(error))
-				}
-			}
-
-			// Load the built-in repository types
-			if err := collector.LoadDefaultRepositoryTypes(); err != nil {
-				return fmt.Errorf("loading repository collector types: %w", err)
-			}
-
-			// Run the ampel verifier
-			ampel, err := verifier.New(verifier.WithCollectorInits(opts.Collectors))
-			if err != nil {
-				return fmt.Errorf("creating verifier: %w", err)
-			}
-
-			if err := opts.LoadPublicKeys(); err != nil {
-				return fmt.Errorf("loading keys: %w", err)
-			}
-
-			// Build the context providers as specified in the options
-			if err := opts.buildContextProviders(); err != nil {
-				return fmt.Errorf("building context providers: %w", err)
-			}
-
-			// Run the evaluation:
-			results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, policy.PolicyOrSetOrGroup(set, pcy, grp), subject)
-			if err != nil {
-				return fmt.Errorf("running subject verification: %w", err)
-			}
-
-			if err := attestResults(&opts, ampel, results); err != nil {
-				return fmt.Errorf("attesting results: %w", err)
-			}
-
-			eng := render.NewEngine()
-			if err := eng.SetDriver(opts.Format); err != nil {
-				return err
-			}
-
-			switch r := results.(type) {
-			case *papi.Result:
-				if err := eng.RenderResult(os.Stdout, r); err != nil {
-					return fmt.Errorf("rendering result: %w", err)
-				}
-			case *papi.ResultGroup:
-				if err := eng.Driver.RenderResultGroup(os.Stdout, r); err != nil {
-					return fmt.Errorf("rendering result: %w", err)
-				}
-			case *papi.ResultSet:
-				if opts.PolicyOutput || len(opts.Policies) > 0 {
-					for _, r := range r.GetResults() {
-						if err := eng.RenderResult(os.Stdout, r); err != nil {
-							return fmt.Errorf("rendering results: %w", err)
-						}
-					}
-				} else if err := eng.RenderResultSet(os.Stdout, r); err != nil {
-					return fmt.Errorf("rendering results: %w", err)
-				}
-			}
-
-			if results.GetStatus() == papi.StatusFAIL && opts.SetExitCode {
-				os.Exit(1)
-			}
-
-			return nil
+			return opts.Run()
 		},
 	}
 
 	opts.AddFlags(evalCmd)
 	parentCmd.AddCommand(evalCmd)
+}
+
+// Run executes the verify command logic.
+func (opts *verifyOptions) Run() error {
+	// Validate options
+	if err := opts.Validate(); err != nil {
+		return err
+	}
+
+	// Read the subject from the specified string:
+	subject, err := opts.SubjectDescriptor()
+	if err != nil {
+		return fmt.Errorf("resolving subject string: %w", err)
+	}
+
+	// Parse any keys for the policy check
+	keys, err := parsePolicyKeys(opts)
+	if err != nil {
+		return err
+	}
+
+	// Compile the policy or location
+	set, pcy, grp, ver, err := policy.NewCompiler().CompileVerifyLocation(
+		opts.PolicyLocation,
+		options.WithIdentityString(opts.PolicyIdentityStrings...),
+		options.WithPublicKey(keys...),
+		options.WithVerifySignatures(opts.PolicyVerify),
+	)
+	if err != nil {
+		return fmt.Errorf("compiling policy: %w", err)
+	}
+
+	if opts.PolicyVerify && ver != nil {
+		if !ver.GetVerified() {
+			//nolint:errcheck,forcetypeassert
+			return fmt.Errorf("policy signature verification failed: %w", ver.(error))
+		}
+	}
+
+	// Load the built-in repository types
+	if err := collector.LoadDefaultRepositoryTypes(); err != nil {
+		return fmt.Errorf("loading repository collector types: %w", err)
+	}
+
+	// Run the ampel verifier
+	ampel, err := verifier.New(verifier.WithCollectorInits(opts.Collectors))
+	if err != nil {
+		return fmt.Errorf("creating verifier: %w", err)
+	}
+
+	if err := opts.LoadPublicKeys(); err != nil {
+		return fmt.Errorf("loading keys: %w", err)
+	}
+
+	// Build the context providers as specified in the options
+	if err := opts.buildContextProviders(); err != nil {
+		return fmt.Errorf("building context providers: %w", err)
+	}
+
+	// Run the evaluation:
+	results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, policy.PolicyOrSetOrGroup(set, pcy, grp), subject)
+	if err != nil {
+		return fmt.Errorf("running subject verification: %w", err)
+	}
+
+	if err := attestResults(opts, ampel, results); err != nil {
+		return fmt.Errorf("attesting results: %w", err)
+	}
+
+	eng := render.NewEngine()
+	if err := eng.SetDriver(opts.Format); err != nil {
+		return err
+	}
+
+	switch r := results.(type) {
+	case *papi.Result:
+		if err := eng.RenderResult(os.Stdout, r); err != nil {
+			return fmt.Errorf("rendering result: %w", err)
+		}
+	case *papi.ResultGroup:
+		if err := eng.Driver.RenderResultGroup(os.Stdout, r); err != nil {
+			return fmt.Errorf("rendering result: %w", err)
+		}
+	case *papi.ResultSet:
+		if opts.PolicyOutput || len(opts.Policies) > 0 {
+			for _, r := range r.GetResults() {
+				if err := eng.RenderResult(os.Stdout, r); err != nil {
+					return fmt.Errorf("rendering results: %w", err)
+				}
+			}
+			for _, g := range r.GetGroups() {
+				if err := eng.Driver.RenderResultGroup(os.Stdout, g); err != nil {
+					return fmt.Errorf("rendering group results: %w", err)
+				}
+			}
+		} else if err := eng.RenderResultSet(os.Stdout, r); err != nil {
+			return fmt.Errorf("rendering results: %w", err)
+		}
+	}
+
+	if results.GetStatus() == papi.StatusFAIL && opts.SetExitCode {
+		os.Exit(1)
+	}
+
+	return nil
 }
 
 func attestResults(opts *verifyOptions, ampel *verifier.Ampel, results papi.Results) error {
