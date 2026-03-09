@@ -8,7 +8,7 @@ require (
 	github.com/carabiner-dev/command v0.3.0
 	github.com/carabiner-dev/hasher v0.2.3
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
-	github.com/carabiner-dev/policy v0.4.2-0.20260302060138-befb59523ee5
+	github.com/carabiner-dev/policy v0.4.2
 	github.com/carabiner-dev/predicates v0.1.0
 	github.com/fatih/color v1.18.0
 	github.com/google/cel-go v0.27.0
