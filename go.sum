@@ -92,8 +92,8 @@ github.com/bradleyjkemp/cupaloy/v2 v2.8.0 h1:any4BmKE+jGIaMpnU8YgH/I2LPiLBufr6oM
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0/go.mod h1:bm7JXdkRd4BHJk9HpwqAI8BoAY1lps46Enkdqw6aRX0=
 github.com/carabiner-dev/attestation v0.2.1 h1:VhjV5YlO9TsW50Sr/Zd54bdbZhhDAqgxC3kB9z1I+3Q=
 github.com/carabiner-dev/attestation v0.2.1/go.mod h1:O84vF84RZG3pJO/6BYrPs718bZviHF5DKajP1HsrDpw=
-github.com/carabiner-dev/collector v0.2.9 h1:RZyKD3Ks5u0cKMHUBBh2BSK03aLaNClYDX5iQHRS2bo=
-github.com/carabiner-dev/collector v0.2.9/go.mod h1:ltqIryrtd+Ev+zAW9Q2h/UHNVMhT2nR1Fmchk+8lbs8=
+github.com/carabiner-dev/collector v0.2.10-0.20260313072331-dd26e7f51e4f h1:pi1af6hS2/rNgJ1+fQVU480hjLAFOS0d6zZrz/yaqKM=
+github.com/carabiner-dev/collector v0.2.10-0.20260313072331-dd26e7f51e4f/go.mod h1:mFgXb1sGc+5wFgcItrVFGLrCIGzrNg4oRosSrV77/Y8=
 github.com/carabiner-dev/command v0.3.1-0.20260313054653-5c2e5699363e h1:TIgNxgPL7p9Z7euiZz4qptP1d+8UDV4CaINMqnyNExM=
 github.com/carabiner-dev/command v0.3.1-0.20260313054653-5c2e5699363e/go.mod h1:sAFFXue83fGhhqsrdHmYT8MIs/kbV63plUfZir80HlE=
 github.com/carabiner-dev/ghrfs v0.3.4 h1:XJoDXkuw+8KQPTC4oI0da8vLpnx7cfQBGgyjzo+Eqrc=
@@ -112,8 +112,8 @@ github.com/carabiner-dev/policy v0.4.2 h1:5yMIqui603UgpUft6wwub7+sErgsCqUJuElZF/
 github.com/carabiner-dev/policy v0.4.2/go.mod h1:T7ruDEM6F7xWm6OzYRY9s+QiSMsh/VPDufZakCrlYOg=
 github.com/carabiner-dev/predicates v0.1.0 h1:t6tQF9gFdr6TIccWtuNk3kFasx8eu88INFVGkCUnjL4=
 github.com/carabiner-dev/predicates v0.1.0/go.mod h1:jL6EAD+LiI6GW/rOdRYAJF4HaA88/V2Q4n7yUGNQ7XM=
-github.com/carabiner-dev/signer v0.3.8-0.20260313052054-634848231120 h1:NnxU8ElazF/Zc1v1/Z+SBYdFfzXsQfsZvqUSkqfZri0=
-github.com/carabiner-dev/signer v0.3.8-0.20260313052054-634848231120/go.mod h1:kqmUAFHKgQXFsIsIFjbk4UlOMXNte7J1IVxIgKAnY/M=
+github.com/carabiner-dev/signer v0.4.0 h1:pmjAEq4lIwMrPxu+qLPY5Bp9M77o9M9jS0wK8B8N8Ac=
+github.com/carabiner-dev/signer v0.4.0/go.mod h1:kqmUAFHKgQXFsIsIFjbk4UlOMXNte7J1IVxIgKAnY/M=
 github.com/carabiner-dev/vcslocator v0.4.0 h1:HxU8F7FWJatnIhR6NowsPpfki8xw2uNDRLuikcBHFao=
 github.com/carabiner-dev/vcslocator v0.4.0/go.mod h1:B3JFnwypdrRVQPJKNK3BOlRw6DbgmsiHGmoT3ZELpp8=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
@@ -258,8 +258,8 @@ github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeN
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
-github.com/google/go-containerregistry v0.21.1 h1:sOt/o9BS2b87FnR7wxXPvRKU1XVJn2QCwOS5g8zQXlc=
-github.com/google/go-containerregistry v0.21.1/go.mod h1:ctO5aCaewH4AK1AumSF5DPW+0+R+d2FmylMJdp5G7p0=
+github.com/google/go-containerregistry v0.21.2 h1:vYaMU4nU55JJGFC9JR/s8NZcTjbE9DBBbvusTW9NeS0=
+github.com/google/go-containerregistry v0.21.2/go.mod h1:ctO5aCaewH4AK1AumSF5DPW+0+R+d2FmylMJdp5G7p0=
 github.com/google/gofuzz v1.2.0 h1:xRy4A+RhZaiKjJ1bPfwQ8sedCA+YS2YcCHW6ec7JMi0=
 github.com/google/gofuzz v1.2.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/google/s2a-go v0.1.9 h1:LGD7gtMgezd8a/Xak7mEWL0PjoTQFvpRudN895yqKW0=
