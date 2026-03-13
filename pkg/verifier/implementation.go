@@ -146,6 +146,22 @@ func (di *defaultIplementation) CheckPolicy(ctx context.Context, opts *Verificat
 			),
 		}
 	}
+
+	// Extract public keys from policy identities and add them to the
+	// verification options so they are available for attestation verification.
+	for _, id := range p.GetIdentities() {
+		if id.GetKey() == nil {
+			continue
+		}
+		pk, err := id.PublicKey()
+		if err != nil {
+			return fmt.Errorf("parsing public key from policy identity %q: %w", id.GetId(), err)
+		}
+		if pk != nil {
+			opts.Keys = append(opts.Keys, pk)
+		}
+	}
+
 	return nil
 }
 
@@ -221,6 +237,12 @@ func (di *defaultIplementation) GatherAttestations(
 		},
 		&filters.SubjectlessMatcher{},
 	).Run(attestations, attestation.WithMode(attestation.QueryModeOr))
+
+	// Pass any verification keys to the collector so it can verify
+	// signatures on fetched attestations (e.g. keys embedded in policies).
+	if len(opts.Keys) > 0 {
+		agent.AddKeys(opts.Keys...)
+	}
 
 	// Now, query the collector to get all attestations available for the artifact.
 	res, err := agent.FetchAttestationsBySubject(ctx, []attestation.Subject{subject})
