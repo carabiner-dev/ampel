@@ -366,14 +366,17 @@ func (opts *verifyOptions) Run() error {
 		return fmt.Errorf("loading repository collector types: %w", err)
 	}
 
-	// Run the ampel verifier
-	ampel, err := verifier.New(verifier.WithCollectorInits(opts.Collectors))
-	if err != nil {
-		return fmt.Errorf("creating verifier: %w", err)
-	}
-
 	if err := opts.LoadPublicKeys(); err != nil {
 		return fmt.Errorf("loading keys: %w", err)
+	}
+
+	// Run the ampel verifier
+	ampel, err := verifier.New(
+		verifier.WithCollectorInits(opts.Collectors),
+		verifier.WithKeys(opts.Keys...),
+	)
+	if err != nil {
+		return fmt.Errorf("creating verifier: %w", err)
 	}
 
 	// Build the context providers as specified in the options

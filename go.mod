@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	github.com/carabiner-dev/attestation v0.2.1
-	github.com/carabiner-dev/collector v0.2.9
+	github.com/carabiner-dev/collector v0.2.10-0.20260313072331-dd26e7f51e4f
 	github.com/carabiner-dev/command v0.3.1-0.20260313054653-5c2e5699363e
 	github.com/carabiner-dev/hasher v0.2.3
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
@@ -68,7 +68,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/certificate-transparency-go v1.3.2 // indirect
-	github.com/google/go-containerregistry v0.21.1 // indirect
+	github.com/google/go-containerregistry v0.21.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect

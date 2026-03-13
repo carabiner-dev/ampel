@@ -9,6 +9,7 @@ import (
 
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector"
+	"github.com/carabiner-dev/signer/key"
 
 	"github.com/carabiner-dev/ampel/pkg/oscal"
 )
@@ -52,6 +53,13 @@ var WithCollector = func(repository attestation.Repository) fnOpt {
 var WithCollectors = func(repos []attestation.Repository) fnOpt {
 	return func(a *Ampel) error {
 		return a.Collector.AddRepository(repos...)
+	}
+}
+
+var WithKeys = func(keys ...key.PublicKeyProvider) fnOpt {
+	return func(a *Ampel) error {
+		a.Collector.AddKeys(keys...)
+		return nil
 	}
 }
 
