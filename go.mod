@@ -1,11 +1,11 @@
 module github.com/carabiner-dev/ampel
 
-go 1.26.0
+go 1.26.1
 
 require (
 	github.com/carabiner-dev/attestation v0.2.1
 	github.com/carabiner-dev/collector v0.2.9
-	github.com/carabiner-dev/command v0.3.0
+	github.com/carabiner-dev/command v0.3.1-0.20260313054653-5c2e5699363e
 	github.com/carabiner-dev/hasher v0.2.3
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
 	github.com/carabiner-dev/policy v0.4.2
@@ -30,7 +30,7 @@ require (
 require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/ProtonMail/go-crypto v1.3.0 // indirect
+	github.com/ProtonMail/go-crypto v1.4.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/avast/retry-go/v4 v4.7.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
@@ -38,7 +38,7 @@ require (
 	github.com/carabiner-dev/github v0.2.2 // indirect
 	github.com/carabiner-dev/jsonl v0.2.1 // indirect
 	github.com/carabiner-dev/openeox v0.0.0-20251126193927-142e907140f5 // indirect
-	github.com/carabiner-dev/signer v0.3.7
+	github.com/carabiner-dev/signer v0.3.8-0.20260313052054-634848231120
 	github.com/carabiner-dev/vcslocator v0.4.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cloudflare/circl v1.6.2 // indirect
