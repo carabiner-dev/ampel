@@ -12,7 +12,7 @@ require (
 	github.com/carabiner-dev/predicates v0.1.0
 	github.com/fatih/color v1.18.0
 	github.com/google/cel-go v0.27.0
-	github.com/in-toto/attestation v1.1.2
+	github.com/in-toto/attestation v1.1.3-0.20260311170755-7bfb269c6eb5
 	github.com/jedib0t/go-pretty/v6 v6.7.8
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/openvex/go-vex v0.2.7

@@ -19,6 +19,7 @@ import (
 var ResultsAttestationFormats = []string{
 	"ampel", // Regular ampel resultSet
 	"vsa",   // Verification Summary Attestation
+	"svr",   // Simple Verification Result
 }
 
 type VerificationOptions struct {
