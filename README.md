@@ -28,7 +28,26 @@ can transform the output of the common vulnerability scanners to a common format
 
 ## Installing
 
-TBD
+### Download a Binary
+
+Pre-built binaries for Linux, macOS and Windows are available on the
+[GitHub Releases](https://github.com/carabiner-dev/ampel/releases) page.
+Download the archive for your platform, extract it and place the `ampel`
+binary somewhere in your `$PATH`.
+
+### Go Install
+
+If you have Go installed, you can install ampel directly:
+
+```shell
+go install github.com/carabiner-dev/ampel/cmd/ampel@latest
+```
+
+### GitHub Action
+
+Ampel is also available as a GitHub Action for use in CI/CD workflows.
+See [carabiner-dev/actions](https://github.com/carabiner-dev/actions) for
+setup instructions and usage examples.
 
 ## The Ampel Ecosystem
 
