@@ -1,6 +1,7 @@
 # 🔴🟡🟢 AMPEL
 
 ### The Amazing Multi-Purpose Policy Engine (and L)
+
 ![Image](https://github.com/user-attachments/assets/95d714a4-2401-4c33-a978-1016d5a961f6)
 Ampel is a lightweight supply chain policy engine designed to be embedded
 across the software development lifecycle to make sure that source code,
@@ -15,8 +16,9 @@ Ampel works with attestations in the [in-toto](https://in-toto.io/) format and h
 support for sigstore bundles. Signing schemes are pluggable, meaning other
 signature verification mechanisms can be added.
 
-As a supply chain security tool, Ampel can work with common formats like 
-[SLSA](https://slsa.dev) to check software provenance and SBOMs to gate on depedndency data, but policies can be written against any custom data in JSON.
+As a supply chain security tool, Ampel can work with common formats like
+[SLSA](https://slsa.dev) to check software provenance and SBOMs to gate on
+depedndency data, but policies can be written against any custom data in JSON.
 
 The policy engine also supports __transformers__ that can read and verify attestations to then convert them to other formats, simplifying policy
 authoring.
@@ -28,15 +30,43 @@ can transform the output of the common vulnerability scanners to a common format
 
 ## Installing
 
-TBD
+### Download a Binary
+
+Pre-built binaries for Linux, macOS and Windows are available on the
+[GitHub Releases](https://github.com/carabiner-dev/ampel/releases) page.
+Download the archive for your platform, extract it and place the `ampel`
+binary somewhere in your `$PATH`.
+
+### Go Install
+
+If you have Go installed, you can install ampel directly:
+
+```shell
+go install github.com/carabiner-dev/ampel/cmd/ampel@latest
+```
+
+### GitHub Action
+
+Ampel is also available as a GitHub Action for use in CI/CD workflows.
+See [carabiner-dev/actions](https://github.com/carabiner-dev/actions) for
+setup instructions and usage examples.
 
 ## The Ampel Ecosystem
 
-Ampel is part of a growing ecosystem of tools that let software developers and
-security engineers harden their SDLC processes. The more mature siblings of 
-Ampel are:
+### Attestations Collector
 
-- [bnd](https://github.com/carabiner-dev/bnd): A tool to attest, sign and verify 
+Policy evaluation relies on attestations. AMPEL relies on the
+[Carabiner Collector](https://github.com/carabiner-dev/collector)
+to read attestations from all sorts of backends, from repositories, registries,
+filesystems and more.
+
+### Other Tools
+
+Ampel is part of a growing ecosystem of tools that let software developers and
+security engineers harden their SDLC processes. The more mature siblings of
+AMPEL are:
+
+- [bnd](https://github.com/carabiner-dev/bnd): A tool to attest, sign and verify
 data. It also has features that work with attestations and sigstore bundles.
 
 - [snappy](https://github.com/carabiner-dev/snappy): Takes snapshots of APIs to
@@ -75,7 +105,7 @@ if the tenet holds true.
 A policy's tenets can be evaluated in two modes:
 
 - `AND` a policy will evaluate to PASS when all tenets are true.
-- `OR` a policy will `PASS` if at least one tenet evaluates to true. Useful when 
+- `OR` a policy will `PASS` if at least one tenet evaluates to true. Useful when
 there is more than one way to check.
 
 Think of tenets as questions to ask your attested data:
@@ -88,8 +118,8 @@ Think of tenets as questions to ask your attested data:
 
 ## Link to Compliance Controls
 
-A policy can be linked to a security framework control. When evaluating the 
-compliance status of artifacts against a security framework, Ampel can 
+A policy can be linked to a security framework control. When evaluating the
+compliance status of artifacts against a security framework, Ampel can
 link the policies to controls and checks defined in OSCAL catalogs and profiles.
 
 ## Results and Results Attestations
@@ -106,16 +136,13 @@ have been checked once.
 
 ### Policy Sets
 
-Multiple policies can be specified together in a `PolicySet`. This is a handy way 
+Multiple policies can be specified together in a `PolicySet`. This is a handy way
 to maintain policies that relate to each other in a single file to make them
 available to the engine at evaluation time. The results of policies tied together
 in a PolicySet can also be reported together in a ResultsSet.
 
 ## Copyright
 
-Ampel is released under the Apache 2.0 license by Carabiner Systems, Inc. 
-Feel free to contribute patches or open an issue if you find a problem. Feedback 
-always welcome!
-
-
-
+Ampel is released under the Apache 2.0 license by Carabiner Systems, Inc.
+Feel free to contribute patches or open an issue if you find a problem. Feedback
+is always welcome!
