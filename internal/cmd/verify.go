@@ -10,6 +10,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector"
@@ -343,25 +344,8 @@ func (opts *verifyOptions) Run() error {
 		return err
 	}
 
-	// Compile the policy or location
-	set, pcy, grp, ver, err := policy.NewCompiler().CompileVerifyLocation(
-		opts.PolicyLocation,
-		options.WithIdentityString(opts.PolicyIdentityStrings...),
-		options.WithPublicKey(keys...),
-		options.WithVerifySignatures(opts.PolicyVerify),
-	)
-	if err != nil {
-		return fmt.Errorf("compiling policy: %w", err)
-	}
-
-	if opts.PolicyVerify && ver != nil {
-		if !ver.GetVerified() {
-			//nolint:errcheck,forcetypeassert
-			return fmt.Errorf("policy signature verification failed: %w", ver.(error))
-		}
-	}
-
-	// Load the built-in repository types
+	// Set up the collector and verifier early so we can pre-fetch
+	// attestations concurrently with policy compilation.
 	if err := collector.LoadDefaultRepositoryTypes(); err != nil {
 		return fmt.Errorf("loading repository collector types: %w", err)
 	}
@@ -370,7 +354,6 @@ func (opts *verifyOptions) Run() error {
 		return fmt.Errorf("loading keys: %w", err)
 	}
 
-	// Run the ampel verifier
 	ampel, err := verifier.New(
 		verifier.WithCollectorInits(opts.Collectors),
 		verifier.WithKeys(opts.Keys...),
@@ -384,8 +367,55 @@ func (opts *verifyOptions) Run() error {
 		return fmt.Errorf("building context providers: %w", err)
 	}
 
-	// Run the evaluation:
-	results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, policy.PolicyOrSetOrGroup(set, pcy, grp), subject)
+	// Run policy compilation and attestation pre-fetch concurrently.
+	// Policy compilation (git clone for remote policies) and collector
+	// fetching (OCI registry I/O) are independent and expensive.
+	var (
+		compileSet *papi.PolicySet
+		compilePcy *papi.Policy
+		compileGrp *papi.PolicyGroup
+		compileVer attestation.Verification
+		compileErr error
+		wg         sync.WaitGroup
+	)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		compileSet, compilePcy, compileGrp, compileVer, compileErr = policy.NewCompiler().CompileVerifyLocation(
+			opts.PolicyLocation,
+			options.WithIdentityString(opts.PolicyIdentityStrings...),
+			options.WithPublicKey(keys...),
+			options.WithVerifySignatures(opts.PolicyVerify),
+		)
+	}()
+
+	// Pre-fetch attestations into the collector's cache so that the
+	// Verify call below gets an immediate cache hit.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		//nolint:errcheck,gosec // Best-effort cache warming; Verify will re-fetch on miss.
+		ampel.Collector.FetchAttestationsBySubject(
+			context.Background(), []attestation.Subject{subject},
+		)
+	}()
+
+	wg.Wait()
+
+	if compileErr != nil {
+		return fmt.Errorf("compiling policy: %w", compileErr)
+	}
+
+	if opts.PolicyVerify && compileVer != nil {
+		if !compileVer.GetVerified() {
+			//nolint:errcheck,forcetypeassert
+			return fmt.Errorf("policy signature verification failed: %w", compileVer.(error))
+		}
+	}
+
+	// Run the evaluation (attestations should already be cached):
+	results, err := ampel.Verify(context.Background(), &opts.VerificationOptions, policy.PolicyOrSetOrGroup(compileSet, compilePcy, compileGrp), subject)
 	if err != nil {
 		return fmt.Errorf("running subject verification: %w", err)
 	}
