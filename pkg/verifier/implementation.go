@@ -183,6 +183,22 @@ func (di *defaultIplementation) CheckPolicySet(ctx context.Context, opts *Verifi
 			),
 		}
 	}
+
+	// Extract public keys from common identities so they are available
+	// for attestation signature verification during collection.
+	for _, id := range set.GetCommon().GetIdentities() {
+		if id.GetKey() == nil {
+			continue
+		}
+		pk, err := id.PublicKey()
+		if err != nil {
+			return fmt.Errorf("parsing public key from policy identity %q: %w", id.GetId(), err)
+		}
+		if pk != nil {
+			opts.Keys = append(opts.Keys, pk)
+		}
+	}
+
 	return nil
 }
 
@@ -440,13 +456,12 @@ func (di *defaultIplementation) Transform(
 	return subject, prepredicates, nil
 }
 
-// CheckIdentities checks that the ingested attestations are signed by one of the
-// identities defined in the policy.
+// CheckIdentities verifies attestation signatures and filters the envelope
+// list to only those signed by a recognized identity. Envelopes that cannot
+// be verified or whose signer does not match any of the policy/context
+// identities are silently discarded — they are simply not candidates for
+// evaluation. The function only fails when no envelopes survive the filter.
 func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *VerificationOptions, policyIdentities []*sapi.Identity, envelopes []attestation.Envelope) (bool, [][]*sapi.Identity, []error, error) {
-	// verification errors for the user
-	errs := make([]error, len(envelopes))
-	validSigners := make([][]*sapi.Identity, len(envelopes))
-
 	// allIds are the allowed ids (from the policy + any from options)
 	allIds := []*sapi.Identity{}
 
@@ -476,15 +491,17 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 		}
 	}
 
-	// If there are no identities defined, return here
+	// If there are no identities defined, return here with all envelopes
+	// accepted (no identity constraint to enforce). A nil ids slice signals
+	// to FilterAttestations that no identity filtering should be applied.
 	if len(allIds) == 0 {
 		logrus.Debug("No identities defined in policy. Not checking.")
-		return true, validSigners, nil, nil
-	} else {
-		logrus.Debug("Will look for signed attestations from:")
-		for _, i := range allIds {
-			logrus.Debugf("  > %s", i.Slug())
-		}
+		return true, nil, nil, nil
+	}
+
+	logrus.Debug("Will look for signed attestations from:")
+	for _, i := range allIds {
+		logrus.Debugf("  > %s", i.Slug())
 	}
 
 	// The keys to use are the ones in the options...
@@ -501,22 +518,16 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 		}
 	}
 
-	allow := true
-
-	// First, verify the signatures on the envelopes
+	// Verify signatures and collect only envelopes with a matching identity.
+	validSigners := make([][]*sapi.Identity, len(envelopes))
 	for i, e := range envelopes {
-		// Attestations are expected to be verified here already, but we want
-		// to make sure. This should not be an issue as the verification data
-		// should be already cached.
 		if err := e.Verify(keys); err != nil {
-			errs[i] = fmt.Errorf("verifying attestation %d (type %s) signature failed: %w", i, e.GetStatement().GetType(), err)
-			allow = false
+			logrus.Debugf("attestation %d (type %s): signature verification error, skipping: %v", i, e.GetStatement().GetType(), err)
 			continue
 		}
 
 		if e.GetVerification() == nil || !e.GetVerification().GetVerified() {
-			errs[i] = fmt.Errorf("attestation %d (type %s) not verified", i, e.GetStatement().GetType())
-			allow = false
+			logrus.Debugf("attestation %d (type %s): not verified, skipping", i, e.GetStatement().GetType())
 			continue
 		}
 
@@ -527,28 +538,51 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 		}
 
 		if len(validSigners[i]) == 0 {
-			allow = false
-			errs[i] = fmt.Errorf("attestation %d (type %s) has no recognized signer identities", i, e.GetStatement().GetType())
+			logrus.Debugf("attestation %d (type %s): no matching signer identity, skipping", i, e.GetStatement().GetType())
 		}
 	}
 
-	return allow, validSigners, errs, nil
+	// Check if at least one envelope matched a recognized identity.
+	matched := false
+	for _, ids := range validSigners {
+		if len(ids) > 0 {
+			matched = true
+			break
+		}
+	}
+
+	if !matched {
+		return false, validSigners, []error{
+			fmt.Errorf("no attestations matched a recognized signer identity"),
+		}, nil
+	}
+
+	return true, validSigners, nil, nil
 }
 
 // FilterAttestations filters the attestations read to only those required by the
 // policy. This function also restamps the ingested predicates with the identities
-// verified against the policy when ingesting the attestations.
+// verified against the policy when ingesting the attestations. Envelopes whose
+// identity list is empty (not admitted by CheckIdentities) are excluded.
 //
 // TODO(puerco): Implement filtering before 1.0
 func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, subject attestation.Subject, envs []attestation.Envelope, ids [][]*sapi.Identity) ([]attestation.Predicate, error) {
 	preds := make([]attestation.Predicate, 0, len(envs))
 	for i, env := range envs {
+		// Skip envelopes that were not admitted by CheckIdentities.
+		if len(ids) > 0 && len(ids[i]) == 0 {
+			continue
+		}
 		pred := env.GetStatement().GetPredicate()
+		var matchedIds []*sapi.Identity
+		if ids != nil {
+			matchedIds = ids[i]
+		}
 		pred.SetVerification(&sapi.Verification{
 			Signature: &sapi.SignatureVerification{
 				Date:       timestamppb.Now(),
 				Verified:   true,
-				Identities: ids[i],
+				Identities: matchedIds,
 			},
 		})
 		preds = append(preds, pred)

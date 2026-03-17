@@ -38,7 +38,7 @@ require (
 	github.com/carabiner-dev/github v0.2.2 // indirect
 	github.com/carabiner-dev/jsonl v0.2.1 // indirect
 	github.com/carabiner-dev/openeox v0.0.0-20260302211234-88fe8a305401 // indirect
-	github.com/carabiner-dev/signer v0.4.1
+	github.com/carabiner-dev/signer v0.4.2-0.20260317092902-42e595fd41c1
 	github.com/carabiner-dev/vcslocator v0.4.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
