@@ -271,12 +271,32 @@ func TestCheckPolicy(t *testing.T) {
 	}
 }
 
-type fakeEnvelope struct {
+type fakePredicate struct {
 	ver attestation.Verification
 }
 
-func (fe *fakeEnvelope) GetStatement() attestation.Statement       { return &intoto.Statement{} }
-func (fe *fakeEnvelope) GetPredicate() attestation.Predicate       { return nil }
+func (fp *fakePredicate) GetType() attestation.PredicateType        { return "" }
+func (fp *fakePredicate) SetType(attestation.PredicateType) error   { return nil }
+func (fp *fakePredicate) GetParsed() any                            { return nil }
+func (fp *fakePredicate) GetData() []byte                           { return []byte("{}") }
+func (fp *fakePredicate) GetVerification() attestation.Verification { return fp.ver }
+func (fp *fakePredicate) GetOrigin() attestation.Subject            { return nil }
+func (fp *fakePredicate) SetOrigin(attestation.Subject)             {}
+func (fp *fakePredicate) SetVerification(v attestation.Verification) {
+	fp.ver = v
+}
+
+var _ attestation.Predicate = &fakePredicate{}
+
+type fakeEnvelope struct {
+	ver  attestation.Verification
+	pred attestation.Predicate
+}
+
+func (fe *fakeEnvelope) GetStatement() attestation.Statement {
+	return &intoto.Statement{Predicate: fe.pred}
+}
+func (fe *fakeEnvelope) GetPredicate() attestation.Predicate       { return fe.pred }
 func (fe *fakeEnvelope) GetSignatures() []attestation.Signature    { return nil }
 func (fe *fakeEnvelope) GetCertificate() attestation.Certificate   { return nil }
 func (fe *fakeEnvelope) GetVerification() attestation.Verification { return fe.ver }
@@ -424,53 +444,71 @@ func TestCheckIdentities(t *testing.T) {
 		envelopes        []attestation.Envelope
 		mustErr          bool
 		mustAllow        bool
+		expectNilIds     bool // when true, ids slice must be nil (no filtering)
 	}{
 		{"no-allowedIdentities-defined", DefaultVerificationOptions, []*sapi.Identity{}, []attestation.Envelope{
 			&fakeEnvelope{
 				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}}},
 			},
-		}, false, true},
+		}, false, true, true},
 		{"no-matching-identities-opts", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*sapi.Identity{}, []attestation.Envelope{
 			&fakeEnvelope{
 				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstoreOther}}},
 			},
-		}, false, false},
+		}, false, false, false},
 		{"no-matching-identities-policy", VerificationOptions{IdentityStrings: []string{}}, []*sapi.Identity{idSigstore}, []attestation.Envelope{
 			&fakeEnvelope{
 				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstoreOther}}},
 			},
-		}, false, false},
+		}, false, false, false},
 		{"ids-in-opts", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*sapi.Identity{}, []attestation.Envelope{
 			&fakeEnvelope{
 				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}}},
 			},
-		}, false, true},
+		}, false, true, false},
 		{"ids-in-policy", VerificationOptions{IdentityStrings: []string{}}, []*sapi.Identity{idSigstore}, []attestation.Envelope{
 			&fakeEnvelope{
 				ver: &sapi.Verification{
 					Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}},
 				},
 			},
-		}, false, true},
+		}, false, true, false},
 		{"ids-in-policy-over-opts-pass", VerificationOptions{IdentityStrings: []string{idSigstoreOther.Slug()}}, []*sapi.Identity{idSigstore}, []attestation.Envelope{
 			&fakeEnvelope{
 				ver: &sapi.Verification{
 					Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}},
 				},
 			},
-		}, false, true},
+		}, false, true, false},
 		{"ids-in-policy-over-opts-fail", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*sapi.Identity{idSigstoreOther}, []attestation.Envelope{
 			&fakeEnvelope{
 				ver: &sapi.Verification{
 					Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}},
 				},
 			},
-		}, false, false},
+		}, false, false, false},
+		// Mixed envelopes: one matches, others don't — should pass and
+		// silently discard non-matching envelopes.
+		{"mixed-envelopes-one-matches", VerificationOptions{}, []*sapi.Identity{idSigstore}, []attestation.Envelope{
+			&fakeEnvelope{
+				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}}},
+			},
+			&fakeEnvelope{
+				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstoreOther}}},
+			},
+			&fakeEnvelope{
+				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: false}},
+			},
+		}, false, true, false},
+		// All envelopes unverified — should fail.
+		{"all-unverified", VerificationOptions{}, []*sapi.Identity{idSigstore}, []attestation.Envelope{
+			&fakeEnvelope{ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: false}}},
+			&fakeEnvelope{ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: false}}},
+		}, false, false, false},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			// allow, ids, errs, err
-			allow, _, _, err := di.CheckIdentities(
+			allow, ids, _, err := di.CheckIdentities(
 				t.Context(), &tt.opts, tt.policyIdentities, tt.envelopes,
 			)
 
@@ -480,6 +518,119 @@ func TestCheckIdentities(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.Equal(t, tt.mustAllow, allow)
+			if tt.expectNilIds {
+				require.Nil(t, ids, "ids must be nil when no identities are defined")
+			}
 		})
 	}
+}
+
+func TestCheckIdentitiesMixedSigners(t *testing.T) {
+	t.Parallel()
+
+	idMatch := &sapi.Identity{
+		Sigstore: &sapi.IdentitySigstore{
+			Issuer:   "https://example.com",
+			Identity: "alice@example.com",
+		},
+	}
+	idOther := &sapi.Identity{
+		Sigstore: &sapi.IdentitySigstore{
+			Issuer:   "https://other.com",
+			Identity: "bob@other.com",
+		},
+	}
+
+	di := defaultIplementation{}
+	allow, ids, errs, err := di.CheckIdentities(
+		t.Context(),
+		&VerificationOptions{},
+		[]*sapi.Identity{idMatch},
+		[]attestation.Envelope{
+			// envelope 0: matches
+			&fakeEnvelope{ver: &sapi.Verification{
+				Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idMatch}},
+			}},
+			// envelope 1: wrong identity
+			&fakeEnvelope{ver: &sapi.Verification{
+				Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idOther}},
+			}},
+			// envelope 2: not verified
+			&fakeEnvelope{ver: &sapi.Verification{
+				Signature: &sapi.SignatureVerification{Verified: false},
+			}},
+		},
+	)
+	require.NoError(t, err)
+	require.True(t, allow, "should allow when at least one envelope matches")
+	require.Nil(t, errs)
+
+	// Matching envelope gets identity; others get empty slices.
+	require.Len(t, ids, 3)
+	require.Len(t, ids[0], 1, "envelope 0 should have a matched identity")
+	require.Empty(t, ids[1], "envelope 1 should have no matched identity")
+	require.Empty(t, ids[2], "envelope 2 should have no matched identity")
+}
+
+// TestFilterAttestationsNilIds verifies that when no identities are defined
+// (CheckIdentities returns nil ids), all envelopes pass through without panic.
+func TestFilterAttestationsNilIds(t *testing.T) {
+	t.Parallel()
+
+	di := defaultIplementation{}
+	envs := []attestation.Envelope{
+		&fakeEnvelope{pred: &fakePredicate{}},
+		&fakeEnvelope{pred: &fakePredicate{}},
+		&fakeEnvelope{pred: &fakePredicate{}},
+	}
+	preds, err := di.FilterAttestations(
+		&VerificationOptions{}, nil, envs, nil,
+	)
+	require.NoError(t, err)
+	require.Len(t, preds, 3, "all envelopes must pass through when ids is nil")
+}
+
+func TestFilterAttestationsSkipsNonAdmitted(t *testing.T) {
+	t.Parallel()
+
+	idMatch := &sapi.Identity{
+		Sigstore: &sapi.IdentitySigstore{
+			Issuer:   "https://example.com",
+			Identity: "alice@example.com",
+		},
+	}
+
+	di := defaultIplementation{}
+	preds, err := di.FilterAttestations(
+		&VerificationOptions{},
+		nil,
+		[]attestation.Envelope{
+			&fakeEnvelope{
+				pred: &fakePredicate{},
+				ver: &sapi.Verification{
+					Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idMatch}},
+				},
+			},
+			&fakeEnvelope{
+				pred: &fakePredicate{},
+				ver: &sapi.Verification{
+					Signature: &sapi.SignatureVerification{Verified: false},
+				},
+			},
+			&fakeEnvelope{
+				pred: &fakePredicate{},
+				ver: &sapi.Verification{
+					Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idMatch}},
+				},
+			},
+		},
+		// Only envelope 0 and 2 have matched identities.
+		[][]*sapi.Identity{
+			{idMatch},
+			{},
+			{idMatch},
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, preds, 2, "only admitted envelopes should produce predicates")
 }
