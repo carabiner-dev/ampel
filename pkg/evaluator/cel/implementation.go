@@ -74,6 +74,8 @@ func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, pl
 		ext.TwoVarComprehensions(),
 	)
 
+	envOpts = append(envOpts, verificationCompileOptions()...)
+
 	for _, plugin := range plugins {
 		envOpts = append(envOpts, plugin.Library())
 	}
@@ -99,7 +101,7 @@ func (dce *defaulCelEvaluator) BuildVariables(
 	// List of variables to return
 	ret := map[string]any{}
 	// Collected predicates
-	preds := []*structpb.Value{}
+	preds := []any{}
 	fpreds := []attestation.Predicate{}
 	for _, p := range predicates {
 		// I think we can remove this filter
@@ -113,14 +115,15 @@ func (dce *defaulCelEvaluator) BuildVariables(
 		if err := json.Unmarshal(p.GetData(), &d); err != nil {
 			return nil, fmt.Errorf("unmarshalling predicate data: %w", err)
 		}
-		val, err := structpb.NewValue(map[string]any{
+		predMap := map[string]any{
 			"predicate_type": string(p.GetType()),
 			"data":           d,
-		})
+		}
+		val, err := structpb.NewValue(predMap)
 		if err != nil {
 			return nil, fmt.Errorf("serializing predicate: %w", err)
 		}
-		preds = append(preds, val)
+		preds = append(preds, NewPredicateVal(val, p))
 		fpreds = append(fpreds, p)
 	}
 	ret[VarNamePredicates] = preds
@@ -199,7 +202,7 @@ func (dce *defaulCelEvaluator) EnsurePredicates(tenet *papi.Tenet, vars *map[str
 	if !ok {
 		predFail = true
 	} else {
-		l, ok := predLlist.([]*structpb.Value)
+		l, ok := predLlist.([]any)
 		if !ok {
 			predFail = true
 		}
@@ -491,22 +494,22 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 	ret := map[string]any{}
 
 	// Collected predicates
-	preds := make([]*structpb.Value, 0, 1)
 	d := map[string]any{}
 	if err := json.Unmarshal(predicate.GetData(), &d); err != nil {
 		return nil, fmt.Errorf("unmarshaling predicate data: %w", err)
 	}
-	val, err := structpb.NewValue(map[string]any{
+	predMap := map[string]any{
 		"predicate_type": string(predicate.GetType()),
 		"data":           d,
-	})
+	}
+	val, err := structpb.NewValue(predMap)
 	if err != nil {
 		return nil, fmt.Errorf("serializing predicate: %w", err)
 	}
-	preds = append(preds, val)
+	pv := NewPredicateVal(val, predicate)
 
-	ret[VarNamePredicates] = preds
-	ret[VarNamePredicate] = val
+	ret[VarNamePredicates] = []any{pv}
+	ret[VarNamePredicate] = pv
 	subdata, err := extractSubjectData(subject)
 	if err != nil {
 		return nil, fmt.Errorf("loading subject data onto selector evaluation runtime: %w", err)
