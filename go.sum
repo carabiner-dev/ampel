@@ -310,8 +310,8 @@ github.com/hjson/hjson-go/v4 v4.6.0 h1:16e6ViyVfAANKsXo/46h8szUADez7FJs67xl/l+KH
 github.com/hjson/hjson-go/v4 v4.6.0/go.mod h1:4zx6c7Y0vWcm8IRyVoQJUHAPJLXLvbG6X8nk1RLigSo=
 github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef h1:A9HsByNhogrvm9cWb28sjiS3i7tcKCkflWFEkHfuAgM=
 github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef/go.mod h1:lADxMC39cJJqL93Duh1xhAs4I2Zs8mKS89XWXFGp9cs=
-github.com/in-toto/attestation v1.1.3-0.20260311170755-7bfb269c6eb5 h1:tee1nLi3lxKphcVnt7UyM0tkocGSevulxR0S7/GgI24=
-github.com/in-toto/attestation v1.1.3-0.20260311170755-7bfb269c6eb5/go.mod h1:r79G45gOmzPismgObLSL+rZTFxUgZLOQJI6LofTZgXk=
+github.com/in-toto/attestation v1.2.0 h1:aPRUZ3azbqD7yEBD5fP3TD8Dszf+YHo284SOcpahjQk=
+github.com/in-toto/attestation v1.2.0/go.mod h1:r79G45gOmzPismgObLSL+rZTFxUgZLOQJI6LofTZgXk=
 github.com/in-toto/in-toto-golang v0.10.0 h1:+s2eZQSK3WmWfYV85qXVSBfqgawi/5L02MaqA4o/tpM=
 github.com/in-toto/in-toto-golang v0.10.0/go.mod h1:wjT4RiyFlLWCmLUJjwB8oZcjaq7HA390aMJcD3xXgmg=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
