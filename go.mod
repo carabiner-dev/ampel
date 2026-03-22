@@ -10,7 +10,7 @@ require (
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
 	github.com/carabiner-dev/policy v0.4.2
 	github.com/carabiner-dev/predicates v0.1.0
-	github.com/fatih/color v1.18.0
+	github.com/fatih/color v1.19.0
 	github.com/google/cel-go v0.27.0
 	github.com/in-toto/attestation v1.2.0
 	github.com/jedib0t/go-pretty/v6 v6.7.8
