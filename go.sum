@@ -110,12 +110,12 @@ github.com/carabiner-dev/openeox v0.0.0-20260302211234-88fe8a305401 h1:fexoMxtBC
 github.com/carabiner-dev/openeox v0.0.0-20260302211234-88fe8a305401/go.mod h1:YDuJw950hcWHl/WWJTpmyAMfRRY3rNXgy4NxnTtRTIY=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 h1:BJ9+OCNezZGkU8SrGC3oB7Tj+J0JsonwfZztcgUav6c=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92/go.mod h1:o7jXwi/fFZ9mQlvVlog0kcvyEkwQT3eWmVQmrorBGpE=
-github.com/carabiner-dev/policy v0.4.2 h1:5yMIqui603UgpUft6wwub7+sErgsCqUJuElZF/McA3U=
-github.com/carabiner-dev/policy v0.4.2/go.mod h1:T7ruDEM6F7xWm6OzYRY9s+QiSMsh/VPDufZakCrlYOg=
+github.com/carabiner-dev/policy v0.4.3 h1:IvA0Z6aDZvBx3D7ZQdx7GCbpXU3XcCuS5FclMQgLCfk=
+github.com/carabiner-dev/policy v0.4.3/go.mod h1:MxQMkRjjLTj7hpQH11LFWPmXmjcg190AnmOYYxB0poQ=
 github.com/carabiner-dev/predicates v0.1.0 h1:t6tQF9gFdr6TIccWtuNk3kFasx8eu88INFVGkCUnjL4=
 github.com/carabiner-dev/predicates v0.1.0/go.mod h1:jL6EAD+LiI6GW/rOdRYAJF4HaA88/V2Q4n7yUGNQ7XM=
-github.com/carabiner-dev/signer v0.4.2-0.20260317092902-42e595fd41c1 h1:TbJ567LC77uQs+Relza7aaWhzfV71gpffHo7CuYVVbQ=
-github.com/carabiner-dev/signer v0.4.2-0.20260317092902-42e595fd41c1/go.mod h1:BTWxBXeVfqx23jLIQ72DIYAg105FjSwK11aAco5+ixo=
+github.com/carabiner-dev/signer v0.4.2 h1:VcrffuY8iHkKVcA91lyhOAg39u0V0fAdtQjSBYBrmcg=
+github.com/carabiner-dev/signer v0.4.2/go.mod h1:BTWxBXeVfqx23jLIQ72DIYAg105FjSwK11aAco5+ixo=
 github.com/carabiner-dev/vcslocator v0.4.0 h1:HxU8F7FWJatnIhR6NowsPpfki8xw2uNDRLuikcBHFao=
 github.com/carabiner-dev/vcslocator v0.4.0/go.mod h1:B3JFnwypdrRVQPJKNK3BOlRw6DbgmsiHGmoT3ZELpp8=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
