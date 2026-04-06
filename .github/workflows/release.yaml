@@ -36,10 +36,10 @@ jobs:
           cache: false
 
       - name: Install tejolote
-        uses: kubernetes-sigs/release-actions/setup-tejolote@cbe0488670ad0c0ff422fbef963da3bfe451a891 # v0.4.2
+        uses: kubernetes-sigs/release-actions/setup-tejolote@8753ea6bdadb814d779c6ec34eaca689dbfb492b # v0.4.3
 
       - name: Install bom
-        uses: kubernetes-sigs/release-actions/setup-bom@cbe0488670ad0c0ff422fbef963da3bfe451a891 # v0.4.2
+        uses: kubernetes-sigs/release-actions/setup-bom@8753ea6bdadb814d779c6ec34eaca689dbfb492b # v0.4.3
 
       - name: Set tag output
         id: tag
