@@ -94,8 +94,8 @@ github.com/bradleyjkemp/cupaloy/v2 v2.8.0 h1:any4BmKE+jGIaMpnU8YgH/I2LPiLBufr6oM
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0/go.mod h1:bm7JXdkRd4BHJk9HpwqAI8BoAY1lps46Enkdqw6aRX0=
 github.com/carabiner-dev/attestation v0.2.1 h1:VhjV5YlO9TsW50Sr/Zd54bdbZhhDAqgxC3kB9z1I+3Q=
 github.com/carabiner-dev/attestation v0.2.1/go.mod h1:O84vF84RZG3pJO/6BYrPs718bZviHF5DKajP1HsrDpw=
-github.com/carabiner-dev/collector v0.3.3 h1:CgdbleYJVjWicDmXZPPi3CbvBTyOIKNtn4iwEnT0rok=
-github.com/carabiner-dev/collector v0.3.3/go.mod h1:3TmwVSEto5NxQSqY0OTyRlCkkZme7NYg+PLAUdEGVR0=
+github.com/carabiner-dev/collector v0.3.4-0.20260405002205-9441e61c839f h1:+4hEnn7qDN//h30l2aRJmL5j/c2BhULHEnWC7fyadiQ=
+github.com/carabiner-dev/collector v0.3.4-0.20260405002205-9441e61c839f/go.mod h1:3TmwVSEto5NxQSqY0OTyRlCkkZme7NYg+PLAUdEGVR0=
 github.com/carabiner-dev/command v0.3.1-0.20260313054653-5c2e5699363e h1:TIgNxgPL7p9Z7euiZz4qptP1d+8UDV4CaINMqnyNExM=
 github.com/carabiner-dev/command v0.3.1-0.20260313054653-5c2e5699363e/go.mod h1:sAFFXue83fGhhqsrdHmYT8MIs/kbV63plUfZir80HlE=
 github.com/carabiner-dev/ghrfs v0.3.4 h1:XJoDXkuw+8KQPTC4oI0da8vLpnx7cfQBGgyjzo+Eqrc=

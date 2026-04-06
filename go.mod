@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	github.com/carabiner-dev/attestation v0.2.1
-	github.com/carabiner-dev/collector v0.3.3
+	github.com/carabiner-dev/collector v0.3.4-0.20260405002205-9441e61c839f
 	github.com/carabiner-dev/command v0.3.1-0.20260313054653-5c2e5699363e
 	github.com/carabiner-dev/hasher v0.2.3
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
