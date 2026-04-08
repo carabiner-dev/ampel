@@ -11,7 +11,7 @@ require (
 	github.com/carabiner-dev/policy v0.4.4
 	github.com/carabiner-dev/predicates v0.1.0
 	github.com/fatih/color v1.19.0
-	github.com/google/cel-go v0.27.0
+	github.com/google/cel-go v0.28.0
 	github.com/in-toto/attestation v1.2.0
 	github.com/jedib0t/go-pretty/v6 v6.7.9
 	github.com/mitchellh/go-wordwrap v1.0.1
