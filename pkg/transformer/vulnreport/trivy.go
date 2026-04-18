@@ -13,6 +13,7 @@ import (
 	"github.com/carabiner-dev/collector/predicate/osv"
 	"github.com/carabiner-dev/collector/predicate/trivy"
 	posv "github.com/carabiner-dev/osv/go/osv"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -160,8 +161,14 @@ func (t *Transformer) TrivyToOSV(original attestation.Predicate) (attestation.Pr
 		osvResults.Results[0].Packages = append(osvResults.Results[0].Packages, pkg)
 	}
 
+	data, err := protojson.Marshal(osvResults)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling OSV predicate: %w", err)
+	}
+
 	return &generic.Predicate{
 		Type:   osv.PredicateType,
 		Parsed: osvResults,
+		Data:   data,
 	}, nil
 }
