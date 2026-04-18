@@ -21,6 +21,10 @@ var PredicateTypes = []attestation.PredicateType{
 	trivy.PredicateType,
 }
 
+func New() *Transformer {
+	return &Transformer{}
+}
+
 // Transformer implements the normalizer from scanner to vulnv2
 type Transformer struct{}
 
