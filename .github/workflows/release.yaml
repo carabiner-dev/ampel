@@ -69,7 +69,6 @@ jobs:
             tejolote attest --artifacts github://${{github.repository}}/${{ steps.tag.outputs.tag_name }} github://${{github.repository}}/"${GITHUB_RUN_ID}" --output provenance.json
             bnd statement provenance.json -o ampel-${{ steps.tag.outputs.tag_name }}.provenance.json
             gh release upload ${{ steps.tag.outputs.tag_name }} ampel-${{ steps.tag.outputs.tag_name }}.provenance.json
-            bnd push github ${{github.repository}} ampel-${{ steps.tag.outputs.tag_name }}.provenance.json
 
       - name: Generate SBOM
         shell: bash
