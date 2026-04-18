@@ -1,3 +1,5 @@
+buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260415201107-50325440f8f2.1 h1:s6hzCXtND/ICdGPTMGk7C+/BFlr2Jg5GyH0NKf4XGXg=
+buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260415201107-50325440f8f2.1/go.mod h1:tvtbpgaVXZX4g6Pn+AnzFycuRK3MOz5HJfEGeEllXYM=
 cel.dev/expr v0.25.1 h1:1KrZg61W6TWSxuNZ37Xy49ps13NUovb66QLprthtwi4=
 cel.dev/expr v0.25.1/go.mod h1:hrXvqGP6G6gyx8UAHSHJ5RGk//1Oj5nXQ2NI02Nrsg4=
 cloud.google.com/go v0.123.0 h1:2NAUJwPR47q+E35uaJeYoNhuNEM9kM8SjgRgdeOJUSE=
@@ -108,8 +110,8 @@ github.com/carabiner-dev/openeox v1.0.0-pre.1 h1:47Oe0vcH9m8nBFFQCPLNVR2HwiumXst
 github.com/carabiner-dev/openeox v1.0.0-pre.1/go.mod h1:+6i8M7PhtWk2jRtUC1anZnhmOr5cXKMLGYjwFcqPDa0=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 h1:BJ9+OCNezZGkU8SrGC3oB7Tj+J0JsonwfZztcgUav6c=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92/go.mod h1:o7jXwi/fFZ9mQlvVlog0kcvyEkwQT3eWmVQmrorBGpE=
-github.com/carabiner-dev/policy v0.4.6 h1:JfWUPDtBNiC+TtNudcpLwHtlRQqRR580cb4m19cXYFo=
-github.com/carabiner-dev/policy v0.4.6/go.mod h1:DKCL2EEEN0l6mnTcGk2fnOfqv8dZJ1w+r8BTTxEw5Y8=
+github.com/carabiner-dev/policy v0.4.7-0.20260418052227-a418c4cef5e1 h1:yOyUDlY89Lnv4KVr3KmVWoIk3JlsVfzm4P07BfGu7oA=
+github.com/carabiner-dev/policy v0.4.7-0.20260418052227-a418c4cef5e1/go.mod h1:A+fnVBXpzx7f/MiLoH1FGTBAOe23ZZwXtGJsT9MCpBM=
 github.com/carabiner-dev/predicates v0.1.0 h1:t6tQF9gFdr6TIccWtuNk3kFasx8eu88INFVGkCUnjL4=
 github.com/carabiner-dev/predicates v0.1.0/go.mod h1:jL6EAD+LiI6GW/rOdRYAJF4HaA88/V2Q4n7yUGNQ7XM=
 github.com/carabiner-dev/sbomfs v0.1.0 h1:gEsmn85hod7JTLs2dDr5C1x4Af7FUEhI0lbTurNaEZs=
