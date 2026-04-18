@@ -11,6 +11,7 @@ import (
 
 	"github.com/carabiner-dev/attestation"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/carabiner-dev/ampel/pkg/transformer/protobom"
 	"github.com/carabiner-dev/ampel/pkg/transformer/vex"
@@ -27,30 +28,38 @@ var (
 // a list of string identifiers
 type Factory struct{}
 
-// Get returns
-func (tf *Factory) Get(c Class) (Transformer, error) {
+// Get returns a transformer for the given class, initialized with the
+// supplied config. Pass nil config when the policy declared none; each
+// transformer applies its own defaults.
+func (tf *Factory) Get(c Class, config *structpb.Struct) (Transformer, error) {
 	if !strings.HasPrefix(c.Name(), "internal:") {
 		return nil, errors.New("only internal transformers are supported for now")
 	}
 
 	s := strings.TrimPrefix(c.Name(), "internal:")
+	var t Transformer
 	switch s {
 	case protobom.ClassName:
-		logrus.Debugf("Found driver for transformer class %s", s)
-		return protobom.New(), nil
+		t = protobom.New()
 	case vulnreport.ClassName:
-		logrus.Debugf("Found driver for transformer class %s", s)
-		return vulnreport.New(), nil
+		t = vulnreport.New()
 	case vex.ClassName:
-		logrus.Debugf("Found driver for transformer class %s", s)
-		return vex.New(), nil
+		t = vex.New()
 	default:
 		return nil, fmt.Errorf("unknown transformer %q", s)
 	}
+	logrus.Debugf("Found driver for transformer class %s", s)
+	if err := t.Init(config); err != nil {
+		return nil, fmt.Errorf("initializing transformer %q: %w", s, err)
+	}
+	return t, nil
 }
 
 // Transformer is an interface that models a predicate transformer
 type Transformer interface {
+	// Init configures the transformer from policy-supplied config. Implementations
+	// must tolerate a nil config and apply defaults.
+	Init(*structpb.Struct) error
 	Mutate(attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
 }
 
