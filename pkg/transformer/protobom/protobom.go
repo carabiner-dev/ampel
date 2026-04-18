@@ -16,6 +16,7 @@ import (
 	"github.com/carabiner-dev/collector/predicate/spdx"
 	"github.com/protobom/protobom/pkg/reader"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type Transformer struct{}
@@ -24,6 +25,11 @@ var ClassName = "protobom"
 
 func New() *Transformer {
 	return &Transformer{}
+}
+
+// Init satisfies the transformer interface. The protobom transformer takes no config.
+func (p *Transformer) Init(_ *structpb.Struct) error {
+	return nil
 }
 
 // PredicateTypes

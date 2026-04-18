@@ -24,6 +24,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/carabiner-dev/ampel/internal/index"
 )
@@ -36,6 +37,11 @@ func New() *Transformer {
 
 // Transformer implements the VEX interface
 type Transformer struct{}
+
+// Init satisfies the transformer interface. The VEX transformer takes no config today.
+func (t *Transformer) Init(_ *structpb.Struct) error {
+	return nil
+}
 
 // Mutate applies the VEX documents in the input to the received
 // vulnerability reports.
