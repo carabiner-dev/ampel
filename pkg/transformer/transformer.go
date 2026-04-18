@@ -22,6 +22,7 @@ import (
 var (
 	_ Transformer = (*protobom.Transformer)(nil)
 	_ Transformer = (*vulnreport.Transformer)(nil)
+	_ Transformer = (*vex.Transformer)(nil)
 )
 
 // Factory returns a list of transformers from

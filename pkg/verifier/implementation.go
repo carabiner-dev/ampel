@@ -418,13 +418,18 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *pa
 func (di *defaultIplementation) BuildTransformers(opts *VerificationOptions, policy *papi.Policy) (map[transformer.Class]transformer.Transformer, error) {
 	factory := transformer.Factory{}
 	transformers := map[transformer.Class]transformer.Transformer{}
-	for _, classString := range policy.Transformers {
-		t, err := factory.Get(transformer.Class(classString.Id))
+
+	// Here we should have logic to support loading the latest version. So if
+	// a policy defined v1 and we have v1.1 and v1.2 load v1.2. Also, no version
+	// will load the latest version.
+	for _, trDef := range policy.Transformers {
+		t, err := factory.Get(transformer.Class(trDef.GetId()), trDef.GetConfig())
 		if err != nil {
-			return nil, fmt.Errorf("building tranformer for class %q: %w", classString, err)
+			return nil, fmt.Errorf("building tranformer for class %q: %w", t, err)
 		}
-		transformers[transformer.Class(classString.Id)] = t
+		transformers[transformer.Class(trDef.GetId())] = t
 	}
+
 	logrus.Debugf("Loaded %d transformers defined in the policy", len(transformers))
 	return transformers, nil
 }
