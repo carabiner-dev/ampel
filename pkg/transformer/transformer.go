@@ -40,7 +40,7 @@ func (tf *Factory) Get(c Class) (Transformer, error) {
 		return protobom.New(), nil
 	case vulnreport.ClassName:
 		logrus.Debugf("Found driver for transformer class %s", s)
-		return protobom.New(), nil
+		return vulnreport.New(), nil
 	case vex.ClassName:
 		logrus.Debugf("Found driver for transformer class %s", s)
 		return vex.New(), nil
