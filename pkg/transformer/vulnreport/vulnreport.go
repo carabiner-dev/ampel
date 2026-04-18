@@ -7,15 +7,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector/predicate/generic"
 	"github.com/carabiner-dev/collector/predicate/trivy"
+	"github.com/carabiner-dev/collector/predicate/vulns"
 	v02 "github.com/in-toto/attestation/go/predicates/vulns/v02"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// trivyScannerURI identifies the Trivy scanner in vulns/v0.2 Scanner.uri.
+const trivyScannerURI = "https://trivy.dev"
 
 var ClassName = "vulnreport"
 
@@ -103,19 +108,22 @@ func trivyToVulnsV2(original attestation.Predicate) (attestation.Predicate, erro
 
 	oParsed, ok := original.GetParsed().(*trivy.TrivyReport)
 	if !ok {
-		return nil, fmt.Errorf("unable to parse predicate payload as v02.Vulns")
+		return nil, fmt.Errorf("unable to parse predicate payload as trivy report")
+	}
+
+	scanTime := time.Now()
+	if oParsed.CreatedAt != nil {
+		scanTime = *oParsed.CreatedAt
 	}
 
 	newReport := &v02.Vulns{
 		Scanner: &v02.Scanner{
-			Uri:     "",
-			Version: new(string),
-			Db:      &v02.VulnDatabase{},
-			Result:  []*v02.Result{},
+			Uri:    trivyScannerURI,
+			Result: []*v02.Result{},
 		},
 		Metadata: &v02.ScanMetadata{
-			ScanStartedOn:  timestamppb.New(*oParsed.CreatedAt),
-			ScanFinishedOn: timestamppb.New(*oParsed.CreatedAt),
+			ScanStartedOn:  timestamppb.New(scanTime),
+			ScanFinishedOn: timestamppb.New(scanTime),
 		},
 	}
 
@@ -126,18 +134,39 @@ func trivyToVulnsV2(original attestation.Predicate) (attestation.Predicate, erro
 				Severity:    []*v02.Result_Severity{},
 				Annotations: []*structpb.Struct{},
 			}
-			newResult.Severity = append(newResult.Severity, &v02.Result_Severity{
-				Method: "",
-				Score:  "",
+
+			for _, cvss := range vuln.CVSS {
+				newResult.Severity = append(newResult.Severity, &v02.Result_Severity{
+					Method: "CVSS_V3",
+					Score:  fmt.Sprintf("%.1f", cvss.V3Score),
+				})
+			}
+
+			ann, err := structpb.NewStruct(map[string]any{
+				"package":           vuln.PkgName,
+				"installed_version": vuln.InstalledVersion,
+				"fixed_version":     vuln.FixedVersion,
+				"purl":              vuln.PkgIdentifier["PURL"],
+				"severity":          vuln.Severity,
+				"title":             vuln.Title,
 			})
+			if err != nil {
+				return nil, fmt.Errorf("building result annotation: %w", err)
+			}
+			newResult.Annotations = append(newResult.Annotations, ann)
 
 			newReport.Scanner.Result = append(newReport.Scanner.Result, newResult)
 		}
 	}
 
+	data, err := protojson.Marshal(newReport)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling vulns/v0.2 predicate: %w", err)
+	}
+
 	return &generic.Predicate{
-		Type:   trivy.PredicateType,
+		Type:   vulns.PredicateType,
 		Parsed: newReport,
-		Data:   []byte{},
+		Data:   data,
 	}, nil
 }
