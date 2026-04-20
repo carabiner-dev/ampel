@@ -803,13 +803,22 @@ func failPolicyGroupWithError(p *papi.PolicyGroup, chain []*papi.ChainedSubject,
 // Returns the new go context loaded with the augmented eval ctx definition and the
 // new evaluation context.
 func (ampel *Ampel) loadElementEvalContextDef(ctx context.Context, element papi.CommonProvider) (context.Context, evalcontext.EvaluationContext) {
-	// First, extract any existing evaluation context
-	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
-	if !ok {
-		evalContext = evalcontext.EvaluationContext{
-			Context:    map[string]*papi.ContextVal{},
-			Identities: []*sapi.Identity{},
-		}
+	// First, extract any existing evaluation context. The map and slice fields
+	// inside EvaluationContext are reference types, so when this function runs
+	// concurrently across goroutines sharing the same parent ctx we must clone
+	// them before mutating to avoid concurrent map writes / slice races.
+	parent, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+	evalContext := evalcontext.EvaluationContext{
+		Context:    map[string]*papi.ContextVal{},
+		Identities: []*sapi.Identity{},
+	}
+	if ok {
+		maps.Copy(evalContext.Context, parent.Context)
+		evalContext.Identities = append(evalContext.Identities, parent.Identities...)
+		evalContext.ContextValues = parent.ContextValues
+		evalContext.Subject = parent.Subject
+		evalContext.Policy = parent.Policy
+		evalContext.ChainedSubjects = parent.ChainedSubjects
 	}
 
 	// If the policy material has an eval context definition, then parse it and add
