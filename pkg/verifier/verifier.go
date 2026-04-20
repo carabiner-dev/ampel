@@ -26,6 +26,11 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 )
 
+const (
+	assertModeAND = "AND"
+	assertModeOR  = "OR"
+)
+
 type PolicyError struct {
 	error
 	Guidance string
@@ -522,17 +527,26 @@ func (ampel *Ampel) VerifySubjectWithPolicyGroup(
 		res.EvalResults = append(res.EvalResults, rs)
 	}
 
-	// Assert the group results. For the group to pass all blocks
-	// need to pass.
+	// Assert the group results based on the group's assert mode.
+	// AND (default): all blocks must pass. OR: any block passing is sufficient.
+	assertMode := group.GetMeta().GetAssertMode()
+	if assertMode == assertModeOR {
+		res.Status = papi.StatusFAIL
+	}
+
 	fails := []string{}
 	for i := range res.EvalResults {
-		if res.EvalResults[i].GetStatus() == papi.StatusFAIL {
+		if res.EvalResults[i].GetStatus() == papi.StatusFAIL && (assertMode == "" || assertMode == assertModeAND) {
 			res.Status = papi.StatusFAIL
 			if res.EvalResults[i].GetId() != "" {
 				fails = append(fails, res.EvalResults[i].GetId())
 			} else {
 				fails = append(fails, fmt.Sprintf("#%d", i))
 			}
+		}
+
+		if res.EvalResults[i].GetStatus() == papi.StatusPASS && assertMode == assertModeOR {
+			res.Status = papi.StatusPASS
 		}
 	}
 	if len(fails) > 0 && res.Status == papi.StatusFAIL {
@@ -555,7 +569,7 @@ func (ampel *Ampel) verifySubjectWithBlock(
 		Error:   &papi.Error{},
 	}
 
-	if block.GetMeta().GetAssertMode() == "OR" {
+	if block.GetMeta().GetAssertMode() == assertModeOR {
 		rset.Status = papi.StatusFAIL
 	}
 
@@ -568,14 +582,14 @@ func (ampel *Ampel) verifySubjectWithBlock(
 		}
 		rset.Results = append(rset.Results, res)
 
-		if res.GetStatus() == papi.StatusFAIL && block.GetMeta().GetAssertMode() == "" || block.GetMeta().GetAssertMode() == "AND" {
+		if res.GetStatus() == papi.StatusFAIL && block.GetMeta().GetAssertMode() == "" || block.GetMeta().GetAssertMode() == assertModeAND {
 			rset.Status = papi.StatusFAIL
 			if opts.LazyBlockEval {
 				break
 			}
 		}
 
-		if res.GetStatus() == papi.StatusPASS && block.GetMeta().GetAssertMode() == "OR" {
+		if res.GetStatus() == papi.StatusPASS && block.GetMeta().GetAssertMode() == assertModeOR {
 			rset.Status = papi.StatusPASS
 			if opts.LazyBlockEval {
 				break
@@ -587,7 +601,7 @@ func (ampel *Ampel) verifySubjectWithBlock(
 	if rset.Status != papi.StatusPASS {
 		assertMode := block.GetMeta().GetAssertMode()
 		switch assertMode {
-		case "OR":
+		case assertModeOR:
 			// Copy the error from the last failed policy
 			for i := len(rset.Results) - 1; i >= 0; i-- {
 				if rset.Results[i].GetStatus() == papi.StatusFAIL {
