@@ -405,8 +405,8 @@ github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRI
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/protobom/cel v0.1.0 h1:BxzIwssIyavN78o4rH95E0GC6FIh2gb2PDPm+4w93pQ=
 github.com/protobom/cel v0.1.0/go.mod h1:Ycs/nyv34JH0BBUNdrPPQ2tZrBy3VpDME38K5Sox4Xc=
-github.com/protobom/protobom v0.5.4 h1:fMSO3wA5BEj/J6f1zgT56Ps/6pcE0NGZZzphnIoL/DQ=
-github.com/protobom/protobom v0.5.4/go.mod h1:zz85kBItD/hO6c9o18pFXgFv2UOwtAhqZDAITIfPJcs=
+github.com/protobom/protobom v0.5.5 h1:empsX+5PTBSZr5fcKY2m9QcEblVTk30JhkwCTOZbK9M=
+github.com/protobom/protobom v0.5.5/go.mod h1:BHRle+iMKbIO1jlSseQvhIOgXYkdS4PjN3wfUeByV/0=
 github.com/regclient/regclient v0.11.3 h1:aTnVRsgFaOmezgKp7caL3zINrZKAXsMbzS1oCgD7/cA=
 github.com/regclient/regclient v0.11.3/go.mod h1:a4PDi+VyEbBuV/5hCfMjnYH8jvB7NgD0mdggwNRECy8=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=

@@ -18,7 +18,7 @@ require (
 	github.com/openvex/go-vex v0.2.8
 	github.com/package-url/packageurl-go v0.1.5
 	github.com/protobom/cel v0.1.0
-	github.com/protobom/protobom v0.5.4
+	github.com/protobom/protobom v0.5.5
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
