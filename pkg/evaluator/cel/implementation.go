@@ -368,6 +368,22 @@ func decodeValue(val ref.Val) (attestation.Subject, error) {
 			return nil, errors.New("selectror must return a string or cel.Subject struct")
 		}
 
+		// Normalize digest algorithm keys to the canonical intoto casing
+		// (sha1, sha256, gitCommit, ...) and lowercase the hex values so
+		// comparisons match regardless of how the CEL expression built them.
+		canonicalAlgo := make(map[string]string, len(intoto.HashAlgorithms))
+		for name := range intoto.HashAlgorithms {
+			canonicalAlgo[strings.ToLower(name)] = name
+		}
+		normalized := make(map[string]string, len(subj.Digest))
+		for k, h := range subj.Digest {
+			if canonical, ok := canonicalAlgo[strings.ToLower(k)]; ok {
+				k = canonical
+			}
+			normalized[k] = strings.ToLower(h)
+		}
+		subj.Digest = normalized
+
 		// We add here a little hack to copy gitCommit hashes to sha1s (and viceversa)
 		// to ensure maximum matching chances
 
