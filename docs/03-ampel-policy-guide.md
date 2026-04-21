@@ -199,6 +199,65 @@ resulting ContextVal would be:
 
 As mentioned above, values can be replaced with another type for now.
 
+### Dynamic Values via Expressions
+
+Context values can be resolved dynamically by an evaluator runtime instead of
+being supplied as a static `value`/`default` or by an external provider. To do
+this, set `expression` (and optionally `runtime`) on the `ContextVal`:
+
+```json
+    "context": {
+        "builderId": {
+            "expression": "subject.name"
+        }
+    }
+```
+
+When `expression` is set, AMPEL invokes the configured runtime at evaluation
+time, resolves the expression and uses the result as the context value. Like
+`value`, an expression is considered burned-in to the policy: it cannot be
+overridden by `default` or by external providers, and is mutually exclusive
+with both `value` and `default` (the policy will fail validation if either is
+combined with `expression`).
+
+The optional `runtime` field selects which evaluator runs the expression. When
+omitted, the policy's default runtime is used (CEL in the default
+distribution). `runtime` is only valid when `expression` is set.
+
+#### Resolution Order
+
+Context values are resolved in two deterministic phases:
+
+1. **Static phase:** every entry that does not define an `expression` is
+   resolved first, in alphabetical key order, by combining `value`, `default`
+   and any external provider override.
+2. **Dynamic phase:** every entry that defines an `expression` is then
+   resolved, also in alphabetical key order, with the static-phase results
+   already populated on the `context.*` object.
+
+Because the static snapshot is captured once before the dynamic phase begins,
+expressions can rely on every static sibling being visible, but they cannot
+observe other expression-resolved siblings. This keeps evaluation order
+irrelevant among expressions and prevents cyclic dependencies.
+
+#### Variables available to context expressions
+
+Expressions evaluated against context values run *before* attestations are
+filtered for a tenet, so they have access to a smaller set of inputs than a
+tenet body. The available variables are:
+
+- `subject` — the subject under evaluation (`name`, `uri`, `digest`).
+- `context` — the already-resolved context values from ancestor scopes
+  (PolicySet → PolicyGroup → Policy) **and** every static sibling at the
+  current scope. Expression-resolved siblings at the current scope are not
+  visible (see "Resolution order" above).
+- Any global variables and functions registered by runtime plugins (for
+  example, the `hasher`, `url`, and `purl` helpers in the CEL runtime).
+
+The following are intentionally *not* available, because they are not yet
+known when context values are assembled: `predicate`, `predicates`, the
+chained subjects produced by selectors, and the policy object itself.
+
 ### Data Sources
 
 Contextual values can get their data from external sources which are not
