@@ -157,9 +157,14 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	// Load the policyset eval ctx definition into the go contect
 	ctx, evalContext := ampel.loadElementEvalContextDef(ctx, policySet)
 
+	// Publish the subject on the evalcontext so context-value expressions and
+	// the evaluator runtimes can reach it via ctx.
+	evalContext.Subject = subject
+	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext)
+
 	// Here we build the context that will be common for all policies as defined
 	// in the policy set.
-	evalContextValues, err := ampel.impl.AssembleEvalContextValues(ctx, &opts, policySet.GetCommon().GetContext())
+	evalContextValues, err := ampel.impl.AssembleEvalContextValues(ctx, &opts, evaluators, policySet.GetCommon().GetContext())
 	if err != nil {
 		return nil, fmt.Errorf("assembling policy context: %w", err)
 	}
@@ -320,7 +325,13 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("parsing single attestations: %w", err)
 	}
 
-	evalContext, err := ampel.impl.AssembleEvalContextValues(ctx, opts, policy.GetContext())
+	// Publish the subject on the evalcontext so context-value expressions and
+	// the evaluator runtimes can reach it via ctx.
+	ec, _ := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+	ec.Subject = subject
+	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, ec)
+
+	evalContext, err := ampel.impl.AssembleEvalContextValues(ctx, opts, evaluators, policy.GetContext())
 	if err != nil {
 		return nil, fmt.Errorf("assembling policy context: %w", err)
 	}
@@ -461,9 +472,14 @@ func (ampel *Ampel) VerifySubjectWithPolicyGroup(
 	// Load the policyset eval ctx definition into the go contect
 	ctx, evalContext := ampel.loadElementEvalContextDef(ctx, group)
 
+	// Publish the subject on the evalcontext so context-value expressions and
+	// the evaluator runtimes can reach it via ctx.
+	evalContext.Subject = subject
+	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext)
+
 	// Here we build the context that will be common for all policies as defined
 	// in the policy group.
-	evalContextValues, err := ampel.impl.AssembleEvalContextValues(ctx, &opts, group.GetCommon().GetContext())
+	evalContextValues, err := ampel.impl.AssembleEvalContextValues(ctx, &opts, evaluators, group.GetCommon().GetContext())
 	if err != nil {
 		return nil, fmt.Errorf("assembling policy context: %w", err)
 	}

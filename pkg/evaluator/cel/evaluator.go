@@ -150,6 +150,30 @@ func (e *Evaluator) RegisterPlugin(plugin api.Plugin) error {
 	return nil
 }
 
+// EvalExpression evaluates a standalone CEL expression against the subject
+// carried in the evalcontext and plugin-provided variables, returning its
+// resolved value. It is used to resolve dynamic ContextVal expressions.
+func (e *Evaluator) EvalExpression(
+	ctx context.Context, opts *options.EvaluatorOptions, code string,
+) (any, error) {
+	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+	if !ok {
+		evalContext = evalcontext.EvaluationContext{}
+	}
+
+	vars, err := e.impl.BuildExpressionVariables(opts, e.Plugins, &evalContext)
+	if err != nil {
+		return nil, fmt.Errorf("building expression variable set: %w", err)
+	}
+
+	ast, err := e.impl.CompileCode(e.Environment, code)
+	if err != nil {
+		return nil, fmt.Errorf("compiling expression: %w", err)
+	}
+
+	return e.impl.EvaluateExpression(e.Environment, ast, vars)
+}
+
 func (e *Evaluator) ExecChainedSelector(
 	ctx context.Context, opts *options.EvaluatorOptions, chained *papi.ChainedPredicate, predicate attestation.Predicate,
 ) ([]attestation.Subject, error) {

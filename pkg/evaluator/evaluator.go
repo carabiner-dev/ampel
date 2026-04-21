@@ -33,4 +33,10 @@ func (f *Factory) Get(opts *options.EvaluatorOptions, c class.Class) (Evaluator,
 type Evaluator interface {
 	ExecTenet(context.Context, *options.EvaluatorOptions, *papi.Tenet, []attestation.Predicate) (*papi.EvalResult, error)
 	ExecChainedSelector(context.Context, *options.EvaluatorOptions, *papi.ChainedPredicate, attestation.Predicate) ([]attestation.Subject, error)
+
+	// EvalExpression evaluates a standalone expression and returns its value.
+	// Used to resolve dynamic ContextVal expressions. The evaluator reads the
+	// subject and any other evaluation-time data from the evalcontext.EvaluationContext
+	// stored in ctx.
+	EvalExpression(context.Context, *options.EvaluatorOptions, string) (any, error)
 }
