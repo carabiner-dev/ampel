@@ -4,12 +4,12 @@ go 1.26.2
 
 require (
 	github.com/carabiner-dev/attestation v0.2.1
-	github.com/carabiner-dev/collector v0.3.4
+	github.com/carabiner-dev/collector v0.3.5
 	github.com/carabiner-dev/command v0.3.1
 	github.com/carabiner-dev/hasher v0.2.4
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
-	github.com/carabiner-dev/policy v0.4.8-0.20260420074232-1f3927cc85fc
-	github.com/carabiner-dev/predicates v0.1.0
+	github.com/carabiner-dev/policy v0.5.0
+	github.com/carabiner-dev/predicates v0.5.0
 	github.com/fatih/color v1.19.0
 	github.com/google/cel-go v0.28.0
 	github.com/in-toto/attestation v1.2.0

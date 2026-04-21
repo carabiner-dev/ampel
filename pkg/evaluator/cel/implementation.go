@@ -39,6 +39,8 @@ type CelEvaluatorImplementation interface {
 	Assert(*papi.ResultSet) bool
 	BuildSelectorVariables(*options.EvaluatorOptions, map[string]Plugin, *evalcontext.EvaluationContext, *papi.Policy, attestation.Subject, *papi.ChainedPredicate, attestation.Predicate) (*map[string]any, error)
 	EvaluateChainedSelector(*cel.Env, *cel.Ast, *map[string]any) ([]attestation.Subject, error)
+	BuildExpressionVariables(*options.EvaluatorOptions, map[string]Plugin, *evalcontext.EvaluationContext) (*map[string]any, error)
+	EvaluateExpression(*cel.Env, *cel.Ast, *map[string]any) (any, error)
 }
 
 type defaulCelEvaluator struct{}
@@ -545,4 +547,61 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 	}
 
 	return &ret, nil
+}
+
+// BuildExpressionVariables builds the variable set available to standalone
+// expressions (used to resolve dynamic ContextVal expressions). It exposes
+// `subject`, the already-resolved `context` and any plugin-provided globals,
+// but intentionally omits `predicate` and `predicates` since those are not
+// available at context-assembly time.
+//
+//nolint:gocritic // *map return type matches BuildVariables/BuildSelectorVariables
+func (dce *defaulCelEvaluator) BuildExpressionVariables(
+	opts *options.EvaluatorOptions, plugins map[string]Plugin,
+	evalContext *evalcontext.EvaluationContext,
+) (*map[string]any, error) {
+	ret := map[string]any{}
+
+	subdata, err := extractSubjectData(evalContext.Subject)
+	if err != nil {
+		return nil, fmt.Errorf("loading subject data onto expression runtime: %w", err)
+	}
+	ret[VarNameSubject] = subdata
+
+	s, err := structpb.NewStruct(evalContext.ContextValues)
+	if err != nil {
+		return nil, fmt.Errorf("structuring context data: %w", err)
+	}
+	ret[VarNameContext] = s
+
+	for _, p := range plugins {
+		maps.Copy(ret, p.VarValues(evalContext.Policy, evalContext.Subject, nil))
+	}
+
+	return &ret, nil
+}
+
+// EvaluateExpression runs a compiled standalone expression and returns the
+// resolved Go value (via ref.Val.Value()).
+func (dce *defaulCelEvaluator) EvaluateExpression(
+	//nolint:gocritic // vars is intentionally passed by pointer to match siblings
+	env *cel.Env, ast *cel.Ast, vars *map[string]any,
+) (any, error) {
+	if env == nil {
+		return nil, fmt.Errorf("CEL environment not set")
+	}
+	if vars == nil {
+		return nil, fmt.Errorf("variable set undefined")
+	}
+
+	program, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize))
+	if err != nil {
+		return nil, fmt.Errorf("generating program from AST: %w", err)
+	}
+
+	result, _, err := program.Eval(*vars)
+	if err != nil {
+		return nil, fmt.Errorf("evaluation error: %w", err)
+	}
+	return result.Value(), nil
 }

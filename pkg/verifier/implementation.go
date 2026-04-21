@@ -76,7 +76,7 @@ type AmpelVerifier interface {
 	ProcessPolicySetChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *papi.PolicySet, map[string]any, attestation.Subject, []attestation.Envelope) ([]attestation.Subject, []*papi.ChainedSubject, bool, error)
 
 	// AssembleEvalContextValues builds the policy context values by mixing defaults and defined values
-	AssembleEvalContextValues(context.Context, *VerificationOptions, map[string]*papi.ContextVal) (map[string]any, error)
+	AssembleEvalContextValues(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, map[string]*papi.ContextVal) (map[string]any, error)
 }
 
 type defaultIplementation struct{}
@@ -834,7 +834,9 @@ func newResourceDescriptorFromSubject(s attestation.Subject) *gointoto.ResourceD
 // the context definition starting with its defaults, received values from
 // upstream and context value providers.
 func (di *defaultIplementation) AssembleEvalContextValues(
-	ctx context.Context, opts *VerificationOptions, contextValues map[string]*papi.ContextVal,
+	ctx context.Context, opts *VerificationOptions,
+	evaluators map[class.Class]evaluator.Evaluator,
+	contextValues map[string]*papi.ContextVal,
 ) (map[string]any, error) {
 	errs := []error{}
 
@@ -904,36 +906,96 @@ func (di *defaultIplementation) AssembleEvalContextValues(
 	logrus.Debugf("[CTX] Assembled Context: %+v", assembledContext)
 	logrus.Debugf("[CTX] Context Values: %+v", definitions)
 
-	// Assemble the context by overriding values in order
-	for k, contextDef := range assembledContext {
+	// Resolution is done in two phases over a stable, sorted key order:
+	//
+	//   Phase 1 — resolve every static entry (value, default, provider).
+	//   Snapshot — publish the Phase 1 results onto the evalcontext so they
+	//              are reachable from CEL as `context.<name>`.
+	//   Phase 2 — resolve every expression entry with the static-only
+	//             snapshot in scope. Expression results are NOT added to the
+	//             snapshot, so sibling expressions cannot observe each other.
+	//
+	// Sorting both phases makes ordering deterministic and keeps any errors
+	// reported in a stable order.
+	sortedKeys := slices.Sorted(maps.Keys(assembledContext))
+
+	// Phase 1: static values.
+	for _, k := range sortedKeys {
+		contextDef := assembledContext[k]
+		if contextDef.GetExpression() != "" {
+			continue
+		}
 		var v any
-		// First case: If the policy has a burned in value, that is it.
-		// Burned context values into the policy are signed and cannot
-		// be modified.
+		// Burned-in value wins outright; cannot be overridden by callers.
 		if contextDef.Value != nil {
-			// Potential change:
-			// Here if the defined values attempt to flip a value
-			// burned in the policy code, perhaps we should return
-			// an error instead of ignoring.
 			values[k] = contextDef.Value.AsInterface()
 			continue
 		}
 
-		// Second. The overridable base value is the policy default:
+		// Default is the overridable base.
 		if contextDef.Default != nil {
 			v = contextDef.Default.AsInterface()
 		}
 
-		// Third. If there is a value defined, we override the default:
+		// Provider-supplied values override the default.
 		if _, ok := definitions[k]; ok {
 			v = definitions[k]
 		}
 
 		values[k] = v
 
-		// Fail if the value is required and not set
+		// Required values must end Phase 1 with a non-nil value; expression
+		// values are checked separately in Phase 2.
 		if contextDef.Required != nil && *contextDef.Required && values[k] == nil {
 			errs = append(errs, fmt.Errorf("context value %s is required but not set", k))
+		}
+	}
+
+	// Phase 2: dynamic values resolved by an evaluator runtime. We publish a
+	// snapshot of the Phase 1 results onto the evalcontext so that CEL
+	// expressions see them via `context.<name>`. The snapshot is built once
+	// and never mutated, so expressions cannot depend on each other.
+	hasExpressions := false
+	for _, contextDef := range assembledContext {
+		if contextDef.GetExpression() != "" {
+			hasExpressions = true
+			break
+		}
+	}
+	if hasExpressions {
+		exprCtx := ctx
+		if ec, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext); ok {
+			snapshot := make(map[string]any, len(values))
+			maps.Copy(snapshot, values)
+			ec.ContextValues = snapshot
+			exprCtx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, ec)
+		}
+
+		for _, k := range sortedKeys {
+			contextDef := assembledContext[k]
+			expr := contextDef.GetExpression()
+			if expr == "" {
+				continue
+			}
+			cls := class.Class(contextDef.GetRuntime())
+			if cls == "" {
+				cls = "default"
+			}
+			ev, ok := evaluators[cls]
+			if !ok {
+				errs = append(errs, fmt.Errorf("context value %q: runtime %q not available", k, cls))
+				continue
+			}
+			out, err := ev.EvalExpression(exprCtx, &opts.EvaluatorOptions, expr)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("evaluating expression for context value %q: %w", k, err))
+				continue
+			}
+			values[k] = out
+
+			if contextDef.Required != nil && *contextDef.Required && values[k] == nil {
+				errs = append(errs, fmt.Errorf("context value %s is required but not set", k))
+			}
 		}
 	}
 
