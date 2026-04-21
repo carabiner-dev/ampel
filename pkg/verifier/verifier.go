@@ -327,7 +327,10 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 
 	// Publish the subject on the evalcontext so context-value expressions and
 	// the evaluator runtimes can reach it via ctx.
-	ec, _ := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+	ec, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+	if !ok {
+		ec = evalcontext.EvaluationContext{}
+	}
 	ec.Subject = subject
 	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, ec)
 

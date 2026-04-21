@@ -554,6 +554,8 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 // `subject`, the already-resolved `context` and any plugin-provided globals,
 // but intentionally omits `predicate` and `predicates` since those are not
 // available at context-assembly time.
+//
+//nolint:gocritic // *map return type matches BuildVariables/BuildSelectorVariables
 func (dce *defaulCelEvaluator) BuildExpressionVariables(
 	opts *options.EvaluatorOptions, plugins map[string]Plugin,
 	evalContext *evalcontext.EvaluationContext,
