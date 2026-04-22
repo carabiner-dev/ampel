@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright 2025 Carabiner Systems, Inc
+// SPDX-FileCopyrightText: Copyright 2026 Carabiner Systems, Inc
 // SPDX-License-Identifier: Apache-2.0
 
 package tty
@@ -8,52 +8,40 @@ import (
 	"io"
 
 	papi "github.com/carabiner-dev/policy/api/v1"
-
-	"github.com/carabiner-dev/ampel/internal/drivers/gotable"
 )
 
+// New returns the TTY driver, wired to the default Decorator.
 func New() *Driver {
-	return &Driver{
-		TableWriter: gotable.TableBuilder{
-			Decorator: &Decorator{},
-		},
-	}
+	return &Driver{Decorator: &Decorator{}}
 }
 
+// Driver renders Ampel results as ANSI-styled terminal tables using
+// github.com/carabiner-dev/termtable. The tables auto-size to the
+// attached terminal and clip overwide output to the screen.
 type Driver struct {
-	TableWriter gotable.TableBuilder
+	Decorator *Decorator
 }
 
-// RenderResultSet takes a resultset
+// RenderResultSet writes the 4-column policy-set table to w.
 func (d *Driver) RenderResultSet(w io.Writer, rset *papi.ResultSet) error {
-	t, err := d.TableWriter.ResultSetTable(rset)
-	if err != nil {
+	if _, err := d.resultSetTable(rset).WriteTo(w); err != nil {
 		return fmt.Errorf("rendering ResultSet table: %w", err)
 	}
-
-	t.SetOutputMirror(w)
-	t.Render()
 	return nil
 }
 
-// RenderResultSet takes a resultset
+// RenderResultGroup writes the 4-column policy-group table to w.
 func (d *Driver) RenderResultGroup(w io.Writer, rset *papi.ResultGroup) error {
-	t, err := d.TableWriter.ResultGroupTable(rset)
-	if err != nil {
-		return fmt.Errorf("rendering ResultSet table: %w", err)
+	if _, err := d.resultGroupTable(rset).WriteTo(w); err != nil {
+		return fmt.Errorf("rendering ResultGroup table: %w", err)
 	}
-
-	t.SetOutputMirror(w)
-	t.Render()
 	return nil
 }
 
+// RenderResult writes the 3-column single-result table to w.
 func (d *Driver) RenderResult(w io.Writer, result *papi.Result) error {
-	t, err := d.TableWriter.ResultsTable(result)
-	if err != nil {
-		return fmt.Errorf("building table: %w", err)
+	if _, err := d.resultTable(result).WriteTo(w); err != nil {
+		return fmt.Errorf("rendering Result table: %w", err)
 	}
-	t.SetOutputMirror(w)
-	t.Render()
 	return nil
 }
