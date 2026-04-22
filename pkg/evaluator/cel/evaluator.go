@@ -24,6 +24,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/hasher"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/protobom"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/purl"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/semver"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/url"
 )
 
@@ -77,6 +78,7 @@ var (
 	_ Plugin = (*github.Plugin)(nil)
 	_ Plugin = (*protobom.Plugin)(nil)
 	_ Plugin = (*purl.Plugin)(nil)
+	_ Plugin = (*semver.Plugin)(nil)
 )
 
 // rebuildEnvironment builds the environment with the current settings
@@ -96,6 +98,9 @@ func (e *Evaluator) rebuildEnvironment(opts *options.EvaluatorOptions) error {
 		}
 		if err := e.RegisterPlugin(purl.New()); err != nil {
 			return fmt.Errorf("registering purl: %w", err)
+		}
+		if err := e.RegisterPlugin(semver.New()); err != nil {
+			return fmt.Errorf("registering semver: %w", err)
 		}
 	}
 
