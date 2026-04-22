@@ -10,6 +10,7 @@ require (
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
 	github.com/carabiner-dev/policy v0.5.0
 	github.com/carabiner-dev/predicates v0.5.0
+	github.com/carabiner-dev/termtable v1.0.0
 	github.com/fatih/color v1.19.0
 	github.com/google/cel-go v0.28.0
 	github.com/in-toto/attestation v1.2.0
@@ -156,6 +157,7 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/regclient/regclient v0.11.3 // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sigstore/gitsign v0.14.1-0.20260414150136-4638d83b00e1 // indirect
 	github.com/sigstore/rekor-tiles/v2 v2.2.1 // indirect
 	github.com/sigstore/sigstore-go v1.1.4 // indirect
