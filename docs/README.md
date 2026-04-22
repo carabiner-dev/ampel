@@ -102,4 +102,6 @@ contributions are welcome!
 - Appendix A: The AMPEL CEL Runtime
   - The Runtime Environment
   - AMPEL Functions
-  - Plugins
+  - [Plugins](cel-plugins.md) — the runtime globals (`hasher`,
+    `url`, `github`, `protobom`, `purl`, `semver`) available in
+    every CEL expression.
