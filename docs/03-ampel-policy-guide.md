@@ -252,7 +252,8 @@ tenet body. The available variables are:
   current scope. Expression-resolved siblings at the current scope are not
   visible (see "Resolution order" above).
 - Any global variables and functions registered by runtime plugins (for
-  example, the `hasher`, `url`, and `purl` helpers in the CEL runtime).
+  example, the `hasher`, `url`, `purl`, and `semver` helpers in the CEL
+  runtime).
 
 The following are intentionally *not* available, because they are not yet
 known when context values are assembled: `predicate`, `predicates`, the
