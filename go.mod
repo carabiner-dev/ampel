@@ -11,7 +11,7 @@ require (
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
 	github.com/carabiner-dev/policy v0.5.0
 	github.com/carabiner-dev/predicates v0.5.0
-	github.com/carabiner-dev/termtable v1.0.0
+	github.com/carabiner-dev/termtable v1.1.0
 	github.com/fatih/color v1.19.0
 	github.com/google/cel-go v0.28.0
 	github.com/in-toto/attestation v1.2.0
