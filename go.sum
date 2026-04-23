@@ -120,8 +120,8 @@ github.com/carabiner-dev/sbomfs v0.1.0 h1:gEsmn85hod7JTLs2dDr5C1x4Af7FUEhI0lbTur
 github.com/carabiner-dev/sbomfs v0.1.0/go.mod h1:UyPyTSNx9JOLZVgTmM9WXdmgVqDWXCYwr1LK1Ts+7H0=
 github.com/carabiner-dev/signer v0.4.5 h1:H3XHHqorZw7wvLysbGCc+FM90nSdzFlODj+mIGMsYJc=
 github.com/carabiner-dev/signer v0.4.5/go.mod h1:B/53ToJAIgwM+KuDwj52+HwnlA5p8Rmz2OXQdy9x+xs=
-github.com/carabiner-dev/termtable v1.0.0 h1:z8xZCfOhQQSU58onrE3eVBFWZLCxlU0/D4EySqxW1E0=
-github.com/carabiner-dev/termtable v1.0.0/go.mod h1:f2kBeZo0N9vQEMhfDfxv+DdXXy7eb9Wvu9u1sSyvR2A=
+github.com/carabiner-dev/termtable v1.1.0 h1:b/7IqM52Wqwi9njjnAEIDddUYyX23msFkQVihkwarDs=
+github.com/carabiner-dev/termtable v1.1.0/go.mod h1:f2kBeZo0N9vQEMhfDfxv+DdXXy7eb9Wvu9u1sSyvR2A=
 github.com/carabiner-dev/vcslocator v0.4.3 h1:rXKwVT8N4hS85GEJQGd0ZgOjTcALuCslsqZyg4g6qxA=
 github.com/carabiner-dev/vcslocator v0.4.3/go.mod h1:o0v3BV06HMg20GaJctA8feu0W/aan+XhHq0i+wr6Jq0=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
