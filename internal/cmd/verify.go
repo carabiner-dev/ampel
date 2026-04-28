@@ -35,6 +35,29 @@ var (
 	hashRegex    *regexp.Regexp
 )
 
+const (
+	grpSubject      = "subject"
+	grpPolicy       = "policy"
+	grpEvidence     = "evidence"
+	grpContext      = "context"
+	grpResults      = "results"
+	grpSigning      = "signing"
+	grpVerification = "verification"
+)
+
+// verifyFlagGroups defines the order and headings of the flag sections
+// rendered by `ampel verify --help`. Empty groups are skipped, so the
+// signing section won't appear until signer flags are wired in.
+var verifyFlagGroups = []flagGroup{
+	{ID: grpSubject, Title: "Subject Specification:"},
+	{ID: grpPolicy, Title: "Policy Options & Specification:"},
+	{ID: grpEvidence, Title: "Evidence Collection:"},
+	{ID: grpContext, Title: "Context Definition:"},
+	{ID: grpResults, Title: "Results Attestation & Output:"},
+	{ID: grpSigning, Title: "Signing Flags:"},
+	{ID: grpVerification, Title: "Verification Flags:"},
+}
+
 type verifyOptions struct {
 	verifier.VerificationOptions
 	keyOpts.Options
@@ -152,6 +175,16 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().BoolVar(
 		&o.AllowEmptySetChains, "allow-empty-set-chain", verifier.DefaultVerificationOptions.AllowEmptySetChains, "don't fail PolicySets when chains are empty",
 	)
+
+	groupFlags(cmd, grpSubject, "subject", "subject-file", "subject-hash")
+	groupFlags(cmd, grpPolicy, "policy", "pid", "policy-out", "policy-verify", "policy-key", "policy-signer", "expiration")
+	groupFlags(cmd, grpEvidence, "key", "attestation", "collector", "signer")
+	groupFlags(cmd, grpContext, "context", "context-json", "context-yaml", "context-env")
+	groupFlags(cmd, grpResults, "attest-results", "attest-format", "results-path", "format")
+	groupFlags(cmd, grpVerification, "exit-code", "workers", "allow-empty-set-chain")
+
+	registerFlagGroups(cmd, verifyFlagGroups...)
+	applyFlagGroupTemplate(cmd)
 }
 
 func parseHash(estring string) (algo, value string, err error) {
