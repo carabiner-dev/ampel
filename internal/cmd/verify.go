@@ -26,6 +26,7 @@ import (
 	"sigs.k8s.io/release-utils/helpers"
 
 	"github.com/carabiner-dev/ampel/internal/render"
+	"github.com/carabiner-dev/ampel/pkg/attest"
 	acontext "github.com/carabiner-dev/ampel/pkg/context"
 	"github.com/carabiner-dev/ampel/pkg/verifier"
 )
@@ -453,8 +454,13 @@ func (opts *verifyOptions) Run() error {
 		return fmt.Errorf("running subject verification: %w", err)
 	}
 
-	if err := attestResults(opts, ampel, results); err != nil {
-		return fmt.Errorf("attesting results: %w", err)
+	if opts.AttestResults {
+		if err := attest.New().AttestToFile(
+			opts.ResultsAttestationPath, results,
+			attest.WithFormat(opts.AttestFormat),
+		); err != nil {
+			return fmt.Errorf("attesting results: %w", err)
+		}
 	}
 
 	eng := render.NewEngine()
@@ -490,43 +496,6 @@ func (opts *verifyOptions) Run() error {
 
 	if results.GetStatus() == papi.StatusFAIL && opts.SetExitCode {
 		os.Exit(1)
-	}
-
-	return nil
-}
-
-func attestResults(opts *verifyOptions, ampel *verifier.Ampel, results papi.Results) error {
-	// Generate the results attestation
-	if !opts.AttestResults {
-		return nil
-	}
-	attFile, err := os.Create(opts.ResultsAttestationPath)
-	if err != nil {
-		return fmt.Errorf("unable to open results attestation path")
-	}
-
-	switch opts.AttestFormat {
-	case "ampel", "":
-		if err := ampel.AttestResults(attFile, results); err != nil {
-			return fmt.Errorf("writing results attestation: %w", err)
-		}
-	default:
-		eng := render.NewEngine()
-		if err := eng.SetDriver(opts.AttestFormat); err != nil {
-			return fmt.Errorf("loading VSA attestation driver: %w", err)
-		}
-		switch r := results.(type) {
-		case *papi.Result:
-			if err := eng.RenderResult(attFile, r); err != nil {
-				return err
-			}
-		case *papi.ResultSet:
-			if err := eng.RenderResultSet(attFile, r); err != nil {
-				return err
-			}
-		default:
-			return fmt.Errorf("unable to determine results type to attest")
-		}
 	}
 
 	return nil

@@ -112,14 +112,14 @@ github.com/carabiner-dev/openeox v1.0.0-pre.1 h1:47Oe0vcH9m8nBFFQCPLNVR2HwiumXst
 github.com/carabiner-dev/openeox v1.0.0-pre.1/go.mod h1:+6i8M7PhtWk2jRtUC1anZnhmOr5cXKMLGYjwFcqPDa0=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92 h1:BJ9+OCNezZGkU8SrGC3oB7Tj+J0JsonwfZztcgUav6c=
 github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92/go.mod h1:o7jXwi/fFZ9mQlvVlog0kcvyEkwQT3eWmVQmrorBGpE=
-github.com/carabiner-dev/policy v0.5.0 h1:BBCLtB6PwFB40nTEbI3ooL/54RZCCGFwUCWXS4yJ4DQ=
-github.com/carabiner-dev/policy v0.5.0/go.mod h1:A+fnVBXpzx7f/MiLoH1FGTBAOe23ZZwXtGJsT9MCpBM=
+github.com/carabiner-dev/policy v0.5.1-0.20260428221018-836cdae656c0 h1:ff1L68jFh1Oo/RmXF9/TqjD7JaDLDXipmWBjQlcyZM4=
+github.com/carabiner-dev/policy v0.5.1-0.20260428221018-836cdae656c0/go.mod h1:iOGhyDNXsGulBRZmMj7zaZcf00rU16+hfq6wI+IT3Fc=
 github.com/carabiner-dev/predicates v0.5.0 h1:CG2xO5xTXWXakjJkAFuS2xSA2olP9Ew25k6CAyL8waI=
 github.com/carabiner-dev/predicates v0.5.0/go.mod h1:EUm2p0CwKoUuc+OLbGkoxLdRqBrg/r957b8iN/ACWSA=
 github.com/carabiner-dev/sbomfs v0.1.0 h1:gEsmn85hod7JTLs2dDr5C1x4Af7FUEhI0lbTurNaEZs=
 github.com/carabiner-dev/sbomfs v0.1.0/go.mod h1:UyPyTSNx9JOLZVgTmM9WXdmgVqDWXCYwr1LK1Ts+7H0=
-github.com/carabiner-dev/signer v0.4.5 h1:H3XHHqorZw7wvLysbGCc+FM90nSdzFlODj+mIGMsYJc=
-github.com/carabiner-dev/signer v0.4.5/go.mod h1:B/53ToJAIgwM+KuDwj52+HwnlA5p8Rmz2OXQdy9x+xs=
+github.com/carabiner-dev/signer v0.4.6-0.20260428182929-2749e66cbe88 h1:9Iij1K4kXYuKKk+2ZkrNR5pJjt/j1q6Yf7gGt7XPQlY=
+github.com/carabiner-dev/signer v0.4.6-0.20260428182929-2749e66cbe88/go.mod h1:lQXabEgyFNLm49T3K3PKmU//H1+hEIOsF+13ZKgXhCs=
 github.com/carabiner-dev/termtable v1.1.0 h1:b/7IqM52Wqwi9njjnAEIDddUYyX23msFkQVihkwarDs=
 github.com/carabiner-dev/termtable v1.1.0/go.mod h1:f2kBeZo0N9vQEMhfDfxv+DdXXy7eb9Wvu9u1sSyvR2A=
 github.com/carabiner-dev/vcslocator v0.4.3 h1:rXKwVT8N4hS85GEJQGd0ZgOjTcALuCslsqZyg4g6qxA=
@@ -468,6 +468,8 @@ github.com/spf13/cobra v1.10.2/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiT
 github.com/spf13/pflag v1.0.9/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/spf13/pflag v1.0.10 h1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=
 github.com/spf13/pflag v1.0.10/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
+github.com/spiffe/go-spiffe/v2 v2.6.0 h1:l+DolpxNWYgruGQVV0xsfeya3CsC7m8iBzDnMpsbLuo=
+github.com/spiffe/go-spiffe/v2 v2.6.0/go.mod h1:gm2SeUoMZEtpnzPNs2Csc0D/gX33k1xIx7lEzqblHEs=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=

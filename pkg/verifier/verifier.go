@@ -21,6 +21,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/carabiner-dev/ampel/pkg/attest"
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
@@ -687,39 +688,17 @@ func subjectToString(subject attestation.Subject) string {
 	return str
 }
 
-// AttestResult writes an attestation capturing an evaluation result
+// AttestResult writes an attestation capturing an evaluation result.
 func (ampel *Ampel) AttestResult(w io.Writer, result *papi.Result) error {
-	return ampel.impl.AttestResultToWriter(w, result)
+	return attest.New().AttestTo(w, result)
 }
 
-// AttestResult writes an attestation capturing an evaluation result
+// AttestResults writes an attestation capturing one or more
+// evaluation results. Result and ResultGroup inputs are wrapped into
+// a single-entry ResultSet by the attester so every output shape is
+// consistent.
 func (ampel *Ampel) AttestResults(w io.Writer, results papi.Results) error {
-	switch r := results.(type) {
-	case *papi.Result:
-		rs := &papi.ResultSet{
-			Results:   []*papi.Result{r},
-			DateStart: r.DateStart,
-			DateEnd:   r.DateEnd,
-		}
-		if err := rs.Assert(); err != nil {
-			return fmt.Errorf("asserting results set: %w", err)
-		}
-		return ampel.impl.AttestResultSetToWriter(w, rs)
-	case *papi.ResultSet:
-		return ampel.impl.AttestResultSetToWriter(w, r)
-	case *papi.ResultGroup:
-		rs := &papi.ResultSet{
-			Groups:    []*papi.ResultGroup{r},
-			DateStart: r.DateStart,
-			DateEnd:   r.DateEnd,
-		}
-		if err := rs.Assert(); err != nil {
-			return fmt.Errorf("asserting results set: %w", err)
-		}
-		return ampel.impl.AttestResultSetToWriter(w, rs)
-	default:
-		return fmt.Errorf("results are not result or resultset")
-	}
+	return attest.New().AttestTo(w, results)
 }
 
 // failPolicySetWithError completes a policy set and sets the specified error

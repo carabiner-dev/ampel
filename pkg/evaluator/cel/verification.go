@@ -198,7 +198,7 @@ var matchIdImpl = func(lhs ref.Val, rhs ref.Val) ref.Val {
 		return types.NewErr("matchesId: argument must be a string")
 	}
 
-	id, err := sapi.NewIdentityFromSlug(slug)
+	id, err := sapi.NewIdentityFromSpec(slug)
 	if err != nil {
 		return types.NewErr("matchesId: invalid identity slug: %v", err)
 	}
