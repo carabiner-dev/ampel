@@ -23,6 +23,7 @@ require (
 	github.com/protobom/protobom v0.5.5
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
+	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
@@ -164,7 +165,6 @@ require (
 	github.com/sigstore/sigstore-go v1.1.4 // indirect
 	github.com/sigstore/timestamp-authority/v2 v2.0.6 // indirect
 	github.com/spdx/tools-golang v0.5.7 // indirect
-	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
 	github.com/vbatts/tar-split v0.12.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
