@@ -49,24 +49,6 @@ func groupFlags(cmd *cobra.Command, group string, names ...string) {
 	}
 }
 
-// groupFlagsByPrefix tags every persistent flag on cmd whose name starts
-// with one of the given prefixes. Used for flags registered by an
-// external library (e.g. signer's *options.SignerSet) where in-place
-// annotation at registration isn't possible.
-func groupFlagsByPrefix(cmd *cobra.Command, group string, prefixes ...string) {
-	cmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
-		for _, p := range prefixes {
-			if strings.HasPrefix(f.Name, p) {
-				if f.Annotations == nil {
-					f.Annotations = map[string][]string{}
-				}
-				f.Annotations[flagGroupAnnotation] = []string{group}
-				return
-			}
-		}
-	})
-}
-
 // groupedFlagUsages renders cmd's local flags bucketed under the group
 // headings registered for cmd. Mirrors pflag.FlagSet.FlagUsages output
 // per bucket so column alignment matches cobra's default rendering.
