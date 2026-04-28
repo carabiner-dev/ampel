@@ -478,7 +478,7 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 	if len(opts.IdentityStrings) > 0 && len(policyIdentities) == 0 {
 		logrus.Debugf("Got %d identity strings from options", len(opts.IdentityStrings))
 		for _, idSlug := range opts.IdentityStrings {
-			ident, err := sapi.NewIdentityFromSlug(idSlug)
+			ident, err := sapi.NewIdentityFromSpec(idSlug)
 			if err != nil {
 				return false, nil, nil, fmt.Errorf("invalid identity slug %q: %w", idSlug, err)
 			}
@@ -496,7 +496,7 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 
 	logrus.Debug("Will look for signed attestations from:")
 	for _, i := range allIds {
-		logrus.Debugf("  > %s", i.Slug())
+		logrus.Debugf("  > %s", i.Principal())
 	}
 
 	// The keys to use are the ones in the options...

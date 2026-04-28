@@ -451,7 +451,7 @@ func TestCheckIdentities(t *testing.T) {
 				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}}},
 			},
 		}, false, true, true},
-		{"no-matching-identities-opts", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*sapi.Identity{}, []attestation.Envelope{
+		{"no-matching-identities-opts", VerificationOptions{IdentityStrings: []string{idSigstore.Spec()}}, []*sapi.Identity{}, []attestation.Envelope{
 			&fakeEnvelope{
 				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstoreOther}}},
 			},
@@ -461,7 +461,7 @@ func TestCheckIdentities(t *testing.T) {
 				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstoreOther}}},
 			},
 		}, false, false, false},
-		{"ids-in-opts", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*sapi.Identity{}, []attestation.Envelope{
+		{"ids-in-opts", VerificationOptions{IdentityStrings: []string{idSigstore.Spec()}}, []*sapi.Identity{}, []attestation.Envelope{
 			&fakeEnvelope{
 				ver: &sapi.Verification{Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}}},
 			},
@@ -473,14 +473,14 @@ func TestCheckIdentities(t *testing.T) {
 				},
 			},
 		}, false, true, false},
-		{"ids-in-policy-over-opts-pass", VerificationOptions{IdentityStrings: []string{idSigstoreOther.Slug()}}, []*sapi.Identity{idSigstore}, []attestation.Envelope{
+		{"ids-in-policy-over-opts-pass", VerificationOptions{IdentityStrings: []string{idSigstoreOther.Spec()}}, []*sapi.Identity{idSigstore}, []attestation.Envelope{
 			&fakeEnvelope{
 				ver: &sapi.Verification{
 					Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}},
 				},
 			},
 		}, false, true, false},
-		{"ids-in-policy-over-opts-fail", VerificationOptions{IdentityStrings: []string{idSigstore.Slug()}}, []*sapi.Identity{idSigstoreOther}, []attestation.Envelope{
+		{"ids-in-policy-over-opts-fail", VerificationOptions{IdentityStrings: []string{idSigstore.Spec()}}, []*sapi.Identity{idSigstoreOther}, []attestation.Envelope{
 			&fakeEnvelope{
 				ver: &sapi.Verification{
 					Signature: &sapi.SignatureVerification{Verified: true, Identities: []*sapi.Identity{idSigstore}},
