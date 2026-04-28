@@ -21,19 +21,12 @@ import (
 	"github.com/carabiner-dev/collector/statement/intoto"
 	papi "github.com/carabiner-dev/policy/api/v1"
 	"github.com/carabiner-dev/predicates"
-
-	"github.com/carabiner-dev/ampel/internal/drivers/svr"
-	"github.com/carabiner-dev/ampel/internal/drivers/vsa"
 )
 
-// renderDriver is the subset of the render-driver interface that
-// produces an attestation. Declared locally so pkg/attest doesn't
-// have to import internal/render — that would pull internal/drivers/
-// attester back in and create a cycle through this package.
-type renderDriver interface {
-	RenderResult(io.Writer, *papi.Result) error
-	RenderResultSet(io.Writer, *papi.ResultSet) error
-}
+// ampelVerifierID is the verifier identifier embedded in every
+// attestation produced by this package (VSA, SVR, and the ampel
+// resultset format).
+const ampelVerifierID = "https://carabiner.dev/ampel@v1"
 
 // ResultsAttester writes a results attestation in the format chosen
 // per call via WithFormat. The "ampel" format produces an in-toto
@@ -98,8 +91,12 @@ func (a *ResultsAttester) AttestTo(w io.Writer, results papi.Results, opts ...Fn
 	switch o.format {
 	case "ampel", "":
 		return a.attestAmpel(w, results)
+	case "vsa":
+		return a.attestVSA(w, results)
+	case "svr":
+		return a.attestSVR(w, results)
 	default:
-		return a.attestRendered(w, results, o.format)
+		return fmt.Errorf("unknown attestation format %q", o.format)
 	}
 }
 
@@ -133,36 +130,6 @@ func (a *ResultsAttester) attestAmpel(w io.Writer, results papi.Results) error {
 	default:
 		return errors.New("results are not Result, ResultSet or ResultGroup")
 	}
-}
-
-// attestRendered writes a non-"ampel" results attestation by
-// dispatching directly to the format-specific driver. Bypasses the
-// render engine on purpose: routing through internal/render would
-// pull internal/drivers/attester (and therefore this package) back
-// in via render's default driver list and break the import graph.
-func (a *ResultsAttester) attestRendered(w io.Writer, results papi.Results, format string) error {
-	var driver renderDriver
-	switch format {
-	case "vsa":
-		driver = vsa.New()
-	case "svr":
-		driver = svr.New()
-	default:
-		return fmt.Errorf("unknown attestation format %q", format)
-	}
-	switch r := results.(type) {
-	case *papi.Result:
-		if err := driver.RenderResult(w, r); err != nil {
-			return fmt.Errorf("rendering result: %w", err)
-		}
-	case *papi.ResultSet:
-		if err := driver.RenderResultSet(w, r); err != nil {
-			return fmt.Errorf("rendering result set: %w", err)
-		}
-	default:
-		return errors.New("unable to determine results type to attest")
-	}
-	return nil
 }
 
 // writeResultSet builds an in-toto statement carrying a
