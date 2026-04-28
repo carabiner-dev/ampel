@@ -4,7 +4,6 @@
 package attest
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -37,12 +36,12 @@ const (
 // computed by extracting the results of policies chained to a
 // different subject — those policies are expected to have their own
 // controls section, defining the SLSA level they check.
-func (a *ResultsAttester) attestVSA(w io.Writer, results papi.Results) error {
+func (a *ResultsAttester) attestVSA(w io.Writer, results papi.Results, o attestOptions) error {
 	switch r := results.(type) {
 	case *papi.Result:
-		return a.writeVSAFromResult(w, r)
+		return a.writeVSAFromResult(w, r, o)
 	case *papi.ResultSet:
-		return a.writeVSAFromResultSet(w, r)
+		return a.writeVSAFromResultSet(w, r, o)
 	case *papi.ResultGroup:
 		return errors.New("rendering result groups as VSAs is not supported yet")
 	default:
@@ -50,7 +49,7 @@ func (a *ResultsAttester) attestVSA(w io.Writer, results papi.Results) error {
 	}
 }
 
-func (a *ResultsAttester) writeVSAFromResultSet(w io.Writer, set *papi.ResultSet) error {
+func (a *ResultsAttester) writeVSAFromResultSet(w io.Writer, set *papi.ResultSet, o attestOptions) error {
 	vsaData := &v1.VerificationSummary{
 		Verifier: &v1.VerificationSummary_Verifier{
 			Id: ampelVerifierID,
@@ -125,10 +124,10 @@ func (a *ResultsAttester) writeVSAFromResultSet(w io.Writer, set *papi.ResultSet
 	if verifiedSomeSlsa {
 		vsaData.SlsaVersion = slsaVersion
 	}
-	return writeVSAStatement(w, set.GetSubject(), vsaData)
+	return writeVSAStatement(w, set.GetSubject(), vsaData, o)
 }
 
-func (a *ResultsAttester) writeVSAFromResult(w io.Writer, result *papi.Result) error {
+func (a *ResultsAttester) writeVSAFromResult(w io.Writer, result *papi.Result, o attestOptions) error {
 	vsaData := &v1.VerificationSummary{
 		Verifier: &v1.VerificationSummary_Verifier{
 			Id: ampelVerifierID,
@@ -177,12 +176,12 @@ func (a *ResultsAttester) writeVSAFromResult(w io.Writer, result *papi.Result) e
 	if verifiedSomeSlsa {
 		vsaData.SlsaVersion = slsaVersion
 	}
-	return writeVSAStatement(w, result.GetSubject(), vsaData)
+	return writeVSAStatement(w, result.GetSubject(), vsaData, o)
 }
 
 // writeVSAStatement wraps the populated VSA predicate in an in-toto
 // statement and writes it as JSON to w.
-func writeVSAStatement(w io.Writer, subject attestation.Subject, att *v1.VerificationSummary) error {
+func writeVSAStatement(w io.Writer, subject attestation.Subject, att *v1.VerificationSummary, o attestOptions) error {
 	vsaJsonData, err := protojson.Marshal(att)
 	if err != nil {
 		return fmt.Errorf("marshaling vsa: %w", err)
@@ -203,15 +202,7 @@ func writeVSAStatement(w io.Writer, subject attestation.Subject, att *v1.Verific
 		}),
 	)
 
-	jsonData, err := json.Marshal(statement)
-	if err != nil {
-		return fmt.Errorf("serializing VSA: %w", err)
-	}
-
-	if _, err := w.Write(jsonData); err != nil {
-		return fmt.Errorf("writing VSA data: %w", err)
-	}
-	return nil
+	return writeStatementJSON(w, statement, o.prettyPrint)
 }
 
 // resultStringToSLSAResult translates ampel evaluation status strings

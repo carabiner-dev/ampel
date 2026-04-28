@@ -10,6 +10,7 @@
 package attest
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -48,13 +49,14 @@ type FnOpt func(*attestOptions)
 
 // attestOptions holds the per-call configuration produced by FnOpts.
 type attestOptions struct {
-	format string
+	format      string
+	prettyPrint bool
 }
 
 // defaultAttestOptions returns the baseline per-call config used when
 // no FnOpts are supplied.
 func defaultAttestOptions() attestOptions {
-	return attestOptions{format: "ampel"}
+	return attestOptions{format: "ampel", prettyPrint: true}
 }
 
 // WithFormat selects the results-attestation format for the call.
@@ -64,6 +66,16 @@ func defaultAttestOptions() attestOptions {
 func WithFormat(format string) FnOpt {
 	return func(o *attestOptions) {
 		o.format = format
+	}
+}
+
+// WithPrettyPrint controls JSON formatting of the produced
+// attestation. The default is true (2-space indented output);
+// pass false for a single-line compact form suitable for piping
+// or one-line-per-record archives.
+func WithPrettyPrint(enabled bool) FnOpt {
+	return func(o *attestOptions) {
+		o.prettyPrint = enabled
 	}
 }
 
@@ -90,11 +102,11 @@ func (a *ResultsAttester) AttestTo(w io.Writer, results papi.Results, opts ...Fn
 	}
 	switch o.format {
 	case "ampel", "":
-		return a.attestAmpel(w, results)
+		return a.attestAmpel(w, results, o)
 	case "vsa":
-		return a.attestVSA(w, results)
+		return a.attestVSA(w, results, o)
 	case "svr":
-		return a.attestSVR(w, results)
+		return a.attestSVR(w, results, o)
 	default:
 		return fmt.Errorf("unknown attestation format %q", o.format)
 	}
@@ -103,7 +115,7 @@ func (a *ResultsAttester) AttestTo(w io.Writer, results papi.Results, opts ...Fn
 // attestAmpel writes an "ampel"-format results attestation. Result
 // and ResultGroup inputs are wrapped into a single-entry ResultSet
 // before serialization so every output is the same shape.
-func (a *ResultsAttester) attestAmpel(w io.Writer, results papi.Results) error {
+func (a *ResultsAttester) attestAmpel(w io.Writer, results papi.Results, o attestOptions) error {
 	switch r := results.(type) {
 	case *papi.Result:
 		rs := &papi.ResultSet{
@@ -114,9 +126,9 @@ func (a *ResultsAttester) attestAmpel(w io.Writer, results papi.Results) error {
 		if err := rs.Assert(); err != nil {
 			return fmt.Errorf("asserting results set: %w", err)
 		}
-		return writeResultSet(w, rs)
+		return writeResultSet(w, rs, o)
 	case *papi.ResultSet:
-		return writeResultSet(w, r)
+		return writeResultSet(w, r, o)
 	case *papi.ResultGroup:
 		rs := &papi.ResultSet{
 			Groups:    []*papi.ResultGroup{r},
@@ -126,10 +138,33 @@ func (a *ResultsAttester) attestAmpel(w io.Writer, results papi.Results) error {
 		if err := rs.Assert(); err != nil {
 			return fmt.Errorf("asserting results set: %w", err)
 		}
-		return writeResultSet(w, rs)
+		return writeResultSet(w, rs, o)
 	default:
 		return errors.New("results are not Result, ResultSet or ResultGroup")
 	}
+}
+
+// writeStatementJSON serializes stmt to w in either 2-space indented
+// or compact single-line JSON. Used by every format-specific writer
+// so the WithPrettyPrint behavior stays consistent across ampel, VSA
+// and SVR output.
+func writeStatementJSON(w io.Writer, stmt *intoto.Statement, pretty bool) error {
+	var (
+		data []byte
+		err  error
+	)
+	if pretty {
+		data, err = json.MarshalIndent(stmt, "", "  ")
+	} else {
+		data, err = json.Marshal(stmt)
+	}
+	if err != nil {
+		return fmt.Errorf("serializing statement: %w", err)
+	}
+	if _, err := w.Write(data); err != nil {
+		return fmt.Errorf("writing statement: %w", err)
+	}
+	return nil
 }
 
 // writeResultSet builds an in-toto statement carrying a
@@ -137,7 +172,7 @@ func (a *ResultsAttester) attestAmpel(w io.Writer, results papi.Results) error {
 // drawn from each Result's first Chain entry when present, with
 // per-digest deduplication so a ResultSet covering many results
 // against the same subject doesn't repeat it.
-func writeResultSet(w io.Writer, resultset *papi.ResultSet) error {
+func writeResultSet(w io.Writer, resultset *papi.ResultSet, o attestOptions) error {
 	if resultset == nil {
 		return errors.New("unable to attest results, set is nil")
 	}
@@ -173,7 +208,7 @@ func writeResultSet(w io.Writer, resultset *papi.ResultSet) error {
 	stmt.PredicateType = predicates.PredicateTypeResultSet
 	stmt.Predicate = &predicates.ResultSet{Parsed: resultset}
 
-	return stmt.WriteJson(w)
+	return writeStatementJSON(w, stmt, o.prettyPrint)
 }
 
 // stringifyDigests returns a canonical algo:value/algo:value... form

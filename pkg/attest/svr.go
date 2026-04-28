@@ -24,12 +24,12 @@ import (
 const svrPredicateType = "https://in-toto.io/attestation/svr/v0.1"
 
 // attestSVR writes a Simple Verification Result attestation for results.
-func (a *ResultsAttester) attestSVR(w io.Writer, results papi.Results) error {
+func (a *ResultsAttester) attestSVR(w io.Writer, results papi.Results, o attestOptions) error {
 	switch r := results.(type) {
 	case *papi.Result:
-		return a.writeSVRFromResult(w, r)
+		return a.writeSVRFromResult(w, r, o)
 	case *papi.ResultSet:
-		return a.writeSVRFromResultSet(w, r)
+		return a.writeSVRFromResultSet(w, r, o)
 	case *papi.ResultGroup:
 		return errors.New("rendering result groups as SVRs is not supported yet")
 	default:
@@ -37,7 +37,7 @@ func (a *ResultsAttester) attestSVR(w io.Writer, results papi.Results) error {
 	}
 }
 
-func (a *ResultsAttester) writeSVRFromResultSet(w io.Writer, set *papi.ResultSet) error {
+func (a *ResultsAttester) writeSVRFromResultSet(w io.Writer, set *papi.ResultSet, o attestOptions) error {
 	policyAny, err := svrPolicyResourceDescriptor(set.GetMeta().GetOrigin())
 	if err != nil {
 		return fmt.Errorf("wrapping policy descriptor: %w", err)
@@ -67,10 +67,10 @@ func (a *ResultsAttester) writeSVRFromResultSet(w io.Writer, set *papi.ResultSet
 		}
 	}
 
-	return writeSVRStatement(w, set.GetSubject(), svrData)
+	return writeSVRStatement(w, set.GetSubject(), svrData, o)
 }
 
-func (a *ResultsAttester) writeSVRFromResult(w io.Writer, result *papi.Result) error {
+func (a *ResultsAttester) writeSVRFromResult(w io.Writer, result *papi.Result, o attestOptions) error {
 	policyAny, err := svrPolicyResourceDescriptor(result.GetMeta().GetOrigin())
 	if err != nil {
 		return fmt.Errorf("wrapping policy descriptor: %w", err)
@@ -95,14 +95,14 @@ func (a *ResultsAttester) writeSVRFromResult(w io.Writer, result *papi.Result) e
 		}
 	}
 
-	return writeSVRStatement(w, result.GetSubject(), svrData)
+	return writeSVRStatement(w, result.GetSubject(), svrData, o)
 }
 
 // writeSVRStatement wraps the populated SVR predicate in an in-toto
 // statement and writes it as JSON to w. The protojson Any wrapper
 // injects an "@type" field into the policy block; strip it so the
 // SVR output stays clean.
-func writeSVRStatement(w io.Writer, subject attestation.Subject, att *svrpred.SimpleVerificationResult) error {
+func writeSVRStatement(w io.Writer, subject attestation.Subject, att *svrpred.SimpleVerificationResult, o attestOptions) error {
 	svrJsonData, err := protojson.Marshal(att)
 	if err != nil {
 		return fmt.Errorf("marshaling svr: %w", err)
@@ -137,15 +137,7 @@ func writeSVRStatement(w io.Writer, subject attestation.Subject, att *svrpred.Si
 		}),
 	)
 
-	jsonData, err := json.Marshal(statement)
-	if err != nil {
-		return fmt.Errorf("serializing SVR: %w", err)
-	}
-
-	if _, err := w.Write(jsonData); err != nil {
-		return fmt.Errorf("writing SVR data: %w", err)
-	}
-	return nil
+	return writeStatementJSON(w, statement, o.prettyPrint)
 }
 
 func svrPolicyResourceDescriptor(origin attestation.Subject) (*anypb.Any, error) {
