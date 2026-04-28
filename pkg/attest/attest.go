@@ -4,8 +4,9 @@
 // Package attest writes attestations capturing evaluation results in
 // the format chosen by the caller. It is the home for the signing
 // pipeline that will turn ampel results into signed attestations —
-// for now it covers the format dispatch only, so call sites that
-// move to it today don't change shape when signing lands.
+// for now it covers the format dispatch and intoto statement
+// construction so call sites that move to it today don't change shape
+// when signing lands.
 package attest
 
 import (
@@ -13,77 +14,209 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
+	"strings"
 
+	"github.com/carabiner-dev/attestation"
+	"github.com/carabiner-dev/collector/statement/intoto"
 	papi "github.com/carabiner-dev/policy/api/v1"
+	"github.com/carabiner-dev/predicates"
 
-	"github.com/carabiner-dev/ampel/internal/render"
-	"github.com/carabiner-dev/ampel/pkg/verifier"
+	"github.com/carabiner-dev/ampel/internal/drivers/svr"
+	"github.com/carabiner-dev/ampel/internal/drivers/vsa"
 )
 
-// ResultsAttester writes a results attestation in the configured
-// format. The "ampel" format is rendered by the *verifier.Ampel
-// supplied at construction; non-"ampel" formats route through the
-// render engine.
-type ResultsAttester struct {
-	// Ampel renders the "ampel" format. Required when Format is
-	// "" or "ampel"; may be nil for any other format.
-	Ampel *verifier.Ampel
-
-	// Format selects the results-attestation format. Empty defaults
-	// to "ampel". Must be one of verifier.ResultsAttestationFormats;
-	// callers should rely on VerificationOptions.Validate for
-	// upstream rejection of unknown values.
-	Format string
+// renderDriver is the subset of the render-driver interface that
+// produces an attestation. Declared locally so pkg/attest doesn't
+// have to import internal/render — that would pull internal/drivers/
+// attester back in and create a cycle through this package.
+type renderDriver interface {
+	RenderResult(io.Writer, *papi.Result) error
+	RenderResultSet(io.Writer, *papi.ResultSet) error
 }
 
-// New returns a ResultsAttester wired to ampel for the "ampel" format.
-// Empty format resolves to "ampel" at attest time.
-func New(ampel *verifier.Ampel, format string) *ResultsAttester {
-	return &ResultsAttester{Ampel: ampel, Format: format}
+// ResultsAttester writes a results attestation in the format chosen
+// per call via WithFormat. The "ampel" format produces an in-toto
+// statement carrying a predicates.ResultSet; "vsa" and "svr" route
+// through their format-specific drivers.
+//
+// The struct is a placeholder for instance-level configuration that
+// spans multiple attestation calls — signer credentials, retry
+// behavior, and so on — that will land alongside signing support.
+type ResultsAttester struct{}
+
+// New returns a ready-to-use ResultsAttester.
+func New() *ResultsAttester {
+	return &ResultsAttester{}
+}
+
+// FnOpt configures a single Attest* call.
+type FnOpt func(*attestOptions)
+
+// attestOptions holds the per-call configuration produced by FnOpts.
+type attestOptions struct {
+	format string
+}
+
+// defaultAttestOptions returns the baseline per-call config used when
+// no FnOpts are supplied.
+func defaultAttestOptions() attestOptions {
+	return attestOptions{format: "ampel"}
+}
+
+// WithFormat selects the results-attestation format for the call.
+// Must be one of verifier.ResultsAttestationFormats. Empty resolves
+// to "ampel" at dispatch, so passing through an unset
+// AttestFormat option is safe.
+func WithFormat(format string) FnOpt {
+	return func(o *attestOptions) {
+		o.format = format
+	}
 }
 
 // AttestToFile writes the results attestation for results to path,
 // truncating any existing file. The file handle is closed before
-// the call returns.
-func (a *ResultsAttester) AttestToFile(path string, results *papi.Results) error {
+// the call returns. Format selection is per-call via WithFormat;
+// the default is "ampel".
+func (a *ResultsAttester) AttestToFile(path string, results papi.Results, opts ...FnOpt) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("opening results attestation path: %w", err)
 	}
 	defer f.Close() //nolint:errcheck // best-effort close on a write target; AttestTo's error wins
-	return a.AttestTo(f, results)
+	return a.AttestTo(f, results, opts...)
 }
 
 // AttestTo writes the results attestation for results to w. Splitting
 // the writer- and path-based entry points keeps the dispatch
 // testable without touching the filesystem.
-func (a *ResultsAttester) AttestTo(w io.Writer, results papi.Results) error {
-	switch a.Format {
-	case "ampel", "":
-		if a.Ampel == nil {
-			return errors.New("attest: \"ampel\" format requires a configured *verifier.Ampel")
-		}
-		if err := a.Ampel.AttestResults(w, results); err != nil {
-			return fmt.Errorf("writing results attestation: %w", err)
-		}
-		return nil
-	default:
-		eng := render.NewEngine()
-		if err := eng.SetDriver(a.Format); err != nil {
-			return fmt.Errorf("loading attestation driver: %w", err)
-		}
-		switch r := results.(type) {
-		case *papi.Result:
-			if err := eng.RenderResult(w, r); err != nil {
-				return fmt.Errorf("rendering result: %w", err)
-			}
-		case *papi.ResultSet:
-			if err := eng.RenderResultSet(w, r); err != nil {
-				return fmt.Errorf("rendering result set: %w", err)
-			}
-		default:
-			return errors.New("unable to determine results type to attest")
-		}
-		return nil
+func (a *ResultsAttester) AttestTo(w io.Writer, results papi.Results, opts ...FnOpt) error {
+	o := defaultAttestOptions()
+	for _, fn := range opts {
+		fn(&o)
 	}
+	switch o.format {
+	case "ampel", "":
+		return a.attestAmpel(w, results)
+	default:
+		return a.attestRendered(w, results, o.format)
+	}
+}
+
+// attestAmpel writes an "ampel"-format results attestation. Result
+// and ResultGroup inputs are wrapped into a single-entry ResultSet
+// before serialization so every output is the same shape.
+func (a *ResultsAttester) attestAmpel(w io.Writer, results papi.Results) error {
+	switch r := results.(type) {
+	case *papi.Result:
+		rs := &papi.ResultSet{
+			Results:   []*papi.Result{r},
+			DateStart: r.DateStart,
+			DateEnd:   r.DateEnd,
+		}
+		if err := rs.Assert(); err != nil {
+			return fmt.Errorf("asserting results set: %w", err)
+		}
+		return writeResultSet(w, rs)
+	case *papi.ResultSet:
+		return writeResultSet(w, r)
+	case *papi.ResultGroup:
+		rs := &papi.ResultSet{
+			Groups:    []*papi.ResultGroup{r},
+			DateStart: r.DateStart,
+			DateEnd:   r.DateEnd,
+		}
+		if err := rs.Assert(); err != nil {
+			return fmt.Errorf("asserting results set: %w", err)
+		}
+		return writeResultSet(w, rs)
+	default:
+		return errors.New("results are not Result, ResultSet or ResultGroup")
+	}
+}
+
+// attestRendered writes a non-"ampel" results attestation by
+// dispatching directly to the format-specific driver. Bypasses the
+// render engine on purpose: routing through internal/render would
+// pull internal/drivers/attester (and therefore this package) back
+// in via render's default driver list and break the import graph.
+func (a *ResultsAttester) attestRendered(w io.Writer, results papi.Results, format string) error {
+	var driver renderDriver
+	switch format {
+	case "vsa":
+		driver = vsa.New()
+	case "svr":
+		driver = svr.New()
+	default:
+		return fmt.Errorf("unknown attestation format %q", format)
+	}
+	switch r := results.(type) {
+	case *papi.Result:
+		if err := driver.RenderResult(w, r); err != nil {
+			return fmt.Errorf("rendering result: %w", err)
+		}
+	case *papi.ResultSet:
+		if err := driver.RenderResultSet(w, r); err != nil {
+			return fmt.Errorf("rendering result set: %w", err)
+		}
+	default:
+		return errors.New("unable to determine results type to attest")
+	}
+	return nil
+}
+
+// writeResultSet builds an in-toto statement carrying a
+// predicates.ResultSet and writes it as JSON to w. Subjects are
+// drawn from each Result's first Chain entry when present, with
+// per-digest deduplication so a ResultSet covering many results
+// against the same subject doesn't repeat it.
+func writeResultSet(w io.Writer, resultset *papi.ResultSet) error {
+	if resultset == nil {
+		return errors.New("unable to attest results, set is nil")
+	}
+
+	stmt := intoto.NewStatement()
+
+	// TODO(puerco): This should probably be a method of the results set
+	seen := []string{}
+	for _, result := range resultset.Results {
+		subject := result.Subject
+		if len(result.Chain) > 0 {
+			subject = result.Chain[0].Source
+		}
+
+		// If we already saw it, skip.
+		if slices.Contains(seen, stringifyDigests(subject)) {
+			continue
+		}
+		seen = append(seen, stringifyDigests(subject))
+
+		haveMatching := false
+		for _, s := range stmt.Subject {
+			if attestation.SubjectsMatch(s, subject) {
+				haveMatching = true
+				break
+			}
+		}
+		if !haveMatching {
+			stmt.AddSubject(subject)
+		}
+	}
+
+	stmt.PredicateType = predicates.PredicateTypeResultSet
+	stmt.Predicate = &predicates.ResultSet{Parsed: resultset}
+
+	return stmt.WriteJson(w)
+}
+
+// stringifyDigests returns a canonical algo:value/algo:value... form
+// of subject's digest map suitable for set-membership checks.
+func stringifyDigests(subject attestation.Subject) string {
+	digest := subject.GetDigest()
+	s := make([]string, 0, len(digest))
+	for algo, val := range digest {
+		s = append(s, fmt.Sprintf("%s:%s", algo, val))
+	}
+	slices.Sort(s)
+	return strings.Join(s, "/")
 }

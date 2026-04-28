@@ -8,9 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"maps"
-	"os"
 	"slices"
 	"strings"
 	"text/template"
@@ -23,7 +21,6 @@ import (
 	"github.com/carabiner-dev/collector/filters"
 	"github.com/carabiner-dev/collector/statement/intoto"
 	papi "github.com/carabiner-dev/policy/api/v1"
-	"github.com/carabiner-dev/predicates"
 	sapi "github.com/carabiner-dev/signer/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
@@ -56,13 +53,6 @@ type AmpelVerifier interface {
 
 	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope, [][]*sapi.Identity) ([]attestation.Predicate, error)
 	AssertResult(*papi.Policy, *papi.Result) error
-	AttestResults(context.Context, *VerificationOptions, papi.Results) error
-
-	// AttestResultToWriter takes an evaluation result and writes an attestation to the supplied io.Writer
-	AttestResultToWriter(io.Writer, *papi.Result) error
-
-	// AttestResultSetToWriter takes an policy resultset and writes an attestation to the supplied io.Writer
-	AttestResultSetToWriter(io.Writer, *papi.ResultSet) error
 
 	// VerifySubject runs the verification process.
 	VerifySubject(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *papi.Policy, map[string]any, attestation.Subject, []attestation.Predicate) (*papi.Result, error)
@@ -1184,132 +1174,6 @@ func (di *defaultIplementation) VerifySubject(
 	rs.DateEnd = timestamppb.Now()
 
 	return rs, errors.Join(errs...)
-}
-
-// AttestResults writes an attestation captring the evaluation
-// results set.
-func (di *defaultIplementation) AttestResults(
-	ctx context.Context, opts *VerificationOptions, results papi.Results,
-) error {
-	if !opts.AttestResults {
-		return nil
-	}
-
-	logrus.Debugf("writing evaluation attestation to %s", opts.ResultsAttestationPath)
-
-	// Open the file in the options
-	f, err := os.Create(opts.ResultsAttestationPath)
-	if err != nil {
-		return fmt.Errorf("opening results attestation file: %w", err)
-	}
-
-	switch r := results.(type) {
-	case *papi.Result:
-		// Write the statement to json
-		return di.AttestResultToWriter(f, r)
-	case *papi.ResultSet:
-		return di.AttestResultSetToWriter(f, r)
-	default:
-		return fmt.Errorf("unable to cast result")
-	}
-}
-
-// AttestResultToWriter writes an attestation capturing a evaluation
-// result set.
-func (di *defaultIplementation) AttestResultToWriter(
-	w io.Writer, result *papi.Result,
-) error {
-	if result == nil {
-		return fmt.Errorf("unable to attest results, set is nil")
-	}
-
-	subject := result.Subject
-	if result.Chain != nil {
-		if len(result.Chain) > 0 {
-			subject = result.Chain[0].Source
-		}
-	}
-
-	// Create the predicate file
-	pred := &predicates.ResultSet{
-		Parsed: &papi.ResultSet{
-			Results: []*papi.Result{result},
-		},
-	}
-
-	// Create the statement
-	stmt := intoto.NewStatement()
-	stmt.PredicateType = predicates.PredicateTypeResultSet
-	stmt.AddSubject(subject)
-	stmt.Predicate = pred
-
-	// Write the statement to json
-	return stmt.WriteJson(w)
-}
-
-func stringifyDigests(subject attestation.Subject) string {
-	digest := subject.GetDigest()
-	s := make([]string, 0, len(digest))
-	for algo, val := range digest {
-		s = append(s, fmt.Sprintf("%s:%s", algo, val))
-	}
-
-	slices.Sort(s)
-	return strings.Join(s, "/")
-}
-
-// AttestResults writes an attestation captring the evaluation
-// results set.
-func (di *defaultIplementation) AttestResultSetToWriter(
-	w io.Writer, resultset *papi.ResultSet,
-) error {
-	if resultset == nil {
-		return fmt.Errorf("unable to attest results, set is nil")
-	}
-
-	// TODO(puerco): This should probably be a method of the results set
-	seen := []string{}
-
-	// Create the statement
-	stmt := intoto.NewStatement()
-
-	for _, result := range resultset.Results {
-		subject := result.Subject
-		if result.Chain != nil {
-			if len(result.Chain) > 0 {
-				subject = result.Chain[0].Source
-			}
-		}
-
-		// If we already saw it, next:
-		if slices.Contains(seen, stringifyDigests(subject)) {
-			continue
-		}
-
-		// If we havent check if we have a matching pred
-		seen = append(seen, stringifyDigests(subject))
-		haveMatching := false
-		for _, s := range stmt.Subject {
-			if attestation.SubjectsMatch(s, subject) {
-				haveMatching = true
-				break
-			}
-		}
-		if !haveMatching {
-			stmt.AddSubject(subject)
-		}
-	}
-
-	// Create the predicate file
-	pred := &predicates.ResultSet{
-		Parsed: resultset,
-	}
-
-	stmt.PredicateType = predicates.PredicateTypeResultSet
-	stmt.Predicate = pred
-
-	// Write the statement to json
-	return stmt.WriteJson(w)
 }
 
 // ProcessPolicySetChainedSubjects executes a PolicySet's ChainLink and returns

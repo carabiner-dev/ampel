@@ -455,8 +455,10 @@ func (opts *verifyOptions) Run() error {
 	}
 
 	if opts.AttestResults {
-		if err := attest.New(ampel, opts.AttestFormat).
-			AttestToFile(opts.ResultsAttestationPath, results); err != nil {
+		if err := attest.New().AttestToFile(
+			opts.ResultsAttestationPath, results,
+			attest.WithFormat(opts.AttestFormat),
+		); err != nil {
 			return fmt.Errorf("attesting results: %w", err)
 		}
 	}
