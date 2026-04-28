@@ -18,7 +18,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.7.10
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/openvex/go-vex v0.2.8
-	github.com/package-url/packageurl-go v0.1.5
+	github.com/package-url/packageurl-go v0.1.6
 	github.com/protobom/cel v0.1.0
 	github.com/protobom/protobom v0.5.5
 	github.com/sirupsen/logrus v1.9.4
