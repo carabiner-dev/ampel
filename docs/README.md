@@ -24,6 +24,21 @@ but - as all software documentation - expect the manual to be always under
 construction and always behind the latest version. As always, patches and
 contributions are welcome!
 
+## Installing
+
+The fastest way to get a working `ampel` binary is through Homebrew using
+the Carabiner tap:
+
+```shell
+brew install carabiner-dev/tap/ampel
+```
+
+Pre-built binaries for Linux, macOS and Windows are also available on the
+[GitHub Releases](https://github.com/carabiner-dev/ampel/releases) page,
+and `go install github.com/carabiner-dev/ampel/cmd/ampel@latest` works for
+Go users. See the project [README](../README.md#installing) for the full
+list of installation options.
+
 ## Table of Contents
 
 - Policy Evaluation Basics
