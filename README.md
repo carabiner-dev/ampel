@@ -134,6 +134,13 @@ This means that results can be used as input attestations for further policies,
 making it simple to check for complex processes further downstream after they
 have been checked once.
 
+Result attestations can be produced as the full Ampel ResultSet, as a SLSA
+[Verification Summary Attestation (VSA)](https://slsa.dev/verification_summary/v1)
+or as an in-toto [Simple Verification Result (SVR)](https://github.com/in-toto/attestation/blob/main/spec/predicates/svr.md),
+and can optionally be signed with sigstore, SPIFFE, or a local key via the
+`--sign` flag. See [Producing Result Attestations](docs/02-ampel-attestations.md#producing-result-attestations)
+for details.
+
 ### Policy Sets
 
 Multiple policies can be specified together in a `PolicySet`. This is a handy way
