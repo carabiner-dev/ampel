@@ -38,6 +38,25 @@ var (
 	hashRegex    *regexp.Regexp
 )
 
+// attestFormatFor maps a --format value to its canonical attester
+// format name. Returns ok=false for non-attestation display formats
+// (tty, html, markdown), which should still be rendered through the
+// render engine. The "attestation" alias maps to "ampel" so the
+// stdout output of --format=attestation matches what
+// --attest-format=ampel produces.
+func attestFormatFor(format string) (string, bool) {
+	switch format {
+	case "attestation":
+		return "ampel", true
+	case "vsa":
+		return "vsa", true
+	case "svr":
+		return "svr", true
+	default:
+		return "", false
+	}
+}
+
 const (
 	grpSubject      = "subject"
 	grpPolicy       = "policy"
@@ -182,7 +201,7 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	)
 
 	cmd.PersistentFlags().BoolVar(
-		&o.Sign, "sign", false, "sign the results attestation (requires --attest-results)",
+		&o.Sign, "sign", false, "sign the results attestation",
 	)
 	o.SignerSet.AddFlags(cmd)
 
@@ -286,10 +305,11 @@ func (o *verifyOptions) Validate() error {
 		errs = append(errs, errors.New("no attestation sources specified (collectors or files)"))
 	}
 
-	if o.Sign && !o.AttestResults {
-		errs = append(errs, errors.New("--sign requires --attest-results (nothing to sign without an attestation)"))
-	}
 	if o.Sign {
+		_, stdoutIsAttest := attestFormatFor(o.Format)
+		if !o.AttestResults && !stdoutIsAttest {
+			errs = append(errs, errors.New("--sign requires --attest-results or --format=attestation|vsa|svr (nothing to sign otherwise)"))
+		}
 		if err := o.SignerSet.Validate(); err != nil {
 			errs = append(errs, fmt.Errorf("validating signer config: %w", err))
 		}
@@ -478,21 +498,40 @@ func (opts *verifyOptions) Run() error {
 		return fmt.Errorf("running subject verification: %w", err)
 	}
 
-	if opts.AttestResults {
-		var attesterOpts []attest.FnOpt
-		if opts.Sign {
-			s, err := signer.NewSignerFromSet(opts.SignerSet)
-			if err != nil {
-				return fmt.Errorf("building signer: %w", err)
-			}
-			attesterOpts = append(attesterOpts, attest.WithSigner(s))
+	stdoutAttestFmt, stdoutIsAttest := attestFormatFor(opts.Format)
+
+	// Build the attester once. The signer (when --sign is set)
+	// applies to both the file output (--attest-results) and the
+	// stdout attestation output (--format=attestation|vsa|svr).
+	var attesterOpts []attest.FnOpt
+	if opts.Sign {
+		s, err := signer.NewSignerFromSet(opts.SignerSet)
+		if err != nil {
+			return fmt.Errorf("building signer: %w", err)
 		}
-		if err := attest.New(attesterOpts...).AttestToFile(
+		attesterOpts = append(attesterOpts, attest.WithSigner(s))
+	}
+	attester := attest.New(attesterOpts...)
+
+	if opts.AttestResults {
+		if err := attester.AttestToFile(
 			opts.ResultsAttestationPath, results,
 			attest.WithFormat(opts.AttestFormat),
 		); err != nil {
 			return fmt.Errorf("attesting results: %w", err)
 		}
+	}
+
+	if stdoutIsAttest {
+		if err := attester.AttestTo(
+			os.Stdout, results, attest.WithFormat(stdoutAttestFmt),
+		); err != nil {
+			return fmt.Errorf("rendering attestation to stdout: %w", err)
+		}
+		if results.GetStatus() == papi.StatusFAIL && opts.SetExitCode {
+			os.Exit(1)
+		}
+		return nil
 	}
 
 	eng := render.NewEngine()
