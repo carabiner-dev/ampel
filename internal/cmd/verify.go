@@ -19,7 +19,9 @@ import (
 	"github.com/carabiner-dev/policy"
 	papi "github.com/carabiner-dev/policy/api/v1"
 	"github.com/carabiner-dev/policy/options"
+	"github.com/carabiner-dev/signer"
 	"github.com/carabiner-dev/signer/key"
+	signerOpts "github.com/carabiner-dev/signer/options"
 	"github.com/fatih/color"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/spf13/cobra"
@@ -76,6 +78,8 @@ type verifyOptions struct {
 	PolicyIdentityStrings []string
 	PolicyVerify          bool
 	PolicyKeyPaths        []string
+	Sign                  bool
+	SignerSet             *signerOpts.SignerSet
 }
 
 // AddFlags adds the flags
@@ -177,12 +181,22 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 		&o.AllowEmptySetChains, "allow-empty-set-chain", verifier.DefaultVerificationOptions.AllowEmptySetChains, "don't fail PolicySets when chains are empty",
 	)
 
+	cmd.PersistentFlags().BoolVar(
+		&o.Sign, "sign", false, "sign the results attestation (requires --attest-results)",
+	)
+	o.SignerSet.AddFlags(cmd)
+
 	groupFlags(cmd, grpSubject, "subject", "subject-file", "subject-hash")
 	groupFlags(cmd, grpPolicy, "policy", "pid", "policy-out", "policy-verify", "policy-key", "policy-signer", "expiration")
 	groupFlags(cmd, grpEvidence, "key", "attestation", "collector", "signer")
 	groupFlags(cmd, grpContext, "context", "context-json", "context-yaml", "context-env")
 	groupFlags(cmd, grpResults, "attest-results", "attest-format", "results-path", "format")
 	groupFlags(cmd, grpVerification, "exit-code", "workers", "allow-empty-set-chain")
+	groupFlags(cmd, grpSigning, "sign")
+	// Sweep every flag the SignerSet just registered into the
+	// Signing section. Doing it post-hoc keeps the signer library's
+	// AddFlags surface untouched.
+	groupFlagsByPrefix(cmd, grpSigning, "signing-", "sigstore-", "spiffe-")
 
 	registerFlagGroups(cmd, verifyFlagGroups...)
 	applyFlagGroupTemplate(cmd)
@@ -272,12 +286,22 @@ func (o *verifyOptions) Validate() error {
 		errs = append(errs, errors.New("no attestation sources specified (collectors or files)"))
 	}
 
+	if o.Sign && !o.AttestResults {
+		errs = append(errs, errors.New("--sign requires --attest-results (nothing to sign without an attestation)"))
+	}
+	if o.Sign {
+		if err := o.SignerSet.Validate(); err != nil {
+			errs = append(errs, fmt.Errorf("validating signer config: %w", err))
+		}
+	}
+
 	return errors.Join(errs...)
 }
 
 func addVerify(parentCmd *cobra.Command) {
 	opts := verifyOptions{
 		VerificationOptions: verifier.NewVerificationOptions(),
+		SignerSet:           signerOpts.DefaultSignerSet(),
 	}
 	evalCmd := &cobra.Command{
 		Short: "check artifacts against a policy",
@@ -455,7 +479,15 @@ func (opts *verifyOptions) Run() error {
 	}
 
 	if opts.AttestResults {
-		if err := attest.New().AttestToFile(
+		var attesterOpts []attest.FnOpt
+		if opts.Sign {
+			s, err := signer.NewSignerFromSet(opts.SignerSet)
+			if err != nil {
+				return fmt.Errorf("building signer: %w", err)
+			}
+			attesterOpts = append(attesterOpts, attest.WithSigner(s))
+		}
+		if err := attest.New(attesterOpts...).AttestToFile(
 			opts.ResultsAttestationPath, results,
 			attest.WithFormat(opts.AttestFormat),
 		); err != nil {

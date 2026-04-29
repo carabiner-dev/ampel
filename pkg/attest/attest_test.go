@@ -5,11 +5,15 @@ package attest
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"strings"
 	"testing"
 
 	papi "github.com/carabiner-dev/policy/api/v1"
+	"github.com/carabiner-dev/signer"
+	"github.com/carabiner-dev/signer/key"
+	"github.com/carabiner-dev/signer/options"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -206,6 +210,120 @@ func TestStringifyDigests_OrderStability(t *testing.T) {
 		if got := stringifyDigests(sub); got != first {
 			t.Errorf("iter %d: stringifyDigests = %q, want %q", i, got, first)
 		}
+	}
+}
+
+// newKeySigner returns a *signer.Signer wired to the key backend
+// using a freshly generated keypair. Suitable for exercising the
+// signed-output path without an OIDC popup or external dependency.
+func newKeySigner(t *testing.T) *signer.Signer {
+	t.Helper()
+	priv, err := key.NewGenerator().GenerateKeyPair()
+	if err != nil {
+		t.Fatalf("generating signing key: %v", err)
+	}
+	s := signer.NewSigner()
+	s.Options.Backend = options.BackendKey
+	s.Options.Keys = []key.PrivateKeyProvider{priv}
+	return s
+}
+
+// dsseEnvelope is the on-the-wire shape of a key-backend signed
+// artifact, used to assert that the signed-path output is a DSSE
+// envelope rather than a raw Statement.
+type dsseEnvelope struct {
+	PayloadType string `json:"payloadType"`
+	Payload     string `json:"payload"`
+	Signatures  []struct {
+		KeyID string `json:"keyid"`
+		Sig   string `json:"sig"`
+	} `json:"signatures"`
+}
+
+// TestAttestTo_Signed_ConstructorSigner exercises the typical CLI
+// path: signer is bound at New time and AttestTo emits a DSSE
+// envelope (key backend) carrying the in-toto Statement as payload.
+func TestAttestTo_Signed_ConstructorSigner(t *testing.T) {
+	s := newKeySigner(t)
+	rs := newResultSet(t, "deadbeef")
+
+	var buf bytes.Buffer
+	if err := New(WithSigner(s)).AttestTo(&buf, rs); err != nil {
+		t.Fatalf("AttestTo: %v", err)
+	}
+
+	var env dsseEnvelope
+	if err := json.Unmarshal(buf.Bytes(), &env); err != nil {
+		t.Fatalf("output is not a DSSE envelope: %v\nbody: %s", err, buf.String())
+	}
+	if env.Payload == "" {
+		t.Fatal("envelope payload is empty")
+	}
+	if len(env.Signatures) == 0 {
+		t.Fatal("envelope has no signatures")
+	}
+
+	// The base64-decoded payload should be the in-toto Statement
+	// carrying the ampel resultset predicateType.
+	decoded, err := base64.StdEncoding.DecodeString(env.Payload)
+	if err != nil {
+		t.Fatalf("decoding payload: %v", err)
+	}
+	var stmt statementShape
+	if err := json.Unmarshal(decoded, &stmt); err != nil {
+		t.Fatalf("payload is not a Statement: %v\npayload: %s", err, decoded)
+	}
+	if stmt.PredicateType != "https://carabiner.dev/ampel/resultset/v0" {
+		t.Errorf("payload predicateType = %q, want ampel resultset", stmt.PredicateType)
+	}
+}
+
+// TestAttestTo_Signed_PerCallOverride exercises the library-caller
+// path: attester is constructed with no signer, but a per-call
+// WithSigner enables signing for one AttestTo invocation.
+func TestAttestTo_Signed_PerCallOverride(t *testing.T) {
+	s := newKeySigner(t)
+	rs := newResultSet(t, "deadbeef")
+
+	a := New() // no constructor signer
+	var buf bytes.Buffer
+	if err := a.AttestTo(&buf, rs, WithSigner(s)); err != nil {
+		t.Fatalf("AttestTo: %v", err)
+	}
+	var env dsseEnvelope
+	if err := json.Unmarshal(buf.Bytes(), &env); err != nil {
+		t.Fatalf("output is not a DSSE envelope: %v\nbody: %s", err, buf.String())
+	}
+	if env.Payload == "" || len(env.Signatures) == 0 {
+		t.Errorf("envelope missing payload or signatures: %+v", env)
+	}
+}
+
+// TestAttestTo_Signed_PerCallNilOverride confirms that passing
+// WithSigner(nil) at call time disables signing even when a signer
+// was bound at New time. Useful for callers that want to selectively
+// emit unsigned attestations from a signing-default attester.
+func TestAttestTo_Signed_PerCallNilOverride(t *testing.T) {
+	s := newKeySigner(t)
+	rs := newResultSet(t, "deadbeef")
+
+	a := New(WithSigner(s))
+	var buf bytes.Buffer
+	if err := a.AttestTo(&buf, rs, WithSigner(nil)); err != nil {
+		t.Fatalf("AttestTo: %v", err)
+	}
+	// Output is the raw in-toto Statement, not a DSSE envelope.
+	var stmt statementShape
+	if err := json.Unmarshal(buf.Bytes(), &stmt); err != nil {
+		t.Fatalf("output should be a Statement: %v", err)
+	}
+	if stmt.PredicateType != "https://carabiner.dev/ampel/resultset/v0" {
+		t.Errorf("predicateType = %q, want ampel resultset", stmt.PredicateType)
+	}
+	// Sanity: ensure no DSSE shape leaked through.
+	var env dsseEnvelope
+	if err := json.Unmarshal(buf.Bytes(), &env); err == nil && env.Payload != "" {
+		t.Errorf("expected unsigned output; got DSSE-shaped payload field")
 	}
 }
 

@@ -22,6 +22,7 @@ import (
 	"github.com/carabiner-dev/collector/statement/intoto"
 	papi "github.com/carabiner-dev/policy/api/v1"
 	"github.com/carabiner-dev/predicates"
+	"github.com/carabiner-dev/signer"
 )
 
 // ampelVerifierID is the verifier identifier embedded in every
@@ -34,27 +35,41 @@ const ampelVerifierID = "https://carabiner.dev/ampel@v1"
 // statement carrying a predicates.ResultSet; "vsa" and "svr" route
 // through their format-specific drivers.
 //
-// The struct is a placeholder for instance-level configuration that
-// spans multiple attestation calls — signer credentials, retry
-// behavior, and so on — that will land alongside signing support.
-type ResultsAttester struct{}
-
-// New returns a ready-to-use ResultsAttester.
-func New() *ResultsAttester {
-	return &ResultsAttester{}
+// FnOpts passed to New populate the attester's defaults; the same
+// FnOpts passed to AttestTo / AttestToFile override those defaults
+// for one call. A typical CLI configures once via New (e.g. with a
+// pre-built *signer.Signer) and never overrides; library callers
+// can stay stateless and pass options per call instead.
+type ResultsAttester struct {
+	defaults attestOptions
 }
 
-// FnOpt configures a single Attest* call.
+// New returns a ResultsAttester with optional instance-level
+// defaults. Pass FnOpts here when the same configuration applies to
+// every call (typical CLI use); otherwise leave empty and pass
+// options per call.
+func New(opts ...FnOpt) *ResultsAttester {
+	a := &ResultsAttester{defaults: defaultAttestOptions()}
+	for _, fn := range opts {
+		fn(&a.defaults)
+	}
+	return a
+}
+
+// FnOpt configures a ResultsAttester. Passed to New, it sets
+// instance-wide defaults; passed to AttestTo / AttestToFile, it
+// overrides those defaults for that one call.
 type FnOpt func(*attestOptions)
 
-// attestOptions holds the per-call configuration produced by FnOpts.
+// attestOptions is the resolved configuration for one Attest* call.
 type attestOptions struct {
 	format      string
 	prettyPrint bool
+	signer      *signer.Signer
 }
 
-// defaultAttestOptions returns the baseline per-call config used when
-// no FnOpts are supplied.
+// defaultAttestOptions returns the baseline config used when no
+// FnOpts are supplied at construction or call time.
 func defaultAttestOptions() attestOptions {
 	return attestOptions{format: "ampel", prettyPrint: true}
 }
@@ -69,20 +84,38 @@ func WithFormat(format string) FnOpt {
 	}
 }
 
-// WithPrettyPrint controls JSON formatting of the produced
-// attestation. The default is true (2-space indented output);
-// pass false for a single-line compact form suitable for piping
-// or one-line-per-record archives.
+// WithPrettyPrint controls JSON formatting of the unsigned
+// attestation. The default is true (2-space indented output); pass
+// false for a single-line compact form.
+//
+// When a signer is configured via WithSigner this option is a
+// no-op — the produced *signer.SignedArtifact serializes with the
+// formatting dictated by its kind (sigstore Bundle: compact;
+// DSSE envelope: indented).
 func WithPrettyPrint(enabled bool) FnOpt {
 	return func(o *attestOptions) {
 		o.prettyPrint = enabled
 	}
 }
 
+// WithSigner configures the attester to sign the produced
+// attestation instead of writing the raw in-toto Statement. The
+// output shape becomes the *signer.SignedArtifact's canonical JSON
+// form (sigstore Bundle for the sigstore/SPIFFE backends, DSSE
+// envelope for the key backend).
+//
+// nil resets to the unsigned path — useful per-call to override an
+// instance-level default set at New time.
+func WithSigner(s *signer.Signer) FnOpt {
+	return func(o *attestOptions) {
+		o.signer = s
+	}
+}
+
 // AttestToFile writes the results attestation for results to path,
 // truncating any existing file. The file handle is closed before
-// the call returns. Format selection is per-call via WithFormat;
-// the default is "ampel".
+// the call returns. Per-call FnOpts override any defaults set at
+// New time.
 func (a *ResultsAttester) AttestToFile(path string, results papi.Results, opts ...FnOpt) error {
 	f, err := os.Create(path)
 	if err != nil {
@@ -92,11 +125,12 @@ func (a *ResultsAttester) AttestToFile(path string, results papi.Results, opts .
 	return a.AttestTo(f, results, opts...)
 }
 
-// AttestTo writes the results attestation for results to w. Splitting
-// the writer- and path-based entry points keeps the dispatch
-// testable without touching the filesystem.
+// AttestTo writes the results attestation for results to w. The
+// effective configuration is the attester's defaults overlaid with
+// any per-call FnOpts. Splitting the writer- and path-based entry
+// points keeps the dispatch testable without touching the filesystem.
 func (a *ResultsAttester) AttestTo(w io.Writer, results papi.Results, opts ...FnOpt) error {
-	o := defaultAttestOptions()
+	o := a.defaults
 	for _, fn := range opts {
 		fn(&o)
 	}
@@ -110,6 +144,29 @@ func (a *ResultsAttester) AttestTo(w io.Writer, results papi.Results, opts ...Fn
 	default:
 		return fmt.Errorf("unknown attestation format %q", o.format)
 	}
+}
+
+// writeStatement writes stmt to w in either its raw in-toto JSON
+// form (when no signer is configured) or as a signer.SignedArtifact
+// (sigstore Bundle or DSSE envelope, depending on the backend).
+// All format-specific writers funnel through this method so the
+// signing dispatch lives in exactly one place.
+func (a *ResultsAttester) writeStatement(w io.Writer, stmt *intoto.Statement, o attestOptions) error {
+	if o.signer == nil {
+		return writeStatementJSON(w, stmt, o.prettyPrint)
+	}
+	data, err := json.Marshal(stmt)
+	if err != nil {
+		return fmt.Errorf("serializing statement for signing: %w", err)
+	}
+	artifact, err := o.signer.SignStatement(data)
+	if err != nil {
+		return fmt.Errorf("signing statement: %w", err)
+	}
+	if _, err := artifact.WriteTo(w); err != nil {
+		return fmt.Errorf("writing signed artifact: %w", err)
+	}
+	return nil
 }
 
 // attestAmpel writes an "ampel"-format results attestation. Result
@@ -126,9 +183,9 @@ func (a *ResultsAttester) attestAmpel(w io.Writer, results papi.Results, o attes
 		if err := rs.Assert(); err != nil {
 			return fmt.Errorf("asserting results set: %w", err)
 		}
-		return writeResultSet(w, rs, o)
+		return a.writeResultSet(w, rs, o)
 	case *papi.ResultSet:
-		return writeResultSet(w, r, o)
+		return a.writeResultSet(w, r, o)
 	case *papi.ResultGroup:
 		rs := &papi.ResultSet{
 			Groups:    []*papi.ResultGroup{r},
@@ -138,7 +195,7 @@ func (a *ResultsAttester) attestAmpel(w io.Writer, results papi.Results, o attes
 		if err := rs.Assert(); err != nil {
 			return fmt.Errorf("asserting results set: %w", err)
 		}
-		return writeResultSet(w, rs, o)
+		return a.writeResultSet(w, rs, o)
 	default:
 		return errors.New("results are not Result, ResultSet or ResultGroup")
 	}
@@ -168,11 +225,11 @@ func writeStatementJSON(w io.Writer, stmt *intoto.Statement, pretty bool) error 
 }
 
 // writeResultSet builds an in-toto statement carrying a
-// predicates.ResultSet and writes it as JSON to w. Subjects are
-// drawn from each Result's first Chain entry when present, with
+// predicates.ResultSet and writes it via a.writeStatement. Subjects
+// are drawn from each Result's first Chain entry when present, with
 // per-digest deduplication so a ResultSet covering many results
 // against the same subject doesn't repeat it.
-func writeResultSet(w io.Writer, resultset *papi.ResultSet, o attestOptions) error {
+func (a *ResultsAttester) writeResultSet(w io.Writer, resultset *papi.ResultSet, o attestOptions) error {
 	if resultset == nil {
 		return errors.New("unable to attest results, set is nil")
 	}
@@ -208,7 +265,7 @@ func writeResultSet(w io.Writer, resultset *papi.ResultSet, o attestOptions) err
 	stmt.PredicateType = predicates.PredicateTypeResultSet
 	stmt.Predicate = &predicates.ResultSet{Parsed: resultset}
 
-	return writeStatementJSON(w, stmt, o.prettyPrint)
+	return a.writeStatement(w, stmt, o)
 }
 
 // stringifyDigests returns a canonical algo:value/algo:value... form
