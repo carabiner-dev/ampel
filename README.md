@@ -3,6 +3,7 @@
 ### The Amazing Multi-Purpose Policy Engine (and L)
 
 ![Image](https://github.com/user-attachments/assets/95d714a4-2401-4c33-a978-1016d5a961f6)
+
 Ampel is a lightweight supply chain policy engine designed to be embedded
 across the software development lifecycle to make sure that source code,
 tools and the build environment can be trusted by verifying unforgeable
@@ -34,8 +35,23 @@ can transform the output of the common vulnerability scanners to a common format
 
 Pre-built binaries for Linux, macOS and Windows are available on the
 [GitHub Releases](https://github.com/carabiner-dev/ampel/releases) page.
-Download the archive for your platform, extract it and place the `ampel`
-binary somewhere in your `$PATH`.
+Download the binary for your architecture, and place it as
+`ampel` binary somewhere in your `$PATH`.
+
+### Homebrew
+
+Ampel is available through the Carabiner Homebrew tap:
+
+```shell
+brew install carabiner-dev/tap/ampel
+```
+
+Or, if you prefer to tap explicitly:
+
+```shell
+brew tap carabiner-dev/tap
+brew install ampel
+```
 
 ### Go Install
 
