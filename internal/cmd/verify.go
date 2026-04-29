@@ -19,7 +19,9 @@ import (
 	"github.com/carabiner-dev/policy"
 	papi "github.com/carabiner-dev/policy/api/v1"
 	"github.com/carabiner-dev/policy/options"
+	"github.com/carabiner-dev/signer"
 	"github.com/carabiner-dev/signer/key"
+	signerOpts "github.com/carabiner-dev/signer/options"
 	"github.com/fatih/color"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/spf13/cobra"
@@ -35,6 +37,25 @@ var (
 	hashRegexStr = `^(\bsha1\b|\bsha256\b|\bsha512\b|\bsha3\b|\bgitCommit\b):([a-f0-9]+)$`
 	hashRegex    *regexp.Regexp
 )
+
+// attestFormatFor maps a --format value to its canonical attester
+// format name. Returns ok=false for non-attestation display formats
+// (tty, html, markdown), which should still be rendered through the
+// render engine. The "attestation" alias maps to "ampel" so the
+// stdout output of --format=attestation matches what
+// --attest-format=ampel produces.
+func attestFormatFor(format string) (string, bool) {
+	switch format {
+	case "attestation":
+		return "ampel", true
+	case "vsa":
+		return "vsa", true
+	case "svr":
+		return "svr", true
+	default:
+		return "", false
+	}
+}
 
 const (
 	grpSubject      = "subject"
@@ -76,6 +97,8 @@ type verifyOptions struct {
 	PolicyIdentityStrings []string
 	PolicyVerify          bool
 	PolicyKeyPaths        []string
+	Sign                  bool
+	SignerSet             *signerOpts.SignerSet
 }
 
 // AddFlags adds the flags
@@ -177,12 +200,22 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 		&o.AllowEmptySetChains, "allow-empty-set-chain", verifier.DefaultVerificationOptions.AllowEmptySetChains, "don't fail PolicySets when chains are empty",
 	)
 
+	cmd.PersistentFlags().BoolVar(
+		&o.Sign, "sign", false, "sign the results attestation",
+	)
+	o.SignerSet.AddFlags(cmd)
+
 	groupFlags(cmd, grpSubject, "subject", "subject-file", "subject-hash")
 	groupFlags(cmd, grpPolicy, "policy", "pid", "policy-out", "policy-verify", "policy-key", "policy-signer", "expiration")
 	groupFlags(cmd, grpEvidence, "key", "attestation", "collector", "signer")
 	groupFlags(cmd, grpContext, "context", "context-json", "context-yaml", "context-env")
 	groupFlags(cmd, grpResults, "attest-results", "attest-format", "results-path", "format")
 	groupFlags(cmd, grpVerification, "exit-code", "workers", "allow-empty-set-chain")
+	groupFlags(cmd, grpSigning, "sign")
+	// Sweep every flag the SignerSet just registered into the
+	// Signing section. Doing it post-hoc keeps the signer library's
+	// AddFlags surface untouched.
+	groupFlagsByPrefix(cmd, grpSigning, "signing-", "sigstore-", "spiffe-")
 
 	registerFlagGroups(cmd, verifyFlagGroups...)
 	applyFlagGroupTemplate(cmd)
@@ -272,12 +305,23 @@ func (o *verifyOptions) Validate() error {
 		errs = append(errs, errors.New("no attestation sources specified (collectors or files)"))
 	}
 
+	if o.Sign {
+		_, stdoutIsAttest := attestFormatFor(o.Format)
+		if !o.AttestResults && !stdoutIsAttest {
+			errs = append(errs, errors.New("--sign requires --attest-results or --format=attestation|vsa|svr (nothing to sign otherwise)"))
+		}
+		if err := o.SignerSet.Validate(); err != nil {
+			errs = append(errs, fmt.Errorf("validating signer config: %w", err))
+		}
+	}
+
 	return errors.Join(errs...)
 }
 
 func addVerify(parentCmd *cobra.Command) {
 	opts := verifyOptions{
 		VerificationOptions: verifier.NewVerificationOptions(),
+		SignerSet:           signerOpts.DefaultSignerSet(),
 	}
 	evalCmd := &cobra.Command{
 		Short: "check artifacts against a policy",
@@ -454,13 +498,40 @@ func (opts *verifyOptions) Run() error {
 		return fmt.Errorf("running subject verification: %w", err)
 	}
 
+	stdoutAttestFmt, stdoutIsAttest := attestFormatFor(opts.Format)
+
+	// Build the attester once. The signer (when --sign is set)
+	// applies to both the file output (--attest-results) and the
+	// stdout attestation output (--format=attestation|vsa|svr).
+	var attesterOpts []attest.FnOpt
+	if opts.Sign {
+		s, err := signer.NewSignerFromSet(opts.SignerSet)
+		if err != nil {
+			return fmt.Errorf("building signer: %w", err)
+		}
+		attesterOpts = append(attesterOpts, attest.WithSigner(s))
+	}
+	attester := attest.New(attesterOpts...)
+
 	if opts.AttestResults {
-		if err := attest.New().AttestToFile(
+		if err := attester.AttestToFile(
 			opts.ResultsAttestationPath, results,
 			attest.WithFormat(opts.AttestFormat),
 		); err != nil {
 			return fmt.Errorf("attesting results: %w", err)
 		}
+	}
+
+	if stdoutIsAttest {
+		if err := attester.AttestTo(
+			os.Stdout, results, attest.WithFormat(stdoutAttestFmt),
+		); err != nil {
+			return fmt.Errorf("rendering attestation to stdout: %w", err)
+		}
+		if results.GetStatus() == papi.StatusFAIL && opts.SetExitCode {
+			os.Exit(1)
+		}
+		return nil
 	}
 
 	eng := render.NewEngine()

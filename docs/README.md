@@ -43,6 +43,11 @@ contributions are welcome!
     - Collectors
     - Queries and Filters
   - Signatures and Identities
+  - Producing Result Attestations
+    - Output Paths
+    - Result Attestation Formats
+    - Signing Result Attestations
+    - Output Shape
   - Tools
     - bnd
 

@@ -67,7 +67,7 @@ func (a *ResultsAttester) writeSVRFromResultSet(w io.Writer, set *papi.ResultSet
 		}
 	}
 
-	return writeSVRStatement(w, set.GetSubject(), svrData, o)
+	return a.writeSVRStatement(w, set.GetSubject(), svrData, o)
 }
 
 func (a *ResultsAttester) writeSVRFromResult(w io.Writer, result *papi.Result, o attestOptions) error {
@@ -95,14 +95,15 @@ func (a *ResultsAttester) writeSVRFromResult(w io.Writer, result *papi.Result, o
 		}
 	}
 
-	return writeSVRStatement(w, result.GetSubject(), svrData, o)
+	return a.writeSVRStatement(w, result.GetSubject(), svrData, o)
 }
 
 // writeSVRStatement wraps the populated SVR predicate in an in-toto
-// statement and writes it as JSON to w. The protojson Any wrapper
+// statement and routes it through a.writeStatement so signing and
+// pretty-print dispatch stay centralized. The protojson Any wrapper
 // injects an "@type" field into the policy block; strip it so the
 // SVR output stays clean.
-func writeSVRStatement(w io.Writer, subject attestation.Subject, att *svrpred.SimpleVerificationResult, o attestOptions) error {
+func (a *ResultsAttester) writeSVRStatement(w io.Writer, subject attestation.Subject, att *svrpred.SimpleVerificationResult, o attestOptions) error {
 	svrJsonData, err := protojson.Marshal(att)
 	if err != nil {
 		return fmt.Errorf("marshaling svr: %w", err)
@@ -137,7 +138,7 @@ func writeSVRStatement(w io.Writer, subject attestation.Subject, att *svrpred.Si
 		}),
 	)
 
-	return writeStatementJSON(w, statement, o.prettyPrint)
+	return a.writeStatement(w, statement, o)
 }
 
 func svrPolicyResourceDescriptor(origin attestation.Subject) (*anypb.Any, error) {

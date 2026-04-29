@@ -124,7 +124,7 @@ func (a *ResultsAttester) writeVSAFromResultSet(w io.Writer, set *papi.ResultSet
 	if verifiedSomeSlsa {
 		vsaData.SlsaVersion = slsaVersion
 	}
-	return writeVSAStatement(w, set.GetSubject(), vsaData, o)
+	return a.writeVSAStatement(w, set.GetSubject(), vsaData, o)
 }
 
 func (a *ResultsAttester) writeVSAFromResult(w io.Writer, result *papi.Result, o attestOptions) error {
@@ -176,12 +176,13 @@ func (a *ResultsAttester) writeVSAFromResult(w io.Writer, result *papi.Result, o
 	if verifiedSomeSlsa {
 		vsaData.SlsaVersion = slsaVersion
 	}
-	return writeVSAStatement(w, result.GetSubject(), vsaData, o)
+	return a.writeVSAStatement(w, result.GetSubject(), vsaData, o)
 }
 
 // writeVSAStatement wraps the populated VSA predicate in an in-toto
-// statement and writes it as JSON to w.
-func writeVSAStatement(w io.Writer, subject attestation.Subject, att *v1.VerificationSummary, o attestOptions) error {
+// statement and routes it through a.writeStatement so signing and
+// pretty-print dispatch stay centralized.
+func (a *ResultsAttester) writeVSAStatement(w io.Writer, subject attestation.Subject, att *v1.VerificationSummary, o attestOptions) error {
 	vsaJsonData, err := protojson.Marshal(att)
 	if err != nil {
 		return fmt.Errorf("marshaling vsa: %w", err)
@@ -202,7 +203,7 @@ func writeVSAStatement(w io.Writer, subject attestation.Subject, att *v1.Verific
 		}),
 	)
 
-	return writeStatementJSON(w, statement, o.prettyPrint)
+	return a.writeStatement(w, statement, o)
 }
 
 // resultStringToSLSAResult translates ampel evaluation status strings
