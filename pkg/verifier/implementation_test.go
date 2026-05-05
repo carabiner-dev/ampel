@@ -4,6 +4,7 @@
 package verifier
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -633,4 +634,68 @@ func TestFilterAttestationsSkipsNonAdmitted(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, preds, 2, "only admitted envelopes should produce predicates")
+}
+
+// TestVerifySubjectErrOnMissingAttestations covers the ErrOnMissingAttestations
+// option: when off (default) a tenet that requires predicates but receives none
+// produces a failed EvalResult with the sentinel in Error.Message and no
+// top-level error; when on, the same condition additionally returns the
+// sentinel as a Go error so callers can detect it via errors.Is.
+func TestVerifySubjectErrOnMissingAttestations(t *testing.T) {
+	t.Parallel()
+
+	policy := &papi.Policy{
+		Id: "needs-predicate",
+		Tenets: []*papi.Tenet{{
+			Id:   "t1",
+			Code: "true",
+			Predicates: &papi.PredicateSpec{
+				Types: []string{"https://example.com/predicate"},
+			},
+		}},
+	}
+	subject := &gointoto.ResourceDescriptor{
+		Name:   "test-subject",
+		Digest: map[string]string{"sha256": "aaaa0000000000000000000000000000000000000000000000000000000000aa"},
+	}
+	evaluators := map[class.Class]evaluator.Evaluator{}
+
+	for _, tc := range []struct {
+		name             string
+		errOnMissing     bool
+		wantErrIsMissing bool
+	}{
+		{"off-default", false, false},
+		{"on", true, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			di := &defaultIplementation{}
+			opts := &VerificationOptions{
+				EvaluatorOptions:         eoptions.Default,
+				DefaultEvaluator:         DefaultVerificationOptions.DefaultEvaluator,
+				ErrOnMissingAttestations: tc.errOnMissing,
+			}
+
+			result, err := di.VerifySubject(
+				context.Background(), opts, evaluators, policy,
+				map[string]any{}, subject, []attestation.Predicate{},
+			)
+
+			if tc.wantErrIsMissing {
+				require.ErrorIs(t, err, ErrMissingAttestations)
+			} else {
+				require.NoError(t, err)
+			}
+
+			// Result is populated identically in both cases — the EvalResult
+			// always carries the sentinel string so consumers retain detail.
+			require.NotNil(t, result)
+			require.Len(t, result.EvalResults, 1)
+			require.Equal(t, papi.StatusFAIL, result.EvalResults[0].GetStatus())
+			require.NotNil(t, result.EvalResults[0].GetError())
+			require.Equal(t, ErrMissingAttestations.Error(), result.EvalResults[0].GetError().GetMessage())
+		})
+	}
 }
