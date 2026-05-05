@@ -1095,6 +1095,9 @@ func (di *defaultIplementation) VerifySubject(
 				},
 			}
 			skipEval = true
+			if opts.ErrOnMissingAttestations {
+				errs = append(errs, fmt.Errorf("tenet #%d on subject %s: %w", i, subjectToString(subject), ErrMissingAttestations))
+			}
 		}
 
 		if !skipEval {

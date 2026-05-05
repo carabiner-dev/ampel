@@ -87,6 +87,19 @@ type VerificationOptions struct {
 	// is known. This makes evaluation faster but also means that some policies in
 	// the block may not be evaluated (and missing from the group's resultSet)
 	LazyBlockEval bool
+
+	// ErrOnMissingAttestations causes the verifier to return ErrMissingAttestations
+	// (as a Go error wrapped via errors.Join) the moment any tenet cannot be
+	// evaluated due to missing attestations. The EvalResult is still populated
+	// in Error.Message so callers retain diagnostic detail.
+	//
+	// The default (false) causes the missing attestations error to surface
+	// only as a failed EvalResult, not as a top-level Go error.
+	//
+	// Intended for programmatic callers that want to detect this condition
+	// distinctly from policy violations or signature failures (for example,
+	// to drive a wait+retry loop while attestations land).
+	ErrOnMissingAttestations bool
 }
 
 // Validate checks the options set
