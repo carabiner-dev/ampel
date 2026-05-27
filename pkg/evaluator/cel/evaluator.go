@@ -20,6 +20,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/cvss"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/github"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/hasher"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/protobom"
@@ -79,6 +80,7 @@ var (
 	_ Plugin = (*protobom.Plugin)(nil)
 	_ Plugin = (*purl.Plugin)(nil)
 	_ Plugin = (*semver.Plugin)(nil)
+	_ Plugin = (*cvss.Plugin)(nil)
 )
 
 // rebuildEnvironment builds the environment with the current settings
@@ -101,6 +103,9 @@ func (e *Evaluator) rebuildEnvironment(opts *options.EvaluatorOptions) error {
 		}
 		if err := e.RegisterPlugin(semver.New()); err != nil {
 			return fmt.Errorf("registering semver: %w", err)
+		}
+		if err := e.RegisterPlugin(cvss.New()); err != nil {
+			return fmt.Errorf("registering cvss: %w", err)
 		}
 	}
 
