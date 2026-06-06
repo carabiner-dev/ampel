@@ -25,9 +25,15 @@ import (
 // never mutated. A template that references a missing context value errors
 // (fail-closed) rather than producing an empty or literal matcher.
 //
-// NOTE (prototype): only same-syntax {{ .Context.x }} templating, only the
-// StringMatcher values, and only the policy-level identities are handled here.
-// PolicySet/group common identities would get the same pass at their level.
+// Renders only {{ .Context.x }} templates in StringMatcher values, not the
+// legacy plain issuer/identity string fields (which are deprecated). The caller
+// (VerifySubjectWithPolicy) resolves both policy-level and PolicySet/group common
+// identities.
+//
+// KNOWN GAP / design question: chained-predicate identities (resolved inside
+// ProcessChainedSubjects, before this runs) are NOT yet templated. The open
+// question for upstream is whether resolution should move into CheckIdentities so
+// every identity-check call site is covered centrally, rather than per-call-site.
 func resolvePolicyIdentities(identities []*sapi.Identity, contextValues map[string]any) ([]*sapi.Identity, error) {
 	if len(identities) == 0 {
 		return identities, nil
