@@ -76,13 +76,24 @@ func TestResolvePolicyIdentitiesFields(t *testing.T) {
 			{Kind: &sapi.Matcher_String_{String_: exactM("{{ .Context.extra }}")}},
 		},
 	}
-	key := &sapi.Identity{Key: &sapi.IdentityKey{IdMatch: exactM("{{ .Context.kid }}")}}
+	key := &sapi.Identity{Key: &sapi.IdentityKey{
+		IdMatch:                 exactM("{{ .Context.kid }}"),
+		TypeMatch:               exactM("{{ .Context.ktype }}"),
+		SigningFingerprintMatch: exactM("{{ .Context.kfp }}"),
+	}}
+	spiffe := &sapi.Identity{Spiffe: &sapi.IdentitySpiffe{
+		SvidMatch:        exactM("{{ .Context.svid }}"),
+		TrustDomainMatch: exactM("{{ .Context.td }}"),
+		PathMatch:        exactM("{{ .Context.path }}"),
+	}}
 
 	ctx := map[string]any{
 		"iss": "https://issuer", "who": "user@example.com",
-		"repo": "https://github.com/o/r", "extra": "matched", "kid": "k1",
+		"repo": "https://github.com/o/r", "extra": "matched",
+		"kid": "k1", "ktype": "rsa", "kfp": "fp1",
+		"svid": "spiffe://td/w", "td": "td", "path": "/w",
 	}
-	out, err := resolvePolicyIdentities([]*sapi.Identity{id, key}, ctx)
+	out, err := resolvePolicyIdentities([]*sapi.Identity{id, key, spiffe}, ctx)
 	require.NoError(t, err)
 
 	ss := out[0].GetSigstore()
@@ -90,7 +101,24 @@ func TestResolvePolicyIdentitiesFields(t *testing.T) {
 	require.Equal(t, "user@example.com", ss.GetIdentityMatch().GetExact())
 	require.Equal(t, "https://github.com/o/r", ss.GetSourceRepositoryUriMatch().GetExact())
 	require.Equal(t, "matched", out[0].GetMatchers()[0].GetString_().GetExact())
-	require.Equal(t, "k1", out[1].GetKey().GetIdMatch().GetExact())
+
+	k := out[1].GetKey()
+	require.Equal(t, "k1", k.GetIdMatch().GetExact())
+	require.Equal(t, "rsa", k.GetTypeMatch().GetExact())
+	require.Equal(t, "fp1", k.GetSigningFingerprintMatch().GetExact())
+
+	sp := out[2].GetSpiffe()
+	require.Equal(t, "spiffe://td/w", sp.GetSvidMatch().GetExact())
+	require.Equal(t, "td", sp.GetTrustDomainMatch().GetExact())
+	require.Equal(t, "/w", sp.GetPathMatch().GetExact())
+}
+
+// TestResolvePolicyIdentitiesBadTemplate: a malformed template errors.
+func TestResolvePolicyIdentitiesBadTemplate(t *testing.T) {
+	t.Parallel()
+	id := &sapi.Identity{Sigstore: &sapi.IdentitySigstore{IssuerMatch: exactM("{{ .Context.x")}}
+	_, err := resolvePolicyIdentities([]*sapi.Identity{id}, map[string]any{"x": "y"})
+	require.Error(t, err)
 }
 
 // TestResolvePolicyIdentitiesStatic: a matcher with no template is unchanged

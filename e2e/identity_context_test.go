@@ -67,11 +67,24 @@ func TestIdentityContextSourceRepo(t *testing.T) {
 		require.Equal(t, papi.StatusPASS, res.GetStatus())
 	})
 
-	// Wrong repo: nothing admitted, FAIL.
+	// Wrong repo: nothing admitted, FAIL — specifically at identity validation,
+	// not the tenet.
 	t.Run("wrong-repo", func(t *testing.T) {
 		res, err := verify(t, []string{"source_repo:https://github.com/evil/repo"})
 		require.NoError(t, err)
 		require.Equal(t, papi.StatusFAIL, res.GetStatus())
+
+		rs, ok := res.(*papi.ResultSet)
+		require.True(t, ok)
+		var sawIdentityFailure bool
+		for _, r := range rs.GetResults() {
+			for _, er := range r.GetEvalResults() {
+				if er.GetError().GetMessage() == "attestation identity validation failed" {
+					sawIdentityFailure = true
+				}
+			}
+		}
+		require.True(t, sawIdentityFailure, "wrong repo must fail at identity validation, not the tenet")
 	})
 
 	// Missing required source_repo: fail closed via context-assembly error.
