@@ -88,10 +88,16 @@ func TestResolvePolicyIdentitiesFields(t *testing.T) {
 	}}
 
 	ctx := map[string]any{
-		"iss": "https://issuer", "who": "user@example.com",
-		"repo": "https://github.com/o/r", "extra": "matched",
-		"kid": "k1", "ktype": "rsa", "kfp": "fp1",
-		"svid": "spiffe://td/w", "td": "td", "path": "/w",
+		"iss":   "https://issuer",
+		"who":   "user@example.com",
+		"repo":  "https://github.com/o/r",
+		"extra": "matched",
+		"kid":   "k1",
+		"ktype": "rsa",
+		"kfp":   "fp1",
+		"svid":  "spiffe://td/w",
+		"td":    "td",
+		"path":  "/w",
 	}
 	out, err := resolvePolicyIdentities([]*sapi.Identity{id, key, spiffe}, ctx)
 	require.NoError(t, err)
