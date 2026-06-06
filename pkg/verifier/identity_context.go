@@ -12,28 +12,11 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// resolvePolicyIdentities renders {{ .Context.x }} templates found in a policy's
-// signer identities against the assembled context values, returning resolved
-// copies. This lets a published policy keep its signer identity baked in while a
-// verifier supplies a value at runtime (e.g. the adopter source repo via
-// -x source_repo=...). Substitution happens BEFORE the identity filter
-// (CheckIdentities) runs, so the value lands inside the existing identity (it
-// stays AND-ed, not OR-ed as a separate identity) and the constraint fails
-// closed.
-//
-// Identities are deep-cloned before substitution; the shared policy proto is
-// never mutated. A template that references a missing context value errors
-// (fail-closed) rather than producing an empty or literal matcher.
-//
-// Renders only {{ .Context.x }} templates in StringMatcher values, not the
-// legacy plain issuer/identity string fields (which are deprecated). The caller
-// (VerifySubjectWithPolicy) resolves both policy-level and PolicySet/group common
-// identities.
-//
-// KNOWN GAP / design question: chained-predicate identities (resolved inside
-// ProcessChainedSubjects, before this runs) are NOT yet templated. The open
-// question for upstream is whether resolution should move into CheckIdentities so
-// every identity-check call site is covered centrally, rather than per-call-site.
+// resolvePolicyIdentities returns copies of the identities with {{ .Context.x }}
+// templates in their StringMatcher values rendered from the context. It runs
+// before CheckIdentities so the resolved value lands inside the identity (AND-ed)
+// and fails closed: a missing context value errors, and the policy proto is
+// cloned, never mutated.
 func resolvePolicyIdentities(identities []*sapi.Identity, contextValues map[string]any) ([]*sapi.Identity, error) {
 	if len(identities) == 0 {
 		return identities, nil
