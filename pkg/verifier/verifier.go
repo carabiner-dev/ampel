@@ -365,10 +365,19 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("gathering evidence: %w", err)
 	}
 
+	// Resolve any {{ .Context.x }} templates in the policy identities from the
+	// assembled context, so a verifier-supplied value (e.g. -x source_repo=...)
+	// fills a matcher in a published policy. This runs BEFORE CheckIdentities so
+	// the value lands inside the identity (AND-ed) and fails closed.
+	resolvedIdentities, err := resolvePolicyIdentities(policy.GetIdentities(), evalContext)
+	if err != nil {
+		return nil, fmt.Errorf("resolving policy identities from context: %w", err)
+	}
+
 	// Check identities to see if the attestations can be admitted
 	// TODO(puerco)
 	// Option: Unsigned statements cause a:fail or b:ignore
-	allow, ids, idErrors, err := ampel.impl.CheckIdentities(ctx, opts, policy.GetIdentities(), atts)
+	allow, ids, idErrors, err := ampel.impl.CheckIdentities(ctx, opts, resolvedIdentities, atts)
 	if err != nil {
 		return nil, fmt.Errorf("error validating signer identity: %w", err)
 	}

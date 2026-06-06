@@ -55,3 +55,69 @@ func TestSourceRepositoryURIEndToEnd(t *testing.T) {
 	// Correct issuer + wrong origin repo: AND semantics fail closed.
 	require.False(t, check(policy("https://github.com/evil/repo")), "wrong source repo must not match")
 }
+
+// TestSourceRepositoryURIDynamicEndToEnd exercises the dynamic path: the
+// published policy bakes in the signer issuer and leaves the origin repo as a
+// {{ .Context.x }} template; the verifier supplies the repo at runtime (as
+// -x source_repo=... would). resolvePolicyIdentities fills the matcher BEFORE
+// CheckIdentities, so the constraint stays AND-ed inside the identity and fails
+// closed.
+func TestSourceRepositoryURIDynamicEndToEnd(t *testing.T) {
+	const issuer = "https://token.actions.githubusercontent.com"
+	const repo = "https://github.com/sigstore/sigstore-js"
+
+	exact := func(s string) *sapi.StringMatcher {
+		return &sapi.StringMatcher{Kind: &sapi.StringMatcher_Exact{Exact: s}}
+	}
+	// The published policy: issuer baked in, repo supplied via context.
+	published := func() []*sapi.Identity {
+		return []*sapi.Identity{{
+			Sigstore: &sapi.IdentitySigstore{
+				IssuerMatch:              exact(issuer),
+				SourceRepositoryUriMatch: exact("{{ .Context.source_repo }}"),
+			},
+		}}
+	}
+
+	envs, err := (&bundle.Parser{}).ParseFile("testdata/github-actions-bundle.json")
+	require.NoError(t, err)
+	require.NotEmpty(t, envs)
+
+	di := defaultIplementation{}
+	checkWith := func(ctxVals map[string]any) (bool, error) {
+		resolved, err := resolvePolicyIdentities(published(), ctxVals)
+		if err != nil {
+			return false, err
+		}
+		allow, _, _, err := di.CheckIdentities(
+			t.Context(), &VerificationOptions{}, resolved, []attestation.Envelope{envs[0]},
+		)
+		require.NoError(t, err)
+		return allow, nil
+	}
+
+	// Verifier supplies the correct repo -> template resolves -> accepted.
+	allow, err := checkWith(map[string]any{"source_repo": repo})
+	require.NoError(t, err)
+	require.True(t, allow, "verifier-supplied correct repo must match")
+
+	// Verifier supplies a wrong repo -> fails closed (AND with the baked issuer).
+	allow, err = checkWith(map[string]any{"source_repo": "https://github.com/evil/repo"})
+	require.NoError(t, err)
+	require.False(t, allow, "verifier-supplied wrong repo must not match")
+
+	// Verifier supplies nothing -> resolution errors (fail closed), not match-anything.
+	_, err = checkWith(map[string]any{})
+	require.Error(t, err, "missing required context value must error, not silently pass")
+
+	// The shared policy proto is never mutated: resolving a captured identity
+	// leaves the original template in place (clone, don't mutate).
+	original := published()
+	_, err = resolvePolicyIdentities(original, map[string]any{"source_repo": repo})
+	require.NoError(t, err)
+	require.Equal(t,
+		"{{ .Context.source_repo }}",
+		original[0].GetSigstore().GetSourceRepositoryUriMatch().GetExact(),
+		"resolvePolicyIdentities must not mutate the shared policy identity",
+	)
+}
