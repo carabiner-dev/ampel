@@ -373,6 +373,16 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	if err != nil {
 		return nil, fmt.Errorf("resolving policy identities from context: %w", err)
 	}
+	// Common (PolicySet/group) identities reach CheckIdentities via the
+	// evaluation context; resolve their templates from the same context too.
+	if len(ec.Identities) > 0 {
+		resolvedCommon, err := resolvePolicyIdentities(ec.Identities, evalContext)
+		if err != nil {
+			return nil, fmt.Errorf("resolving common identities from context: %w", err)
+		}
+		ec.Identities = resolvedCommon
+		ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, ec)
+	}
 
 	// Check identities to see if the attestations can be admitted
 	// TODO(puerco)
