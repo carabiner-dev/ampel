@@ -15,7 +15,7 @@ require (
 	github.com/fatih/color v1.19.0
 	github.com/google/cel-go v0.28.1
 	github.com/in-toto/attestation v1.2.0
-	github.com/jedib0t/go-pretty/v6 v6.7.10
+	github.com/jedib0t/go-pretty/v6 v6.8.0
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/openvex/go-vex v0.2.8
 	github.com/package-url/packageurl-go v0.1.6
@@ -144,6 +144,7 @@ require (
 	github.com/go-openapi/swag/typeutils v0.26.0 // indirect
 	github.com/go-openapi/swag/yamlutils v0.26.0 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
+	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
