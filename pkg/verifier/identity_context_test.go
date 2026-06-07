@@ -13,12 +13,15 @@ import (
 func exactM(s string) *sapi.StringMatcher {
 	return &sapi.StringMatcher{Kind: &sapi.StringMatcher_Exact{Exact: s}}
 }
+
 func regexM(s string) *sapi.StringMatcher {
 	return &sapi.StringMatcher{Kind: &sapi.StringMatcher_Regex{Regex: s}}
 }
+
 func prefixM(s string) *sapi.StringMatcher {
 	return &sapi.StringMatcher{Kind: &sapi.StringMatcher_Prefix{Prefix: s}}
 }
+
 func globM(s string) *sapi.StringMatcher {
 	return &sapi.StringMatcher{Kind: &sapi.StringMatcher_Glob{Glob: s}}
 }
