@@ -657,11 +657,17 @@ func (di *defaultIplementation) evaluateChain(
 		// Check the attestation identities for now, we fallback to the identities
 		// defined in the policy if the link does not have its own. Probably this
 		// should have a better default.
+		chainIdentities := globalIdentities
 		if link.GetPredicate().GetIdentities() != nil {
-			pass, ids, _, err = di.CheckIdentities(ctx, opts, link.GetPredicate().GetIdentities(), lattestation[0:0])
-		} else {
-			pass, ids, _, err = di.CheckIdentities(ctx, opts, globalIdentities, lattestation[0:0])
+			chainIdentities = link.GetPredicate().GetIdentities()
 		}
+		// Resolve any from_context bindings so the feature also reaches
+		// chained-predicate identities and fails closed on a missing value.
+		chainIdentities, err = resolvePolicyIdentities(chainIdentities, evalContextValues)
+		if err != nil {
+			return nil, nil, false, fmt.Errorf("resolving chained attestation identity: %w", err)
+		}
+		pass, ids, _, err = di.CheckIdentities(ctx, opts, chainIdentities, lattestation[0:0])
 		if err != nil {
 			return nil, nil, false, fmt.Errorf("error checking attestation identity: %w", err)
 		}

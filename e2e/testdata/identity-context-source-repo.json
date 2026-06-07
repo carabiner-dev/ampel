@@ -1,0 +1,38 @@
+{
+    "id": "identity-context-source-repo-set",
+    "meta": {
+        "origin": {}
+    },
+    "policies": [
+        {
+            "id": "identity-context-source-repo",
+            "meta": {
+                "origin": {}
+            },
+            "context": {
+                "source_repo": {
+                    "type": "string",
+                    "required": true
+                }
+            },
+            "identities": [
+                {
+                    "sigstore": {
+                        "issuerMatch": {
+                            "exact": "https://token.actions.githubusercontent.com"
+                        },
+                        "sourceRepositoryUriMatch": {
+                            "fromContext": "source_repo"
+                        }
+                    }
+                }
+            ],
+            "tenets": [
+                {
+                    "id": "admitted",
+                    "code": "true"
+                }
+            ]
+        }
+    ]
+}

@@ -5,7 +5,7 @@ go 1.26.2
 require (
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/carabiner-dev/attestation v0.2.1
-	github.com/carabiner-dev/collector v0.3.6
+	github.com/carabiner-dev/collector v0.3.7
 	github.com/carabiner-dev/command v0.3.1
 	github.com/carabiner-dev/hasher v0.2.4
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
@@ -42,7 +42,7 @@ require (
 	github.com/carabiner-dev/github v0.2.3 // indirect
 	github.com/carabiner-dev/jsonl v0.2.1 // indirect
 	github.com/carabiner-dev/openeox v1.0.0-pre.1 // indirect
-	github.com/carabiner-dev/signer v0.5.0
+	github.com/carabiner-dev/signer v0.5.2
 	github.com/carabiner-dev/vcslocator v0.4.4 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect

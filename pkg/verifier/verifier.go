@@ -365,10 +365,26 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("gathering evidence: %w", err)
 	}
 
+	// Resolve any from_context identity bindings against the assembled context
+	// before checking identities, so the resolved value lands inside the identity
+	// (AND-ed) and fails closed on a missing value. Covers the policy's own
+	// identities and the common identities inherited from the context.
+	resolvedIdentities, err := resolvePolicyIdentities(policy.GetIdentities(), evalContext)
+	if err != nil {
+		return nil, fmt.Errorf("resolving policy identities: %w", err)
+	}
+	if len(ec.Identities) > 0 {
+		ec.Identities, err = resolvePolicyIdentities(ec.Identities, evalContext)
+		if err != nil {
+			return nil, fmt.Errorf("resolving common identities: %w", err)
+		}
+		ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, ec)
+	}
+
 	// Check identities to see if the attestations can be admitted
 	// TODO(puerco)
 	// Option: Unsigned statements cause a:fail or b:ignore
-	allow, ids, idErrors, err := ampel.impl.CheckIdentities(ctx, opts, policy.GetIdentities(), atts)
+	allow, ids, idErrors, err := ampel.impl.CheckIdentities(ctx, opts, resolvedIdentities, atts)
 	if err != nil {
 		return nil, fmt.Errorf("error validating signer identity: %w", err)
 	}
