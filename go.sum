@@ -96,8 +96,8 @@ github.com/bradleyjkemp/cupaloy/v2 v2.8.0 h1:any4BmKE+jGIaMpnU8YgH/I2LPiLBufr6oM
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0/go.mod h1:bm7JXdkRd4BHJk9HpwqAI8BoAY1lps46Enkdqw6aRX0=
 github.com/carabiner-dev/attestation v0.2.1 h1:VhjV5YlO9TsW50Sr/Zd54bdbZhhDAqgxC3kB9z1I+3Q=
 github.com/carabiner-dev/attestation v0.2.1/go.mod h1:O84vF84RZG3pJO/6BYrPs718bZviHF5DKajP1HsrDpw=
-github.com/carabiner-dev/collector v0.3.6 h1:EVWbQIkznKCO+/gK5Otd+iL2/pay//NQsghA9N9eHpI=
-github.com/carabiner-dev/collector v0.3.6/go.mod h1:lk3D5bo9rxJwThwO4zrIP27zJJ1UpnF/S6UHJpZi940=
+github.com/carabiner-dev/collector v0.3.7 h1:K1ChCAhW3Guy8JLosTh+5ndtnyfwPXohAm5D12LgfIk=
+github.com/carabiner-dev/collector v0.3.7/go.mod h1:LUwrfU5kbCeKfoRgX87ETLqDaedfsIXrBcNDcdOAuGM=
 github.com/carabiner-dev/command v0.3.1 h1:iBkh+AjwziFZmyihv/izypCV74nkmaslZxb5AgP7GP4=
 github.com/carabiner-dev/command v0.3.1/go.mod h1:0mWfS5BU/krtaI1hgD5wjmLpjWVlf38KY8usA8zfF5c=
 github.com/carabiner-dev/ghrfs v0.3.4 h1:XJoDXkuw+8KQPTC4oI0da8vLpnx7cfQBGgyjzo+Eqrc=
@@ -118,8 +118,8 @@ github.com/carabiner-dev/predicates v0.5.0 h1:CG2xO5xTXWXakjJkAFuS2xSA2olP9Ew25k
 github.com/carabiner-dev/predicates v0.5.0/go.mod h1:EUm2p0CwKoUuc+OLbGkoxLdRqBrg/r957b8iN/ACWSA=
 github.com/carabiner-dev/sbomfs v0.1.0 h1:gEsmn85hod7JTLs2dDr5C1x4Af7FUEhI0lbTurNaEZs=
 github.com/carabiner-dev/sbomfs v0.1.0/go.mod h1:UyPyTSNx9JOLZVgTmM9WXdmgVqDWXCYwr1LK1Ts+7H0=
-github.com/carabiner-dev/signer v0.5.0 h1:F0w5+SBzCIY48JSyPU5vavq9hWu8U49bMdAR9pFPQxs=
-github.com/carabiner-dev/signer v0.5.0/go.mod h1:QSdF3/d+MqKehGQMw8NYSVa1vIm4cZ32bJ4smcV8PTw=
+github.com/carabiner-dev/signer v0.5.2 h1:0mWCaekAinluwm/gxLlX3Btrof2r04v68dO1kUZUiNc=
+github.com/carabiner-dev/signer v0.5.2/go.mod h1:QSdF3/d+MqKehGQMw8NYSVa1vIm4cZ32bJ4smcV8PTw=
 github.com/carabiner-dev/termtable v1.1.0 h1:b/7IqM52Wqwi9njjnAEIDddUYyX23msFkQVihkwarDs=
 github.com/carabiner-dev/termtable v1.1.0/go.mod h1:f2kBeZo0N9vQEMhfDfxv+DdXXy7eb9Wvu9u1sSyvR2A=
 github.com/carabiner-dev/vcslocator v0.4.4 h1:5uzb2yKfslMHY9RkkpUW28jLx2iVX93Al/GjSvG/2Ok=
