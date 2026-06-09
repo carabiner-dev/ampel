@@ -49,8 +49,8 @@ func (ampel *Ampel) Verify(
 	}
 
 	// Publish the results (best-effort): the publisher fans them out to the
-	// configured emitters and we ignore any emitter errors.
-	_ = ampel.publisher.PublishResults(ctx, results)
+	// configured emitters and we intentionally ignore any emitter errors.
+	_ = ampel.publisher.PublishResults(ctx, results) //nolint:errcheck // best-effort publish
 
 	return results, nil
 }

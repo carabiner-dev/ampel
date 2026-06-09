@@ -15,6 +15,7 @@ import (
 // capture is a minimal Emitter that records what it was given and can be made
 // to fail on demand.
 type capture struct {
+	spec    string
 	emitted papi.Results
 	err     error
 }
@@ -26,10 +27,8 @@ func (c *capture) Emit(_ context.Context, r papi.Results, _ ...EmitOpt) error {
 
 func TestEmitterFromString(t *testing.T) {
 	t.Parallel()
-	var gotSpec string
 	require.NoError(t, RegisterEmitterType("test-from-string", func(spec string) (Emitter, error) {
-		gotSpec = spec
-		return &capture{}, nil
+		return &capture{spec: spec}, nil
 	}))
 	t.Cleanup(func() { UnregisterEmitterType("test-from-string") })
 
@@ -53,14 +52,16 @@ func TestEmitterFromString(t *testing.T) {
 		{name: "unknown-moniker", init: "does-not-exist:https://example.com", mustErr: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			e, err := EmitterFromString(tc.init)
 			if tc.mustErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			require.NotNil(t, e)
-			require.Equal(t, tc.wantSpec, gotSpec)
+			c, ok := e.(*capture)
+			require.True(t, ok)
+			require.Equal(t, tc.wantSpec, c.spec)
 		})
 	}
 }

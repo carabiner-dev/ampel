@@ -79,9 +79,9 @@ func (e *Emitter) Emit(ctx context.Context, results papi.Results, _ ...publisher
 	if err != nil {
 		return fmt.Errorf("posting to webhook: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // best-effort: nothing to do on a close failure
 	// Drain the body so the connection can be reused.
-	_, _ = io.Copy(io.Discard, resp.Body)
+	_, _ = io.Copy(io.Discard, resp.Body) //nolint:errcheck // best-effort drain
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("webhook returned non-success status %s", resp.Status)

@@ -36,7 +36,9 @@ func TestBuild(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tc.wantURL, p.(*Emitter).URL)
+			emitter, ok := p.(*Emitter)
+			require.True(t, ok)
+			require.Equal(t, tc.wantURL, emitter.URL)
 		})
 	}
 }
@@ -47,7 +49,7 @@ func TestPublish(t *testing.T) {
 	var gotContentType string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotContentType = r.Header.Get("Content-Type")
-		gotBody, _ = io.ReadAll(r.Body)
+		gotBody, _ = io.ReadAll(r.Body) //nolint:errcheck // test handler
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer srv.Close()
