@@ -91,6 +91,7 @@ type verifyOptions struct {
 	ContextYAML           string
 	ContextStringVals     []string
 	Collectors            []string
+	Publishers            []string
 	Subject               string
 	SubjectFile           string
 	SubjectHash           string
@@ -158,6 +159,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 
 	cmd.PersistentFlags().StringSliceVarP(
 		&o.Collectors, "collector", "c", []string{}, "attestation collectors to initialize",
+	)
+
+	cmd.PersistentFlags().StringSliceVar(
+		&o.Publishers, "publish", []string{}, "publishers to emit evaluation results to, as \"driver:spec\"",
 	)
 
 	cmd.PersistentFlags().BoolVar(
@@ -434,6 +439,7 @@ func (opts *verifyOptions) Run() error {
 
 	ampel, err := verifier.New(
 		verifier.WithCollectorInits(opts.Collectors),
+		verifier.WithPublisherInits(opts.Publishers),
 		verifier.WithKeys(opts.Keys...),
 	)
 	if err != nil {

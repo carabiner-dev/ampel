@@ -12,6 +12,7 @@ import (
 	"github.com/carabiner-dev/signer/key"
 
 	"github.com/carabiner-dev/ampel/pkg/oscal"
+	"github.com/carabiner-dev/ampel/pkg/publisher"
 )
 
 var ErrMissingAttestations = errors.New("required attestations missing to verify subject")
@@ -85,9 +86,34 @@ var WithCollectorInits = func(init []string) fnOpt {
 	}
 }
 
+// WithPublisherInit adds a publisher from an init string ("driver:spec")
+var WithPublisherInit = func(init string) fnOpt {
+	return func(ampel *Ampel) error {
+		p, err := publisher.New(init)
+		if err != nil {
+			return err
+		}
+		ampel.publishers = append(ampel.publishers, p)
+		return nil
+	}
+}
+
+// WithPublisherInits adds multiple publishers from a list of init strings
+var WithPublisherInits = func(init []string) fnOpt {
+	return func(ampel *Ampel) error {
+		pubs, err := publisher.NewSet(init)
+		if err != nil {
+			return err
+		}
+		ampel.publishers = append(ampel.publishers, pubs...)
+		return nil
+	}
+}
+
 // Ampel is the attestation verifier
 type Ampel struct {
-	impl      AmpelVerifier
-	checker   AmpelStatusChecker
-	Collector *collector.Agent
+	impl       AmpelVerifier
+	checker    AmpelStatusChecker
+	Collector  *collector.Agent
+	publishers []publisher.Publisher
 }

@@ -18,6 +18,7 @@ import (
 	sapi "github.com/carabiner-dev/signer/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/nozzle/throttler"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -37,8 +38,26 @@ type PolicyError struct {
 	Guidance string
 }
 
-// Verify checks a subject against a policy using the available evidence
+// Verify checks a subject against a policy using the available evidence. The
+// policy argument may be a single policy, a policy group or a policy set; the
+// results are published once per call, regardless of the material kind.
 func (ampel *Ampel) Verify(
+	ctx context.Context, opts *VerificationOptions, policy any, subject attestation.Subject,
+) (papi.Results, error) {
+	results, err := ampel.verify(ctx, opts, policy, subject)
+	if err != nil {
+		return nil, err
+	}
+
+	// Publish the results to any configured publishers (best-effort).
+	ampel.publish(ctx, results)
+
+	return results, nil
+}
+
+// verify dispatches the verification to the right routine depending on the kind
+// of policy material supplied and returns the assembled results.
+func (ampel *Ampel) verify(
 	ctx context.Context, opts *VerificationOptions, policy any, subject attestation.Subject,
 ) (papi.Results, error) {
 	switch v := policy.(type) {
@@ -297,6 +316,20 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 
 	// Succcess!
 	return resultSet, nil
+}
+
+// publish sends the results to all configured publishers. Publishing is
+// best effort for now. AMPEL does not queue or retry. If a publisher error
+// happens,  it is just logged but never returned.
+func (ampel *Ampel) publish(ctx context.Context, results papi.Results) {
+	if results == nil {
+		return
+	}
+	for _, p := range ampel.publishers {
+		if err := p.Publish(ctx, results); err != nil {
+			logrus.Warnf("publishing results: %v", err)
+		}
+	}
 }
 
 // VerifySubjectWithPolicy verifies a subject against a single policy
