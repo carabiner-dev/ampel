@@ -18,7 +18,6 @@ import (
 	sapi "github.com/carabiner-dev/signer/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/nozzle/throttler"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -49,8 +48,9 @@ func (ampel *Ampel) Verify(
 		return nil, err
 	}
 
-	// Publish the results to any configured publishers (best-effort).
-	ampel.publish(ctx, results)
+	// Publish the results (best-effort): the publisher fans them out to the
+	// configured emitters and we ignore any emitter errors.
+	_ = ampel.publisher.PublishResults(ctx, results)
 
 	return results, nil
 }
@@ -316,20 +316,6 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 
 	// Succcess!
 	return resultSet, nil
-}
-
-// publish sends the results to all configured publishers. Publishing is
-// best effort for now. AMPEL does not queue or retry. If a publisher error
-// happens,  it is just logged but never returned.
-func (ampel *Ampel) publish(ctx context.Context, results papi.Results) {
-	if results == nil {
-		return
-	}
-	for _, p := range ampel.publishers {
-		if err := p.Publish(ctx, results); err != nil {
-			logrus.Warnf("publishing results: %v", err)
-		}
-	}
 }
 
 // VerifySubjectWithPolicy verifies a subject against a single policy

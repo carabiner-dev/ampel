@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: Copyright 2026 Carabiner Systems, Inc
 // SPDX-License-Identifier: Apache-2.0
 
-// Package stdout implements a mock publisher that writes the evaluation results
+// Package stdout implements a mock emitter that writes the evaluation results
 // as JSON to a writer (os.Stdout by default). It is mainly useful for tests and
-// for manually inspecting what would be published.
+// for manually inspecting what would be published. It is not wired into
+// LoadDefaultEmitterTypes; tests that need it register it explicitly.
 package stdout
 
 import (
@@ -14,34 +15,32 @@ import (
 	"os"
 
 	papi "github.com/carabiner-dev/policy/api/v1"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/carabiner-dev/ampel/pkg/publisher"
 )
 
-// DriverName is the id used to select this publisher in an initstring.
-const DriverName = "stdout"
+// TypeMoniker is the moniker used to select this emitter in an initstring.
+const TypeMoniker = "stdout"
 
-func init() {
-	publisher.Register(DriverName, func() publisher.Publisher { return New() })
+// Build constructs a stdout emitter. The init string is ignored; results are
+// written to os.Stdout.
+func Build(string) (publisher.Emitter, error) {
+	return New(), nil
 }
 
-// Publisher writes the result set as indented JSON to Writer.
-type Publisher struct {
+// Emitter writes the results as indented JSON to Writer.
+type Emitter struct {
 	Writer io.Writer
 }
 
-// New returns a stdout publisher writing to os.Stdout.
-func New() *Publisher {
-	return &Publisher{Writer: os.Stdout}
+// New returns a stdout emitter writing to os.Stdout.
+func New() *Emitter {
+	return &Emitter{Writer: os.Stdout}
 }
 
-// Init takes no configuration.
-func (p *Publisher) Init(*structpb.Struct) error { return nil }
-
-// Publish writes the results to the configured writer as indented JSON.
-func (p *Publisher) Publish(_ context.Context, results papi.Results, _ ...publisher.PublishOpt) error {
-	w := p.Writer
+// Emit writes the results to the configured writer as indented JSON.
+func (e *Emitter) Emit(_ context.Context, results papi.Results, _ ...publisher.EmitOpt) error {
+	w := e.Writer
 	if w == nil {
 		w = os.Stdout
 	}
