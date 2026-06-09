@@ -48,14 +48,19 @@ func attestFormatFor(format string) (string, bool) {
 	switch format {
 	case "attestation":
 		return "ampel", true
-	case "vsa":
-		return "vsa", true
-	case "svr":
-		return "svr", true
+	case formatVSA:
+		return formatVSA, true
+	case formatSVR:
+		return formatSVR, true
 	default:
 		return "", false
 	}
 }
+
+const (
+	formatVSA = "vsa"
+	formatSVR = "svr"
+)
 
 const (
 	grpSubject      = "subject"

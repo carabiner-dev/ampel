@@ -43,9 +43,9 @@ func extractVerificationData(pred attestation.Predicate) map[string]any {
 		}
 		if k := id.GetKey(); k != nil {
 			idMap["key"] = map[string]any{
-				"id":   k.GetId(),
-				"type": k.GetType(),
-				"data": k.GetData(),
+				"id":    k.GetId(),
+				"type":  k.GetType(),
+				keyData: k.GetData(),
 			}
 		}
 		if r := id.GetRef(); r != nil {

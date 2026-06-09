@@ -15,6 +15,14 @@ import (
 
 type PurlTool struct{}
 
+const (
+	keyType      = "type"
+	keyNamespace = "namespace"
+	keyName      = "name"
+	keyVersion   = "version"
+	keySubpath   = "subpath"
+)
+
 var PurlType = cel.ObjectType("purl")
 
 func (pt *PurlTool) Functions() []cel.EnvOption {
@@ -36,7 +44,7 @@ func (pt *PurlTool) Functions() []cel.EnvOption {
 			),
 		),
 		cel.Function(
-			"namespace",
+			keyNamespace,
 			cel.MemberOverload(
 				"purl_namespace_binding",
 				[]*cel.Type{PurlType, cel.StringType}, cel.StringType,
@@ -44,7 +52,7 @@ func (pt *PurlTool) Functions() []cel.EnvOption {
 			),
 		),
 		cel.Function(
-			"name",
+			keyName,
 			cel.MemberOverload(
 				"purl_name_binding",
 				[]*cel.Type{PurlType, cel.StringType}, cel.StringType,
@@ -52,7 +60,7 @@ func (pt *PurlTool) Functions() []cel.EnvOption {
 			),
 		),
 		cel.Function(
-			"version",
+			keyVersion,
 			cel.MemberOverload(
 				"purl_version_binding",
 				[]*cel.Type{PurlType, cel.StringType}, cel.StringType,
@@ -68,7 +76,7 @@ func (pt *PurlTool) Functions() []cel.EnvOption {
 			),
 		),
 		cel.Function(
-			"subpath",
+			keySubpath,
 			cel.MemberOverload(
 				"purl_subpath_binding",
 				[]*cel.Type{PurlType, cel.StringType}, cel.StringType,
@@ -94,11 +102,11 @@ var parse = func(_ ref.Val, rhs ref.Val) ref.Val {
 
 		// Create a map with all PURL components
 		result := map[string]any{
-			"type":      parsed.Type,
-			"namespace": parsed.Namespace,
-			"name":      parsed.Name,
-			"version":   parsed.Version,
-			"subpath":   parsed.Subpath,
+			keyType:      parsed.Type,
+			keyNamespace: parsed.Namespace,
+			keyName:      parsed.Name,
+			keyVersion:   parsed.Version,
+			keySubpath:   parsed.Subpath,
 		}
 
 		// Convert qualifiers to CEL-compatible map

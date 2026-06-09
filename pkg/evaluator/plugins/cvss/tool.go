@@ -42,6 +42,10 @@ const (
 	Prefix30 = "CVSS:3.0/"
 	Prefix31 = "CVSS:3.1/"
 	Prefix40 = "CVSS:4.0/"
+
+	severityHigh = "HIGH"
+	keyVersion   = "version"
+	keySeverity  = "severity"
 )
 
 var CvssType = cel.ObjectType("cvss", traits.ReceiverType)
@@ -104,7 +108,7 @@ func getCVSSResult(vector string) (*cvssResult, error) {
 func rating20(score float64) string {
 	switch {
 	case score >= 7.0:
-		return "HIGH"
+		return severityHigh
 	case score >= 4.0:
 		return "MEDIUM"
 	default:
@@ -121,14 +125,14 @@ func (ct *CvssTool) Functions() []cel.EnvOption {
 			}
 			return res.score, nil
 		}),
-		memberStringFn("severity", func(v string) (string, error) {
+		memberStringFn(keySeverity, func(v string) (string, error) {
 			res, err := getCVSSResult(v)
 			if err != nil {
 				return "", err
 			}
 			return res.severity, nil
 		}),
-		memberStringFn("version", func(v string) (string, error) {
+		memberStringFn(keyVersion, func(v string) (string, error) {
 			res, err := getCVSSResult(v)
 			if err != nil {
 				return "", err
@@ -183,9 +187,9 @@ func (ct *CvssTool) Functions() []cel.EnvOption {
 						return types.NewErrFromString(err.Error())
 					}
 					m := map[string]any{
-						"version":  res.version,
-						"score":    res.score,
-						"severity": res.severity,
+						keyVersion:  res.version,
+						"score":     res.score,
+						keySeverity: res.severity,
 					}
 					for _, abv := range res.metrics {
 						if val, getErr := res.doc.Get(abv); getErr == nil {

@@ -16,6 +16,8 @@ import (
 	"github.com/jedib0t/go-pretty/v6/text"
 )
 
+const headerSubject = "Subject"
+
 type TableBuilder struct {
 	Decorator TableDecorator
 }
@@ -59,7 +61,7 @@ func (tb *TableBuilder) ResultsTable(result *papi.Result) (table.Writer, error) 
 	t.AppendRow(table.Row{"Results Date", "Results Date", result.DateEnd.AsTime().Local()}, rowConfigAutoMerge)
 	t.AppendRow(table.Row{"Execution Time", "Execution Time", result.DateEnd.AsTime().Sub(result.DateStart.AsTime())}, rowConfigAutoMerge)
 	t.AppendRow(table.Row{"Tenets", "Tenets", tb.Decorator.TenetsToString(result)}, rowConfigAutoMerge)
-	t.AppendRow(table.Row{"Subject", "Subject", tb.Decorator.SubjectToString(result.Subject, result.Chain)}, rowConfigAutoMerge)
+	t.AppendRow(table.Row{headerSubject, headerSubject, tb.Decorator.SubjectToString(result.Subject, result.Chain)}, rowConfigAutoMerge)
 	if len(result.GetMeta().Controls) > 0 {
 		t.AppendRow(table.Row{"Controls", "Controls", tb.Decorator.ControlsToString(result, "", "")}, rowConfigAutoMerge)
 	}
@@ -113,7 +115,7 @@ func (tb *TableBuilder) ResultSetTable(set *papi.ResultSet) (table.Writer, error
 		t.AppendRow(
 			table.Row{
 				fmt.Sprintf("Status: %s %s", tb.Decorator.StatusToDot(set.Status), tb.Decorator.Bold(set.Status)),
-				"Subject", st, st,
+				headerSubject, st, st,
 			},
 			rowConfigAutoMerge,
 		)
@@ -239,7 +241,7 @@ func (tb *TableBuilder) ResultGroupTable(grp *papi.ResultGroup) (table.Writer, e
 		t.AppendRow(
 			table.Row{
 				tb.Decorator.Bold("Status:") + fmt.Sprintf(" %s %s", tb.Decorator.StatusToDot(grp.GetStatus()), tb.Decorator.Bold(grp.GetStatus())),
-				tb.Decorator.Bold("Subject"), st, st,
+				tb.Decorator.Bold(headerSubject), st, st,
 			},
 			rowConfigAutoMerge,
 		)

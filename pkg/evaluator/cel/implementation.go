@@ -29,6 +29,12 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
 
+// Shared map-key / CEL identifier literals used across the package.
+const (
+	keyPredicateType = "predicate_type"
+	keyData          = "data"
+)
+
 type CelEvaluatorImplementation interface {
 	CompileCode(*cel.Env, string) (*cel.Ast, error)
 	CreateEnvironment(*options.EvaluatorOptions, map[string]Plugin) (*cel.Env, error)
@@ -118,8 +124,8 @@ func (dce *defaulCelEvaluator) BuildVariables(
 			return nil, fmt.Errorf("unmarshalling predicate data: %w", err)
 		}
 		predMap := map[string]any{
-			"predicate_type": string(p.GetType()),
-			"data":           d,
+			keyPredicateType: string(p.GetType()),
+			keyData:          d,
 		}
 		val, err := structpb.NewValue(predMap)
 		if err != nil {
@@ -517,8 +523,8 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 		return nil, fmt.Errorf("unmarshaling predicate data: %w", err)
 	}
 	predMap := map[string]any{
-		"predicate_type": string(predicate.GetType()),
-		"data":           d,
+		keyPredicateType: string(predicate.GetType()),
+		keyData:          d,
 	}
 	val, err := structpb.NewValue(predMap)
 	if err != nil {
