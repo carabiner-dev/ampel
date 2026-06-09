@@ -91,6 +91,7 @@ type verifyOptions struct {
 	ContextYAML           string
 	ContextStringVals     []string
 	Collectors            []string
+	Publishers            []string
 	Subject               string
 	SubjectFile           string
 	SubjectHash           string
@@ -160,6 +161,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 		&o.Collectors, "collector", "c", []string{}, "attestation collectors to initialize",
 	)
 
+	cmd.PersistentFlags().StringSliceVar(
+		&o.Publishers, "publish", []string{}, "publishers to emit evaluation results to, as \"driver:spec\"",
+	)
+
 	cmd.PersistentFlags().BoolVar(
 		&o.SetExitCode, "exit-code", true, "set a non-zero exit code on policy verification fail",
 	)
@@ -209,7 +214,7 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	groupFlags(cmd, grpPolicy, "policy", "pid", "policy-out", "policy-verify", "policy-key", "policy-signer", "expiration")
 	groupFlags(cmd, grpEvidence, "key", "attestation", "collector", "signer")
 	groupFlags(cmd, grpContext, "context", "context-json", "context-yaml", "context-env")
-	groupFlags(cmd, grpResults, "attest-results", "attest-format", "results-path", "format")
+	groupFlags(cmd, grpResults, "attest-results", "attest-format", "results-path", "format", "publish")
 	groupFlags(cmd, grpVerification, "exit-code", "workers", "allow-empty-set-chain")
 	groupFlags(cmd, grpSigning, "sign")
 	// Sweep every flag the SignerSet just registered into the
@@ -434,6 +439,7 @@ func (opts *verifyOptions) Run() error {
 
 	ampel, err := verifier.New(
 		verifier.WithCollectorInits(opts.Collectors),
+		verifier.WithPublisherInits(opts.Publishers),
 		verifier.WithKeys(opts.Keys...),
 	)
 	if err != nil {

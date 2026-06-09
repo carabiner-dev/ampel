@@ -6,12 +6,15 @@ package verifier
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector"
 	"github.com/carabiner-dev/signer/key"
 
 	"github.com/carabiner-dev/ampel/pkg/oscal"
+	"github.com/carabiner-dev/ampel/pkg/publisher"
+	publisherdrivers "github.com/carabiner-dev/ampel/pkg/publisher/drivers"
 )
 
 var ErrMissingAttestations = errors.New("required attestations missing to verify subject")
@@ -32,6 +35,7 @@ func New(opts ...fnOpt) (*Ampel, error) {
 		impl:      &defaultIplementation{},
 		checker:   &defaultStatusChecker{},
 		Collector: agent,
+		publisher: publisher.New(),
 	}
 
 	for _, opFn := range opts {
@@ -39,6 +43,18 @@ func New(opts ...fnOpt) (*Ampel, error) {
 			return nil, err
 		}
 	}
+
+	// Register the built-in emitter types (unless disabled) before the publisher
+	// builds its queued emitters, which look them up by moniker.
+	if ampel.publisher.LoadsDefaults() {
+		if err := publisherdrivers.LoadDefaultEmitterTypes(); err != nil {
+			return nil, fmt.Errorf("loading default emitter types: %w", err)
+		}
+	}
+	if err := ampel.publisher.Build(); err != nil {
+		return nil, fmt.Errorf("building publisher: %w", err)
+	}
+
 	return ampel, nil
 }
 
@@ -85,9 +101,38 @@ var WithCollectorInits = func(init []string) fnOpt {
 	}
 }
 
+// WithPublisherInit adds an emitter from an init string ("moniker:spec"). The
+// emitter is built when the verifier is created, after the default emitter
+// types are registered.
+var WithPublisherInit = func(init string) fnOpt {
+	return func(ampel *Ampel) error {
+		ampel.publisher.AddEmitterInit(init)
+		return nil
+	}
+}
+
+// WithPublisherInits adds multiple emitters from a list of init strings.
+var WithPublisherInits = func(init []string) fnOpt {
+	return func(ampel *Ampel) error {
+		ampel.publisher.AddEmitterInit(init...)
+		return nil
+	}
+}
+
+// WithDefaultPublishers controls whether the built-in emitter types are
+// registered when the verifier is created. It is enabled by default; pass false
+// to manage the emitter registry yourself.
+var WithDefaultPublishers = func(load bool) fnOpt {
+	return func(ampel *Ampel) error {
+		ampel.publisher.SetLoadDefaults(load)
+		return nil
+	}
+}
+
 // Ampel is the attestation verifier
 type Ampel struct {
 	impl      AmpelVerifier
 	checker   AmpelStatusChecker
 	Collector *collector.Agent
+	publisher *publisher.Publisher
 }

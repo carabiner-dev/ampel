@@ -37,8 +37,27 @@ type PolicyError struct {
 	Guidance string
 }
 
-// Verify checks a subject against a policy using the available evidence
+// Verify checks a subject against a policy using the available evidence. The
+// policy argument may be a single policy, a policy group or a policy set; the
+// results are published once per call, regardless of the material kind.
 func (ampel *Ampel) Verify(
+	ctx context.Context, opts *VerificationOptions, policy any, subject attestation.Subject,
+) (papi.Results, error) {
+	results, err := ampel.verify(ctx, opts, policy, subject)
+	if err != nil {
+		return nil, err
+	}
+
+	// Publish the results (best-effort): the publisher fans them out to the
+	// configured emitters and we intentionally ignore any emitter errors.
+	_ = ampel.publisher.PublishResults(ctx, results) //nolint:errcheck // best-effort publish
+
+	return results, nil
+}
+
+// verify dispatches the verification to the right routine depending on the kind
+// of policy material supplied and returns the assembled results.
+func (ampel *Ampel) verify(
 	ctx context.Context, opts *VerificationOptions, policy any, subject attestation.Subject,
 ) (papi.Results, error) {
 	switch v := policy.(type) {
