@@ -5,88 +5,133 @@ package publisher
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	papi "github.com/carabiner-dev/policy/api/v1"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
-// capture is a minimal Publisher used to assert registry/initstring behavior.
+// capture is a minimal Emitter that records what it was given and can be made
+// to fail on demand.
 type capture struct {
-	cfg       *structpb.Struct
-	published papi.Results
+	emitted papi.Results
+	err     error
 }
 
-func (c *capture) Init(cfg *structpb.Struct) error { c.cfg = cfg; return nil }
-
-func (c *capture) Publish(_ context.Context, rs papi.Results, _ ...PublishOpt) error {
-	c.published = rs
-	return nil
+func (c *capture) Emit(_ context.Context, r papi.Results, _ ...EmitOpt) error {
+	c.emitted = r
+	return c.err
 }
 
-func TestNew(t *testing.T) {
+func TestEmitterFromString(t *testing.T) {
 	t.Parallel()
-	last := &capture{}
-	Register("test-capture", func() Publisher { last = &capture{}; return last })
+	var gotSpec string
+	require.NoError(t, RegisterEmitterType("test-from-string", func(spec string) (Emitter, error) {
+		gotSpec = spec
+		return &capture{}, nil
+	}))
+	t.Cleanup(func() { UnregisterEmitterType("test-from-string") })
 
 	for _, tc := range []struct {
-		name      string
-		init      string
-		mustErr   bool
-		assertCfg func(*testing.T, *structpb.Struct)
+		name     string
+		init     string
+		mustErr  bool
+		wantSpec string
 	}{
+		{name: "no-spec", init: "test-from-string:", wantSpec: ""},
+		{name: "plain-uri", init: "test-from-string:https://example.com/hook", wantSpec: "https://example.com/hook"},
 		{
-			name: "no-spec",
-			init: "test-capture:",
-			assertCfg: func(t *testing.T, s *structpb.Struct) {
-				t.Helper()
-				require.Empty(t, s.GetFields())
-			},
+			// The spec reaches the factory verbatim: a query string must
+			// survive, never split into key=value config.
+			name:     "uri-with-query",
+			init:     "test-from-string:https://host/hook?token=abc",
+			wantSpec: "https://host/hook?token=abc",
 		},
-		{
-			name: "bare-spec-under-spec-key",
-			init: "test-capture:https://example.com/hook",
-			assertCfg: func(t *testing.T, s *structpb.Struct) {
-				t.Helper()
-				require.Equal(t, "https://example.com/hook", s.GetFields()["spec"].GetStringValue())
-			},
-		},
-		{
-			name: "query-spec",
-			init: "test-capture:url=https://example.com&timeout=5s",
-			assertCfg: func(t *testing.T, s *structpb.Struct) {
-				t.Helper()
-				require.Equal(t, "https://example.com", s.GetFields()["url"].GetStringValue())
-				require.Equal(t, "5s", s.GetFields()["timeout"].GetStringValue())
-			},
-		},
-		{name: "no-scheme", init: "no-colon", mustErr: true},
-		{name: "empty-driver", init: ":spec", mustErr: true},
-		{name: "unknown-driver", init: "does-not-exist:x", mustErr: true},
+		{name: "no-colon", init: "no-colon", mustErr: true},
+		{name: "empty-moniker", init: ":https://example.com", mustErr: true},
+		{name: "unknown-moniker", init: "does-not-exist:https://example.com", mustErr: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			p, err := New(tc.init)
+			e, err := EmitterFromString(tc.init)
 			if tc.mustErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			require.NotNil(t, p)
-			tc.assertCfg(t, last.cfg)
+			require.NotNil(t, e)
+			require.Equal(t, tc.wantSpec, gotSpec)
 		})
 	}
 }
 
-func TestNewSet(t *testing.T) {
+func TestRegisterEmitterType(t *testing.T) {
 	t.Parallel()
-	Register("test-set", func() Publisher { return &capture{} })
+	factory := func(string) (Emitter, error) { return &capture{}, nil }
+	require.NoError(t, RegisterEmitterType("test-register", factory))
+	t.Cleanup(func() { UnregisterEmitterType("test-register") })
 
-	pubs, err := NewSet([]string{"test-set:a=1", "test-set:b=2"})
-	require.NoError(t, err)
-	require.Len(t, pubs, 2)
+	// A second registration of the same moniker is rejected.
+	require.ErrorIs(t, RegisterEmitterType("test-register", factory), ErrTypeAlreadyRegistered)
 
-	_, err = NewSet([]string{"test-set:a=1", "bad-driver:x"})
-	require.Error(t, err)
+	// After unregistering, it can be registered again.
+	UnregisterEmitterType("test-register")
+	require.NoError(t, RegisterEmitterType("test-register", factory))
+}
+
+func TestPublisherBuild(t *testing.T) {
+	t.Parallel()
+	var gotSpec string
+	require.NoError(t, RegisterEmitterType("test-build", func(spec string) (Emitter, error) {
+		gotSpec = spec
+		return &capture{}, nil
+	}))
+	t.Cleanup(func() { UnregisterEmitterType("test-build") })
+
+	p := New()
+	p.AddEmitterInit("test-build:https://host/x?token=abc")
+	require.NoError(t, p.Build())
+	require.Len(t, p.Emitters, 1)
+	require.Equal(t, "https://host/x?token=abc", gotSpec)
+
+	// The init queue is consumed: a second Build adds nothing.
+	require.NoError(t, p.Build())
+	require.Len(t, p.Emitters, 1)
+}
+
+func TestPublisherBuildUnknownType(t *testing.T) {
+	t.Parallel()
+	p := New()
+	p.AddEmitterInit("does-not-exist:spec")
+	require.Error(t, p.Build())
+}
+
+func TestPublishResults(t *testing.T) {
+	t.Parallel()
+	good := &capture{}
+	bad := &capture{err: errors.New("boom")}
+	p := New()
+	p.AddEmitter(good, bad)
+
+	rs := &papi.ResultSet{Status: papi.StatusPASS}
+	err := p.PublishResults(context.Background(), rs)
+	require.ErrorContains(t, err, "boom")
+	// Every emitter is invoked even though one failed.
+	require.NotNil(t, good.emitted)
+	require.NotNil(t, bad.emitted)
+}
+
+func TestPublishResultsNil(t *testing.T) {
+	t.Parallel()
+	p := New()
+	p.AddEmitter(&capture{})
+	require.NoError(t, p.PublishResults(context.Background(), nil))
+}
+
+func TestLoadsDefaults(t *testing.T) {
+	t.Parallel()
+	p := New()
+	require.True(t, p.LoadsDefaults())
+	p.SetLoadDefaults(false)
+	require.False(t, p.LoadsDefaults())
 }
