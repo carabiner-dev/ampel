@@ -14,22 +14,25 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/publisher"
 )
 
-func TestRegistered(t *testing.T) {
+func TestRegisterAndFromString(t *testing.T) {
 	t.Parallel()
-	p, err := publisher.New(DriverName + ":")
+	require.NoError(t, publisher.RegisterEmitterType(TypeMoniker, Build))
+	t.Cleanup(func() { publisher.UnregisterEmitterType(TypeMoniker) })
+
+	e, err := publisher.EmitterFromString(TypeMoniker + ":")
 	require.NoError(t, err)
-	require.IsType(t, &Publisher{}, p)
+	require.IsType(t, &Emitter{}, e)
 }
 
-func TestPublish(t *testing.T) {
+func TestEmit(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer
-	p := &Publisher{Writer: &buf}
+	e := &Emitter{Writer: &buf}
 
 	rs := &papi.ResultSet{
 		PolicySet: &papi.PolicyRef{Id: "test-set"},
 		Status:    papi.StatusPASS,
 	}
-	require.NoError(t, p.Publish(context.Background(), rs))
+	require.NoError(t, e.Emit(context.Background(), rs))
 	require.Contains(t, buf.String(), "test-set")
 }
