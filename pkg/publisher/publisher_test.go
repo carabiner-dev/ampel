@@ -66,6 +66,7 @@ func TestNew(t *testing.T) {
 		{name: "unknown-driver", init: "does-not-exist:x", mustErr: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			p, err := New(tc.init)
 			if tc.mustErr {
 				require.Error(t, err)

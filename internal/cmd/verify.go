@@ -214,7 +214,7 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	groupFlags(cmd, grpPolicy, "policy", "pid", "policy-out", "policy-verify", "policy-key", "policy-signer", "expiration")
 	groupFlags(cmd, grpEvidence, "key", "attestation", "collector", "signer")
 	groupFlags(cmd, grpContext, "context", "context-json", "context-yaml", "context-env")
-	groupFlags(cmd, grpResults, "attest-results", "attest-format", "results-path", "format")
+	groupFlags(cmd, grpResults, "attest-results", "attest-format", "results-path", "format", "publish")
 	groupFlags(cmd, grpVerification, "exit-code", "workers", "allow-empty-set-chain")
 	groupFlags(cmd, grpSigning, "sign")
 	// Sweep every flag the SignerSet just registered into the
