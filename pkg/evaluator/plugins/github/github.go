@@ -18,6 +18,17 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+const (
+	keyScheme = "scheme"
+	keyHost   = "host"
+	keyOrg    = "org"
+	keyRepo   = "repo"
+	keyName   = "name"
+	keyURI    = "uri"
+	keyDigest = "digest"
+	keySHA256 = "sha256"
+)
+
 type GitHubUtil struct{}
 
 var GitHubType = cel.ObjectType("github", traits.ReceiverType)
@@ -87,10 +98,10 @@ func parseRepoURI(uri string) (map[string]string, error) {
 	}
 
 	return map[string]string{
-		"scheme": strings.TrimPrefix(parsed.Scheme, "git+"),
-		"host":   parsed.Hostname(),
-		"org":    parts[0],
-		"repo":   repo,
+		keyScheme: strings.TrimPrefix(parsed.Scheme, "git+"),
+		keyHost:   parsed.Hostname(),
+		keyOrg:    parts[0],
+		keyRepo:   repo,
 	}, nil
 }
 
@@ -108,20 +119,20 @@ var uriToRepoDescriptor = func(_ ref.Val, rhs ref.Val) ref.Val {
 		if err != nil {
 			return types.NewErrFromString(err.Error())
 		}
-		if parts["repo"] == "" {
+		if parts[keyRepo] == "" {
 			return types.NewErrFromString("unable to create descriptor, no repo name defined in URL")
 		}
-		name := fmt.Sprintf("%s/%s/%s", parts["host"], parts["org"], parts["repo"])
+		name := fmt.Sprintf("%s/%s/%s", parts[keyHost], parts[keyOrg], parts[keyRepo])
 
 		h := sha256.New()
 		h.Write([]byte(name))
 		digest := fmt.Sprintf("%x", h.Sum(nil))
 
 		mapa := map[string]any{
-			"name": name,
-			"uri":  fmt.Sprintf("https://%s", name),
-			"digest": map[string]any{
-				"sha256": digest,
+			keyName: name,
+			keyURI:  fmt.Sprintf("https://%s", name),
+			keyDigest: map[string]any{
+				keySHA256: digest,
 			},
 		}
 
@@ -154,21 +165,21 @@ var uriToOrgDescriptor = func(_ ref.Val, rhs ref.Val) ref.Val {
 		if err != nil {
 			return types.NewErrFromString(err.Error())
 		}
-		if parts["org"] == "" || parts["host"] == "" {
+		if parts[keyOrg] == "" || parts[keyHost] == "" {
 			return types.NewErrFromString("could not parse org from repo uri")
 		}
-		name := fmt.Sprintf("%s/%s", parts["host"], parts["org"])
+		name := fmt.Sprintf("%s/%s", parts[keyHost], parts[keyOrg])
 
 		h := sha256.New()
 		h.Write([]byte(name))
 		digest := fmt.Sprintf("%x", h.Sum(nil))
 
 		mapa := map[string]any{
-			"digest": map[string]any{
-				"sha256": digest,
+			keyDigest: map[string]any{
+				keySHA256: digest,
 			},
-			"name": name,
-			"uri":  fmt.Sprintf("https://%s", name),
+			keyName: name,
+			keyURI:  fmt.Sprintf("https://%s", name),
 		}
 
 		reg, err := types.NewRegistry()
@@ -218,20 +229,20 @@ var uriToBranchDescriptor = func(args ...ref.Val) ref.Val {
 	if err != nil {
 		return types.NewErrFromString(err.Error())
 	}
-	if parts["repo"] == "" {
+	if parts[keyRepo] == "" {
 		return types.NewErrFromString("unable to create descriptor, no repo name defined in URL")
 	}
-	name := fmt.Sprintf("%s/%s/%s@%s", parts["host"], parts["org"], parts["repo"], branch)
+	name := fmt.Sprintf("%s/%s/%s@%s", parts[keyHost], parts[keyOrg], parts[keyRepo], branch)
 
 	h := sha256.New()
 	h.Write([]byte(name))
 	digest := fmt.Sprintf("%x", h.Sum(nil))
 
 	mapa := map[string]any{
-		"name": name,
-		"uri":  fmt.Sprintf("git+https://%s", name),
-		"digest": map[string]any{
-			"sha256": digest,
+		keyName: name,
+		keyURI:  fmt.Sprintf("git+https://%s", name),
+		keyDigest: map[string]any{
+			keySHA256: digest,
 		},
 	}
 

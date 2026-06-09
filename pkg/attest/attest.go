@@ -30,6 +30,10 @@ import (
 // resultset format).
 const ampelVerifierID = "https://carabiner.dev/ampel@v1"
 
+// formatAmpel is the canonical name of the native ampel resultset
+// attestation format.
+const formatAmpel = "ampel"
+
 // ResultsAttester writes a results attestation in the format chosen
 // per call via WithFormat. The "ampel" format produces an in-toto
 // statement carrying a predicates.ResultSet; "vsa" and "svr" route
@@ -71,7 +75,7 @@ type attestOptions struct {
 // defaultAttestOptions returns the baseline config used when no
 // FnOpts are supplied at construction or call time.
 func defaultAttestOptions() attestOptions {
-	return attestOptions{format: "ampel", prettyPrint: true}
+	return attestOptions{format: formatAmpel, prettyPrint: true}
 }
 
 // WithFormat selects the results-attestation format for the call.
@@ -135,7 +139,7 @@ func (a *ResultsAttester) AttestTo(w io.Writer, results papi.Results, opts ...Fn
 		fn(&o)
 	}
 	switch o.format {
-	case "ampel", "":
+	case formatAmpel, "":
 		return a.attestAmpel(w, results, o)
 	case "vsa":
 		return a.attestVSA(w, results, o)

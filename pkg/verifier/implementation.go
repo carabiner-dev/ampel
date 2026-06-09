@@ -314,7 +314,7 @@ func (di *defaultIplementation) ParseAttestations(ctx context.Context, opts *Ver
 // result sets returned by the evaluators.
 func (di *defaultIplementation) AssertResult(policy *papi.Policy, result *papi.Result) error {
 	switch policy.GetMeta().GetAssertMode() {
-	case "OR", "":
+	case assertModeOR, "":
 		for _, er := range result.EvalResults {
 			if er.Status == papi.StatusPASS {
 				result.Status = papi.StatusPASS
@@ -325,7 +325,7 @@ func (di *defaultIplementation) AssertResult(policy *papi.Policy, result *papi.R
 		if policy.GetMeta().GetEnforce() == "OFF" {
 			result.Status = papi.StatusSOFTFAIL
 		}
-	case "AND":
+	case assertModeAND:
 		for _, er := range result.EvalResults {
 			if er.Status == papi.StatusFAIL {
 				result.Status = papi.StatusFAIL

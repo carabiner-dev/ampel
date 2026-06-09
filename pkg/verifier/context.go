@@ -12,6 +12,11 @@ import (
 	papi "github.com/carabiner-dev/policy/api/v1"
 )
 
+const (
+	valueTrue  = "true"
+	valueFalse = "false"
+)
+
 // ensureContextType makes sure the loaded context values are match the types
 // defined in the context definition. For now we ensure the types of simple
 // types: string, bool, int and convert between them as much as possible.
@@ -38,9 +43,9 @@ func convertToString(value any) string {
 		return ""
 	case bool:
 		if v {
-			return "true"
+			return valueTrue
 		}
-		return "false"
+		return valueFalse
 	case int, int8, int16, int32, int64:
 		return fmt.Sprintf("%d", v)
 	case uint, uint8, uint16, uint32, uint64:
@@ -58,9 +63,9 @@ func convertToBool(value any) (bool, error) {
 	case bool:
 		return v, nil
 	case string:
-		if strings.EqualFold(v, "true") {
+		if strings.EqualFold(v, valueTrue) {
 			return true, nil
-		} else if strings.EqualFold(v, "false") {
+		} else if strings.EqualFold(v, valueFalse) {
 			return false, nil
 		}
 		// Try to parse as number

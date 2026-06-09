@@ -26,6 +26,10 @@ const (
 	// vsaContextResourceURIKey is the policy-context key recognized
 	// for overriding the VSA resource URI.
 	vsaContextResourceURIKey = "vsa.resourceUri"
+
+	// statusPassed is the SLSA VerificationResult value for a passing
+	// verification.
+	statusPassed = "PASSED"
 )
 
 // attestVSA writes a VSA attestation for results.
@@ -211,7 +215,7 @@ func (a *ResultsAttester) writeVSAStatement(w io.Writer, subject attestation.Sub
 func resultStringToSLSAResult(status string) string {
 	switch status {
 	case papi.StatusPASS, papi.StatusSOFTFAIL:
-		return "PASSED"
+		return statusPassed
 	case papi.StatusFAIL:
 		return "FAILED"
 	default:
