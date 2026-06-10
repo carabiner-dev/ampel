@@ -64,7 +64,8 @@ jobs:
       - name: Log in to GHCR
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: echo "$GITHUB_TOKEN" | ko login ghcr.io --username "${{ github.actor }}" --password-stdin
+          KO_ACTOR: ${{ github.actor }}
+        run: echo "$GITHUB_TOKEN" | ko login ghcr.io --username "$KO_ACTOR" --password-stdin
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89 # v7.2.2
@@ -84,22 +85,26 @@ jobs:
           IMAGE_REF=$(ko build ./cmd/ampel \
             --bare \
             --platform=linux/amd64,linux/arm64 \
-            --tags="${{ steps.tag.outputs.tag_name }},latest" \
+            --tags="${GIT_VERSION},latest" \
             --image-refs=image.refs)
           echo "image_ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
           echo "Pushed: ${IMAGE_REF}"
 
       - name: Sign image with cosign (keyless, new bundle format)
+        env:
+          IMAGE_REF: ${{ steps.ko.outputs.image_ref }}
         run: |
-          cosign sign --yes "${{ steps.ko.outputs.image_ref }}"
+          cosign sign --yes "$IMAGE_REF"
 
       - name: Generate Provenance
         id: tejolote
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG_NAME: ${{ steps.tag.outputs.tag_name }}
         run: |
-            tejolote attest --artifacts github://${{github.repository}}/${{ steps.tag.outputs.tag_name }} github://${{github.repository}}/"${GITHUB_RUN_ID}" --output provenance.json
+            tejolote attest --artifacts "github://${REPO}/${TAG_NAME}" "github://${REPO}/${GITHUB_RUN_ID}" --output provenance.json
 
       - name: Add image subjects to provenance
         run: |
@@ -120,9 +125,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.tag.outputs.tag_name }}
         run: |
-            bnd statement provenance.json -o ampel-${{ steps.tag.outputs.tag_name }}.provenance.json
-            gh release upload ${{ steps.tag.outputs.tag_name }} ampel-${{ steps.tag.outputs.tag_name }}.provenance.json
+            bnd statement provenance.json -o "ampel-${TAG_NAME}.provenance.json"
+            gh release upload "${TAG_NAME}" "ampel-${TAG_NAME}.provenance.json"
 
       - name: Generate SBOM
         id: sbom
@@ -133,6 +139,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Attach provenance attestation to the image
+        env:
+          IMAGE_REF: ${{ steps.ko.outputs.image_ref }}
         run: |
           set -euo pipefail
           # cosign v3 removed "cosign attach attestation", so attach the
@@ -146,4 +154,4 @@ jobs:
           cosign attest --yes \
             --predicate predicate.json \
             --type "${pred_type}" \
-            "${{ steps.ko.outputs.image_ref }}"
+            "$IMAGE_REF"
