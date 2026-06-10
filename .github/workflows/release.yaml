@@ -17,8 +17,11 @@ jobs:
     permissions:
       contents: write # To push artifacts to the relase
       id-token: write # To sign attestations 
-      attestations: write 
+      attestations: write
       packages: write # To push the image
+
+    env:
+      KO_DOCKER_REPO: ghcr.io/${{ github.repository }}
 
     steps:
       - name: Setup bnd
@@ -45,7 +48,20 @@ jobs:
         id: tag
         run: echo "tag_name=${GITHUB_REF#refs/*/}" >> "$GITHUB_OUTPUT"
 
-      - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
+      - name: Install ko
+        uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
+        with:
+          version: v0.18.1
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.1
+
+      - name: Log in to GHCR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GITHUB_TOKEN" | ko login ghcr.io --username "${{ github.actor }}" --password-stdin
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89 # v7.2.2
@@ -55,10 +71,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: ko build --bare ./cmd/ampel
+      - name: Build and push multi-arch image
+        id: ko
         env:
           GIT_HASH: ${{ github.sha }}
           GIT_VERSION: ${{ steps.tag.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          IMAGE_REF=$(ko build ./cmd/ampel \
+            --bare \
+            --platform=linux/amd64,linux/arm64 \
+            --tags="${{ steps.tag.outputs.tag_name }},latest" \
+            --image-refs=image.refs)
+          echo "image_ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
+          echo "Pushed: ${IMAGE_REF}"
+
+      - name: Sign image with cosign (keyless, new bundle format)
+        run: |
+          cosign sign --yes --new-bundle-format "${{ steps.ko.outputs.image_ref }}"
 
       - name: Generate Provenance
         id: tejolote
