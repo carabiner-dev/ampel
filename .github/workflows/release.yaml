@@ -17,12 +17,15 @@ jobs:
     permissions:
       contents: write # To push artifacts to the relase
       id-token: write # To sign attestations 
-      attestations: write 
+      attestations: write
       packages: write # To push the image
+
+    env:
+      KO_DOCKER_REPO: ghcr.io/${{ github.repository }}
 
     steps:
       - name: Setup bnd
-        uses: carabiner-dev/bnd-actions/setup@HEAD
+        uses: carabiner-dev/actions/install/bnd@94f29392187fe5082d1195a7d4cae3a7ddf09d9c # v1.2.1
 
       - name: Check out code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -30,22 +33,39 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+      - name: Determine Go versions
+        id: versions
+        uses: carabiner-dev/actions/go/versions@94f29392187fe5082d1195a7d4cae3a7ddf09d9c # v1.2.1
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
-          go-version-file: go.mod
+          go-version: ${{ steps.versions.outputs.GO_MINOR_VERSION_STABLE }}
+          check-latest: true
           cache: false
 
       - name: Install tejolote
         uses: kubernetes-sigs/release-actions/setup-tejolote@8753ea6bdadb814d779c6ec34eaca689dbfb492b # v0.4.3
 
-      - name: Install bom
-        uses: kubernetes-sigs/release-actions/setup-bom@8753ea6bdadb814d779c6ec34eaca689dbfb492b # v0.4.3
-
       - name: Set tag output
         id: tag
         run: echo "tag_name=${GITHUB_REF#refs/*/}" >> "$GITHUB_OUTPUT"
 
-      - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
+      - name: Install ko
+        uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
+        with:
+          version: v0.18.1
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.1
+
+      - name: Log in to GHCR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KO_ACTOR: ${{ github.actor }}
+        run: echo "$GITHUB_TOKEN" | ko login ghcr.io --username "$KO_ACTOR" --password-stdin
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89 # v7.2.2
@@ -55,25 +75,83 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: ko build --bare ./cmd/ampel
+      - name: Build and push multi-arch image
+        id: ko
         env:
           GIT_HASH: ${{ github.sha }}
           GIT_VERSION: ${{ steps.tag.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          IMAGE_REF=$(ko build ./cmd/ampel \
+            --bare \
+            --platform=linux/amd64,linux/arm64 \
+            --tags="${GIT_VERSION},latest" \
+            --image-refs=image.refs)
+          echo "image_ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
+          echo "Pushed: ${IMAGE_REF}"
+
+      - name: Sign image with cosign (keyless, new bundle format)
+        env:
+          IMAGE_REF: ${{ steps.ko.outputs.image_ref }}
+        run: |
+          cosign sign --yes "$IMAGE_REF"
 
       - name: Generate Provenance
         id: tejolote
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG_NAME: ${{ steps.tag.outputs.tag_name }}
         run: |
-            tejolote attest --artifacts github://${{github.repository}}/${{ steps.tag.outputs.tag_name }} github://${{github.repository}}/"${GITHUB_RUN_ID}" --output provenance.json
-            bnd statement provenance.json -o ampel-${{ steps.tag.outputs.tag_name }}.provenance.json
-            gh release upload ${{ steps.tag.outputs.tag_name }} ampel-${{ steps.tag.outputs.tag_name }}.provenance.json
+            tejolote attest --artifacts "github://${REPO}/${TAG_NAME}" "github://${REPO}/${GITHUB_RUN_ID}" --output provenance.json
 
-      - name: Generate SBOM
-        shell: bash
+      - name: Add image subjects to provenance
+        run: |
+          set -euo pipefail
+          # ko wrote the published image digests (the multi-arch index plus each
+          # per-platform manifest) to image.refs. Add them as subjects of the
+          # provenance statement before it gets signed.
+          subjects=$(while IFS= read -r ref; do
+            [ -z "$ref" ] && continue
+            jq -n --arg name "${ref%@*}" --arg sha "${ref##*@sha256:}" \
+              '{name: $name, digest: {sha256: $sha}}'
+          done < image.refs | jq -s '.')
+          jq --argjson subs "$subjects" '.subject = (.subject + $subs)' \
+            provenance.json > provenance.subjects.json
+          mv provenance.subjects.json provenance.json
+
+      - name: Sign and upload Provenance
         env:
           GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.tag.outputs.tag_name }}
         run: |
-          bom generate --format=json -o /tmp/ampel-${{ steps.tag.outputs.tag_name }}.spdx.json .
-          gh release upload ${{ steps.tag.outputs.tag_name }} /tmp/ampel-${{ steps.tag.outputs.tag_name }}.spdx.json
+            bnd statement provenance.json -o "ampel-${TAG_NAME}.provenance.json"
+            gh release upload "${TAG_NAME}" "ampel-${TAG_NAME}.provenance.json"
+
+      - name: Generate SBOM
+        id: sbom
+        uses: carabiner-dev/actions/unpack/sbom@b60791af41423360b892a1a3cee90cd4e131f381 # v1.1.6
+        with:
+          push-to-release: ${{ steps.tag.outputs.tag_name }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Attach provenance attestation to the image
+        env:
+          IMAGE_REF: ${{ steps.ko.outputs.image_ref }}
+        run: |
+          set -euo pipefail
+          # cosign v3 removed "cosign attach attestation", so attach the
+          # provenance by re-signing its predicate onto the image. cosign builds
+          # the in-toto statement (subject = the image digest), signs it keyless
+          # and stores it as an OCI 1.1 referrer in the new bundle format.
+          #
+          # TODO(puerco): Replace this with bnd push once its ready
+          jq '.predicate' provenance.json > predicate.json
+          pred_type=$(jq -r '.predicateType' provenance.json)
+          cosign attest --yes \
+            --predicate predicate.json \
+            --type "${pred_type}" \
+            "$IMAGE_REF"
