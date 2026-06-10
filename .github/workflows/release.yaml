@@ -97,6 +97,27 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
             tejolote attest --artifacts github://${{github.repository}}/${{ steps.tag.outputs.tag_name }} github://${{github.repository}}/"${GITHUB_RUN_ID}" --output provenance.json
+
+      - name: Add image subjects to provenance
+        run: |
+          set -euo pipefail
+          # ko wrote the published image digests (the multi-arch index plus each
+          # per-platform manifest) to image.refs. Add them as subjects of the
+          # provenance statement before it gets signed.
+          subjects=$(while IFS= read -r ref; do
+            [ -z "$ref" ] && continue
+            jq -n --arg name "${ref%@*}" --arg sha "${ref##*@sha256:}" \
+              '{name: $name, digest: {sha256: $sha}}'
+          done < image.refs | jq -s '.')
+          jq --argjson subs "$subjects" '.subject = (.subject + $subs)' \
+            provenance.json > provenance.subjects.json
+          mv provenance.subjects.json provenance.json
+
+      - name: Sign and upload Provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
             bnd statement provenance.json -o ampel-${{ steps.tag.outputs.tag_name }}.provenance.json
             gh release upload ${{ steps.tag.outputs.tag_name }} ampel-${{ steps.tag.outputs.tag_name }}.provenance.json
 
