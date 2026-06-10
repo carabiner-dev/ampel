@@ -88,7 +88,7 @@ jobs:
 
       - name: Sign image with cosign (keyless, new bundle format)
         run: |
-          cosign sign --yes --new-bundle-format "${{ steps.ko.outputs.image_ref }}"
+          cosign sign --yes "${{ steps.ko.outputs.image_ref }}"
 
       - name: Generate Provenance
         id: tejolote
@@ -128,3 +128,19 @@ jobs:
         run: |
           bom generate --format=json -o /tmp/ampel-${{ steps.tag.outputs.tag_name }}.spdx.json .
           gh release upload ${{ steps.tag.outputs.tag_name }} /tmp/ampel-${{ steps.tag.outputs.tag_name }}.spdx.json
+
+      - name: Attach provenance attestation to the image
+        run: |
+          set -euo pipefail
+          # cosign v3 removed "cosign attach attestation", so attach the
+          # provenance by re-signing its predicate onto the image. cosign builds
+          # the in-toto statement (subject = the image digest), signs it keyless
+          # and stores it as an OCI 1.1 referrer in the new bundle format.
+          #
+          # TODO(puerco): Replace this with bnd push once its ready
+          jq '.predicate' provenance.json > predicate.json
+          pred_type=$(jq -r '.predicateType' provenance.json)
+          cosign attest --yes \
+            --predicate predicate.json \
+            --type "${pred_type}" \
+            "${{ steps.ko.outputs.image_ref }}"
