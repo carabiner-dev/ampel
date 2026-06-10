@@ -33,16 +33,19 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+      - name: Determine Go versions
+        id: versions
+        uses: carabiner-dev/actions/go/versions@94f29392187fe5082d1195a7d4cae3a7ddf09d9c # v1.2.1
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
-          go-version-file: go.mod
+          go-version: ${{ steps.versions.outputs.GO_MINOR_VERSION_STABLE }}
+          check-latest: true
           cache: false
 
       - name: Install tejolote
         uses: kubernetes-sigs/release-actions/setup-tejolote@8753ea6bdadb814d779c6ec34eaca689dbfb492b # v0.4.3
-
-      - name: Install bom
-        uses: kubernetes-sigs/release-actions/setup-bom@8753ea6bdadb814d779c6ec34eaca689dbfb492b # v0.4.3
 
       - name: Set tag output
         id: tag
@@ -122,12 +125,12 @@ jobs:
             gh release upload ${{ steps.tag.outputs.tag_name }} ampel-${{ steps.tag.outputs.tag_name }}.provenance.json
 
       - name: Generate SBOM
-        shell: bash
+        id: sbom
+        uses: carabiner-dev/actions/unpack/sbom@b60791af41423360b892a1a3cee90cd4e131f381 # v1.1.6
+        with:
+          push-to-release: ${{ steps.tag.outputs.tag_name }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          bom generate --format=json -o /tmp/ampel-${{ steps.tag.outputs.tag_name }}.spdx.json .
-          gh release upload ${{ steps.tag.outputs.tag_name }} /tmp/ampel-${{ steps.tag.outputs.tag_name }}.spdx.json
 
       - name: Attach provenance attestation to the image
         run: |
