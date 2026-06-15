@@ -608,6 +608,12 @@ func (ampel *Ampel) VerifySubjectWithPolicyGroup(
 		res.Error = fmt.Sprintf("Evaluation failed by blocks [%s]", strings.Join(fails, ", "))
 	}
 
+	// If the group has enforce OFF, downgrade FAIL to SOFTFAIL so the result
+	// is informational rather than blocking.
+	if res.Status == papi.StatusFAIL && group.GetMeta().GetEnforce() == "OFF" {
+		res.Status = papi.StatusSOFTFAIL
+	}
+
 	// Record the end of the group eval
 	res.DateEnd = timestamppb.Now()
 	return res, nil
