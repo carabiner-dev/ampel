@@ -324,14 +324,14 @@ func (di *defaultIplementation) AssertResult(policy *papi.Policy, result *papi.R
 			}
 		}
 		result.Status = papi.StatusFAIL
-		if policy.GetMeta().GetEnforce() == "OFF" {
+		if policy.GetMeta().GetEnforce() == enforceOFF {
 			result.Status = papi.StatusSOFTFAIL
 		}
 	case assertModeAND:
 		for _, er := range result.EvalResults {
 			if er.Status == papi.StatusFAIL {
 				result.Status = papi.StatusFAIL
-				if policy.GetMeta().GetEnforce() == "OFF" {
+				if policy.GetMeta().GetEnforce() == enforceOFF {
 					result.Status = papi.StatusSOFTFAIL
 				}
 				return nil
