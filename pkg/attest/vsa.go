@@ -32,10 +32,11 @@ const (
 //
 // The VerificationResult on the VSA is mapped from the PolicySet
 // assessment status, and the VerifiedLevels list is taken from the
-// SLSA controls advertised by the policies. Dependency levels are
+// controls advertised by the policies; SLSA-track controls
+// additionally set the VSA's slsaVersion. Dependency levels are
 // computed by extracting the results of policies chained to a
 // different subject — those policies are expected to have their own
-// controls section, defining the SLSA level they check.
+// controls section, defining the level they check.
 func (a *ResultsAttester) attestVSA(w io.Writer, results papi.Results, o attestOptions) error {
 	switch r := results.(type) {
 	case *papi.Result:
@@ -89,7 +90,7 @@ func (a *ResultsAttester) writeVSAFromResultSet(w io.Writer, set *papi.ResultSet
 			}
 		}
 
-		// Collect any SLSA levels into the dep count
+		// Collect the levels advertised by passing policies.
 		if r.GetStatus() != papi.StatusPASS {
 			continue
 		}
@@ -98,11 +99,12 @@ func (a *ResultsAttester) writeVSAFromResultSet(w io.Writer, set *papi.ResultSet
 				continue
 			}
 			label := strings.ReplaceAll(ctl.Label(), "-", "_")
-			if !strings.HasPrefix(label, "SLSA_") {
-				continue
-			}
 
-			verifiedSomeSlsa = true
+			// Only SLSA-track controls set the VSA's slsaVersion; controls
+			// from other frameworks still contribute their namespaced label.
+			if strings.HasPrefix(label, "SLSA_") {
+				verifiedSomeSlsa = true
+			}
 
 			// Add the level to the verified levels when the result subject
 			// matches the policyset subject. Otherwise treat the policyset as
@@ -156,11 +158,16 @@ func (a *ResultsAttester) writeVSAFromResult(w io.Writer, result *papi.Result, o
 
 	var verifiedSomeSlsa bool
 	for _, ctl := range result.GetMeta().GetControls() {
-		label := strings.ReplaceAll(ctl.Label(), "-", "_")
-		if !strings.HasPrefix(label, "SLSA_") {
+		if ctl.Id == "" {
 			continue
 		}
-		verifiedSomeSlsa = true
+		label := strings.ReplaceAll(ctl.Label(), "-", "_")
+
+		// Only SLSA-track controls set the VSA's slsaVersion; controls
+		// from other frameworks still contribute their namespaced label.
+		if strings.HasPrefix(label, "SLSA_") {
+			verifiedSomeSlsa = true
+		}
 		vsaData.VerifiedLevels = append(vsaData.VerifiedLevels, label)
 	}
 
