@@ -29,8 +29,8 @@ func TestEvaluateChain(t *testing.T) {
 	def, err := factory.Get(&eoptions.Default, DefaultVerificationOptions.DefaultEvaluator)
 	require.NoError(t, err)
 	evaluators := map[class.Class]evaluator.Evaluator{
-		"default": def,
-		DefaultVerificationOptions.DefaultEvaluator: def,
+		defaultEvaluatorClass: def,
+		DefaultVerificationOptions.DefaultEvaluator.BaseClass(): def,
 	}
 
 	defaultSubject := &gointoto.ResourceDescriptor{
@@ -211,14 +211,17 @@ func TestEvaluateChain(t *testing.T) {
 
 			// Check if there is an evaluator for the link's runtime
 			for _, l := range tt.chainLinks {
-				if runtime := l.GetPredicate().GetRuntime(); runtime != "" {
-					if _, ok := localEvaluators[class.Class(runtime)]; ok {
-						continue
-					}
-					ev, err := factory.Get(&eoptions.Default, class.Class(runtime))
-					require.NoError(t, err)
-					localEvaluators[class.Class(runtime)] = ev
+				runtime := l.GetPredicate().GetRuntime()
+				if runtime == "" {
+					continue
 				}
+				rt := class.MustParseClass(runtime)
+				if _, ok := localEvaluators[rt.BaseClass()]; ok {
+					continue
+				}
+				ev, err := factory.Get(&eoptions.Default, rt)
+				require.NoError(t, err)
+				localEvaluators[rt.BaseClass()] = ev
 			}
 
 			// should we test policyFail?
@@ -653,7 +656,7 @@ func TestProcessChainedSubjectsPropagatesFailFlag(t *testing.T) {
 	def, err := factory.Get(&eoptions.Default, DefaultVerificationOptions.DefaultEvaluator)
 	require.NoError(t, err)
 	evaluators := map[class.Class]evaluator.Evaluator{
-		"default": def,
+		defaultEvaluatorClass:                       def,
 		DefaultVerificationOptions.DefaultEvaluator: def,
 	}
 
@@ -713,7 +716,7 @@ func TestProcessPolicySetChainedSubjectsPropagatesFailFlag(t *testing.T) {
 	def, err := factory.Get(&eoptions.Default, DefaultVerificationOptions.DefaultEvaluator)
 	require.NoError(t, err)
 	evaluators := map[class.Class]evaluator.Evaluator{
-		"default": def,
+		defaultEvaluatorClass:                       def,
 		DefaultVerificationOptions.DefaultEvaluator: def,
 	}
 

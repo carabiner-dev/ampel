@@ -51,4 +51,5 @@ type (
 
 type EvalEnginePlugin interface {
 	CanRegisterFor(class.Class) bool
+	Identity() *class.Identity
 }

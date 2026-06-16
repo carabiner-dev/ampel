@@ -117,7 +117,7 @@ var DefaultVerificationOptions = VerificationOptions{
 
 	// DefaultEvaluator the the default eval enfine is the lowest version
 	// of CEL available
-	DefaultEvaluator: class.Class("cel@v0"),
+	DefaultEvaluator: class.MustParseClass("cel@v0"),
 
 	// ResultsAttestationPath path to the results attestation
 	ResultsAttestationPath: "results.intoto.json",

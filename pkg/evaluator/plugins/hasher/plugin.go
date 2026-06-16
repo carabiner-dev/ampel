@@ -13,6 +13,8 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 )
 
+var Identity = class.MustParseIdentity("hasher@v0")
+
 type Plugin struct {
 	Hasher *Hasher
 }
@@ -47,4 +49,8 @@ func (h *Plugin) VarValues(_ *papi.Policy, _ attestation.Subject, _ []attestatio
 		"hashAlgorithms": algos,
 		"hasher":         h.Hasher,
 	}
+}
+
+func (h *Plugin) Identity() *class.Identity {
+	return Identity
 }

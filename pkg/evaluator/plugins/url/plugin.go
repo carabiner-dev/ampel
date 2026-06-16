@@ -12,6 +12,8 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 )
 
+var Identity = class.MustParseIdentity("url@v0")
+
 type Plugin struct {
 	Tool *UrlTool
 }
@@ -40,4 +42,8 @@ func (h *Plugin) VarValues(_ *papi.Policy, _ attestation.Subject, _ []attestatio
 	return map[string]any{
 		"url": h.Tool,
 	}
+}
+
+func (h *Plugin) Identity() *class.Identity {
+	return Identity
 }

@@ -16,6 +16,8 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 )
 
+var Identity = class.MustParseIdentity("semver@v0")
+
 // Plugin wires the semver tool into ampel's CEL evaluator.
 type Plugin struct {
 	Tool *SemverTool
@@ -42,4 +44,8 @@ func (p *Plugin) VarValues(_ *papi.Policy, _ attestation.Subject, _ []attestatio
 	return map[string]any{
 		"semver": p.Tool,
 	}
+}
+
+func (p *Plugin) Identity() *class.Identity {
+	return Identity
 }
