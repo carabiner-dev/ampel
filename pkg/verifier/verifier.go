@@ -30,6 +30,7 @@ import (
 const (
 	assertModeAND = "AND"
 	assertModeOR  = "OR"
+	enforceOFF    = "OFF"
 )
 
 type PolicyError struct {
@@ -606,6 +607,12 @@ func (ampel *Ampel) VerifySubjectWithPolicyGroup(
 	}
 	if len(fails) > 0 && res.Status == papi.StatusFAIL {
 		res.Error = fmt.Sprintf("Evaluation failed by blocks [%s]", strings.Join(fails, ", "))
+	}
+
+	// If the group has enforce OFF, downgrade FAIL to SOFTFAIL so the result
+	// is informational rather than blocking.
+	if res.Status == papi.StatusFAIL && group.GetMeta().GetEnforce() == enforceOFF {
+		res.Status = papi.StatusSOFTFAIL
 	}
 
 	// Record the end of the group eval

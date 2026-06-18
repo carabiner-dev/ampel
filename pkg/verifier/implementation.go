@@ -35,6 +35,8 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/transformer"
 )
 
+const defaultEvaluatorClass = "default"
+
 // AmpelImplementation
 type AmpelVerifier interface {
 	// CheckPolicy verifies the policy is sound to evaluate before running it
@@ -322,14 +324,14 @@ func (di *defaultIplementation) AssertResult(policy *papi.Policy, result *papi.R
 			}
 		}
 		result.Status = papi.StatusFAIL
-		if policy.GetMeta().GetEnforce() == "OFF" {
+		if policy.GetMeta().GetEnforce() == enforceOFF {
 			result.Status = papi.StatusSOFTFAIL
 		}
 	case assertModeAND:
 		for _, er := range result.EvalResults {
 			if er.Status == papi.StatusFAIL {
 				result.Status = papi.StatusFAIL
-				if policy.GetMeta().GetEnforce() == "OFF" {
+				if policy.GetMeta().GetEnforce() == enforceOFF {
 					result.Status = papi.StatusSOFTFAIL
 				}
 				return nil
@@ -364,7 +366,7 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *pa
 		return nil, fmt.Errorf("unable to build default runtime: %w", err)
 	}
 	logrus.Debugf("Registered default evaluator of class %s", def)
-	evaluators[class.Class("default")] = e
+	evaluators[class.Class(defaultEvaluatorClass)] = e
 	evaluators[def] = e
 	if p.GetMeta().GetRuntime() != "" {
 		evaluators[class.Class(p.GetMeta().GetRuntime())] = e
@@ -791,7 +793,7 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 		attestations, ids, defaultEvalClass,
 	)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, fail, err
 	}
 
 	if len(subjects) > 1 {
@@ -975,7 +977,7 @@ func (di *defaultIplementation) AssembleEvalContextValues(
 			}
 			cls := class.Class(contextDef.GetRuntime())
 			if cls == "" {
-				cls = "default"
+				cls = defaultEvaluatorClass
 			}
 			ev, ok := evaluators[cls]
 			if !ok {
@@ -1066,7 +1068,7 @@ func (di *defaultIplementation) VerifySubject(
 	for i, tenet := range p.Tenets {
 		key := class.Class(tenet.Runtime)
 		if key == "" {
-			key = class.Class("default")
+			key = class.Class(defaultEvaluatorClass)
 		}
 
 		// Filter the predicates to those requested by the tenet or the policy:
@@ -1212,7 +1214,7 @@ func (di *defaultIplementation) ProcessPolicySetChainedSubjects(
 		attestations, policySet.GetCommon().GetIdentities(), defaultEvalClass,
 	)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, fail, err
 	}
 
 	return subjects, chain, fail, nil

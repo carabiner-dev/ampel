@@ -14,6 +14,89 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
 
+func TestPolicyGroupEnforceOFF(t *testing.T) {
+	t.Parallel()
+
+	passingPolicy := &papi.Policy{
+		Id:   "pass",
+		Meta: &papi.Meta{AssertMode: "OR"},
+		Tenets: []*papi.Tenet{
+			{Id: "t1", Code: "true"},
+		},
+	}
+
+	failingPolicy := &papi.Policy{
+		Id:   "fail",
+		Meta: &papi.Meta{AssertMode: "OR"},
+		Tenets: []*papi.Tenet{
+			{Id: "t1", Code: "false", Error: &papi.Error{Message: "expected failure"}},
+		},
+	}
+
+	subject := &gointoto.ResourceDescriptor{
+		Name:   "test-subject",
+		Digest: map[string]string{"sha256": "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"},
+	}
+
+	for _, tc := range []struct {
+		name           string
+		group          *papi.PolicyGroup
+		expectedStatus string
+	}{
+		{
+			name: "enforce-OFF-failing-group-softfails",
+			group: &papi.PolicyGroup{
+				Id:   "group-enforce-off-fail",
+				Meta: &papi.PolicyGroupMeta{Enforce: "OFF"},
+				Blocks: []*papi.PolicyBlock{
+					{Id: "block-1", Meta: &papi.PolicyBlockMeta{}, Policies: []*papi.Policy{failingPolicy}},
+				},
+			},
+			expectedStatus: papi.StatusSOFTFAIL,
+		},
+		{
+			name: "enforce-OFF-passing-group-still-passes",
+			group: &papi.PolicyGroup{
+				Id:   "group-enforce-off-pass",
+				Meta: &papi.PolicyGroupMeta{Enforce: "OFF"},
+				Blocks: []*papi.PolicyBlock{
+					{Id: "block-1", Meta: &papi.PolicyBlockMeta{}, Policies: []*papi.Policy{passingPolicy}},
+				},
+			},
+			expectedStatus: papi.StatusPASS,
+		},
+		{
+			name: "enforce-ON-failing-group-hard-fails",
+			group: &papi.PolicyGroup{
+				Id:   "group-enforce-on-fail",
+				Meta: &papi.PolicyGroupMeta{},
+				Blocks: []*papi.PolicyBlock{
+					{Id: "block-1", Meta: &papi.PolicyBlockMeta{}, Policies: []*papi.Policy{failingPolicy}},
+				},
+			},
+			expectedStatus: papi.StatusFAIL,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			opts := &VerificationOptions{
+				EvaluatorOptions:    options.Default,
+				DefaultEvaluator:    DefaultVerificationOptions.DefaultEvaluator,
+				EnforceExpiration:   false,
+				AllowEmptySetChains: true,
+			}
+
+			ampel, err := New()
+			require.NoError(t, err)
+
+			res, err := ampel.VerifySubjectWithPolicyGroup(context.Background(), opts, tc.group, subject)
+			require.NoError(t, err)
+			require.NotNil(t, res)
+			require.Equal(t, tc.expectedStatus, res.GetStatus())
+		})
+	}
+}
+
 func TestPolicyGroupAssertMode(t *testing.T) {
 	t.Parallel()
 

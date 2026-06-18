@@ -636,6 +636,127 @@ func TestFilterAttestationsSkipsNonAdmitted(t *testing.T) {
 	require.Len(t, preds, 2, "only admitted envelopes should produce predicates")
 }
 
+// TestProcessChainedSubjectsPropagatesFailFlag verifies that ProcessChainedSubjects
+// propagates policyFail=true when evaluateChain returns both an error and fail=true.
+// This covers the bug where the fail flag was discarded (hardcoded false) on error.
+//
+// The scenario: a chain link requires predicate type "https://example.com/nonexistent"
+// but the loaded attestation is an SPDX document. evaluateChain finds no matching
+// attestations and returns (nil, nil, true, PolicyError{...}). ProcessChainedSubjects
+// must surface fail=true to the caller unchanged.
+func TestProcessChainedSubjectsPropagatesFailFlag(t *testing.T) {
+	t.Parallel()
+
+	di := &defaultIplementation{}
+	factory := evaluator.Factory{}
+
+	def, err := factory.Get(&eoptions.Default, DefaultVerificationOptions.DefaultEvaluator)
+	require.NoError(t, err)
+	evaluators := map[class.Class]evaluator.Evaluator{
+		"default": def,
+		DefaultVerificationOptions.DefaultEvaluator: def,
+	}
+
+	subject := &gointoto.ResourceDescriptor{
+		Name: "test",
+		Digest: map[string]string{
+			"sha256": "851074691728c479a4c83628de8310eaca792cc7",
+		},
+	}
+
+	// Build a policy with a chain link that requires a predicate type that does
+	// not exist in the loaded attestation. evaluateChain will return fail=true
+	// with a PolicyError when no matching attestations are found.
+	policy := &papi.Policy{
+		Chain: []*papi.ChainLink{
+			{
+				Source: &papi.ChainLink_Predicate{
+					Predicate: &papi.ChainedPredicate{
+						Type:     "https://example.com/nonexistent",
+						Selector: `"sha256:0000000000000000000000000000000000000000000000000000000000000000"`,
+					},
+				},
+			},
+		},
+	}
+
+	opts := DefaultVerificationOptions
+	opts.AttestationFiles = []string{"testdata/wtf-frontend.spdx.json"}
+
+	attestations, err := di.ParseAttestations(t.Context(), &opts, subject)
+	require.NoError(t, err)
+
+	_, _, fail, gotErr := di.ProcessChainedSubjects(
+		t.Context(), &opts, evaluators,
+		nil, // collector agent not required for this test
+		policy,
+		nil, // no context values
+		subject,
+		attestations,
+	)
+
+	require.Error(t, gotErr, "ProcessChainedSubjects must return an error when the chain cannot be satisfied")
+	require.True(t, fail, "policyFail must be true when evaluateChain returns fail=true with an error")
+	require.IsType(t, PolicyError{}, gotErr, "error must be a PolicyError") //nolint:testifylint // Checking for type, not value
+}
+
+// TestProcessPolicySetChainedSubjectsPropagatesFailFlag is the PolicySet
+// equivalent of TestProcessChainedSubjectsPropagatesFailFlag. It verifies that
+// ProcessPolicySetChainedSubjects propagates policyFail=true when evaluateChain
+// returns both an error and fail=true, rather than hardcoding false.
+func TestProcessPolicySetChainedSubjectsPropagatesFailFlag(t *testing.T) {
+	t.Parallel()
+
+	di := &defaultIplementation{}
+	factory := evaluator.Factory{}
+
+	def, err := factory.Get(&eoptions.Default, DefaultVerificationOptions.DefaultEvaluator)
+	require.NoError(t, err)
+	evaluators := map[class.Class]evaluator.Evaluator{
+		"default": def,
+		DefaultVerificationOptions.DefaultEvaluator: def,
+	}
+
+	subject := &gointoto.ResourceDescriptor{
+		Name: "test",
+		Digest: map[string]string{
+			"sha256": "851074691728c479a4c83628de8310eaca792cc7",
+		},
+	}
+
+	policySet := &papi.PolicySet{
+		Chain: []*papi.ChainLink{
+			{
+				Source: &papi.ChainLink_Predicate{
+					Predicate: &papi.ChainedPredicate{
+						Type:     "https://example.com/nonexistent",
+						Selector: `"sha256:0000000000000000000000000000000000000000000000000000000000000000"`,
+					},
+				},
+			},
+		},
+	}
+
+	opts := DefaultVerificationOptions
+	opts.AttestationFiles = []string{"testdata/wtf-frontend.spdx.json"}
+
+	attestations, err := di.ParseAttestations(t.Context(), &opts, subject)
+	require.NoError(t, err)
+
+	_, _, fail, gotErr := di.ProcessPolicySetChainedSubjects(
+		t.Context(), &opts, evaluators,
+		nil,
+		policySet,
+		nil,
+		subject,
+		attestations,
+	)
+
+	require.Error(t, gotErr)
+	require.True(t, fail, "policyFail must be true when evaluateChain returns fail=true with an error")
+	require.IsType(t, PolicyError{}, gotErr, "error must be a PolicyError") //nolint:testifylint // Checking for type, not value
+}
+
 // TestVerifySubjectErrOnMissingAttestations covers the ErrOnMissingAttestations
 // option: when off (default) a tenet that requires predicates but receives none
 // produces a failed EvalResult with the sentinel in Error.Message and no
