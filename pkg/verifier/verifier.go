@@ -38,6 +38,28 @@ type PolicyError struct {
 	Guidance string
 }
 
+// sharedEvidenceLockKey is the context key under which VerifySubjectWithPolicySet
+// publishes a per-run mutex. The policies and groups of a set are evaluated
+// concurrently but share evidence-handling state: the attestation envelopes
+// (whose Verify() caches/recomputes verification on the shared predicate) and
+// the collector agent (whose AddKeys mutates a shared key set). The lock
+// serializes mutation of that shared state for one run; it is scoped to the run
+// (not the verifier) so unrelated runs proceed in parallel. See
+// sharedEvidenceLock and issue #298.
+type sharedEvidenceLockKey struct{}
+
+// sharedEvidenceLock returns the per-run evidence lock published on the context,
+// or nil when none is set. A nil lock means the caller is not part of a
+// concurrent fan-out (e.g. a single policy verified directly), so the shared
+// envelopes and collector are not at risk and no locking is required.
+func sharedEvidenceLock(ctx context.Context) *sync.Mutex {
+	mu, ok := ctx.Value(sharedEvidenceLockKey{}).(*sync.Mutex)
+	if !ok {
+		return nil
+	}
+	return mu
+}
+
 // Verify checks a subject against a policy using the available evidence. The
 // policy argument may be a single policy, a policy group or a policy set; the
 // results are published once per call, regardless of the material kind.
@@ -238,6 +260,14 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 		}
 		return softPassPolicySet(ctx, policySet, resultSet)
 	}
+
+	// The policies and groups below are evaluated concurrently but share the
+	// attestation envelopes parsed once above and the collector agent. Publish a
+	// lock on the context so the evidence-gathering steps (GatherAttestations'
+	// key distribution and CheckIdentities' signature verification) can serialize
+	// their mutation of that shared state for this run (see issue #298 and
+	// sharedEvidenceLock).
+	ctx = context.WithValue(ctx, sharedEvidenceLockKey{}, &sync.Mutex{})
 
 	var mtx sync.Mutex
 	t := throttler.New(int(opts.ParallelWorkers), len(policySet.Policies)*len(subjects))
