@@ -24,6 +24,7 @@ import (
 	sapi "github.com/carabiner-dev/signer/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -247,9 +248,18 @@ func (di *defaultIplementation) GatherAttestations(
 	).Run(attestations, attestation.WithMode(attestation.QueryModeOr))
 
 	// Pass any verification keys to the collector so it can verify
-	// signatures on fetched attestations (e.g. keys embedded in policies).
+	// signatures on fetched attestations (e.g. keys embedded in policies). The
+	// agent (and its key set) is shared across the concurrently-evaluated
+	// policies and groups of a run, and AddKeys is not internally synchronized,
+	// so guard it with the per-run evidence lock (nil outside a fan-out).
 	if len(opts.Keys) > 0 {
-		agent.AddKeys(opts.Keys...)
+		if mu := sharedEvidenceLock(ctx); mu != nil {
+			mu.Lock()
+			agent.AddKeys(opts.Keys...)
+			mu.Unlock()
+		} else {
+			agent.AddKeys(opts.Keys...)
+		}
 	}
 
 	// Now, query the collector to get all attestations available for the artifact.
@@ -516,7 +526,15 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 	}
 
 	// Verify signatures and collect only envelopes with a matching identity.
+	// The envelopes are shared across the concurrently-evaluated policies of a
+	// PolicySet, and their verification is cached/recomputed on the shared
+	// predicate, so serialize the verify-and-match step under the per-run lock
+	// published on the context (nil outside a concurrent fan-out).
 	validSigners := make([][]*sapi.Identity, len(envelopes))
+	if mu := sharedEvidenceLock(ctx); mu != nil {
+		mu.Lock()
+		defer mu.Unlock()
+	}
 	for i, e := range envelopes {
 		if err := e.Verify(keys); err != nil {
 			logrus.Debugf("attestation %d (type %s): signature verification error, skipping: %v", i, e.GetStatement().GetType(), err)
@@ -562,6 +580,9 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 // verified against the policy when ingesting the attestations. Envelopes whose
 // identity list is empty (not admitted by CheckIdentities) are excluded.
 //
+// The matched identities are exposed to the evaluator through a per-policy
+// matchedPredicate wrapper rather than by mutating the shared predicate.
+//
 // TODO(puerco): Implement filtering before 1.0
 func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, subject attestation.Subject, envs []attestation.Envelope, ids [][]*sapi.Identity) ([]attestation.Predicate, error) {
 	preds := make([]attestation.Predicate, 0, len(envs))
@@ -575,16 +596,37 @@ func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, su
 		if ids != nil {
 			matchedIds = ids[i]
 		}
-		pred.SetVerification(&sapi.Verification{
-			Signature: &sapi.SignatureVerification{
-				Date:       timestamppb.Now(),
-				Verified:   true,
-				Identities: matchedIds,
+		preds = append(preds, &matchedPredicate{
+			Predicate: pred,
+			verification: &sapi.Verification{
+				Signature: &sapi.SignatureVerification{
+					Date:       timestamppb.Now(),
+					Verified:   true,
+					Identities: matchedIds,
+				},
 			},
 		})
-		preds = append(preds, pred)
 	}
 	return preds, nil
+}
+
+// matchedPredicate wraps a shared attestation.Predicate to carry the identities
+// the signer matched for a single policy without mutating the underlying
+// predicate, which is shared across the policies of a PolicySet. It overrides
+// the verification accessors so the evaluator sees the per-policy matched
+// identities while leaving the shared predicate (and the signer identity cached
+// on its envelope) untouched. See FilterAttestations and issue #298.
+type matchedPredicate struct {
+	attestation.Predicate
+	verification attestation.Verification
+}
+
+func (mp *matchedPredicate) GetVerification() attestation.Verification {
+	return mp.verification
+}
+
+func (mp *matchedPredicate) SetVerification(v attestation.Verification) {
+	mp.verification = v
 }
 
 // evaluateChain evaluates an evidence chain and returns the resulting subject
@@ -828,6 +870,22 @@ func newResourceDescriptorFromSubject(s attestation.Subject) *gointoto.ResourceD
 	}
 }
 
+// mergeContextValClone returns base with over merged into it, without mutating
+// base. base may be a *papi.ContextVal shared by reference across the
+// concurrently evaluated policies of a run (e.g. inherited from the PolicySet
+// common context), so it is cloned before merging (issue #298).
+func mergeContextValClone(base, over *papi.ContextVal) *papi.ContextVal {
+	merged, ok := proto.Clone(base).(*papi.ContextVal)
+	if !ok {
+		// proto.Clone of a *papi.ContextVal always returns a *papi.ContextVal;
+		// rebuild from base on the unreachable miss so we still never mutate it.
+		merged = &papi.ContextVal{}
+		merged.Merge(base)
+	}
+	merged.Merge(over)
+	return merged
+}
+
 // AssembleEvalContextValues puts together the context values map by assembling
 // the context definition starting with its defaults, received values from
 // upstream and context value providers.
@@ -888,8 +946,12 @@ func (di *defaultIplementation) AssembleEvalContextValues(
 		}
 		lcnames[strings.ToLower(k)] = k
 		// Validate the key? Probably in a policy validation func
-		if _, ok := assembledContext[k]; ok {
-			assembledContext[k].Merge(def)
+		if existing, ok := assembledContext[k]; ok {
+			// The existing value may be inherited from the PolicySet common
+			// context, which is shared by reference across the concurrently
+			// evaluated policies. Merge into a clone so the policy's own
+			// context definition never mutates that shared object (issue #298).
+			assembledContext[k] = mergeContextValClone(existing, def)
 		} else {
 			assembledContext[k] = def
 		}
