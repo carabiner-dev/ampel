@@ -53,7 +53,7 @@ jobs:
 
       - name: Check go.mod
         id: gomodtidy
-        uses: carabiner-dev/actions/go/modtidy@abf2ee5751a70382867a5dfbc38b22f3bf1c244b
+        uses: carabiner-dev/actions/go/modtidy@f882fa9eb795141737eecac4ffb056df5ad14954
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v9.2.1
