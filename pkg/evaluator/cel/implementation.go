@@ -295,6 +295,31 @@ func (dce *defaulCelEvaluator) EvaluateOutputs(
 	return ret, nil
 }
 
+// serializeOutputs converts a snapshot of evaluated outputs (ref.Val values)
+// to a JSON-normalized map[string]any suitable for serialization into the
+// tenet result. Only the evaluated outputs are included.
+func serializeOutputs(snapshot map[string]ref.Val) (map[string]any, error) {
+	dataResult := outputDataResult{}
+	for id, result := range snapshot {
+		dr := result.Value()
+		if rv, ok := dr.([]ref.Val); ok {
+			dr = deRefList(rv)
+		}
+		dataResult[id] = dr
+	}
+
+	data, err := json.Marshal(&dataResult)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling output evals: %w", err)
+	}
+
+	ret := map[string]any{}
+	if err := json.Unmarshal(data, &ret); err != nil {
+		return nil, fmt.Errorf("unmarshaling data: %w", err)
+	}
+	return ret, nil
+}
+
 type outputDataResult map[string]any
 
 func (odr *outputDataResult) MarshalJSON() ([]byte, error) {

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/carabiner-dev/collector/predicate"
+	"github.com/google/cel-go/cel"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/stretchr/testify/require"
 
@@ -128,6 +129,105 @@ func TestOptionalOperators(t *testing.T) {
 			got, err := ev.EvaluateExpression(env, ast, vars)
 			require.NoError(t, err)
 			require.Equal(t, tc.expected, got)
+		})
+	}
+}
+
+// TestLazyExprMap verifies that a lazyExprMap evaluates entries on first
+// reference, that entries can reference siblings via both dot and bracket
+// notation, that cycles are detected and reported as errors, and that
+// unreferenced entries are absent from the snapshot.
+func TestLazyExprMap(t *testing.T) {
+	t.Parallel()
+	ev := &defaulCelEvaluator{}
+
+	env, err := ev.CreateEnvironment(nil, nil)
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		name       string
+		outputs    map[string]string
+		mainCode   string
+		wantVal    any
+		wantErr    string
+		wantSnap   []string
+		absentSnap []string
+	}{
+		{
+			name: "dot notation cross-reference resolves correctly",
+			outputs: map[string]string{
+				"a": `"hello"`,
+				"b": `outputs.a + " world"`,
+			},
+			mainCode: `outputs.b == "hello world"`,
+			wantVal:  true,
+		},
+		{
+			name: "bracket notation also resolves correctly",
+			outputs: map[string]string{
+				"a": `"hello"`,
+				"b": `outputs.a + " world"`,
+			},
+			mainCode: `outputs["b"] == "hello world"`,
+			wantVal:  true,
+		},
+		{
+			name: "cycle detection returns error",
+			outputs: map[string]string{
+				"cycleA": `outputs.cycleB`,
+				"cycleB": `outputs.cycleA`,
+			},
+			mainCode: `outputs.cycleA`,
+			wantErr:  "cycle",
+		},
+		{
+			name: "unreferenced output absent from snapshot",
+			outputs: map[string]string{
+				"a":      `"hello"`,
+				"b":      `outputs.a + " world"`,
+				"unused": `"never evaluated"`,
+			},
+			mainCode:   `outputs.b == "hello world"`,
+			wantSnap:   []string{"a", "b"},
+			absentSnap: []string{"unused"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			asts := make(map[string]*cel.Ast, len(tc.outputs))
+			for name, code := range tc.outputs {
+				ast, err := ev.CompileCode(env, code)
+				require.NoError(t, err)
+				asts[name] = ast
+			}
+
+			vars := map[string]any{}
+			lazy := newLazyExprMap(env, asts, vars)
+			vars[VarNameOutputs] = lazy
+
+			mainAst, err := ev.CompileCode(env, tc.mainCode)
+			require.NoError(t, err)
+
+			got, err := ev.EvaluateExpression(env, mainAst, &vars)
+			if tc.wantErr != "" {
+				require.Error(t, err, "expected evaluation error containing %q", tc.wantErr)
+				require.Contains(t, err.Error(), tc.wantErr, "error message mismatch")
+				return
+			}
+			require.NoError(t, err)
+
+			if tc.wantVal != nil {
+				require.Equal(t, tc.wantVal, got, "evaluation result mismatch")
+			}
+
+			snap := lazy.snapshot()
+			for _, k := range tc.wantSnap {
+				require.Contains(t, snap, k, "expected %q in snapshot", k)
+			}
+			for _, k := range tc.absentSnap {
+				require.NotContains(t, snap, k, "expected %q absent from snapshot", k)
+			}
 		})
 	}
 }
