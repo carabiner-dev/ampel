@@ -12,6 +12,8 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 )
 
+var Identity = class.MustParseIdentity("purl@v0")
+
 type Plugin struct {
 	Tool *PurlTool
 }
@@ -40,4 +42,8 @@ func (p *Plugin) VarValues(_ *papi.Policy, _ attestation.Subject, _ []attestatio
 	return map[string]any{
 		"purl": p.Tool,
 	}
+}
+
+func (p *Plugin) Identity() *class.Identity {
+	return Identity
 }

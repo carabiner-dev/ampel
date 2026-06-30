@@ -36,7 +36,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/transformer"
 )
 
-const defaultEvaluatorClass = "default"
+var defaultEvaluatorClass = class.MustParseClass("default")
 
 // AmpelImplementation
 type AmpelVerifier interface {
@@ -358,51 +358,64 @@ func (di *defaultIplementation) AssertResult(policy *papi.Policy, result *papi.R
 func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *papi.Policy) (map[class.Class]evaluator.Evaluator, error) {
 	evaluators := map[class.Class]evaluator.Evaluator{}
 	factory := evaluator.Factory{}
-	// First, build the default evaluator
-	def := class.Class(p.GetMeta().GetRuntime())
+	var (
+		defRT class.Class
+		err   error
+	)
 
 	// Compute the default runtime, first from the options received.
 	// If not set, then from the default options set.
-	if p.GetMeta().GetRuntime() == "" {
-		if opts.DefaultEvaluator != "" {
-			def = opts.DefaultEvaluator
-		} else {
-			def = DefaultVerificationOptions.DefaultEvaluator
+	switch {
+	case p.GetMeta().GetRuntime() != "":
+		defRT, err = class.ParseClass(p.GetMeta().GetRuntime())
+		if err != nil {
+			return nil, fmt.Errorf("invalid policy runtime: %w", err)
 		}
+	case opts.DefaultEvaluator != "":
+		defRT = opts.DefaultEvaluator
+	default:
+		defRT = DefaultVerificationOptions.DefaultEvaluator
 	}
 
-	e, err := factory.Get(&opts.EvaluatorOptions, def)
+	e, err := factory.Get(&opts.EvaluatorOptions, defRT)
 	if err != nil {
 		return nil, fmt.Errorf("unable to build default runtime: %w", err)
 	}
-	logrus.Debugf("Registered default evaluator of class %s", def)
-	evaluators[class.Class(defaultEvaluatorClass)] = e
-	evaluators[def] = e
-	if p.GetMeta().GetRuntime() != "" {
-		evaluators[class.Class(p.GetMeta().GetRuntime())] = e
-	}
+	logrus.Debugf("Registered default evaluator of class %s", defRT)
+	evaluators[defaultEvaluatorClass] = e
+	evaluators[defRT.BaseClass()] = e
 
 	for _, link := range p.GetChain() {
-		if classString := link.GetPredicate().GetRuntime(); classString != "" {
-			e, err := factory.Get(&opts.EvaluatorOptions, def)
-			if err != nil {
-				return nil, fmt.Errorf("unable to build chained subject runtime")
-			}
-			logrus.Debugf("registered evaluator of class %s for chained predicate", classString)
-			evaluators[class.Class(classString)] = e
+		classString := link.GetPredicate().GetRuntime()
+		if classString == "" {
+			continue
 		}
+		chainRT, err := class.ParseClass(classString)
+		if err != nil {
+			return nil, fmt.Errorf("invalid chain predicate runtime: %w", err)
+		}
+		e, err := factory.Get(&opts.EvaluatorOptions, chainRT)
+		if err != nil {
+			return nil, fmt.Errorf("unable to build chained subject runtime")
+		}
+		logrus.Debugf("registered evaluator of class %s for chained predicate", classString)
+		evaluators[chainRT.BaseClass()] = e
 	}
 
 	for _, t := range p.Tenets {
 		if t.Runtime == "" {
 			continue
 		}
-		cl := class.Class(t.Runtime)
+		rt, err := class.ParseClass(t.Runtime)
+		if err != nil {
+			return nil, fmt.Errorf("tenet %q has invalid runtime: %w", t.GetId(), err)
+		}
+		cl := rt.BaseClass()
 		if _, ok := evaluators[cl]; ok {
 			continue
 		}
 		// TODO(puerco): Options here should come from the verifier options
-		e, err := factory.Get(&options.EvaluatorOptions{}, cl)
+		e, err := factory.Get(&options.EvaluatorOptions{}, rt)
 		if err != nil {
 			return nil, fmt.Errorf("building %q runtime: %w", t.Runtime, err)
 		}
@@ -727,13 +740,10 @@ func (di *defaultIplementation) evaluateChain(
 		if classString == "" {
 			classString = defaultEvalClass
 		}
-		if classString == "" {
-			classString = string(opts.DefaultEvaluator)
-		}
 
-		key := class.Class(classString)
-		if key == "" {
-			key = opts.DefaultEvaluator
+		key := classForRuntime(classString)
+		if key == "" && opts.DefaultEvaluator != "" {
+			key = opts.DefaultEvaluator.BaseClass()
 		}
 		if _, ok := evaluators[key]; !ok {
 			return nil, nil, false, fmt.Errorf("no evaluator loaded for class %s", key)
@@ -1037,7 +1047,7 @@ func (di *defaultIplementation) AssembleEvalContextValues(
 			if expr == "" {
 				continue
 			}
-			cls := class.Class(contextDef.GetRuntime())
+			cls := classForRuntime(contextDef.GetRuntime())
 			if cls == "" {
 				cls = defaultEvaluatorClass
 			}
@@ -1128,9 +1138,9 @@ func (di *defaultIplementation) VerifySubject(
 	)
 
 	for i, tenet := range p.Tenets {
-		key := class.Class(tenet.Runtime)
+		key := classForRuntime(tenet.Runtime)
 		if key == "" {
-			key = class.Class(defaultEvaluatorClass)
+			key = defaultEvaluatorClass
 		}
 
 		// Filter the predicates to those requested by the tenet or the policy:
@@ -1296,4 +1306,19 @@ func (di *defaultIplementation) BuildGroupEvaluators(opts *VerificationOptions, 
 		}
 	}
 	return evaluators, nil
+}
+
+// classForRuntime parses a raw runtime string and returns its base evaluator
+// class. Returns "" for an empty string; logs a warning and returns "" on
+// parse failure so callers can fall through to their own default.
+func classForRuntime(runtimeStr string) class.Class {
+	if runtimeStr == "" {
+		return ""
+	}
+	rt, err := class.ParseClass(runtimeStr)
+	if err != nil {
+		logrus.Warnf("invalid runtime %q, using default evaluator: %v", runtimeStr, err)
+		return ""
+	}
+	return rt.BaseClass()
 }

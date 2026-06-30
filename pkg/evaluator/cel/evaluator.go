@@ -29,7 +29,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/url"
 )
 
-var Class = class.Class("cel@v0")
+var Class = class.MustParseClass("cel@v0")
 
 // EvaluationError captures error details when executing CEL code
 type EvaluationError struct {
@@ -109,6 +109,10 @@ func (e *Evaluator) rebuildEnvironment(opts *options.EvaluatorOptions) error {
 		}
 	}
 
+	for _, p := range e.Plugins {
+		logrus.Debugf("registered CEL plugin %T version %s", p, p.Identity().Version())
+	}
+
 	// Create the env
 	env, err := e.impl.CreateEnvironment(opts, e.Plugins)
 	if err != nil {
@@ -126,12 +130,10 @@ type Evaluator struct {
 }
 
 type Plugin interface {
-	// CanRegisterDataFor implements the plugin api function that flags if
-	// the plugin is compatible with a class of evaluator
-	CanRegisterFor(class.Class) bool
+	api.EvalEnginePlugin
 
-	// EnvVariables returns the data (as a cel.Variable list) that will be
-	// registered as global variables in the evaluation environment
+	// Library returns the CEL environment option that registers this plugin's
+	// types and functions into the evaluation environment.
 	Library() cel.EnvOption
 
 	// VarValues returns the values of the variables handled by the plugin
@@ -154,7 +156,7 @@ func (e *Evaluator) RegisterPlugin(plugin api.Plugin) error {
 		if !ok {
 			return fmt.Errorf("plugin declares compatibility with %s but does not implement cel.Plugin", Class)
 		}
-		e.Plugins[fmt.Sprintf("%T", dp)] = dp
+		e.Plugins[dp.Identity().Name()] = dp
 	}
 
 	return nil
@@ -326,4 +328,18 @@ func (e *Evaluator) ExecTenet(
 	result.Output = outStruct
 
 	return result, err
+}
+
+func (e *Evaluator) SupportedVersion() string {
+	return Class.Version()
+}
+
+// RegisteredPlugins returns the plugins registered with this evaluator keyed
+// by plugin name.
+func (e *Evaluator) RegisteredPlugins() map[string]api.EvalEnginePlugin {
+	result := make(map[string]api.EvalEnginePlugin, len(e.Plugins))
+	for k, v := range e.Plugins {
+		result[k] = v
+	}
+	return result
 }

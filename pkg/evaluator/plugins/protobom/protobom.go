@@ -20,6 +20,8 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 )
 
+var Identity = class.MustParseIdentity("protobom@v0")
+
 func New() *Plugin {
 	return &Plugin{}
 }
@@ -62,4 +64,8 @@ func (p *Plugin) VarValues(_ *papi.Policy, _ attestation.Subject, preds []attest
 		"protobom": elements.Protobom{},
 		"sboms":    sbomList,
 	}
+}
+
+func (p *Plugin) Identity() *class.Identity {
+	return Identity
 }
