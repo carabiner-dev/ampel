@@ -71,3 +71,63 @@ func TestEvaluateChainedSelector(t *testing.T) {
 		})
 	}
 }
+
+// TestOptionalOperators verifies that the CEL environment has OptionalTypes
+// enabled. The test uses the SLSA v0.2 predicate fixture where materials[1]
+// has no digest field, making it a natural fit for chained optional access\.
+func TestOptionalOperators(t *testing.T) {
+	t.Parallel()
+	ev := &defaulCelEvaluator{}
+
+	env, err := ev.CreateEnvironment(nil, nil)
+	require.NoError(t, err)
+
+	data, err := os.ReadFile("testdata/slsa-v0.2.json")
+	require.NoError(t, err)
+
+	pred, err := predicate.Parsers.Parse(data)
+	require.NoError(t, err)
+
+	vars, err := ev.BuildSelectorVariables(&options.EvaluatorOptions{}, nil, &evalcontext.EvaluationContext{}, nil, nil, nil, pred)
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		name     string
+		code     string
+		expected any
+	}{
+		{
+			// materials[0] has a digest — the chain resolves to the sha1 value.
+			name:     "present chain resolves to value",
+			code:     `predicate.data.materials[0].?digest.sha1.orValue("not-present")`,
+			expected: "3714a2a4684014deb874a0e737dffa0ee02dd647",
+		},
+		{
+			// materials[1] has no digest — optional propagates through .sha1 to the default.
+			name:     "absent intermediate returns default",
+			code:     `predicate.data.materials[1].?digest.sha1.orValue("not-present")`,
+			expected: "not-present",
+		},
+		{
+			name:     "hasValue true when field present",
+			code:     `predicate.data.materials[0].?digest.hasValue()`,
+			expected: true,
+		},
+		{
+			name:     "hasValue false when field absent",
+			code:     `predicate.data.materials[1].?digest.hasValue()`,
+			expected: false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ast, err := ev.CompileCode(env, tc.code)
+			require.NoError(t, err)
+
+			got, err := ev.EvaluateExpression(env, ast, vars)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, got)
+		})
+	}
+}

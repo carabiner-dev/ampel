@@ -67,13 +67,14 @@ func (dce *defaulCelEvaluator) CompileCode(env *cel.Env, code string) (*cel.Ast,
 
 // CreateEnvironment
 func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, plugins map[string]Plugin) (*cel.Env, error) {
-	envOpts := make([]cel.EnvOption, 0, 11+len(plugins))
+	envOpts := make([]cel.EnvOption, 0, 12+len(plugins))
 	envOpts = append(envOpts,
 		cel.Variable(VarNamePredicates, cel.ListType(cel.AnyType)),
 		cel.Variable(VarNamePredicate, cel.AnyType),
 		cel.Variable(VarNameContext, cel.AnyType),
 		cel.Variable(VarNameOutputs, cel.AnyType),
 		cel.Variable(VarNameSubject, cel.AnyType),
+		cel.OptionalTypes(),
 		ext.Bindings(),
 		ext.Strings(),
 		ext.Encoders(),
