@@ -276,25 +276,8 @@ func (e *Evaluator) ExecTenet(
 		return status, nil
 	}
 
-	outputMap, err := e.impl.EvaluateOutputs(e.Environment, outputAsts, vars)
-	if err != nil {
-		//nolint:errorlint
-		ee, ok := err.(*EvaluationError)
-		if ok {
-			return &papi.EvalResult{
-				Id:         tenet.Id,
-				Status:     papi.StatusFAIL,
-				Date:       timestamppb.Now(),
-				Output:     &structpb.Struct{},
-				Statements: statementRefs,
-				Error: &papi.Error{
-					Message:  "Evaluating policy outputs: " + ee.Message,
-					Guidance: ee.EvalError.Error(),
-				},
-			}, nil
-		}
-		return nil, fmt.Errorf("evaluating outputs: %w", err)
-	}
+	lazy := newLazyExprMap(e.Environment, outputAsts, *vars)
+	(*vars)[VarNameOutputs] = lazy
 
 	// Evaluate the ASTs and compile the results into a resultset
 	result, err := e.impl.Evaluate(e.Environment, ast, vars)
@@ -320,6 +303,11 @@ func (e *Evaluator) ExecTenet(
 	// with the tenet data
 	result.Id = tenet.Id
 	result.Statements = statementRefs
+
+	outputMap, err := serializeOutputs(lazy.snapshot())
+	if err != nil {
+		return nil, fmt.Errorf("serializing outputs: %w", err)
+	}
 
 	outStruct, err := structpb.NewStruct(outputMap)
 	if err != nil {
