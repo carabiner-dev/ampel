@@ -21,7 +21,7 @@ require (
 	github.com/package-url/packageurl-go v0.1.6
 	github.com/pandatix/go-cvss v0.6.2
 	github.com/protobom/cel v0.1.0
-	github.com/protobom/protobom v0.5.6
+	github.com/protobom/protobom v0.5.8
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
