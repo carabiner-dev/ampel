@@ -12,6 +12,7 @@ import (
 	"github.com/carabiner-dev/signer/key"
 
 	"github.com/carabiner-dev/ampel/pkg/context"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/cel"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
@@ -117,7 +118,7 @@ var DefaultVerificationOptions = VerificationOptions{
 
 	// DefaultEvaluator the the default eval enfine is the lowest version
 	// of CEL available
-	DefaultEvaluator: class.MustParseClass("cel@v0"),
+	DefaultEvaluator: cel.Class,
 
 	// ResultsAttestationPath path to the results attestation
 	ResultsAttestationPath: "results.intoto.json",
