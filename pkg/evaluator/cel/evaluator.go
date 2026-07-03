@@ -29,7 +29,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/url"
 )
 
-var Class = class.MustParseClass("cel@v0")
+var Class = class.MustParseClass("cel@v1")
 
 // EvaluationError captures error details when executing CEL code
 type EvaluationError struct {

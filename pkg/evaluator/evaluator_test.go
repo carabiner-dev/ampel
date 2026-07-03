@@ -10,6 +10,7 @@ import (
 	papi "github.com/carabiner-dev/policy/api/v1"
 	"github.com/stretchr/testify/require"
 
+	"github.com/carabiner-dev/ampel/pkg/evaluator/cel"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
 )
@@ -61,7 +62,7 @@ func TestFactoryVersionMismatch(t *testing.T) {
 		require.NoError(t, err)
 		_, ok := e.(*versionMismatchEvaluator)
 		require.True(t, ok, "cel@v99 should return a versionMismatchEvaluator")
-		require.Equal(t, "v0", e.SupportedVersion())
+		require.Equal(t, cel.Class.Version(), e.SupportedVersion())
 	})
 
 	t.Run("stub ExecTenet returns FAIL with message", func(t *testing.T) {
@@ -72,7 +73,7 @@ func TestFactoryVersionMismatch(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, papi.StatusFAIL, result.GetStatus())
 		require.Contains(t, result.GetError().GetMessage(), "cel@v99")
-		require.Contains(t, result.GetError().GetMessage(), "cel@v0")
+		require.Contains(t, result.GetError().GetMessage(), cel.Class.String())
 		require.Equal(t, "test-tenet", result.GetId())
 	})
 
