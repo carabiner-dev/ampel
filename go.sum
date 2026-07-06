@@ -96,8 +96,8 @@ github.com/bradleyjkemp/cupaloy/v2 v2.8.0 h1:any4BmKE+jGIaMpnU8YgH/I2LPiLBufr6oM
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0/go.mod h1:bm7JXdkRd4BHJk9HpwqAI8BoAY1lps46Enkdqw6aRX0=
 github.com/carabiner-dev/attestation v0.2.1 h1:VhjV5YlO9TsW50Sr/Zd54bdbZhhDAqgxC3kB9z1I+3Q=
 github.com/carabiner-dev/attestation v0.2.1/go.mod h1:O84vF84RZG3pJO/6BYrPs718bZviHF5DKajP1HsrDpw=
-github.com/carabiner-dev/collector v0.3.7 h1:K1ChCAhW3Guy8JLosTh+5ndtnyfwPXohAm5D12LgfIk=
-github.com/carabiner-dev/collector v0.3.7/go.mod h1:LUwrfU5kbCeKfoRgX87ETLqDaedfsIXrBcNDcdOAuGM=
+github.com/carabiner-dev/collector v0.3.8 h1:leCzOeh2kO4dcJWyBL4bdPjW4qSD4kg/5Y3PnGu6nwo=
+github.com/carabiner-dev/collector v0.3.8/go.mod h1:JPGGx76ZtmRZe9ZlAloOjJTiFr7U8ysOWrMe2zTav+4=
 github.com/carabiner-dev/command v0.3.1 h1:iBkh+AjwziFZmyihv/izypCV74nkmaslZxb5AgP7GP4=
 github.com/carabiner-dev/command v0.3.1/go.mod h1:0mWfS5BU/krtaI1hgD5wjmLpjWVlf38KY8usA8zfF5c=
 github.com/carabiner-dev/ghrfs v0.3.4 h1:XJoDXkuw+8KQPTC4oI0da8vLpnx7cfQBGgyjzo+Eqrc=
@@ -159,8 +159,8 @@ github.com/digitorus/pkcs7 v0.0.0-20250730155240-ffadbf3f398c h1:g349iS+CtAvba7i
 github.com/digitorus/pkcs7 v0.0.0-20250730155240-ffadbf3f398c/go.mod h1:mCGGmWkOQvEuLdIRfPIpXViBfpWto4AhwtJlAvo62SQ=
 github.com/digitorus/timestamp v0.0.0-20250524132541-c45532741eea h1:ALRwvjsSP53QmnN3Bcj0NpR8SsFLnskny/EIMebAk1c=
 github.com/digitorus/timestamp v0.0.0-20250524132541-c45532741eea/go.mod h1:GvWntX9qiTlOud0WkQ6ewFm0LPy5JUR1Xo0Ngbd1w6Y=
-github.com/docker/cli v29.4.3+incompatible h1:u+UliYm2J/rYrIh2FqHQg32neRG8GjbvNuwQRTzGspU=
-github.com/docker/cli v29.4.3+incompatible/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
+github.com/docker/cli v29.5.3+incompatible h1:nbEFfz774vBwQ5KRYv7c/AghjReqnGISvrRhzjV0evs=
+github.com/docker/cli v29.5.3+incompatible/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
 github.com/docker/docker-credential-helpers v0.9.5 h1:EFNN8DHvaiK8zVqFA2DT6BjXE0GzfLOZ38ggPTKePkY=
 github.com/docker/docker-credential-helpers v0.9.5/go.mod h1:v1S+hepowrQXITkEfw6o4+BMbGot02wiKpzWhGUZK6c=
 github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 h1:UhxFibDNY/bfvqU5CAUmr9zpesgbU6SWc8/B4mflAE4=
@@ -270,8 +270,8 @@ github.com/google/certificate-transparency-go v1.3.3 h1:hq/rSxztSkXN2tx/3jQqF6Xc
 github.com/google/certificate-transparency-go v1.3.3/go.mod h1:iR17ZgSaXRzSa5qvjFl8TnVD5h8ky2JMVio+dzoKMgA=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
-github.com/google/go-containerregistry v0.21.6 h1:T+yqQIlJXKrM98Om4DlW3GoWQAmhZuLMwoDOvVrtiUM=
-github.com/google/go-containerregistry v0.21.6/go.mod h1:U7MMSBIJynke2MVQrQk19NP9k/uQsGz/h0amIFSHMbo=
+github.com/google/go-containerregistry v0.21.7 h1:/vPFuVXDjtFREsVArW+0h1CIl5urnOhzei4X2DMW9IU=
+github.com/google/go-containerregistry v0.21.7/go.mod h1:kjSbt7/zMsKLWfnHrIvKvhXHUw91jbe9DNjPPJ32gXE=
 github.com/google/gofuzz v1.2.0 h1:xRy4A+RhZaiKjJ1bPfwQ8sedCA+YS2YcCHW6ec7JMi0=
 github.com/google/gofuzz v1.2.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/google/s2a-go v0.1.9 h1:LGD7gtMgezd8a/Xak7mEWL0PjoTQFvpRudN895yqKW0=
@@ -434,8 +434,8 @@ github.com/sigstore/rekor-tiles/v2 v2.2.2-0.20260601073857-5d098a2b6443 h1:/CO8F
 github.com/sigstore/rekor-tiles/v2 v2.2.2-0.20260601073857-5d098a2b6443/go.mod h1:w1h8wF8vq9lHjmtRdwJiEaoVxhP+WHIMpj4M39pkzp0=
 github.com/sigstore/sigstore v1.10.8 h1:1Mgkxvkw4AXMfIP1DOjc6kw0GkUgA8pGVpveN/EfOq4=
 github.com/sigstore/sigstore v1.10.8/go.mod h1:f9+B/4iaYimvUkySyb2mvc73n3RLqNn24grHZM/ET8M=
-github.com/sigstore/sigstore-go v1.2.0 h1:8k8sGMVUUWwZ/KA+s4Q66yEPEzcC1xZ8UsTgI46J9Fc=
-github.com/sigstore/sigstore-go v1.2.0/go.mod h1:I8BqVwAb/SaQJ5pBu5IDFY+ksq8O/1/kCag8XUgrsko=
+github.com/sigstore/sigstore-go v1.2.1 h1:YWP/rDbBaEBvtbkj6xtwsSj38ZCFEhTVVadNOXjVe3A=
+github.com/sigstore/sigstore-go v1.2.1/go.mod h1:I8BqVwAb/SaQJ5pBu5IDFY+ksq8O/1/kCag8XUgrsko=
 github.com/sigstore/sigstore/pkg/signature/kms/aws v1.10.8 h1:tofVQ+UWJgad/69I5zbqxdFCN5gpIn9tRQP7iBzIpBw=
 github.com/sigstore/sigstore/pkg/signature/kms/aws v1.10.8/go.mod h1:73AfJE8H6w5KGCFPBu4x/OG+i1Yxgmh0L/FtV7prd88=
 github.com/sigstore/sigstore/pkg/signature/kms/azure v1.10.8 h1:8Mt7J36GcUEmbiJaiFhz2tud5ZIgkfVVCe2H/WJCHmw=

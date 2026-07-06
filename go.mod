@@ -5,7 +5,7 @@ go 1.26.4
 require (
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/carabiner-dev/attestation v0.2.1
-	github.com/carabiner-dev/collector v0.3.7
+	github.com/carabiner-dev/collector v0.3.8
 	github.com/carabiner-dev/command v0.3.1
 	github.com/carabiner-dev/hasher v0.2.4
 	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
@@ -72,7 +72,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/certificate-transparency-go v1.3.3 // indirect
-	github.com/google/go-containerregistry v0.21.6 // indirect
+	github.com/google/go-containerregistry v0.21.7 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
@@ -127,7 +127,7 @@ require (
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
-	github.com/docker/cli v29.4.3+incompatible // indirect
+	github.com/docker/cli v29.5.3+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.9.5 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/github/smimesign v0.2.0 // indirect
@@ -162,7 +162,7 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sigstore/gitsign v0.16.0 // indirect
 	github.com/sigstore/rekor-tiles/v2 v2.2.2-0.20260601073857-5d098a2b6443 // indirect
-	github.com/sigstore/sigstore-go v1.2.0 // indirect
+	github.com/sigstore/sigstore-go v1.2.1 // indirect
 	github.com/sigstore/timestamp-authority/v2 v2.1.2 // indirect
 	github.com/spdx/tools-golang v0.5.7 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.7.0 // indirect
