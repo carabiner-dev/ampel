@@ -8,7 +8,7 @@ require (
 	github.com/carabiner-dev/collector v0.3.9-0.20260710065700-35858011e579
 	github.com/carabiner-dev/command v0.3.1
 	github.com/carabiner-dev/hasher v0.2.4
-	github.com/carabiner-dev/osv v0.1.0
+	github.com/carabiner-dev/osv v0.1.1
 	github.com/carabiner-dev/policy v0.5.1
 	github.com/carabiner-dev/predicates v0.5.0
 	github.com/carabiner-dev/termtable v1.1.0
