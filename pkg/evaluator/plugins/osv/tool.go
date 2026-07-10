@@ -451,6 +451,14 @@ func toGo(v ref.Val) any {
 			return sv.AsInterface()
 		}
 	}
+	// ampel's CEL predicate wrapper cannot convert to a native map but exposes
+	// its fields via indexing; pull out the OSV data so osv.vulns(predicate)
+	// works the same as osv.vulns(predicate.data).
+	if indexer, ok := v.(traits.Indexer); ok {
+		if data := indexer.Get(types.String("data")); data != nil && !types.IsError(data) {
+			return toGo(data)
+		}
+	}
 	return v.Value()
 }
 
