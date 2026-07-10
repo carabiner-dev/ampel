@@ -31,6 +31,11 @@ import (
 // official in-toto predicate type, so we adopt the tool's repository URL.
 const GrypePredicateType = attestation.PredicateType("https://github.com/anchore/grype")
 
+// legacyOSVPredicateType is the pre-@v1 OSV results type. The collector's osv
+// parser normalizes it to cosv.PredicateType, but the transformer also accepts
+// it directly for robustness.
+const legacyOSVPredicateType = attestation.PredicateType("https://ossf.github.io/osv-schema/results@v1.6.7")
+
 var ClassName = "vulnreport"
 
 // PredicateTypes are the scanner report predicate types this transformer
@@ -38,15 +43,17 @@ var ClassName = "vulnreport"
 var PredicateTypes = []attestation.PredicateType{
 	ctrivy.PredicateType,
 	cosv.PredicateType,
+	legacyOSVPredicateType,
 	GrypePredicateType,
 }
 
 // scannerURIs maps each accepted input type to the scanner identity recorded in
 // the vulns/v0.2 predicate (the OSV format does not carry scanner identity).
 var scannerURIs = map[attestation.PredicateType]string{
-	ctrivy.PredicateType: "https://trivy.dev",
-	cosv.PredicateType:   "https://github.com/google/osv-scanner",
-	GrypePredicateType:   "https://github.com/anchore/grype",
+	ctrivy.PredicateType:   "https://trivy.dev",
+	cosv.PredicateType:     "https://github.com/google/osv-scanner",
+	legacyOSVPredicateType: "https://github.com/google/osv-scanner",
+	GrypePredicateType:     "https://github.com/anchore/grype",
 }
 
 // Output formats the vulnreport transformer can emit.
@@ -127,27 +134,32 @@ func (t *Transformer) Mutate(
 	return nil, newPreds, nil
 }
 
+// osvParser is used only for its dual-read SupportsType, so a predicate typed
+// with either the current @v1 or the legacy @v1.6.7 OSV type is recognized even
+// if it was not normalized upstream by the collector.
+var osvParser = cosv.New()
+
 // toOSVResults normalizes a scanner report predicate into the OSV results
 // format. The bool is false when the predicate is not a supported scanner
 // report, in which case it should be skipped.
 func toOSVResults(pred attestation.Predicate) (*osv.Results, bool, error) {
 	data := pred.GetData()
-	switch pred.GetType() {
-	case ctrivy.PredicateType:
+	switch {
+	case pred.GetType() == ctrivy.PredicateType:
 		report, err := trivy.Parse(data)
 		if err != nil {
 			return nil, true, fmt.Errorf("parsing trivy report: %w", err)
 		}
 		results, err := report.ToOSV()
 		return results, true, err
-	case GrypePredicateType:
+	case pred.GetType() == GrypePredicateType:
 		doc, err := grype.Parse(data)
 		if err != nil {
 			return nil, true, fmt.Errorf("parsing grype report: %w", err)
 		}
 		results, err := doc.ToOSV()
 		return results, true, err
-	case cosv.PredicateType:
+	case osvParser.SupportsType(pred.GetType()):
 		// OSV-Scanner already emits OSV; parse it straight through.
 		results, err := osv.NewParser().ParseResults(data)
 		if err != nil {
