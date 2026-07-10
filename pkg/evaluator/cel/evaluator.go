@@ -23,6 +23,7 @@ import (
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/cvss"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/github"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/hasher"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/osv"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/protobom"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/purl"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/plugins/semver"
@@ -75,6 +76,7 @@ func NewWithOptions(opts *options.EvaluatorOptions) (*Evaluator, error) {
 // Ensure the default plugins implement the cel plugin interface
 var (
 	_ Plugin = (*hasher.Plugin)(nil)
+	_ Plugin = (*osv.Plugin)(nil)
 	_ Plugin = (*url.Plugin)(nil)
 	_ Plugin = (*github.Plugin)(nil)
 	_ Plugin = (*protobom.Plugin)(nil)
@@ -106,6 +108,9 @@ func (e *Evaluator) rebuildEnvironment(opts *options.EvaluatorOptions) error {
 		}
 		if err := e.RegisterPlugin(cvss.New()); err != nil {
 			return fmt.Errorf("registering cvss: %w", err)
+		}
+		if err := e.RegisterPlugin(osv.New()); err != nil {
+			return fmt.Errorf("registering osv: %w", err)
 		}
 	}
 

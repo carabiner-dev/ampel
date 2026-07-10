@@ -105,6 +105,27 @@ func getCVSSResult(vector string) (*cvssResult, error) {
 	}
 }
 
+// Score parses a CVSS vector string and returns its numeric (base) score. It is
+// exported so sibling plugins (e.g. osv) can reuse the version-aware scoring
+// without duplicating the parsing logic.
+func Score(vector string) (float64, error) {
+	res, err := getCVSSResult(vector)
+	if err != nil {
+		return 0, err
+	}
+	return res.score, nil
+}
+
+// Severity parses a CVSS vector string and returns its qualitative rating
+// (CRITICAL/HIGH/MEDIUM/LOW/NONE). Exported for reuse by sibling plugins.
+func Severity(vector string) (string, error) {
+	res, err := getCVSSResult(vector)
+	if err != nil {
+		return "", err
+	}
+	return res.severity, nil
+}
+
 func rating20(score float64) string {
 	switch {
 	case score >= 7.0:

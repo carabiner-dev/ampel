@@ -118,6 +118,22 @@ func TestMutate(t *testing.T) {
 				require.Equal(t, "https://github.com/google/osv-scanner", report.GetScanner().GetUri())
 			},
 		},
+		{
+			// A predicate still typed with the legacy @v1.6.7 OSV type (i.e. not
+			// normalized upstream) is accepted via the parser's dual-read and
+			// emitted as the current @v1 OSV type.
+			name:      "osvscanner-legacy-type-accepted",
+			inputType: legacyOSVPredicateType,
+			dataPath:  "testdata/osv-scanner.json",
+			output:    OutputOSV,
+			wantType:  cosv.PredicateType,
+			validate: func(t *testing.T, pred attestation.Predicate) {
+				t.Helper()
+				results, ok := pred.GetParsed().(*osv.Results)
+				require.True(t, ok, "parsed predicate must be *osv.Results")
+				require.NotEmpty(t, results.GetResults())
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
