@@ -1,31 +1,52 @@
 // SPDX-FileCopyrightText: Copyright 2025 Carabiner Systems, Inc
 // SPDX-License-Identifier: Apache-2.0
 
+// Package vulnreport implements a transformer that normalizes scanner reports
+// (Trivy, Grype, OSV-Scanner) into the OSV results format, and optionally
+// projects them onto the in-toto vulns/v0.2 predicate.
+//
+// The conversion logic lives in the carabiner-dev/osv library; this transformer
+// is a thin adapter that routes each input predicate to the right converter and
+// wraps the result as a predicate.
 package vulnreport
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"time"
 
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector/predicate/generic"
-	"github.com/carabiner-dev/collector/predicate/trivy"
-	"github.com/carabiner-dev/collector/predicate/vulns"
-	v02 "github.com/in-toto/attestation/go/predicates/vulns/v02"
+	cosv "github.com/carabiner-dev/collector/predicate/osv"
+	ctrivy "github.com/carabiner-dev/collector/predicate/trivy"
+	cvulns "github.com/carabiner-dev/collector/predicate/vulns"
+	"github.com/carabiner-dev/osv/go/osv"
+	"github.com/carabiner-dev/osv/scanners/grype"
+	"github.com/carabiner-dev/osv/scanners/trivy"
+	"github.com/carabiner-dev/osv/vulns"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// trivyScannerURI identifies the Trivy scanner in vulns/v0.2 Scanner.uri.
-const trivyScannerURI = "https://trivy.dev"
+// GrypePredicateType identifies a Grype JSON report. Grype does not define an
+// official in-toto predicate type, so we adopt the tool's repository URL.
+const GrypePredicateType = attestation.PredicateType("https://github.com/anchore/grype")
 
 var ClassName = "vulnreport"
 
+// PredicateTypes are the scanner report predicate types this transformer
+// accepts as input.
 var PredicateTypes = []attestation.PredicateType{
-	trivy.PredicateType,
+	ctrivy.PredicateType,
+	cosv.PredicateType,
+	GrypePredicateType,
+}
+
+// scannerURIs maps each accepted input type to the scanner identity recorded in
+// the vulns/v0.2 predicate (the OSV format does not carry scanner identity).
+var scannerURIs = map[attestation.PredicateType]string{
+	ctrivy.PredicateType: "https://trivy.dev",
+	cosv.PredicateType:   "https://github.com/google/osv-scanner",
+	GrypePredicateType:   "https://github.com/anchore/grype",
 }
 
 // Output formats the vulnreport transformer can emit.
@@ -45,7 +66,7 @@ func New() *Transformer {
 	return &Transformer{}
 }
 
-// Transformer implements the normalizer from scanner to vulnv2
+// Transformer implements the normalizer from scanner reports to OSV / vulns.
 type Transformer struct {
 	config Config
 }
@@ -79,94 +100,91 @@ func (t *Transformer) Mutate(
 ) (attestation.Subject, []attestation.Predicate, error) {
 	newPreds := []attestation.Predicate{}
 	for _, original := range preds {
-		//nolint:gocritic // This will take more types at some point
-		switch original.GetType() {
-		case trivy.PredicateType:
-			var (
-				newPred attestation.Predicate
-				err     error
-			)
-			switch t.config.Output {
-			case OutputVulnReport:
-				newPred, err = trivyToVulnsV2(original)
-			default:
-				newPred, err = t.TrivyToOSV(original)
-			}
-			if err != nil {
-				return nil, nil, fmt.Errorf("converting trivy predicate to %s: %w", t.config.Output, err)
-			}
-			newPreds = append(newPreds, newPred)
+		results, ok, err := toOSVResults(original)
+		if err != nil {
+			return nil, nil, err
 		}
+		if !ok {
+			// Not a scanner report we know how to normalize; skip it.
+			continue
+		}
+
+		var (
+			newPred attestation.Predicate
+			perr    error
+		)
+		switch t.config.Output {
+		case OutputVulnReport:
+			newPred, perr = toVulnReportPredicate(results, original.GetType())
+		default:
+			newPred, perr = toOSVPredicate(results)
+		}
+		if perr != nil {
+			return nil, nil, fmt.Errorf("building %s predicate: %w", t.config.Output, perr)
+		}
+		newPreds = append(newPreds, newPred)
 	}
 	return nil, newPreds, nil
 }
 
-func trivyToVulnsV2(original attestation.Predicate) (attestation.Predicate, error) {
-	if original == nil {
-		return nil, errors.New("original predicate undefined")
-	}
-
-	oParsed, ok := original.GetParsed().(*trivy.TrivyReport)
-	if !ok {
-		return nil, fmt.Errorf("unable to parse predicate payload as trivy report")
-	}
-
-	scanTime := time.Now()
-	if oParsed.CreatedAt != nil {
-		scanTime = *oParsed.CreatedAt
-	}
-
-	newReport := &v02.Vulns{
-		Scanner: &v02.Scanner{
-			Uri:    trivyScannerURI,
-			Result: []*v02.Result{},
-		},
-		Metadata: &v02.ScanMetadata{
-			ScanStartedOn:  timestamppb.New(scanTime),
-			ScanFinishedOn: timestamppb.New(scanTime),
-		},
-	}
-
-	for _, result := range oParsed.Results {
-		for _, vuln := range result.Vulnerabilities {
-			newResult := &v02.Result{
-				Id:          vuln.VulnerabilityID,
-				Severity:    []*v02.Result_Severity{},
-				Annotations: []*structpb.Struct{},
-			}
-
-			for _, cvss := range vuln.CVSS {
-				newResult.Severity = append(newResult.Severity, &v02.Result_Severity{
-					Method: "CVSS_V3",
-					Score:  fmt.Sprintf("%.1f", cvss.V3Score),
-				})
-			}
-
-			ann, err := structpb.NewStruct(map[string]any{
-				"package":           vuln.PkgName,
-				"installed_version": vuln.InstalledVersion,
-				"fixed_version":     vuln.FixedVersion,
-				"purl":              vuln.PkgIdentifier["PURL"],
-				"severity":          vuln.Severity,
-				"title":             vuln.Title,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("building result annotation: %w", err)
-			}
-			newResult.Annotations = append(newResult.Annotations, ann)
-
-			newReport.Scanner.Result = append(newReport.Scanner.Result, newResult)
+// toOSVResults normalizes a scanner report predicate into the OSV results
+// format. The bool is false when the predicate is not a supported scanner
+// report, in which case it should be skipped.
+func toOSVResults(pred attestation.Predicate) (*osv.Results, bool, error) {
+	data := pred.GetData()
+	switch pred.GetType() {
+	case ctrivy.PredicateType:
+		report, err := trivy.Parse(data)
+		if err != nil {
+			return nil, true, fmt.Errorf("parsing trivy report: %w", err)
 		}
+		results, err := report.ToOSV()
+		return results, true, err
+	case GrypePredicateType:
+		doc, err := grype.Parse(data)
+		if err != nil {
+			return nil, true, fmt.Errorf("parsing grype report: %w", err)
+		}
+		results, err := doc.ToOSV()
+		return results, true, err
+	case cosv.PredicateType:
+		// OSV-Scanner already emits OSV; parse it straight through.
+		results, err := osv.NewParser().ParseResults(data)
+		if err != nil {
+			return nil, true, fmt.Errorf("parsing osv results: %w", err)
+		}
+		return results, true, nil
+	default:
+		return nil, false, nil
 	}
+}
 
-	data, err := protojson.Marshal(newReport)
+// toOSVPredicate wraps an OSV results set as an OSV predicate.
+func toOSVPredicate(results *osv.Results) (attestation.Predicate, error) {
+	data, err := protojson.Marshal(results)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling osv predicate: %w", err)
+	}
+	return &generic.Predicate{
+		Type:   cosv.PredicateType,
+		Parsed: results,
+		Data:   data,
+	}, nil
+}
+
+// toVulnReportPredicate projects an OSV results set onto a vulns/v0.2 predicate.
+func toVulnReportPredicate(results *osv.Results, inputType attestation.PredicateType) (attestation.Predicate, error) {
+	predicate, err := vulns.FromResults(results, scannerURIs[inputType])
+	if err != nil {
+		return nil, fmt.Errorf("projecting to vulns/v0.2: %w", err)
+	}
+	data, err := protojson.Marshal(predicate)
 	if err != nil {
 		return nil, fmt.Errorf("marshaling vulns/v0.2 predicate: %w", err)
 	}
-
 	return &generic.Predicate{
-		Type:   vulns.PredicateType,
-		Parsed: newReport,
+		Type:   cvulns.PredicateType,
+		Parsed: predicate,
 		Data:   data,
 	}, nil
 }
