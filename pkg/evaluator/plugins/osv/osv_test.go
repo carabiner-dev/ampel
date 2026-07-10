@@ -11,8 +11,8 @@ import (
 )
 
 // sampleData mirrors the JSON shape of an OSV results predicate: two
-// vulnerabilities on one package, the first carrying an alias and a critical
-// CVSS vector, the second a medium one.
+// vulnerabilities across two packages — a critical, aliased, already-fixed Go
+// finding and an unfixed medium PyPI finding.
 func sampleData() map[string]any {
 	return map[string]any{
 		"results": []any{
@@ -28,11 +28,38 @@ func sampleData() map[string]any {
 								"severity": []any{
 									map[string]any{"type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"},
 								},
+								"affected": []any{
+									map[string]any{
+										"package": map[string]any{"name": "github.com/x/y", "ecosystem": "Go", "purl": "pkg:golang/github.com/x/y@1.2.0"},
+										"ranges": []any{
+											map[string]any{"type": "ECOSYSTEM", "events": []any{
+												map[string]any{"introduced": "0"},
+												map[string]any{"fixed": "1.3.0"},
+											}},
+										},
+									},
+								},
+								"database_specific": map[string]any{"severity": "CRITICAL"},
 							},
+						},
+					},
+					map[string]any{
+						"package": map[string]any{"name": "requests", "ecosystem": "PyPI"},
+						"vulnerabilities": []any{
 							map[string]any{
 								"id": "CVE-2026-0002",
 								"severity": []any{
 									map[string]any{"type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N"},
+								},
+								"affected": []any{
+									map[string]any{
+										"package": map[string]any{"name": "requests", "ecosystem": "PyPI", "purl": "pkg:pypi/requests@2.0"},
+										"ranges": []any{
+											map[string]any{"type": "ECOSYSTEM", "events": []any{
+												map[string]any{"introduced": "0"},
+											}},
+										},
+									},
 								},
 							},
 						},
@@ -94,6 +121,52 @@ func TestUnwrapsPredicate(t *testing.T) {
 		"data":           sampleData(),
 	}
 	require.Equal(t, int64(2), run(t, "size(osv.vulns(data))", pred))
+}
+
+func TestFixStatus(t *testing.T) {
+	t.Parallel()
+	require.Equal(t, true, run(t, "osv.isFixed(osv.vulns(data)[0])", sampleData()))
+	require.Equal(t, false, run(t, "osv.isFixed(osv.vulns(data)[1])", sampleData()))
+	require.Equal(t, true, run(t, "osv.fixedVersions(osv.vulns(data)[0]) == ['1.3.0']", sampleData()))
+	require.Equal(t, int64(0), run(t, "size(osv.fixedVersions(osv.vulns(data)[1]))", sampleData()))
+}
+
+func TestSeverityLabel(t *testing.T) {
+	t.Parallel()
+	// Derived from the highest CVSS vector.
+	require.Equal(t, "CRITICAL", run(t, "osv.severityLabel(osv.vulns(data)[0])", sampleData()))
+	// Falls back to the scanner's own label (upper-cased) when there is no CVSS.
+	require.Equal(t, "HIGH", run(t, "osv.severityLabel({'database_specific': {'severity': 'high'}})", sampleData()))
+	require.Empty(t, run(t, "osv.severityLabel({})", sampleData()))
+}
+
+func TestPackageAccessors(t *testing.T) {
+	t.Parallel()
+	require.Equal(t, "pkg:golang/github.com/x/y@1.2.0", run(t, "osv.purl(osv.vulns(data)[0])", sampleData()))
+	require.Equal(t, "Go", run(t, "osv.ecosystem(osv.vulns(data)[0])", sampleData()))
+	require.Equal(t, "PyPI", run(t, "osv.ecosystem(osv.vulns(data)[1])", sampleData()))
+	require.Empty(t, run(t, "osv.purl({})", sampleData()))
+}
+
+func TestFilters(t *testing.T) {
+	t.Parallel()
+	require.Equal(t, int64(1), run(t, "size(osv.forEcosystem(data, 'Go'))", sampleData()))
+	// Ecosystem match is case-insensitive.
+	require.Equal(t, "GHSA-aaaa-bbbb-cccc", run(t, "osv.forEcosystem(data, 'go')[0].id", sampleData()))
+	require.Equal(t, int64(1), run(t, "size(osv.forEcosystem(data, 'PyPI'))", sampleData()))
+	// forPackage matches by bare name appearing in the PURL.
+	require.Equal(t, "GHSA-aaaa-bbbb-cccc", run(t, "osv.forPackage(data, 'github.com/x/y')[0].id", sampleData()))
+	require.Equal(t, int64(0), run(t, "size(osv.forPackage(data, 'nonexistent'))", sampleData()))
+}
+
+func TestCompositePolicy(t *testing.T) {
+	t.Parallel()
+	// "no unpatched critical" — the critical vuln here is fixed, so this passes.
+	require.Equal(t, false, run(t, "osv.vulns(data).exists(v, osv.cvss(v) >= 9.0 && !osv.isFixed(v))", sampleData()))
+	// A critical fixable vuln does exist.
+	require.Equal(t, true, run(t, "osv.vulns(data).exists(v, osv.cvss(v) >= 9.0 && osv.isFixed(v))", sampleData()))
+	// Every Go vulnerability is fixed.
+	require.Equal(t, true, run(t, "osv.forEcosystem(data, 'Go').all(v, osv.isFixed(v))", sampleData()))
 }
 
 func TestEmptyAndMalformed(t *testing.T) {

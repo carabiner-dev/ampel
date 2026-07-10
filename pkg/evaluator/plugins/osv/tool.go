@@ -7,6 +7,7 @@ import (
 	"errors"
 	"reflect"
 	"slices"
+	"strings"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
@@ -22,23 +23,36 @@ var OSVType = cel.ObjectType("osv", traits.ReceiverType)
 
 type OSVTool struct{}
 
-// Functions returns the CEL member functions exposed on the `osv` object:
+// Functions returns the CEL member functions exposed on the `osv` object.
 //
-//	osv.vulns(data)        -> list  : every vulnerability, flattened across
-//	                                  results -> packages -> vulnerabilities
-//	osv.ids(data)          -> list  : the id of every vulnerability
-//	osv.aliases(vuln)      -> list  : a vulnerability's id plus its aliases
-//	osv.matchesID(vuln, id)-> bool  : true if id equals the vuln's id or an alias
-//	osv.cvss(vuln)         -> double: highest CVSS base score across the vuln's
-//	                                  severity vectors (0 when none parse)
+// Document-level take an OSV results object or a whole predicate, so both
+// osv.vulns(predicate) and osv.vulns(predicate.data) work:
 //
-// The data argument may be an OSV results object or a whole predicate (`data`
-// key is unwrapped automatically), so both osv.vulns(predicate) and
-// osv.vulns(predicate.data) work.
+//	osv.vulns(data)             -> list  : every vulnerability, flattened across
+//	                                       results -> packages -> vulnerabilities
+//	osv.ids(data)               -> list  : the id of every vulnerability
+//	osv.forEcosystem(data, eco) -> list  : vulnerabilities in the ecosystem
+//	osv.forPackage(data, name)  -> list  : vulnerabilities affecting the package
+//
+// Vulnerability-level (take a single vulnerability from osv.vulns):
+//
+//	osv.aliases(vuln)       -> list  : a vulnerability's id plus its aliases
+//	osv.matchesID(vuln, id) -> bool  : true if id equals the vuln's id or alias
+//	osv.cvss(vuln)          -> double: highest CVSS base score across severities
+//	osv.severityLabel(vuln) -> string: qualitative severity (CRITICAL/HIGH/...)
+//	osv.isFixed(vuln)       -> bool  : true if a fixed version is available
+//	osv.fixedVersions(vuln) -> list  : the versions that fix the vulnerability
+//	osv.purl(vuln)          -> string: the affected package URL
+//	osv.ecosystem(vuln)     -> string: the affected package ecosystem
 func (t *OSVTool) Functions() []cel.EnvOption {
 	return []cel.EnvOption{
+		// Document-level
 		dynListFn("vulns", flattenVulns),
 		stringListFn("ids", vulnIDs),
+		dynFilterFn("forEcosystem", forEcosystem),
+		dynFilterFn("forPackage", forPackage),
+
+		// Vulnerability-level
 		stringListFn("aliases", aliasesOf),
 		cel.Function("matchesID",
 			cel.MemberOverload("osv_matchesid_binding",
@@ -55,14 +69,12 @@ func (t *OSVTool) Functions() []cel.EnvOption {
 				}),
 			),
 		),
-		cel.Function("cvss",
-			cel.MemberOverload("osv_cvss_binding",
-				[]*cel.Type{OSVType, cel.DynType}, cel.DoubleType,
-				cel.BinaryBinding(func(_ ref.Val, rhs ref.Val) ref.Val {
-					return types.Double(bestCVSS(toGo(rhs)))
-				}),
-			),
-		),
+		doubleFn("cvss", bestCVSS),
+		stringFn("severityLabel", severityLabel),
+		boolFn("isFixed", isFixed),
+		stringListFn("fixedVersions", fixedVersions),
+		stringFn("purl", vulnPURL),
+		stringFn("ecosystem", vulnEcosystem),
 	}
 }
 
@@ -85,6 +97,62 @@ func stringListFn(name string, fn func(any) []string) cel.EnvOption {
 			[]*cel.Type{OSVType, cel.DynType}, cel.ListType(cel.StringType),
 			cel.BinaryBinding(func(_ ref.Val, rhs ref.Val) ref.Val {
 				return types.DefaultTypeAdapter.NativeToValue(fn(toGo(rhs)))
+			}),
+		),
+	)
+}
+
+// stringFn registers an (osv, dyn) -> string member function.
+func stringFn(name string, fn func(any) string) cel.EnvOption {
+	return cel.Function(name,
+		cel.MemberOverload("osv_"+name+"_binding",
+			[]*cel.Type{OSVType, cel.DynType}, cel.StringType,
+			cel.BinaryBinding(func(_ ref.Val, rhs ref.Val) ref.Val {
+				return types.String(fn(toGo(rhs)))
+			}),
+		),
+	)
+}
+
+// boolFn registers an (osv, dyn) -> bool member function.
+func boolFn(name string, fn func(any) bool) cel.EnvOption {
+	return cel.Function(name,
+		cel.MemberOverload("osv_"+name+"_binding",
+			[]*cel.Type{OSVType, cel.DynType}, cel.BoolType,
+			cel.BinaryBinding(func(_ ref.Val, rhs ref.Val) ref.Val {
+				return types.Bool(fn(toGo(rhs)))
+			}),
+		),
+	)
+}
+
+// doubleFn registers an (osv, dyn) -> double member function.
+func doubleFn(name string, fn func(any) float64) cel.EnvOption {
+	return cel.Function(name,
+		cel.MemberOverload("osv_"+name+"_binding",
+			[]*cel.Type{OSVType, cel.DynType}, cel.DoubleType,
+			cel.BinaryBinding(func(_ ref.Val, rhs ref.Val) ref.Val {
+				return types.Double(fn(toGo(rhs)))
+			}),
+		),
+	)
+}
+
+// dynFilterFn registers an (osv, dyn, string) -> list<dyn> member function used
+// by the document-level filters (forEcosystem, forPackage).
+func dynFilterFn(name string, fn func(any, string) []any) cel.EnvOption {
+	return cel.Function(name,
+		cel.MemberOverload("osv_"+name+"_binding",
+			[]*cel.Type{OSVType, cel.DynType, cel.StringType}, cel.ListType(cel.DynType),
+			cel.FunctionBinding(func(args ...ref.Val) ref.Val {
+				if len(args) != 3 {
+					return types.NewErrFromString("osv." + name + " requires data and a string argument")
+				}
+				arg, ok := args[2].Value().(string)
+				if !ok {
+					return types.NewErrFromString("osv." + name + ": second argument must be a string")
+				}
+				return types.DefaultTypeAdapter.NativeToValue(fn(toGo(args[1]), arg))
 			}),
 		),
 	)
@@ -176,18 +244,18 @@ func aliasesOf(vuln any) []string {
 	return out
 }
 
-// bestCVSS returns the highest CVSS base score across the vulnerability's
-// severity vectors, or 0 when none are present or parseable.
-func bestCVSS(vuln any) float64 {
+// bestVector returns the severity vector with the highest CVSS score, or "".
+func bestVector(vuln any) string {
 	vm, ok := vuln.(map[string]any)
 	if !ok {
-		return 0
+		return ""
 	}
 	severities, ok := vm["severity"].([]any)
 	if !ok {
-		return 0
+		return ""
 	}
-	best := 0.0
+	best := ""
+	bestScore := -1.0
 	for _, s := range severities {
 		sm, ok := s.(map[string]any)
 		if !ok {
@@ -197,11 +265,163 @@ func bestCVSS(vuln any) float64 {
 		if !ok || vector == "" {
 			continue
 		}
-		if score, err := cvss.Score(vector); err == nil && score > best {
-			best = score
+		if score, err := cvss.Score(vector); err == nil && score > bestScore {
+			bestScore = score
+			best = vector
 		}
 	}
 	return best
+}
+
+// bestCVSS returns the highest CVSS base score across the vulnerability's
+// severity vectors, or 0 when none are present or parseable.
+func bestCVSS(vuln any) float64 {
+	vector := bestVector(vuln)
+	if vector == "" {
+		return 0
+	}
+	if score, err := cvss.Score(vector); err == nil {
+		return score
+	}
+	return 0
+}
+
+// severityLabel returns a qualitative severity: the CVSS rating of the highest
+// scoring vector, falling back to the scanner's own label in database_specific
+// (upper-cased) for vulnerabilities that carry no CVSS vector.
+func severityLabel(vuln any) string {
+	if vector := bestVector(vuln); vector != "" {
+		if severity, err := cvss.Severity(vector); err == nil && severity != "" {
+			return severity
+		}
+	}
+	if s := dbSpecificSeverity(vuln); s != "" {
+		return strings.ToUpper(s)
+	}
+	return ""
+}
+
+// dbSpecificSeverity returns the scanner-provided severity label stored in the
+// vulnerability's database_specific block, if any.
+func dbSpecificSeverity(vuln any) string {
+	vm, ok := vuln.(map[string]any)
+	if !ok {
+		return ""
+	}
+	db, ok := vm["database_specific"].(map[string]any)
+	if !ok {
+		return ""
+	}
+	if s, ok := db["severity"].(string); ok {
+		return s
+	}
+	return ""
+}
+
+// fixedVersions returns every version that fixes the vulnerability, drawn from
+// the affected ranges' "fixed" events.
+func fixedVersions(vuln any) []string {
+	out := []string{}
+	vm, ok := vuln.(map[string]any)
+	if !ok {
+		return out
+	}
+	affected, ok := vm["affected"].([]any)
+	if !ok {
+		return out
+	}
+	for _, a := range affected {
+		am, ok := a.(map[string]any)
+		if !ok {
+			continue
+		}
+		ranges, ok := am["ranges"].([]any)
+		if !ok {
+			continue
+		}
+		for _, r := range ranges {
+			rm, ok := r.(map[string]any)
+			if !ok {
+				continue
+			}
+			events, ok := rm["events"].([]any)
+			if !ok {
+				continue
+			}
+			for _, e := range events {
+				em, ok := e.(map[string]any)
+				if !ok {
+					continue
+				}
+				if fixed, ok := em["fixed"].(string); ok && fixed != "" {
+					out = append(out, fixed)
+				}
+			}
+		}
+	}
+	return out
+}
+
+// isFixed reports whether the vulnerability has at least one fixed version.
+func isFixed(vuln any) bool {
+	return len(fixedVersions(vuln)) > 0
+}
+
+// affectedPackageField returns the first non-empty value of the named field
+// across the vulnerability's affected packages.
+func affectedPackageField(vuln any, field string) string {
+	vm, ok := vuln.(map[string]any)
+	if !ok {
+		return ""
+	}
+	affected, ok := vm["affected"].([]any)
+	if !ok {
+		return ""
+	}
+	for _, a := range affected {
+		am, ok := a.(map[string]any)
+		if !ok {
+			continue
+		}
+		pkg, ok := am["package"].(map[string]any)
+		if !ok {
+			continue
+		}
+		if v, ok := pkg[field].(string); ok && v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+func vulnPURL(vuln any) string      { return affectedPackageField(vuln, "purl") }
+func vulnEcosystem(vuln any) string { return affectedPackageField(vuln, "ecosystem") }
+
+// forEcosystem returns the vulnerabilities whose affected package is in the
+// given OSV ecosystem (matched case-insensitively).
+func forEcosystem(data any, ecosystem string) []any {
+	out := []any{}
+	for _, v := range flattenVulns(data) {
+		if strings.EqualFold(vulnEcosystem(v), ecosystem) {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
+// forPackage returns the vulnerabilities affecting the given package, matched
+// by exact package name or PURL, or by the query appearing within the PURL (so
+// a bare package name matches its versioned PURL).
+func forPackage(data any, pkg string) []any {
+	out := []any{}
+	for _, v := range flattenVulns(data) {
+		name := affectedPackageField(v, "name")
+		purl := vulnPURL(v)
+		if name == pkg || purl == pkg || (pkg != "" && strings.Contains(purl, pkg)) {
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 // toGo converts a CEL value (a structpb-backed map/list from predicate data)
