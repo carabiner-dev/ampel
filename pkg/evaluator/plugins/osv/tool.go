@@ -44,6 +44,15 @@ type OSVTool struct{}
 //	osv.fixedVersions(vuln) -> list  : the versions that fix the vulnerability
 //	osv.purl(vuln)          -> string: the affected package URL
 //	osv.ecosystem(vuln)     -> string: the affected package ecosystem
+//	osv.references(vuln)    -> list  : reference URLs
+//
+// Enriched field provided by original scanners *stored in database_specific) and
+// which default to 0/false/empty when the scanner did not supply the field:
+//
+//	osv.epss(vuln)  -> double: EPSS exploitation probability (0..1)
+//	osv.risk(vuln)  -> double: scanner risk score
+//	osv.isKEV(vuln) -> bool  : listed in a known-exploited catalog (CISA KEV)
+//	osv.cwes(vuln)  -> list  : associated CWE identifiers
 func (t *OSVTool) Functions() []cel.EnvOption {
 	return []cel.EnvOption{
 		// Document-level
@@ -75,6 +84,13 @@ func (t *OSVTool) Functions() []cel.EnvOption {
 		stringListFn("fixedVersions", fixedVersions),
 		stringFn("purl", vulnPURL),
 		stringFn("ecosystem", vulnEcosystem),
+		stringListFn("references", vulnReferences),
+
+		// Enrichment (from database_specific)
+		doubleFn("epss", vulnEPSS),
+		doubleFn("risk", vulnRisk),
+		boolFn("isKEV", vulnIsKEV),
+		stringListFn("cwes", vulnCWEs),
 	}
 }
 
@@ -436,6 +452,102 @@ func toGo(v ref.Val) any {
 		}
 	}
 	return v.Value()
+}
+
+// vulnReferences returns the URLs of the vulnerability's references.
+func vulnReferences(vuln any) []string {
+	out := []string{}
+	vm, ok := vuln.(map[string]any)
+	if !ok {
+		return out
+	}
+	refs, ok := vm["references"].([]any)
+	if !ok {
+		return out
+	}
+	for _, r := range refs {
+		rm, ok := r.(map[string]any)
+		if !ok {
+			continue
+		}
+		if url, ok := rm["url"].(string); ok && url != "" {
+			out = append(out, url)
+		}
+	}
+	return out
+}
+
+// dbSpecific returns the vulnerability's database_specific object, or nil.
+func dbSpecific(vuln any) map[string]any {
+	vm, ok := vuln.(map[string]any)
+	if !ok {
+		return nil
+	}
+	if db, ok := vm["database_specific"].(map[string]any); ok {
+		return db
+	}
+	return nil
+}
+
+// vulnEPSS returns the EPSS probability from database_specific. It accepts
+// either a bare number or a list of EPSS records (scanner-dependent shape),
+// returning the first record's score in the latter case.
+func vulnEPSS(vuln any) float64 {
+	db := dbSpecific(vuln)
+	if db == nil {
+		return 0
+	}
+	switch v := db["epss"].(type) {
+	case float64:
+		return v
+	case []any:
+		if len(v) > 0 {
+			if m, ok := v[0].(map[string]any); ok {
+				if f, ok := m["epss"].(float64); ok {
+					return f
+				}
+			}
+		}
+	}
+	return 0
+}
+
+// vulnRisk returns the scanner-provided risk score from database_specific.
+func vulnRisk(vuln any) float64 {
+	if db := dbSpecific(vuln); db != nil {
+		if f, ok := db["risk"].(float64); ok {
+			return f
+		}
+	}
+	return 0
+}
+
+// vulnIsKEV reports whether the vulnerability is flagged as known-exploited in
+// database_specific.
+func vulnIsKEV(vuln any) bool {
+	if db := dbSpecific(vuln); db != nil {
+		if b, ok := db["known_exploited"].(bool); ok {
+			return b
+		}
+	}
+	return false
+}
+
+// vulnCWEs returns the CWE identifiers stored in database_specific.
+func vulnCWEs(vuln any) []string {
+	out := []string{}
+	db := dbSpecific(vuln)
+	if db == nil {
+		return out
+	}
+	if list, ok := db["cwe_ids"].([]any); ok {
+		for _, c := range list {
+			if s, ok := c.(string); ok && s != "" {
+				out = append(out, s)
+			}
+		}
+	}
+	return out
 }
 
 // CEL ref.Val + Library plumbing.

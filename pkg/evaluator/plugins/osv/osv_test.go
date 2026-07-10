@@ -39,7 +39,17 @@ func sampleData() map[string]any {
 										},
 									},
 								},
-								"database_specific": map[string]any{"severity": "CRITICAL"},
+								"references": []any{
+									map[string]any{"type": "ADVISORY", "url": "https://github.com/advisories/GHSA-aaaa-bbbb-cccc"},
+									map[string]any{"type": "WEB", "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-0001"},
+								},
+								"database_specific": map[string]any{
+									"severity":        "CRITICAL",
+									"risk":            0.34,
+									"epss":            0.88,
+									"known_exploited": true,
+									"cwe_ids":         []any{"CWE-89"},
+								},
 							},
 						},
 					},
@@ -167,6 +177,30 @@ func TestCompositePolicy(t *testing.T) {
 	require.Equal(t, true, run(t, "osv.vulns(data).exists(v, osv.cvss(v) >= 9.0 && osv.isFixed(v))", sampleData()))
 	// Every Go vulnerability is fixed.
 	require.Equal(t, true, run(t, "osv.forEcosystem(data, 'Go').all(v, osv.isFixed(v))", sampleData()))
+}
+
+func TestReferences(t *testing.T) {
+	t.Parallel()
+	require.Equal(t, int64(2), run(t, "size(osv.references(osv.vulns(data)[0]))", sampleData()))
+	require.Equal(t, "https://github.com/advisories/GHSA-aaaa-bbbb-cccc", run(t, "osv.references(osv.vulns(data)[0])[0]", sampleData()))
+	require.Equal(t, int64(0), run(t, "size(osv.references(osv.vulns(data)[1]))", sampleData()))
+}
+
+func TestEnrichment(t *testing.T) {
+	t.Parallel()
+	// Present on the first (Go) finding.
+	require.InDelta(t, 0.88, run(t, "osv.epss(osv.vulns(data)[0])", sampleData()), 0.001)
+	require.InDelta(t, 0.34, run(t, "osv.risk(osv.vulns(data)[0])", sampleData()), 0.001)
+	require.Equal(t, true, run(t, "osv.isKEV(osv.vulns(data)[0])", sampleData()))
+	require.Equal(t, true, run(t, "osv.cwes(osv.vulns(data)[0]) == ['CWE-89']", sampleData()))
+
+	// Absent on the second finding — safe zero values.
+	require.InDelta(t, 0.0, run(t, "osv.epss(osv.vulns(data)[1])", sampleData()), 0.001)
+	require.Equal(t, false, run(t, "osv.isKEV(osv.vulns(data)[1])", sampleData()))
+	require.Equal(t, int64(0), run(t, "size(osv.cwes(osv.vulns(data)[1]))", sampleData()))
+
+	// A realistic triage policy: fail only on exploited-or-likely critical vulns.
+	require.Equal(t, true, run(t, "osv.vulns(data).exists(v, osv.cvss(v) >= 9.0 && (osv.isKEV(v) || osv.epss(v) >= 0.5))", sampleData()))
 }
 
 func TestEmptyAndMalformed(t *testing.T) {
