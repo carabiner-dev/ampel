@@ -87,8 +87,7 @@ func (t *Transformer) classifyAttestations(predicates []attestation.Predicate) (
 				report = t
 				continue
 			} else {
-				fmt.Printf("%+T", p.GetParsed())
-				logrus.Debugf("found OSV predicate but could not find results")
+				logrus.Debugf("found OSV predicate but could not find results (got %T)", p.GetParsed())
 			}
 		}
 
