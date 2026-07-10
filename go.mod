@@ -5,10 +5,10 @@ go 1.26.4
 require (
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/carabiner-dev/attestation v0.2.1
-	github.com/carabiner-dev/collector v0.3.8
+	github.com/carabiner-dev/collector v0.3.9-0.20260710065700-35858011e579
 	github.com/carabiner-dev/command v0.3.1
 	github.com/carabiner-dev/hasher v0.2.4
-	github.com/carabiner-dev/osv v0.0.0-20250124012120-b8ce4531cd92
+	github.com/carabiner-dev/osv v0.1.0
 	github.com/carabiner-dev/policy v0.5.1
 	github.com/carabiner-dev/predicates v0.5.0
 	github.com/carabiner-dev/termtable v1.1.0
@@ -107,7 +107,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/mod v0.37.0 // indirect
-	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/term v0.44.0 // indirect
