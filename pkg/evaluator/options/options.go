@@ -8,6 +8,14 @@ package options
 type EvaluatorOptions struct {
 	LoadDefaultPlugins bool
 	ParallelWorkers    int8
+
+	// SkipUnsupportedRuntime makes the evaluator factory soft-fail (skip) tenets
+	// whose policy declares a runtime engine version or plugins that this binary
+	// does not provide, instead of failing them. This lets a policy set combine
+	// policies that rely on newer engine features with older engines that skip
+	// them rather than reporting a hard failure. The default (false) preserves
+	// the failing behavior.
+	SkipUnsupportedRuntime bool
 }
 
 var Default = EvaluatorOptions{
