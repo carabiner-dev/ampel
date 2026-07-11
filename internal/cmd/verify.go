@@ -211,6 +211,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	)
 
 	cmd.PersistentFlags().BoolVar(
+		&o.SkipUnsupportedRuntime, "skip-unsupported-runtime", verifier.DefaultVerificationOptions.SkipUnsupportedRuntime, "soft-fail policies when the runtime or plugins are unavailable",
+	)
+
+	cmd.PersistentFlags().BoolVar(
 		&o.Sign, "sign", false, "sign the results attestation",
 	)
 	o.SignerSet.AddFlags(cmd)
@@ -220,7 +224,7 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	groupFlags(cmd, grpEvidence, "key", "attestation", "collector", "signer")
 	groupFlags(cmd, grpContext, "context", "context-json", "context-yaml", "context-env")
 	groupFlags(cmd, grpResults, "attest-results", "attest-format", "results-path", "format", "publish")
-	groupFlags(cmd, grpVerification, "exit-code", "workers", "allow-empty-set-chain")
+	groupFlags(cmd, grpVerification, "exit-code", "workers", "allow-empty-set-chain", "skip-unsupported-runtime")
 	groupFlags(cmd, grpSigning, "sign")
 	// Sweep every flag the SignerSet just registered into the
 	// Signing section. Doing it post-hoc keeps the signer library's

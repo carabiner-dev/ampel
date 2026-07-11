@@ -414,8 +414,7 @@ func (di *defaultIplementation) BuildEvaluators(opts *VerificationOptions, p *pa
 		if _, ok := evaluators[cl]; ok {
 			continue
 		}
-		// TODO(puerco): Options here should come from the verifier options
-		e, err := factory.Get(&options.EvaluatorOptions{}, rt)
+		e, err := factory.Get(&opts.EvaluatorOptions, rt)
 		if err != nil {
 			return nil, fmt.Errorf("building %q runtime: %w", t.Runtime, err)
 		}

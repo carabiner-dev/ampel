@@ -38,10 +38,21 @@ func (f *Factory) Get(opts *options.EvaluatorOptions, c class.Class) (Evaluator,
 	if err != nil {
 		return nil, err
 	}
+
+	// When the policy's declared runtime asks for an engine version or plugins
+	// this binary cannot satisfy, we route its tenets to a stub evaluator. By
+	// default the stub fails them; when the caller opts in via
+	// SkipUnsupportedRuntime it soft-fails (skips) them instead.
+	mismatchStatus := papi.StatusFAIL
+	if opts.SkipUnsupportedRuntime {
+		mismatchStatus = papi.StatusSOFTFAIL
+	}
+
 	if !class.SupportsVersion(c.Version(), e.SupportedVersion()) {
 		return &versionMismatchEvaluator{
 			errMsg:    fmt.Sprintf("version %s is not supported by this engine (supports %s@%s)", c.String(), c.Name(), e.SupportedVersion()),
 			supported: e.SupportedVersion(),
+			status:    mismatchStatus,
 		}, nil
 	}
 	if pp, ok := e.(PluginAware); ok {
@@ -49,6 +60,7 @@ func (f *Factory) Get(opts *options.EvaluatorOptions, c class.Class) (Evaluator,
 			return &versionMismatchEvaluator{ //nolint:nilerr
 				errMsg:    err.Error(),
 				supported: e.SupportedVersion(),
+				status:    mismatchStatus,
 			}, nil
 		}
 	}
@@ -96,16 +108,25 @@ type Evaluator interface {
 
 // versionMismatchEvaluator is returned by the factory when the policy spec
 // requests a runtime or plugin version the engine binary does not support.
-// Every tenet routed to it produces a FAIL with a clear message; no code is executed.
+// Every tenet routed to it produces a result with status (FAIL by default, or
+// SOFTFAIL when the caller opted to skip unsupported runtimes) and a clear
+// message; no policy code is executed.
 type versionMismatchEvaluator struct {
 	errMsg    string
 	supported string
+	// status is the EvalResult status emitted for every tenet routed here.
+	// Empty is treated as FAIL.
+	status string
 }
 
 func (v *versionMismatchEvaluator) ExecTenet(_ context.Context, _ *options.EvaluatorOptions, tenet *papi.Tenet, _ []attestation.Predicate) (*papi.EvalResult, error) {
+	status := v.status
+	if status == "" {
+		status = papi.StatusFAIL
+	}
 	return &papi.EvalResult{
 		Id:     tenet.GetId(),
-		Status: papi.StatusFAIL,
+		Status: status,
 		Date:   timestamppb.Now(),
 		Error:  &papi.Error{Message: v.err().Error()},
 	}, nil

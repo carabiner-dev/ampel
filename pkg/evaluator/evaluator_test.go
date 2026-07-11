@@ -152,3 +152,42 @@ func TestFactoryVersionMismatch(t *testing.T) {
 		require.False(t, ok, "satisfied plugin with transformer requirement should return a real evaluator")
 	})
 }
+
+func TestFactorySkipUnsupportedRuntime(t *testing.T) {
+	t.Parallel()
+	f := &Factory{}
+
+	skipOpts := options.Default
+	skipOpts.SkipUnsupportedRuntime = true
+
+	// Each case declares a runtime this engine cannot satisfy. With the skip
+	// option on, the stub soft-fails the tenet; with it off (options.Default),
+	// the stub fails it.
+	for _, tc := range []struct {
+		name  string
+		class string
+	}{
+		{"unsupported engine version", "cel@v99"},
+		{"missing plugin", "cel@v0?plugin:nosuchplugin=v0"},
+		{"plugin version too new", "cel@v0?plugin:semver=v99"},
+	} {
+		t.Run(tc.name+" soft-fails when skipping", func(t *testing.T) {
+			t.Parallel()
+			e, err := f.Get(&skipOpts, class.MustParseClass(tc.class))
+			require.NoError(t, err)
+			result, err := e.ExecTenet(context.Background(), &skipOpts, &papi.Tenet{Id: "t"}, nil)
+			require.NoError(t, err)
+			require.Equal(t, papi.StatusSOFTFAIL, result.GetStatus(), "skip option should soft-fail unsupported runtime")
+			require.NotEmpty(t, result.GetError().GetMessage(), "the skipped result should still explain why")
+		})
+
+		t.Run(tc.name+" fails by default", func(t *testing.T) {
+			t.Parallel()
+			e, err := f.Get(&options.Default, class.MustParseClass(tc.class))
+			require.NoError(t, err)
+			result, err := e.ExecTenet(context.Background(), &options.Default, &papi.Tenet{Id: "t"}, nil)
+			require.NoError(t, err)
+			require.Equal(t, papi.StatusFAIL, result.GetStatus(), "default behavior should fail unsupported runtime")
+		})
+	}
+}
