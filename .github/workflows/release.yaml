@@ -38,7 +38,7 @@ jobs:
         uses: carabiner-dev/actions/go/versions@94f29392187fe5082d1195a7d4cae3a7ddf09d9c # v1.2.1
 
       - name: Set up Go
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ steps.versions.outputs.GO_MINOR_VERSION_STABLE }}
           check-latest: true
