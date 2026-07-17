@@ -543,6 +543,10 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 	// predicate, so serialize the verify-and-match step under the per-run lock
 	// published on the context (nil outside a concurrent fan-out).
 	validSigners := make([][]*sapi.Identity, len(envelopes))
+	// observedSigners collects the actual signer identities seen on the
+	// verified attestations. It is used to build a "wanted / got" diagnostic
+	// when no attestation matches an accepted identity.
+	var observedSigners []*sapi.Identity
 	if mu := sharedEvidenceLock(ctx); mu != nil {
 		mu.Lock()
 		defer mu.Unlock()
@@ -556,6 +560,12 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 		if e.GetVerification() == nil || !e.GetVerification().GetVerified() {
 			logrus.Debugf("attestation %d (type %s): not verified, skipping", i, e.GetStatement().GetType())
 			continue
+		}
+
+		if v, ok := e.GetVerification().(*sapi.Verification); ok {
+			if sig := v.GetSignature(); sig != nil {
+				observedSigners = append(observedSigners, sig.GetIdentities()...)
+			}
 		}
 
 		for _, id := range allIds {
@@ -580,11 +590,51 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 
 	if !matched {
 		return false, validSigners, []error{
-			fmt.Errorf("no attestations matched a recognized signer identity"),
+			identityMismatchError(allIds, observedSigners),
 		}, nil
 	}
 
 	return true, validSigners, nil, nil
+}
+
+// identityMismatchError builds a human-readable "wanted / got" diagnostic for a
+// signer-identity check that admitted no attestations. The wanted identities are
+// rendered in their rich (matcher-aware) form; the observed signers as pure
+// principals.
+func identityMismatchError(wanted, got []*sapi.Identity) error {
+	if len(got) == 0 {
+		return fmt.Errorf(
+			"no attestation carried a verified signer identity (wanted one of: %s)",
+			renderIdentities(wanted, (*sapi.Identity).Spec),
+		)
+	}
+	return fmt.Errorf(
+		"attestation signer does not match an accepted identity (wanted one of: %s; got: %s)",
+		renderIdentities(wanted, (*sapi.Identity).Spec),
+		renderIdentities(got, (*sapi.Identity).Principal),
+	)
+}
+
+// renderIdentities renders a list of identities to a comma-separated string
+// using the provided rendering function, de-duplicating and dropping empties.
+func renderIdentities(ids []*sapi.Identity, render func(*sapi.Identity) string) string {
+	seen := make(map[string]struct{}, len(ids))
+	parts := make([]string, 0, len(ids))
+	for _, id := range ids {
+		s := render(id)
+		if s == "" {
+			continue
+		}
+		if _, ok := seen[s]; ok {
+			continue
+		}
+		seen[s] = struct{}{}
+		parts = append(parts, s)
+	}
+	if len(parts) == 0 {
+		return "(none)"
+	}
+	return strings.Join(parts, ", ")
 }
 
 // FilterAttestations filters the attestations read to only those required by the

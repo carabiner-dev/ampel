@@ -823,3 +823,56 @@ func TestVerifySubjectErrOnMissingAttestations(t *testing.T) {
 		})
 	}
 }
+
+func TestRenderIdentities(t *testing.T) {
+	t.Parallel()
+	sigstoreID := func(issuer, id string) *sapi.Identity {
+		return &sapi.Identity{Sigstore: &sapi.IdentitySigstore{Issuer: issuer, Identity: id}}
+	}
+
+	t.Run("empty", func(t *testing.T) {
+		t.Parallel()
+		require.Equal(t, "(none)", renderIdentities(nil, (*sapi.Identity).Principal))
+	})
+
+	t.Run("dedup", func(t *testing.T) {
+		t.Parallel()
+		id := sigstoreID("https://issuer", "user@example.com")
+		require.Equal(t,
+			"sigstore::https://issuer::user@example.com",
+			renderIdentities([]*sapi.Identity{id, id}, (*sapi.Identity).Principal),
+		)
+	})
+
+	t.Run("multiple", func(t *testing.T) {
+		t.Parallel()
+		got := renderIdentities([]*sapi.Identity{
+			sigstoreID("https://issuer", "a"),
+			sigstoreID("https://issuer", "b"),
+		}, (*sapi.Identity).Principal)
+		require.Contains(t, got, "sigstore::https://issuer::a")
+		require.Contains(t, got, "sigstore::https://issuer::b")
+		require.Contains(t, got, ", ")
+	})
+}
+
+func TestIdentityMismatchError(t *testing.T) {
+	t.Parallel()
+	wanted := []*sapi.Identity{{Sigstore: &sapi.IdentitySigstore{Issuer: "https://issuer", Identity: "expected"}}}
+
+	t.Run("no-signer-observed", func(t *testing.T) {
+		t.Parallel()
+		err := identityMismatchError(wanted, nil)
+		require.Contains(t, err.Error(), "no attestation carried a verified signer identity")
+		require.Contains(t, err.Error(), "sigstore::https://issuer::expected")
+	})
+
+	t.Run("mismatch", func(t *testing.T) {
+		t.Parallel()
+		got := []*sapi.Identity{{Sigstore: &sapi.IdentitySigstore{Issuer: "https://issuer", Identity: "actual"}}}
+		err := identityMismatchError(wanted, got)
+		require.Contains(t, err.Error(), "does not match an accepted identity")
+		require.Contains(t, err.Error(), "wanted one of: sigstore::https://issuer::expected")
+		require.Contains(t, err.Error(), "got: sigstore::https://issuer::actual")
+	})
+}
