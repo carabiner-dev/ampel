@@ -121,7 +121,9 @@ func convertToInt64(value any) (int64, error) {
 	case int32:
 		return int64(v), nil
 	case uint:
-		if v > math.MaxInt64 {
+		// uint is platform sized, so widen before comparing: on 32-bit builds
+		// the untyped MaxInt64 constant does not fit in a uint.
+		if uint64(v) > math.MaxInt64 {
 			return 0, fmt.Errorf("uint value %d overflows int64", v)
 		}
 		return int64(v), nil
