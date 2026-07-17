@@ -30,8 +30,6 @@ builds:
       - arm64
       - arm
     ignore:
-      - goos: windows
-        goarch: arm64
       # 32-bit arm is built for linux only: darwin dropped it and there is no
       # windows/arm target worth shipping.
       - goos: windows
