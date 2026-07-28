@@ -34,8 +34,11 @@ var _ attestation.Predicate = (*mockPredicate)(nil)
 func newTestEnv(t *testing.T) *cel.Env {
 	t.Helper()
 	vco := verificationCompileOptions()
-	opts := make([]cel.EnvOption, 0, 1+len(vco))
-	opts = append(opts, cel.Variable("predicate", cel.AnyType))
+	opts := make([]cel.EnvOption, 0, 2+len(vco))
+	// Optional types mirror the production environment (see the envOpts in
+	// implementation.go) so tests can pin the optional syntax
+	// (s.?field.orValue(...)) policies rely on.
+	opts = append(opts, cel.Variable("predicate", cel.AnyType), cel.OptionalTypes())
 	opts = append(opts, vco...)
 	env, err := cel.NewEnv(opts...)
 	require.NoError(t, err)
@@ -279,6 +282,12 @@ func TestPredicateVerificationSigners(t *testing.T) {
 		require.True(t, evalBool(t, env, `size(predicate.verification.signers) == 1`, vars))
 		require.True(t, evalBool(t, env, `predicate.verification.signers[0].sigstore.identity == "alice@example.com"`, vars))
 		require.True(t, evalBool(t, env, `predicate.verification.signers.exists(s, has(s.sigstore))`, vars))
+
+		// The optional-types syntax must work on signer elements: presence
+		// checks, safe chained selection and safe traversal of absent fields.
+		require.True(t, evalBool(t, env, `predicate.verification.signers.exists(s, s.?sigstore.hasValue())`, vars))
+		require.True(t, evalBool(t, env, `predicate.verification.signers.exists(s, s.?sigstore.?identity.orValue("") == "alice@example.com")`, vars))
+		require.True(t, evalBool(t, env, `predicate.verification.signers.all(s, s.?key.?id.orValue("none") == "none")`, vars))
 	})
 
 	// With an allowlist: identities is the matched subset (signerA only) while
