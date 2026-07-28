@@ -44,9 +44,6 @@ jobs:
           check-latest: true
           cache: false
 
-      - name: Install tejolote
-        uses: kubernetes-sigs/release-actions/setup-tejolote@c130b4494862d330a1aa4de320076c666d0708da # v0.4.4
-
       - name: Set tag output
         id: tag
         run: echo "tag_name=${GITHUB_REF#refs/*/}" >> "$GITHUB_OUTPUT"
@@ -97,14 +94,13 @@ jobs:
           cosign sign --yes "$IMAGE_REF"
 
       - name: Generate Provenance
-        id: tejolote
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          TAG_NAME: ${{ steps.tag.outputs.tag_name }}
-        run: |
-            tejolote attest --artifacts "github://${REPO}/${TAG_NAME}" "github://${REPO}/${GITHUB_RUN_ID}" --output provenance.json
+        uses: carabiner-dev/actions/slsa/generate@c9a8158ef3d690fe4dfbe61b9b262bfed8db80da # v1.2.5
+        with:
+          # Keep the statement unsigned: the image subjects get added to it
+          # below before bnd signs and uploads it to the release.
+          sign: "false"
+          output: provenance.json
+          artifacts: github://${{ github.repository }}/${{ steps.tag.outputs.tag_name }}
 
       - name: Add image subjects to provenance
         run: |
