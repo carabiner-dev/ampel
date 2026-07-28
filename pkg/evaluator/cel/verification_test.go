@@ -225,6 +225,109 @@ func TestPredicateVerificationFieldAccess(t *testing.T) {
 	})
 }
 
+// mockPredicateSigners extends mockPredicate with the actual verified signer
+// identities, mirroring verifier.matchedPredicate. It satisfies SignersProvider
+// so verification.signers is populated from Signers() rather than from the
+// verification's (matched-subset) identities.
+type mockPredicateSigners struct {
+	mockPredicate
+	signers []*sapi.Identity
+}
+
+func (m *mockPredicateSigners) Signers() []*sapi.Identity { return m.signers }
+
+var (
+	_ attestation.Predicate = (*mockPredicateSigners)(nil)
+	_ SignersProvider       = (*mockPredicateSigners)(nil)
+)
+
+func TestPredicateVerificationSigners(t *testing.T) {
+	t.Parallel()
+	env := newTestEnv(t)
+
+	signerA := &sapi.Identity{
+		Sigstore: &sapi.IdentitySigstore{
+			Issuer:   "https://accounts.google.com",
+			Identity: "alice@example.com",
+		},
+	}
+	signerB := &sapi.Identity{
+		Sigstore: &sapi.IdentitySigstore{
+			Issuer:   "https://accounts.google.com",
+			Identity: "bob@example.com",
+		},
+	}
+
+	// No allowlist: the verification's identities subset is empty while signers
+	// carries the actual signer AMPEL verified.
+	t.Run("no-allowlist", func(t *testing.T) {
+		t.Parallel()
+		pred := &mockPredicateSigners{
+			mockPredicate: mockPredicate{
+				verification: &sapi.Verification{
+					Signature: &sapi.SignatureVerification{
+						Verified:   true,
+						Identities: nil, // no allowlist supplied → empty subset
+					},
+				},
+			},
+			signers: []*sapi.Identity{signerA},
+		}
+		vars := testPredicateVars(pred)
+
+		require.True(t, evalBool(t, env, `size(predicate.verification.identities) == 0`, vars))
+		require.True(t, evalBool(t, env, `size(predicate.verification.signers) == 1`, vars))
+		require.True(t, evalBool(t, env, `predicate.verification.signers[0].sigstore.identity == "alice@example.com"`, vars))
+		require.True(t, evalBool(t, env, `predicate.verification.signers.exists(s, has(s.sigstore))`, vars))
+	})
+
+	// With an allowlist: identities is the matched subset (signerA only) while
+	// signers remains the full actual set (signerA and signerB).
+	t.Run("with-allowlist", func(t *testing.T) {
+		t.Parallel()
+		pred := &mockPredicateSigners{
+			mockPredicate: mockPredicate{
+				verification: &sapi.Verification{
+					Signature: &sapi.SignatureVerification{
+						Verified:   true,
+						Identities: []*sapi.Identity{signerA}, // matched subset
+					},
+				},
+			},
+			signers: []*sapi.Identity{signerA, signerB}, // full actual set
+		}
+		vars := testPredicateVars(pred)
+
+		require.True(t, evalBool(t, env, `size(predicate.verification.identities) == 1`, vars))
+		require.True(t, evalBool(t, env, `predicate.verification.identities[0].sigstore.identity == "alice@example.com"`, vars))
+		require.True(t, evalBool(t, env, `size(predicate.verification.signers) == 2`, vars))
+		require.True(t, evalBool(t, env, `predicate.verification.signers.exists(s, s.sigstore.identity == "bob@example.com")`, vars))
+	})
+
+	// A predicate that does not implement SignersProvider exposes an empty
+	// signers list (never absent), so policies can safely reference it.
+	t.Run("no-signers-provider", func(t *testing.T) {
+		t.Parallel()
+		pred := &mockPredicate{
+			verification: &sapi.Verification{
+				Signature: &sapi.SignatureVerification{
+					Verified:   true,
+					Identities: []*sapi.Identity{signerA},
+				},
+			},
+		}
+		vars := testPredicateVars(pred)
+		require.True(t, evalBool(t, env, `size(predicate.verification.signers) == 0`, vars))
+	})
+
+	// A nil predicate yields the default value with an empty signers list.
+	t.Run("nil-predicate", func(t *testing.T) {
+		t.Parallel()
+		vars := testPredicateVars(nil)
+		require.True(t, evalBool(t, env, `size(predicate.verification.signers) == 0`, vars))
+	})
+}
+
 func TestPredicateDataAccess(t *testing.T) {
 	t.Parallel()
 	env := newTestEnv(t)
