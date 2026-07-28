@@ -295,6 +295,10 @@ var _ attestation.Predicate = &fakePredicate{}
 type fakeEnvelope struct {
 	ver  attestation.Verification
 	pred attestation.Predicate
+	// verOnVerify, when set, is recorded as the envelope's verification by
+	// Verify, mimicking real envelopes that cache their verification result
+	// when their signatures are checked.
+	verOnVerify attestation.Verification
 }
 
 func (fe *fakeEnvelope) GetStatement() attestation.Statement {
@@ -304,7 +308,12 @@ func (fe *fakeEnvelope) GetPredicate() attestation.Predicate       { return fe.p
 func (fe *fakeEnvelope) GetSignatures() []attestation.Signature    { return nil }
 func (fe *fakeEnvelope) GetCertificate() attestation.Certificate   { return nil }
 func (fe *fakeEnvelope) GetVerification() attestation.Verification { return fe.ver }
-func (fe *fakeEnvelope) Verify(...any) error                       { return nil }
+func (fe *fakeEnvelope) Verify(...any) error {
+	if fe.verOnVerify != nil {
+		fe.ver = fe.verOnVerify
+	}
+	return nil
+}
 
 var _ attestation.Envelope = &fakeEnvelope{}
 
@@ -637,6 +646,117 @@ func TestFilterAttestationsSkipsNonAdmitted(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, preds, 2, "only admitted envelopes should produce predicates")
+}
+
+// TestFilterAttestationsCarriesSigners verifies that FilterAttestations records
+// the attestation's actual verified signers on the matchedPredicate (surfaced
+// to policies as verification.signers) independently of the matched allowlist
+// subset carried on the verification (verification.identities).
+func TestFilterAttestationsCarriesSigners(t *testing.T) {
+	t.Parallel()
+
+	signerA := &sapi.Identity{Sigstore: &sapi.IdentitySigstore{Issuer: "https://example.com", Identity: "alice@example.com"}}
+	signerB := &sapi.Identity{Sigstore: &sapi.IdentitySigstore{Issuer: "https://example.com", Identity: "bob@example.com"}}
+
+	di := defaultIplementation{}
+
+	newEnv := func() attestation.Envelope {
+		return &fakeEnvelope{
+			pred: &fakePredicate{},
+			ver: &sapi.Verification{Signature: &sapi.SignatureVerification{
+				Verified:   true,
+				Identities: []*sapi.Identity{signerA, signerB},
+			}},
+		}
+	}
+
+	// No allowlist (CheckIdentities returns nil ids): identities subset is empty
+	// but signers carries the full actual signer set.
+	t.Run("no-allowlist", func(t *testing.T) {
+		t.Parallel()
+		preds, err := di.FilterAttestations(&VerificationOptions{}, nil, []attestation.Envelope{newEnv()}, nil)
+		require.NoError(t, err)
+		require.Len(t, preds, 1)
+
+		mp, ok := preds[0].(*matchedPredicate)
+		require.True(t, ok)
+
+		v, ok := mp.GetVerification().(*sapi.Verification)
+		require.True(t, ok)
+		require.Empty(t, v.GetSignature().GetIdentities(), "matched identities must be empty without an allowlist")
+
+		require.Len(t, mp.Signers(), 2, "signers must carry the full actual signer set")
+		require.Same(t, signerA, mp.Signers()[0])
+		require.Same(t, signerB, mp.Signers()[1])
+	})
+
+	// With an allowlist that matched only signerA: identities is the matched
+	// subset while signers remains the full actual set.
+	t.Run("with-allowlist", func(t *testing.T) {
+		t.Parallel()
+		preds, err := di.FilterAttestations(
+			&VerificationOptions{}, nil, []attestation.Envelope{newEnv()},
+			[][]*sapi.Identity{{signerA}},
+		)
+		require.NoError(t, err)
+		require.Len(t, preds, 1)
+
+		mp, ok := preds[0].(*matchedPredicate)
+		require.True(t, ok)
+
+		v, ok := mp.GetVerification().(*sapi.Verification)
+		require.True(t, ok)
+		require.Len(t, v.GetSignature().GetIdentities(), 1, "identities must be the matched subset")
+		require.Same(t, signerA, v.GetSignature().GetIdentities()[0])
+
+		require.Len(t, mp.Signers(), 2, "signers must remain the full actual set")
+	})
+
+	// A nil/absent envelope verification is tolerated: signers is empty.
+	t.Run("nil-verification", func(t *testing.T) {
+		t.Parallel()
+		preds, err := di.FilterAttestations(
+			&VerificationOptions{}, nil,
+			[]attestation.Envelope{&fakeEnvelope{pred: &fakePredicate{}}}, nil,
+		)
+		require.NoError(t, err)
+		require.Len(t, preds, 1)
+		mp, ok := preds[0].(*matchedPredicate)
+		require.True(t, ok)
+		require.Empty(t, mp.Signers())
+	})
+}
+
+// TestCheckIdentitiesNoAllowlistVerifies verifies that CheckIdentities still
+// verifies the envelope signatures when no identity allowlist is defined, so
+// the actual signers get recorded on the envelope verification and surface to
+// policies as verification.signers (via FilterAttestations).
+func TestCheckIdentitiesNoAllowlistVerifies(t *testing.T) {
+	t.Parallel()
+
+	signer := &sapi.Identity{Sigstore: &sapi.IdentitySigstore{Issuer: "https://example.com", Identity: "alice@example.com"}}
+	env := &fakeEnvelope{
+		pred: &fakePredicate{},
+		verOnVerify: &sapi.Verification{Signature: &sapi.SignatureVerification{
+			Verified:   true,
+			Identities: []*sapi.Identity{signer},
+		}},
+	}
+
+	di := defaultIplementation{}
+	pass, ids, idErrors, err := di.CheckIdentities(context.Background(), &VerificationOptions{}, nil, []attestation.Envelope{env})
+	require.NoError(t, err)
+	require.Empty(t, idErrors)
+	require.True(t, pass)
+	require.Nil(t, ids, "a nil ids slice must signal that no identity filtering applies")
+
+	preds, err := di.FilterAttestations(&VerificationOptions{}, nil, []attestation.Envelope{env}, ids)
+	require.NoError(t, err)
+	require.Len(t, preds, 1)
+	mp, ok := preds[0].(*matchedPredicate)
+	require.True(t, ok)
+	require.Len(t, mp.Signers(), 1, "signers must carry the identities recorded during verification")
+	require.Same(t, signer, mp.Signers()[0])
 }
 
 // TestProcessChainedSubjectsPropagatesFailFlag verifies that ProcessChainedSubjects

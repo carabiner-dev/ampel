@@ -30,6 +30,7 @@ import (
 
 	acontext "github.com/carabiner-dev/ampel/pkg/context"
 	"github.com/carabiner-dev/ampel/pkg/evaluator"
+	"github.com/carabiner-dev/ampel/pkg/evaluator/cel"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/evalcontext"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/options"
@@ -510,11 +511,26 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 		}
 	}
 
-	// If there are no identities defined, return here with all envelopes
-	// accepted (no identity constraint to enforce). A nil ids slice signals
-	// to FilterAttestations that no identity filtering should be applied.
+	// If there are no identities defined, accept all envelopes (no identity
+	// constraint to enforce). A nil ids slice signals to FilterAttestations
+	// that no identity filtering should be applied. Signatures are still
+	// verified so each envelope's verification records the actual signer
+	// identities, which FilterAttestations surfaces to policies as
+	// verification.signers; failures are tolerated as there is no identity
+	// constraint to enforce. Like the verify-and-match step below, the
+	// verification is serialized under the per-run evidence lock because the
+	// envelopes are shared across the policies of a PolicySet.
 	if len(allIds) == 0 {
-		logrus.Debug("No identities defined in policy. Not checking.")
+		logrus.Debug("No identities defined in policy. Not filtering on signer identity.")
+		if mu := sharedEvidenceLock(ctx); mu != nil {
+			mu.Lock()
+			defer mu.Unlock()
+		}
+		for i, e := range envelopes {
+			if err := e.Verify(opts.Keys); err != nil {
+				logrus.Debugf("attestation %d (type %s): signature verification error: %v", i, e.GetStatement().GetType(), err)
+			}
+		}
 		return true, nil, nil, nil
 	}
 
@@ -667,9 +683,27 @@ func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, su
 					Identities: matchedIds,
 				},
 			},
+			// Carry the attestation's actual verified signers, independent of
+			// the matched allowlist subset above. These are populated even when
+			// no allowlist is configured and are surfaced to policies as
+			// verification.signers.
+			signers: envelopeSigners(env),
 		})
 	}
 	return preds, nil
+}
+
+// envelopeSigners returns the actual verified signer identities recorded on an
+// envelope's verification, tolerating a nil/absent verification by returning
+// nil. Unlike the matched allowlist subset carried on matchedPredicate's
+// verification, these are the real signers AMPEL observed regardless of whether
+// an allowlist was pinned.
+func envelopeSigners(env attestation.Envelope) []*sapi.Identity {
+	v, ok := env.GetVerification().(*sapi.Verification)
+	if !ok || v == nil {
+		return nil
+	}
+	return v.GetSignature().GetIdentities()
 }
 
 // matchedPredicate wraps a shared attestation.Predicate to carry the identities
@@ -678,9 +712,18 @@ func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, su
 // the verification accessors so the evaluator sees the per-policy matched
 // identities while leaving the shared predicate (and the signer identity cached
 // on its envelope) untouched. See FilterAttestations and issue #298.
+//
+// It additionally carries the attestation's actual verified signers so policies
+// can read who really signed (via verification.signers in CEL) regardless of
+// whether an allowlist was pinned. This satisfies cel.SignersProvider.
 type matchedPredicate struct {
 	attestation.Predicate
 	verification attestation.Verification
+	// signers holds the actual verified signer identities observed on the
+	// attestation envelope. It is distinct from the matched allowlist subset
+	// carried on verification (which is empty when no allowlist was supplied)
+	// and is surfaced to the evaluator as verification.signers.
+	signers []*sapi.Identity
 }
 
 func (mp *matchedPredicate) GetVerification() attestation.Verification {
@@ -690,6 +733,18 @@ func (mp *matchedPredicate) GetVerification() attestation.Verification {
 func (mp *matchedPredicate) SetVerification(v attestation.Verification) {
 	mp.verification = v
 }
+
+// Signers returns the actual verified signer identities of the attestation.
+// The CEL verification adapter reads these (via cel.SignersProvider) to
+// populate verification.signers. It is an AMPEL-provided view and is NOT part
+// of the carabiner-dev/signer Verification proto.
+func (mp *matchedPredicate) Signers() []*sapi.Identity {
+	return mp.signers
+}
+
+// Compile-time assertion that matchedPredicate satisfies the CEL adapter's
+// SignersProvider contract, keeping the FilterAttestations → CEL plumbing intact.
+var _ cel.SignersProvider = (*matchedPredicate)(nil)
 
 // evaluateChain evaluates an evidence chain and returns the resulting subject
 func (di *defaultIplementation) evaluateChain(

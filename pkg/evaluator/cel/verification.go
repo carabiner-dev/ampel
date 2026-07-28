@@ -16,21 +16,28 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-// extractVerificationData converts the verification data from a predicate into
-// a map[string]any suitable for structpb serialization into the CEL environment.
-func extractVerificationData(pred attestation.Predicate) map[string]any {
-	v, ok := pred.GetVerification().(*sapi.Verification)
-	if !ok || v == nil {
-		return nil
-	}
+// SignersProvider is implemented by predicate wrappers that can expose the
+// actual verified signer identities observed on an attestation. This is the
+// full set of signers AMPEL verified, as distinct from verification.identities
+// (the subset that matched a pinned allowlist, which is empty when none was
+// supplied). AMPEL's per-policy predicate wrapper (verifier.matchedPredicate)
+// implements this; when a predicate does, its signers are surfaced to policies
+// as verification.signers.
+//
+// Note: signers is an AMPEL-provided view. It is NOT part of the
+// carabiner-dev/signer Verification proto.
+type SignersProvider interface {
+	// Signers returns the actual verified signer identities of the attestation.
+	Signers() []*sapi.Identity
+}
 
-	sig := v.GetSignature()
-	if sig == nil {
-		return nil
-	}
-
-	identities := make([]any, 0, len(sig.GetIdentities()))
-	for _, id := range sig.GetIdentities() {
+// identitiesToAny converts a slice of signer identities into the CEL-friendly
+// []any representation. It is shared by verification.identities and
+// verification.signers so both fields expose the same element shape
+// (.id / .sigstore / .key / .ref).
+func identitiesToAny(ids []*sapi.Identity) []any {
+	out := make([]any, 0, len(ids))
+	for _, id := range ids {
 		idMap := map[string]any{
 			"id": id.GetId(),
 		}
@@ -53,13 +60,37 @@ func extractVerificationData(pred attestation.Predicate) map[string]any {
 				"id": r.GetId(),
 			}
 		}
-		identities = append(identities, idMap)
+		out = append(out, idMap)
+	}
+	return out
+}
+
+// extractVerificationData converts the verification data from a predicate into
+// a map[string]any suitable for structpb serialization into the CEL environment.
+func extractVerificationData(pred attestation.Predicate) map[string]any {
+	v, ok := pred.GetVerification().(*sapi.Verification)
+	if !ok || v == nil {
+		return nil
 	}
 
-	return map[string]any{
-		"verified":   sig.GetVerified(),
-		"identities": identities,
+	sig := v.GetSignature()
+	if sig == nil {
+		return nil
 	}
+
+	data := map[string]any{
+		"verified":   sig.GetVerified(),
+		"identities": identitiesToAny(sig.GetIdentities()),
+		// signers is populated by AMPEL from the actual verified signer
+		// identities (see SignersProvider). Unlike identities (the matched
+		// allowlist subset), it is populated even when no allowlist was
+		// supplied. It is an AMPEL-provided view, NOT part of the signer proto.
+		"signers": []any{},
+	}
+	if sp, ok := pred.(SignersProvider); ok {
+		data["signers"] = identitiesToAny(sp.Signers())
+	}
+	return data
 }
 
 // --- VerificationVal: custom CEL value with matchesId support ---
@@ -68,8 +99,15 @@ func extractVerificationData(pred attestation.Predicate) map[string]any {
 var VerificationType = cel.ObjectType("verification", traits.ReceiverType, traits.IndexerType)
 
 // VerificationVal wraps signer verification data as a CEL value. It exposes
-// field access (.verified, .identities) via an embedded structpb CEL map and
-// provides a matchesId member function for identity matching.
+// field access (.verified, .identities, .signers) via an embedded structpb CEL
+// map and provides a matchesId member function for identity matching.
+//
+// .identities is the subset of signers that matched a pinned allowlist (empty
+// when no allowlist was supplied). .signers is the full set of actual verified
+// signers AMPEL observed, populated regardless of any allowlist. matchesId
+// still matches against the verification's identity set; with .signers now
+// available, a policy can also inspect the real signers directly, e.g.
+// verification.signers.exists(s, has(s.sigstore)).
 type VerificationVal struct {
 	verification *sapi.Verification
 	celMap       ref.Val
@@ -77,13 +115,14 @@ type VerificationVal struct {
 
 // NewVerificationVal creates a VerificationVal from a predicate. If the
 // predicate is nil or has no verification, a default (unverified, no
-// identities) value is returned.
+// identities, no signers) value is returned.
 func NewVerificationVal(pred attestation.Predicate) *VerificationVal {
 	vv := &VerificationVal{}
 
 	vdata := map[string]any{
 		"verified":   false,
 		"identities": []any{},
+		"signers":    []any{},
 	}
 
 	if pred != nil {
@@ -186,7 +225,10 @@ func (p *PredicateVal) Get(index ref.Val) ref.Val {
 // --- matchesId function implementation ---
 
 // matchIdImpl parses a slug string into an Identity and checks it against
-// the verification data.
+// the verification data. matchesId matches against the verification's identity
+// set (the matched allowlist subset). With verification.signers now exposing
+// the actual verified signers, a policy can additionally inspect the real
+// signers directly (e.g. verification.signers.exists(s, has(s.sigstore))).
 var matchIdImpl = func(lhs ref.Val, rhs ref.Val) ref.Val {
 	vv, ok := lhs.(*VerificationVal)
 	if !ok {
