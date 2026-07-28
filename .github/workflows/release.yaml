@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Setup bnd
-        uses: carabiner-dev/actions/install/bnd@2a4b2cd115ede14629b03ef7e77586d3269d4c72 # v1.2.3
+        uses: carabiner-dev/actions/install/bnd@16009dca48ac369882d4333f1d15d7cd3a4ded31 # v1.2.4
 
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -35,7 +35,7 @@ jobs:
 
       - name: Determine Go versions
         id: versions
-        uses: carabiner-dev/actions/go/versions@2a4b2cd115ede14629b03ef7e77586d3269d4c72 # v1.2.3
+        uses: carabiner-dev/actions/go/versions@16009dca48ac369882d4333f1d15d7cd3a4ded31 # v1.2.4
 
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -132,7 +132,7 @@ jobs:
 
       - name: Generate SBOM
         id: sbom
-        uses: carabiner-dev/actions/unpack/sbom@2a4b2cd115ede14629b03ef7e77586d3269d4c72 # v1.2.3
+        uses: carabiner-dev/actions/unpack/sbom@16009dca48ac369882d4333f1d15d7cd3a4ded31 # v1.2.4
         with:
           push-to-release: ${{ steps.tag.outputs.tag_name }}
         env:
