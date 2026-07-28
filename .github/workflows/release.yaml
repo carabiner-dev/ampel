@@ -16,7 +16,7 @@ jobs:
 
     permissions:
       contents: write # To push artifacts to the relase
-      id-token: write # To sign attestations 
+      id-token: write # To sign attestations
       attestations: write
       packages: write # To push the image
 
@@ -24,9 +24,6 @@ jobs:
       KO_DOCKER_REPO: ghcr.io/${{ github.repository }}
 
     steps:
-      - name: Setup bnd
-        uses: carabiner-dev/actions/install/bnd@c9a8158ef3d690fe4dfbe61b9b262bfed8db80da # v1.2.5
-
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -56,7 +53,7 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
         with:
-          cosign-release: v3.1.1
+          cosign-release: v3.1.2
 
       - name: Log in to GHCR
         env:
@@ -82,8 +79,7 @@ jobs:
           IMAGE_REF=$(ko build ./cmd/ampel \
             --bare \
             --platform=linux/amd64,linux/arm64 \
-            --tags="${GIT_VERSION},latest" \
-            --image-refs=image.refs)
+            --tags="${GIT_VERSION},latest")
           echo "image_ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
           echo "Pushed: ${IMAGE_REF}"
 
@@ -93,39 +89,6 @@ jobs:
         run: |
           cosign sign --yes "$IMAGE_REF"
 
-      - name: Generate Provenance
-        uses: carabiner-dev/actions/slsa/generate@c9a8158ef3d690fe4dfbe61b9b262bfed8db80da # v1.2.5
-        with:
-          # Keep the statement unsigned: the image subjects get added to it
-          # below before bnd signs and uploads it to the release.
-          sign: "false"
-          output: provenance.json
-          artifacts: github://${{ github.repository }}/${{ steps.tag.outputs.tag_name }}
-
-      - name: Add image subjects to provenance
-        run: |
-          set -euo pipefail
-          # ko wrote the published image digests (the multi-arch index plus each
-          # per-platform manifest) to image.refs. Add them as subjects of the
-          # provenance statement before it gets signed.
-          subjects=$(while IFS= read -r ref; do
-            [ -z "$ref" ] && continue
-            jq -n --arg name "${ref%@*}" --arg sha "${ref##*@sha256:}" \
-              '{name: $name, digest: {sha256: $sha}}'
-          done < image.refs | jq -s '.')
-          jq --argjson subs "$subjects" '.subject = (.subject + $subs)' \
-            provenance.json > provenance.subjects.json
-          mv provenance.subjects.json provenance.json
-
-      - name: Sign and upload Provenance
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ steps.tag.outputs.tag_name }}
-        run: |
-            bnd statement provenance.json -o "ampel-${TAG_NAME}.provenance.json"
-            gh release upload "${TAG_NAME}" "ampel-${TAG_NAME}.provenance.json"
-
       - name: Generate SBOM
         id: sbom
         uses: carabiner-dev/actions/unpack/sbom@c9a8158ef3d690fe4dfbe61b9b262bfed8db80da # v1.2.5
@@ -134,9 +97,84 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+  # The provenance runs in its own job, in parallel with the build, so
+  # that the release process cannot alter the attestation. Everything it
+  # attests is read from published state (the run, the release assets and
+  # the registry), never handed over from the build job.
+  provenance:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # To upload the provenance to the release
+      id-token: write # To sign the provenance attestation
+      packages: write # To attach the provenance to the image
+
+    steps:
+      - name: Setup bnd
+        uses: carabiner-dev/actions/install/bnd@c9a8158ef3d690fe4dfbe61b9b262bfed8db80da # v1.2.5
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.2
+
+      - name: Set tag output
+        id: tag
+        run: echo "tag_name=${GITHUB_REF#refs/*/}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_ACTOR: ${{ github.actor }}
+        run: echo "$GITHUB_TOKEN" | cosign login ghcr.io --username "$GHCR_ACTOR" --password-stdin
+
+      - name: Generate Provenance
+        uses: carabiner-dev/actions/slsa/generate@c9a8158ef3d690fe4dfbe61b9b262bfed8db80da # v1.2.5
+        with:
+          # Wait for the build job to finish, then attest the run and the
+          # release assets. The statement is kept unsigned: the image
+          # subjects get added to it below before bnd signs it.
+          watch-jobs: release
+          sign: "false"
+          output: provenance.json
+          artifacts: github://${{ github.repository }}/${{ steps.tag.outputs.tag_name }}
+
+      - name: Add image subjects to provenance
+        id: image
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}
+          TAG_NAME: ${{ steps.tag.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          # Resolve the image from the registry instead of trusting digests
+          # handed over from the build job: the index digest is the hash of
+          # the raw manifest bytes, the per-platform digests come from the
+          # index members. Add them all as subjects of the provenance
+          # statement before it gets signed.
+          skopeo inspect --raw "docker://${IMAGE}:${TAG_NAME}" > index.json
+          INDEX_DIGEST="sha256:$(sha256sum index.json | cut -d' ' -f1)"
+          echo "ref=${IMAGE}@${INDEX_DIGEST}" >> "$GITHUB_OUTPUT"
+
+          subjects=$( { echo "${INDEX_DIGEST}"; jq -r '.manifests[].digest' index.json; } |
+            jq -Rn --arg name "${IMAGE}" \
+              '[inputs | {name: $name, digest: {sha256: sub("^sha256:"; "")}}]')
+          jq --argjson subs "$subjects" '.subject = (.subject + $subs)' \
+            provenance.json > provenance.subjects.json
+          mv provenance.subjects.json provenance.json
+          rm index.json
+
+      - name: Sign and upload Provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG_NAME: ${{ steps.tag.outputs.tag_name }}
+        run: |
+            bnd statement provenance.json -o "ampel-${TAG_NAME}.provenance.json"
+            gh release upload "${TAG_NAME}" "ampel-${TAG_NAME}.provenance.json"
+
       - name: Attach provenance attestation to the image
         env:
-          IMAGE_REF: ${{ steps.ko.outputs.image_ref }}
+          IMAGE_REF: ${{ steps.image.outputs.ref }}
         run: |
           set -euo pipefail
           # cosign v3 removed "cosign attach attestation", so attach the
