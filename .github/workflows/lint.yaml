@@ -28,7 +28,7 @@ jobs:
 
       - name: Determine Go versions
         id: versions
-        uses: carabiner-dev/actions/go/versions@c9a8158ef3d690fe4dfbe61b9b262bfed8db80da # v1.2.5
+        uses: carabiner-dev/actions/go/versions@36a39ef667efe7112df8b1a534a4e37f35fad6fd # v1.2.6
 
   golangci:
     needs: resolve-versions
@@ -53,7 +53,7 @@ jobs:
 
       - name: Check go.mod
         id: gomodtidy
-        uses: carabiner-dev/actions/go/modtidy@c9a8158ef3d690fe4dfbe61b9b262bfed8db80da # v1.2.5
+        uses: carabiner-dev/actions/go/modtidy@36a39ef667efe7112df8b1a534a4e37f35fad6fd # v1.2.6
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
