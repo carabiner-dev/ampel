@@ -159,7 +159,7 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	)
 
 	cmd.PersistentFlags().StringVarP(
-		&o.Format, "format", "f", "tty", "output format",
+		&o.Format, "format", "f", "tty", fmt.Sprintf("output format %v", render.Formats()),
 	)
 
 	cmd.PersistentFlags().StringSliceVarP(

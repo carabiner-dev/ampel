@@ -6,6 +6,8 @@ package render
 import (
 	"fmt"
 	"io"
+	"maps"
+	"slices"
 	"sync"
 
 	papi "github.com/carabiner-dev/policy/api/v1"
@@ -36,6 +38,14 @@ func LoadDefaultDrivers() {
 	drivers["svr"] = svr.New()
 	drivers["vsa"] = vsa.New()
 	drMtx.Unlock()
+}
+
+// Formats returns the names of the registered rendering drivers
+func Formats() []string {
+	LoadDefaultDrivers()
+	drMtx.Lock()
+	defer drMtx.Unlock()
+	return slices.Sorted(maps.Keys(drivers))
 }
 
 func GetDriverBytType(t string) Driver {
