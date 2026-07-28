@@ -511,11 +511,26 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 		}
 	}
 
-	// If there are no identities defined, return here with all envelopes
-	// accepted (no identity constraint to enforce). A nil ids slice signals
-	// to FilterAttestations that no identity filtering should be applied.
+	// If there are no identities defined, accept all envelopes (no identity
+	// constraint to enforce). A nil ids slice signals to FilterAttestations
+	// that no identity filtering should be applied. Signatures are still
+	// verified so each envelope's verification records the actual signer
+	// identities, which FilterAttestations surfaces to policies as
+	// verification.signers; failures are tolerated as there is no identity
+	// constraint to enforce. Like the verify-and-match step below, the
+	// verification is serialized under the per-run evidence lock because the
+	// envelopes are shared across the policies of a PolicySet.
 	if len(allIds) == 0 {
-		logrus.Debug("No identities defined in policy. Not checking.")
+		logrus.Debug("No identities defined in policy. Not filtering on signer identity.")
+		if mu := sharedEvidenceLock(ctx); mu != nil {
+			mu.Lock()
+			defer mu.Unlock()
+		}
+		for i, e := range envelopes {
+			if err := e.Verify(opts.Keys); err != nil {
+				logrus.Debugf("attestation %d (type %s): signature verification error: %v", i, e.GetStatement().GetType(), err)
+			}
+		}
 		return true, nil, nil, nil
 	}
 
