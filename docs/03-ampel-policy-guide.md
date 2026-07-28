@@ -559,3 +559,65 @@ To specify a key (unstable), use the following string format:
 ```
 key:::TYPE:::KEY_ID:::KEY_DATA
 ```
+
+### Accessing Verification Data in Policies
+
+Once AMPEL has verified an attestation, its verification data is exposed to CEL
+tenets through the `predicate.verification` object. The following fields are
+available:
+
+| Field | Description |
+| --- | --- |
+| `verification.verified` | Boolean, `true` when the attestation signature was cryptographically verified. |
+| `verification.identities` | The subset of signer identities that **matched a pinned allowlist** (the identities defined in the policy/`PolicySet` or passed via `--signer`). It is **empty when no allowlist was supplied**. |
+| `verification.signers` | The **actual verified signer identities** of the attestation. |
+
+Both `verification.identities` and `verification.signers` are lists whose
+elements share the same shape (`.id`, and one of `.sigstore`, `.key` or `.ref`,
+matching the identity kind).
+
+#### `verification.signers`
+
+`verification.signers` is **populated by AMPEL** from the signer identities it
+actually verified on the attestation. Unlike `verification.identities`, it is
+populated **even when no allowlist is configured**, so a policy can read who
+really signed the evidence regardless of whether signer identities were pinned:
+
+```cel
+// At least one signer used a sigstore (keyless) identity:
+predicate.verification.signers.exists(s, has(s.sigstore))
+
+// The attestation was signed by someone in a given domain:
+predicate.verification.signers.exists(s, has(s.sigstore) && s.sigstore.identity.endsWith("@example.com"))
+```
+
+AMPEL's CEL environment enables
+[optional types](https://github.com/google/cel-spec/wiki/proposal-246), so the
+`has()` guards can also be written with the optional selection syntax, where
+selecting an absent field yields an empty optional instead of an error:
+
+```cel
+// Same checks using optional types:
+predicate.verification.signers.exists(s, s.?sigstore.hasValue())
+predicate.verification.signers.exists(s, s.?sigstore.?identity.orValue("").endsWith("@example.com"))
+```
+
+> [!IMPORTANT]
+> `verification.signers` is **distinct from `verification.identities`**.
+> `identities` is the subset that matched a pinned allowlist (and is empty
+> without one), while `signers` is always the full set of actual verified
+> signers. `verification.signers` is an **AMPEL-provided view**: it is *not*
+> part of the `carabiner-dev/signer` Verification proto.
+
+#### `matchesId`
+
+The `verification` object also exposes a `matchesId` member function that
+matches an [identity slug](#identity-slugs) against the verification's identity
+set:
+
+```cel
+predicate.verification.matchesId("sigstore::https://accounts.google.com::joe@example.com")
+```
+
+With `verification.signers` now available, policies can additionally inspect the
+real signers directly using the `.exists`/`.all` comprehensions shown above.
