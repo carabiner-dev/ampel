@@ -6,6 +6,8 @@ package render
 import (
 	"fmt"
 	"io"
+	"maps"
+	"slices"
 	"sync"
 
 	papi "github.com/carabiner-dev/policy/api/v1"
@@ -13,6 +15,7 @@ import (
 	"github.com/carabiner-dev/ampel/internal/drivers/attester"
 	"github.com/carabiner-dev/ampel/internal/drivers/html"
 	"github.com/carabiner-dev/ampel/internal/drivers/markdown"
+	"github.com/carabiner-dev/ampel/internal/drivers/summary"
 	"github.com/carabiner-dev/ampel/internal/drivers/svr"
 	"github.com/carabiner-dev/ampel/internal/drivers/tty"
 	"github.com/carabiner-dev/ampel/internal/drivers/vsa"
@@ -30,10 +33,19 @@ func LoadDefaultDrivers() {
 	drivers["attestation"] = attester.New()
 	drivers["html"] = html.New()
 	drivers["markdown"] = markdown.New()
+	drivers["summary"] = summary.New()
 	drivers["tty"] = tty.New()
 	drivers["svr"] = svr.New()
 	drivers["vsa"] = vsa.New()
 	drMtx.Unlock()
+}
+
+// Formats returns the names of the registered rendering drivers
+func Formats() []string {
+	LoadDefaultDrivers()
+	drMtx.Lock()
+	defer drMtx.Unlock()
+	return slices.Sorted(maps.Keys(drivers))
 }
 
 func GetDriverBytType(t string) Driver {

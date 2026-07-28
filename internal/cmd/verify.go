@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 
@@ -159,7 +160,7 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	)
 
 	cmd.PersistentFlags().StringVarP(
-		&o.Format, "format", "f", "tty", "output format",
+		&o.Format, "format", "f", "tty", fmt.Sprintf("output format %v", render.Formats()),
 	)
 
 	cmd.PersistentFlags().StringSliceVarP(
@@ -305,10 +306,8 @@ func (o *verifyOptions) Validate() error {
 
 	if o.Format == "" {
 		errs = append(errs, errors.New("no output format defined"))
-	} else {
-		if err := render.GetDriverBytType(o.Format); err != nil {
-			errs = append(errs, errors.New("invalid format"))
-		}
+	} else if !slices.Contains(render.Formats(), o.Format) {
+		errs = append(errs, fmt.Errorf("invalid format %q (must be one of %v)", o.Format, render.Formats()))
 	}
 
 	if o.ParallelWorkers <= 0 {
