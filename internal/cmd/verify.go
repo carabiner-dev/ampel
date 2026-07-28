@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 
@@ -305,10 +306,8 @@ func (o *verifyOptions) Validate() error {
 
 	if o.Format == "" {
 		errs = append(errs, errors.New("no output format defined"))
-	} else {
-		if err := render.GetDriverBytType(o.Format); err != nil {
-			errs = append(errs, errors.New("invalid format"))
-		}
+	} else if !slices.Contains(render.Formats(), o.Format) {
+		errs = append(errs, fmt.Errorf("invalid format %q (must be one of %v)", o.Format, render.Formats()))
 	}
 
 	if o.ParallelWorkers <= 0 {
