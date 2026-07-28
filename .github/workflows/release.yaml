@@ -32,7 +32,7 @@ jobs:
 
       - name: Determine Go versions
         id: versions
-        uses: carabiner-dev/actions/go/versions@c9a8158ef3d690fe4dfbe61b9b262bfed8db80da # v1.2.5
+        uses: carabiner-dev/actions/go/versions@36a39ef667efe7112df8b1a534a4e37f35fad6fd # v1.2.6
 
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -91,7 +91,7 @@ jobs:
 
       - name: Generate SBOM
         id: sbom
-        uses: carabiner-dev/actions/unpack/sbom@c9a8158ef3d690fe4dfbe61b9b262bfed8db80da # v1.2.5
+        uses: carabiner-dev/actions/unpack/sbom@36a39ef667efe7112df8b1a534a4e37f35fad6fd # v1.2.6
         with:
           push-to-release: ${{ steps.tag.outputs.tag_name }}
         env:
@@ -111,7 +111,7 @@ jobs:
 
     steps:
       - name: Setup bnd
-        uses: carabiner-dev/actions/install/bnd@c9a8158ef3d690fe4dfbe61b9b262bfed8db80da # v1.2.5
+        uses: carabiner-dev/actions/install/bnd@36a39ef667efe7112df8b1a534a4e37f35fad6fd # v1.2.6
 
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
@@ -129,7 +129,7 @@ jobs:
         run: echo "$GITHUB_TOKEN" | cosign login ghcr.io --username "$GHCR_ACTOR" --password-stdin
 
       - name: Generate Provenance
-        uses: carabiner-dev/actions/slsa/generate@c9a8158ef3d690fe4dfbe61b9b262bfed8db80da # v1.2.5
+        uses: carabiner-dev/actions/slsa/generate@36a39ef667efe7112df8b1a534a4e37f35fad6fd # v1.2.6
         with:
           # Wait for the build job to finish, then attest the run and the
           # release assets. The statement is kept unsigned: the image
