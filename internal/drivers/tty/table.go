@@ -18,6 +18,10 @@ import (
 // fractional seconds.
 const dateFormat = "2006-01-02 15:04:05 -0700 MST"
 
+// assertModeOR mirrors the verifier's assert mode label. A block in OR
+// mode passes as soon as one of its policies does.
+const assertModeOR = "OR"
+
 // localDate renders t in the user's local zone at second resolution.
 func localDate(t time.Time) string {
 	return t.Local().Format(dateFormat)
@@ -225,7 +229,12 @@ func (d *Driver) resultGroupTable(grp *papi.ResultGroup) *termtable.Table {
 
 		var message string
 		if r.GetStatus() == papi.StatusPASS {
-			message = fmt.Sprintf("(%d policies)", len(r.Results))
+			message = strings.Join(blockAssessments(r), "\n")
+			// Fall back to the policy count when the passing policies
+			// define no assessment messages.
+			if message == "" {
+				message = fmt.Sprintf("(%d policies)", len(r.Results))
+			}
 		} else {
 			message = r.GetError().GetMessage()
 			if r.GetError().GetGuidance() != "" {
@@ -311,6 +320,48 @@ func collectAssessments(d *Driver, r *papi.Result) string {
 	return strings.TrimSuffix(b.String(), "\n")
 }
 
+// blockAssessments returns the assessment messages of the policies that
+// carried a block to PASS, in evaluation order and dedup'd.
+//
+// Under the default AND assert mode every policy in the block has to
+// pass, so all of their messages are reported. Under OR a single passing
+// policy decides the block, so only that policy's messages are reported:
+// the rest either failed or never got to run under lazy evaluation.
+func blockAssessments(block *papi.BlockEvalResult) []string {
+	orMode := block.GetMeta().GetAssertMode() == assertModeOR
+	msgs := []string{}
+	seen := map[string]struct{}{}
+	for _, res := range block.GetResults() {
+		if res.GetStatus() != papi.StatusPASS {
+			continue
+		}
+		added := false
+		for _, er := range res.GetEvalResults() {
+			if er.GetStatus() != papi.StatusPASS {
+				continue
+			}
+			msg := er.GetAssessment().GetMessage()
+			if msg == "" {
+				continue
+			}
+			if _, ok := seen[msg]; ok {
+				// Still the deciding policy under OR, just nothing new to say.
+				added = true
+				continue
+			}
+			seen[msg] = struct{}{}
+			msgs = append(msgs, msg)
+			added = true
+		}
+		// Keep looking if the deciding policy had nothing to report, so an
+		// OR block does not end up with an empty cell.
+		if orMode && added {
+			break
+		}
+	}
+	return msgs
+}
+
 // groupSummary builds the Details-column text for a result-group row
 // inside a ResultSet — pass messages on success, dedup'd error
 // messages on failure.
@@ -328,15 +379,11 @@ func groupSummary(d *Driver, grp *papi.ResultGroup) string {
 				}
 				prefix = "[" + strings.Join(labels, ", ") + "] "
 			}
-			for _, res := range block.GetResults() {
-				for _, er := range res.GetEvalResults() {
-					if msg := er.GetAssessment().GetMessage(); msg != "" {
-						line := prefix + msg
-						if _, ok := seen[line]; !ok {
-							seen[line] = struct{}{}
-							msgs = append(msgs, line)
-						}
-					}
+			for _, msg := range blockAssessments(block) {
+				line := prefix + msg
+				if _, ok := seen[line]; !ok {
+					seen[line] = struct{}{}
+					msgs = append(msgs, line)
 				}
 			}
 		}

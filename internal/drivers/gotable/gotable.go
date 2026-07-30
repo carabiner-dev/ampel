@@ -18,6 +18,52 @@ import (
 
 const headerSubject = "Subject"
 
+// assertModeOR mirrors the verifier's assert mode label. A block in OR
+// mode passes as soon as one of its policies does.
+const assertModeOR = "OR"
+
+// blockAssessments returns the assessment messages of the policies that
+// carried a block to PASS, in evaluation order and dedup'd.
+//
+// Under the default AND assert mode every policy in the block has to
+// pass, so all of their messages are reported. Under OR a single passing
+// policy decides the block, so only that policy's messages are reported:
+// the rest either failed or never got to run under lazy evaluation.
+func blockAssessments(block *papi.BlockEvalResult) []string {
+	orMode := block.GetMeta().GetAssertMode() == assertModeOR
+	msgs := []string{}
+	seen := map[string]struct{}{}
+	for _, res := range block.GetResults() {
+		if res.GetStatus() != papi.StatusPASS {
+			continue
+		}
+		added := false
+		for _, er := range res.GetEvalResults() {
+			if er.GetStatus() != papi.StatusPASS {
+				continue
+			}
+			msg := er.GetAssessment().GetMessage()
+			if msg == "" {
+				continue
+			}
+			if _, ok := seen[msg]; ok {
+				// Still the deciding policy under OR, just nothing new to say.
+				added = true
+				continue
+			}
+			seen[msg] = struct{}{}
+			msgs = append(msgs, msg)
+			added = true
+		}
+		// Keep looking if the deciding policy had nothing to report, so an
+		// OR block does not end up with an empty cell.
+		if orMode && added {
+			break
+		}
+	}
+	return msgs
+}
+
 type TableBuilder struct {
 	Decorator TableDecorator
 }
@@ -165,15 +211,11 @@ func (tb *TableBuilder) ResultSetTable(set *papi.ResultSet) (table.Writer, error
 					}
 					prefix = "[" + strings.Join(labels, ", ") + "] "
 				}
-				for _, res := range block.GetResults() {
-					for _, er := range res.GetEvalResults() {
-						if msg := er.GetAssessment().GetMessage(); msg != "" {
-							line := prefix + msg
-							if _, ok := seen[line]; !ok {
-								seen[line] = struct{}{}
-								msgs = append(msgs, line)
-							}
-						}
+				for _, msg := range blockAssessments(block) {
+					line := prefix + msg
+					if _, ok := seen[line]; !ok {
+						seen[line] = struct{}{}
+						msgs = append(msgs, line)
 					}
 				}
 			}
@@ -257,7 +299,12 @@ func (tb *TableBuilder) ResultGroupTable(grp *papi.ResultGroup) (table.Writer, e
 
 		var message string
 		if r.GetStatus() == papi.StatusPASS {
-			message = fmt.Sprintf("(%d policies)", len(r.Results))
+			message = strings.Join(blockAssessments(r), "\n")
+			// Fall back to the policy count when the passing policies
+			// define no assessment messages.
+			if message == "" {
+				message = fmt.Sprintf("(%d policies)", len(r.Results))
+			}
 		} else {
 			message = r.GetError().GetMessage()
 			if r.GetError().GetGuidance() != "" {
