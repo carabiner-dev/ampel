@@ -92,6 +92,19 @@ predicates. The plugin delegates to the
 defines the `Document`, `Node`, `NodeList`, etc. receiver types and
 a rich set of filter/map/query methods on them.
 
+The predicate types read into `sboms` are:
+
+| Format      | Predicate type                    |
+|:------------|:----------------------------------|
+| SPDX 2.x    | `https://spdx.dev/Document`       |
+| SPDX 3.x    | `https://spdx.dev/Document/v3`    |
+| CycloneDX   | `https://cyclonedx.org/bom`       |
+
+All three parse into the same protobom document, so a policy written
+against `sboms` works unchanged whichever format the attestation
+carries. The `internal:protobom` transformer accepts the same three
+types and normalizes them to a single `application/protobom` predicate.
+
 | Variable / expression  | Returns    | Description                                                  |
 |:-----------------------|:-----------|:-------------------------------------------------------------|
 | `sboms`                | `list`     | All SBOM documents attached to the subject as predicates.    |

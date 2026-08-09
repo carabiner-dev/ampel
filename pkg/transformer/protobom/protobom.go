@@ -14,6 +14,7 @@ import (
 	"github.com/carabiner-dev/collector/predicate/generic"
 	"github.com/carabiner-dev/collector/predicate/protobom"
 	"github.com/carabiner-dev/collector/predicate/spdx"
+	"github.com/carabiner-dev/collector/predicate/spdx3"
 	"github.com/protobom/protobom/pkg/reader"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -32,9 +33,11 @@ func (p *Transformer) Init(_ *structpb.Struct) error {
 	return nil
 }
 
-// PredicateTypes
+// PredicateTypes lists the SBOM predicate types protobom's reader can parse
+// into a document.
 var PredicateTypes = []attestation.PredicateType{
 	spdx.PredicateType,
+	spdx3.PredicateType,
 	cyclonedx.PredicateType,
 }
 

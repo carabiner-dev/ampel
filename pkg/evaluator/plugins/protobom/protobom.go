@@ -5,10 +5,12 @@ package protobom
 
 import (
 	"bytes"
+	"slices"
 
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector/predicate/cyclonedx"
 	"github.com/carabiner-dev/collector/predicate/spdx"
+	"github.com/carabiner-dev/collector/predicate/spdx3"
 	papi "github.com/carabiner-dev/policy/api/v1"
 	"github.com/google/cel-go/cel"
 	"github.com/protobom/cel/pkg/elements"
@@ -21,6 +23,15 @@ import (
 )
 
 var Identity = class.MustParseIdentity("protobom@v0")
+
+// sbomPredicateTypes lists the SBOM predicate types protobom's reader can
+// parse into a document. Predicates of any other type are not SBOMs and never
+// reach the sboms variable.
+var sbomPredicateTypes = []attestation.PredicateType{
+	spdx.PredicateType,
+	spdx3.PredicateType,
+	cyclonedx.PredicateType,
+}
 
 func New() *Plugin {
 	return &Plugin{}
@@ -47,7 +58,7 @@ func (p *Plugin) VarValues(_ *papi.Policy, _ attestation.Subject, preds []attest
 	r := reader.New()
 	logrus.Debugf("Inserting protobom vars (from %d predicates)", len(preds))
 	for _, pred := range preds {
-		if pred.GetType() != spdx.PredicateType && pred.GetType() != cyclonedx.PredicateType {
+		if !slices.Contains(sbomPredicateTypes, pred.GetType()) {
 			continue
 		}
 		doc, err := r.ParseStream(bytes.NewReader(pred.GetData()))
