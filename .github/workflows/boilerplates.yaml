@@ -48,7 +48,7 @@ jobs:
 
       - id: boilerplate-check-1
         continue-on-error: true
-        uses: chainguard-dev/actions/boilerplate@9d631658f55713e5f63ca0cc21ee168f81301fd9 # v1.6.30
+        uses: chainguard-dev/actions/boilerplate@bed8050123fff65538e2db1902ff9404030c0221 # v1.6.31
         with:
           boilerplate-directory: "./hack/boilerplates"
           extension: ${{ matrix.extension }}
@@ -56,7 +56,7 @@ jobs:
 
       - id: boilerplate-check-2
         if: steps.boilerplate-check-1.outcome == 'failure'
-        uses: chainguard-dev/actions/boilerplate@9d631658f55713e5f63ca0cc21ee168f81301fd9 # v1.6.30
+        uses: chainguard-dev/actions/boilerplate@bed8050123fff65538e2db1902ff9404030c0221 # v1.6.31
         with:
           boilerplate-directory: "./hack/boilerplates"
           extension: ${{ matrix.extension }}
