@@ -8,7 +8,7 @@ require (
 	github.com/carabiner-dev/collector v0.3.11
 	github.com/carabiner-dev/command v0.3.1
 	github.com/carabiner-dev/hasher v0.2.4
-	github.com/carabiner-dev/osv v0.1.1
+	github.com/carabiner-dev/osv v0.1.2
 	github.com/carabiner-dev/policy v0.5.2
 	github.com/carabiner-dev/predicates v0.5.0
 	github.com/carabiner-dev/termtable v1.1.0
@@ -159,6 +159,7 @@ require (
 	github.com/oklog/ulid/v2 v2.1.2 // indirect
 	github.com/olekukonko/cat v0.0.0-20250911104152-50322a0618f6 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
+	github.com/ossf/osv-schema/bindings/go v0.0.0-20260730052020-9509daabeece // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/regclient/regclient v0.11.5 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
