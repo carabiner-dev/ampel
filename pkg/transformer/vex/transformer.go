@@ -337,7 +337,7 @@ func extractStatements(preds []attestation.Predicate) []*openvex.Statement {
 	ret := []*openvex.Statement{}
 	for _, pred := range preds {
 		doc, ok := pred.GetParsed().(*openvex.VEX)
-		if !(ok) {
+		if !ok {
 			logrus.Debugf("POSSIBLE BUG: predicate is %T instead of OpenVEX", pred.GetParsed())
 			continue
 		}

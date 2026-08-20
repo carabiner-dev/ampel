@@ -93,7 +93,7 @@ func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, pl
 		envOpts...,
 	)
 	if err != nil {
-		return nil, (fmt.Errorf("creating CEL environment: %w", err))
+		return nil, fmt.Errorf("creating CEL environment: %w", err)
 	}
 
 	return env, nil
