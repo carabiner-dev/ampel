@@ -34,6 +34,7 @@ func (s *sharedFakeStatement) GetSubjects() []attestation.Subject          { ret
 func (s *sharedFakeStatement) GetPredicate() attestation.Predicate         { return s.pred }
 func (s *sharedFakeStatement) GetPredicateType() attestation.PredicateType { return "test/v1" }
 func (s *sharedFakeStatement) GetType() string                             { return "https://in-toto.io/Statement/v1" }
+
 func (s *sharedFakeStatement) GetVerification() attestation.Verification {
 	return s.pred.GetVerification()
 }
