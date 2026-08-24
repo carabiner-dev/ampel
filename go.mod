@@ -18,11 +18,11 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.8.3
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/openvex/go-vex v0.2.8
-	github.com/package-url/packageurl-go v0.1.6
-	github.com/pandatix/go-cvss v0.6.2
+	github.com/package-url/packageurl-go v0.1.7
+	github.com/pandatix/go-cvss v0.6.4
 	github.com/protobom/cel v0.1.0
 	github.com/protobom/protobom v0.5.9-0.20260808221622-938f35bcd0da
-	github.com/sirupsen/logrus v1.10.0
+	github.com/sirupsen/logrus v1.10.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.12.1
