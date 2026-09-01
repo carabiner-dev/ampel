@@ -3,7 +3,11 @@
 
 package context
 
-import "strings"
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
 
 // StringMapList returns context data from a list of strings where each
 // line has the value preceded by a colon and the value. For example:
@@ -17,6 +21,31 @@ import "strings"
 // This provider was created to support context strings passed in the CLI
 // to the ampel verifier.
 type StringMapList []string
+
+// ErrInvalidContextValue is returned when a context value definition is
+// not a key:value pair.
+var ErrInvalidContextValue = errors.New("invalid context value definition")
+
+// NewStringMapList validates a list of key:value context definitions
+// and returns them as a provider. A definition without a colon, with an
+// empty key, or with an equals sign or spaces in the key (almost always
+// a key=value mixup) never matches a lookup, so it is rejected here
+// instead of surfacing later as a missing required context value.
+func NewStringMapList(vals []string) (*StringMapList, error) {
+	for _, s := range vals {
+		key, _, ok := strings.Cut(s, ":")
+		switch {
+		case !ok:
+			return nil, fmt.Errorf("%w %q: expected key:value", ErrInvalidContextValue, s)
+		case key == "":
+			return nil, fmt.Errorf("%w %q: empty key", ErrInvalidContextValue, s)
+		case strings.ContainsAny(key, "= \t"):
+			return nil, fmt.Errorf("%w %q: %q is not a plain key (did you write key=value?)", ErrInvalidContextValue, s, key)
+		}
+	}
+	l := StringMapList(vals)
+	return &l, nil
+}
 
 func (sml *StringMapList) GetContextValue(key string) (any, error) {
 	if sml == nil {
