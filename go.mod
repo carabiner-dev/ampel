@@ -5,11 +5,11 @@ go 1.26.5
 require (
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/carabiner-dev/attestation v0.2.1
-	github.com/carabiner-dev/collector v0.3.12
+	github.com/carabiner-dev/collector v0.3.13
 	github.com/carabiner-dev/command v0.3.1
 	github.com/carabiner-dev/hasher v0.2.4
 	github.com/carabiner-dev/osv v0.1.2
-	github.com/carabiner-dev/policy v0.5.2
+	github.com/carabiner-dev/policy v0.5.3
 	github.com/carabiner-dev/predicates v0.5.0
 	github.com/carabiner-dev/termtable v1.1.0
 	github.com/fatih/color v1.19.0
@@ -20,8 +20,8 @@ require (
 	github.com/openvex/go-vex v0.2.8
 	github.com/package-url/packageurl-go v0.1.7
 	github.com/pandatix/go-cvss v0.6.4
-	github.com/protobom/cel v0.1.0
-	github.com/protobom/protobom v0.6.0
+	github.com/protobom/cel v0.1.2
+	github.com/protobom/protobom v0.6.1
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
@@ -41,7 +41,7 @@ require (
 	github.com/carabiner-dev/github v0.2.3 // indirect
 	github.com/carabiner-dev/jsonl v0.2.1 // indirect
 	github.com/carabiner-dev/openeox v1.0.0 // indirect
-	github.com/carabiner-dev/signer v0.6.0
+	github.com/carabiner-dev/signer v0.6.1
 	github.com/carabiner-dev/vcslocator v0.4.7 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cloudflare/circl v1.6.5 // indirect
@@ -69,7 +69,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/certificate-transparency-go v1.3.3 // indirect
-	github.com/google/go-containerregistry v0.21.9 // indirect
+	github.com/google/go-containerregistry v0.22.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
@@ -102,7 +102,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.45.0 // indirect
 	go.opentelemetry.io/otel/trace v1.45.0 // indirect
 	golang.org/x/crypto v0.55.0 // indirect
-	golang.org/x/mod v0.38.0 // indirect
+	golang.org/x/mod v0.39.0 // indirect
 	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
@@ -112,9 +112,10 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260709200747-435963d16310.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.1 // indirect
+	buf.build/go/protovalidate v1.3.0 // indirect
 	cel.dev/expr v0.25.2 // indirect
-	github.com/CycloneDX/cyclonedx-go v0.11.0 // indirect
+	github.com/CycloneDX/cyclonedx-go v0.12.0 // indirect
 	github.com/anchore/go-struct-converter v0.1.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
@@ -127,7 +128,7 @@ require (
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
-	github.com/docker/cli v29.6.2+incompatible // indirect
+	github.com/docker/cli v29.7.2+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.9.5 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/github/smimesign v0.2.0 // indirect
@@ -145,9 +146,9 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/hjson/hjson-go/v4 v4.6.0 // indirect
+	github.com/hjson/hjson-go/v4 v4.7.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/klauspost/compress v1.19.1 // indirect
+	github.com/klauspost/compress v1.19.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
