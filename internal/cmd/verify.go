@@ -591,8 +591,11 @@ func (opts *verifyOptions) Run() error {
 func (opts *verifyOptions) buildContextProviders() (err error) {
 	// Pass the -x flags as a new StringMapList list provider
 	if len(opts.ContextStringVals) > 0 {
-		l := acontext.StringMapList(opts.ContextStringVals)
-		opts.WithContextProvider(&l)
+		l, err := acontext.NewStringMapList(opts.ContextStringVals)
+		if err != nil {
+			return err
+		}
+		opts.WithContextProvider(l)
 	}
 
 	// Read the evaluation context data from JSON:

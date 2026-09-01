@@ -47,3 +47,36 @@ func TestStringMapGetValue(t *testing.T) {
 		})
 	}
 }
+
+func TestNewStringMapList(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name    string
+		vals    []string
+		mustErr bool
+	}{
+		{name: "key-value", vals: []string{"builderId:https://github.com/org/repo/.github/workflows/release.yaml"}},
+		{name: "value-with-colons", vals: []string{"buildPoint:git+ssh://github.com/org/repo@refs/heads/main"}},
+		{name: "empty-value", vals: []string{"since:"}},
+		{name: "dotted-key", vals: []string{"policy.v2:on"}},
+		{name: "several", vals: []string{"a:1", "b:2"}},
+		{name: "empty-list", vals: nil},
+		{name: "equals-instead-of-colon", vals: []string{"builderId=https://github.com/org/repo"}, mustErr: true},
+		{name: "no-colon", vals: []string{"builderId"}, mustErr: true},
+		{name: "empty-key", vals: []string{":value"}, mustErr: true},
+		{name: "space-in-key", vals: []string{"builder id:x"}, mustErr: true},
+		{name: "one-bad-among-good", vals: []string{"a:1", "b=2"}, mustErr: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			l, err := NewStringMapList(tt.vals)
+			if tt.mustErr {
+				require.Error(t, err)
+				require.ErrorIs(t, err, ErrInvalidContextValue)
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, l)
+		})
+	}
+}
