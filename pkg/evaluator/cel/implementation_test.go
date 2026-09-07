@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
+	"cel.dev/cel-go/cel"
 	"github.com/carabiner-dev/collector/predicate"
-	"github.com/google/cel-go/cel"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/stretchr/testify/require"
 

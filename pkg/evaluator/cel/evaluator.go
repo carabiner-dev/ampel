@@ -7,10 +7,10 @@ import (
 	"context"
 	"fmt"
 
+	"cel.dev/cel-go/cel"
 	"github.com/carabiner-dev/attestation"
 	papi "github.com/carabiner-dev/policy/api/v1"
 	sapi "github.com/carabiner-dev/signer/api/v1"
-	"github.com/google/cel-go/cel"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/structpb"
