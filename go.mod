@@ -3,24 +3,24 @@ module github.com/carabiner-dev/ampel
 go 1.26.5
 
 require (
+	cel.dev/cel-go v0.32.0
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/carabiner-dev/attestation v0.2.1
 	github.com/carabiner-dev/collector v0.3.14
 	github.com/carabiner-dev/command v0.3.1
 	github.com/carabiner-dev/hasher v0.2.4
 	github.com/carabiner-dev/osv v0.1.2
-	github.com/carabiner-dev/policy v0.5.3
+	github.com/carabiner-dev/policy v0.5.4
 	github.com/carabiner-dev/predicates v0.5.0
 	github.com/carabiner-dev/termtable v1.1.0
 	github.com/fatih/color v1.19.0
-	github.com/google/cel-go v0.31.0
 	github.com/in-toto/attestation v1.2.0
 	github.com/jedib0t/go-pretty/v6 v6.8.3
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/openvex/go-vex v0.2.8
 	github.com/package-url/packageurl-go v0.1.7
 	github.com/pandatix/go-cvss v0.6.4
-	github.com/protobom/cel v0.1.2
+	github.com/protobom/cel v0.1.3
 	github.com/protobom/protobom v0.6.1
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/cobra v1.10.2
@@ -112,9 +112,9 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.1 // indirect
-	buf.build/go/protovalidate v1.3.0 // indirect
-	cel.dev/expr v0.25.2 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.2 // indirect
+	buf.build/go/protovalidate v1.4.0 // indirect
+	cel.dev/expr v0.25.3 // indirect
 	github.com/CycloneDX/cyclonedx-go v0.12.0 // indirect
 	github.com/anchore/go-struct-converter v0.1.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
@@ -146,7 +146,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/hjson/hjson-go/v4 v4.7.0 // indirect
+	github.com/hjson/hjson-go/v4 v4.7.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/compress v1.19.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
@@ -169,10 +169,10 @@ require (
 	github.com/ulikunitz/xz v0.5.15 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
+	golang.org/x/exp v0.0.0-20260820142414-ca536658362e // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260803160001-6ac0973c030d // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260819154853-08b0e4226688 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260819154853-08b0e4226688 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 )

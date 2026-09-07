@@ -7,12 +7,12 @@ import (
 	"bytes"
 	"slices"
 
+	"cel.dev/cel-go/cel"
 	"github.com/carabiner-dev/attestation"
 	"github.com/carabiner-dev/collector/predicate/cyclonedx"
 	"github.com/carabiner-dev/collector/predicate/spdx"
 	"github.com/carabiner-dev/collector/predicate/spdx3"
 	papi "github.com/carabiner-dev/policy/api/v1"
-	"github.com/google/cel-go/cel"
 	"github.com/protobom/cel/pkg/elements"
 	"github.com/protobom/cel/pkg/library"
 	"github.com/protobom/protobom/pkg/reader"

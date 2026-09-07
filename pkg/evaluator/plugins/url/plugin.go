@@ -4,9 +4,9 @@
 package url
 
 import (
+	"cel.dev/cel-go/cel"
 	"github.com/carabiner-dev/attestation"
 	papi "github.com/carabiner-dev/policy/api/v1"
-	"github.com/google/cel-go/cel"
 
 	api "github.com/carabiner-dev/ampel/pkg/api/v1"
 	"github.com/carabiner-dev/ampel/pkg/evaluator/class"

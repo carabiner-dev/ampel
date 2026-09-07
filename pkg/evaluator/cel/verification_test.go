@@ -6,9 +6,9 @@ package cel
 import (
 	"testing"
 
+	"cel.dev/cel-go/cel"
 	"github.com/carabiner-dev/attestation"
 	sapi "github.com/carabiner-dev/signer/api/v1"
-	"github.com/google/cel-go/cel"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 )
