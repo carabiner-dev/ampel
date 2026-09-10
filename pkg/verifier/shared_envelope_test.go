@@ -124,7 +124,7 @@ func TestFilterAttestationsDoesNotMutateSharedEnvelope(t *testing.T) {
 
 	env := newSharedFakeEnvelope(concreteSigner())
 	envs := []attestation.Envelope{env}
-	ids := [][]*sapi.Identity{{policyIdentity()}}
+	ids := []admission{{admitted: true, verified: true, identities: []*sapi.Identity{policyIdentity()}}}
 
 	// Establish the signer-identity verification as Verify() would.
 	require.NoError(t, env.Verify())
