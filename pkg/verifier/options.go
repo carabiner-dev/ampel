@@ -101,6 +101,17 @@ type VerificationOptions struct {
 	// distinctly from policy violations or signature failures (for example,
 	// to drive a wait+retry loop while attestations land).
 	ErrOnMissingAttestations bool
+
+	// AdmitUnverified admits attestations that were passed explicitly to the
+	// verifier (through Attestations or AttestationFiles) even when they are
+	// unsigned or their signature could not be verified, provided the policy
+	// pins no signer identities. It exists for callers that hand the verifier
+	// evidence on purpose, such as the ampel CLI's --attestation flag, and
+	// never applies to attestations fetched by collectors. Admitted
+	// unverified attestations reach policies with verification.verified set
+	// to false. When the policy (or IdentityStrings) pins signer identities,
+	// unverified attestations are always skipped.
+	AdmitUnverified bool
 }
 
 // Validate checks the options set

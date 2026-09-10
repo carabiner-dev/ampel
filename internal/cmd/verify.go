@@ -128,7 +128,7 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	)
 
 	cmd.PersistentFlags().StringSliceVarP(
-		&o.AttestationFiles, "attestation", "a", o.AttestationFiles, "additional attestations to read",
+		&o.AttestationFiles, "attestation", "a", o.AttestationFiles, "additional attestations to read (admitted unsigned)",
 	)
 
 	cmd.PersistentFlags().BoolVar(
@@ -336,6 +336,12 @@ func addVerify(parentCmd *cobra.Command) {
 		VerificationOptions: verifier.NewVerificationOptions(),
 		SignerSet:           signerOpts.DefaultSignerSet(),
 	}
+	// Attestations passed with --attestation are evidence the user chose to
+	// hand the verifier, so they are admitted even when unsigned or signed
+	// with a key we do not hold (unless the policy pins signer identities).
+	//
+	// Evidence fetched by collectors never gets this treatment.
+	opts.AdmitUnverified = true
 	evalCmd := &cobra.Command{
 		Short: "check artifacts against a policy",
 		Long: fmt.Sprintf(`

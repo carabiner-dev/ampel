@@ -108,8 +108,8 @@ github.com/c2sp/wycheproof v0.0.0-20260105152342-fca0d3ba9f12 h1:C34LW7dhWgjAaAO
 github.com/c2sp/wycheproof v0.0.0-20260105152342-fca0d3ba9f12/go.mod h1:U1QjrC6KepOmtVmJn3QsKOTd9HliGr/da5afPEhLRnk=
 github.com/carabiner-dev/attestation v0.2.1 h1:VhjV5YlO9TsW50Sr/Zd54bdbZhhDAqgxC3kB9z1I+3Q=
 github.com/carabiner-dev/attestation v0.2.1/go.mod h1:O84vF84RZG3pJO/6BYrPs718bZviHF5DKajP1HsrDpw=
-github.com/carabiner-dev/collector v0.3.15 h1:NWKvuE5cc6MoMwJQCqftiPNQ47XxyNpF3JDlR0DyvRc=
-github.com/carabiner-dev/collector v0.3.15/go.mod h1:cDoNb+Ck8CjRvqpCkMguJikSYHqs5zsFpwjw3m1s3js=
+github.com/carabiner-dev/collector v0.3.16 h1:Tatp4tK/xWDluFwDqGfPPcYd9crCWm/0Ma+XlDAZ2Xs=
+github.com/carabiner-dev/collector v0.3.16/go.mod h1:G6neTqtRFOEjjOayE02bDWpLkcFB/gmbkfFteSliPcE=
 github.com/carabiner-dev/command v0.3.2 h1:lkmgr+Sj9OaPxKk2AHlitR76Mg+hqys6BK7071taywY=
 github.com/carabiner-dev/command v0.3.2/go.mod h1:ABHTlUZbUUq7LF1Xmlx01ZY8xMCv4eqleuVEO/LIifU=
 github.com/carabiner-dev/deadrop v0.0.0-20260228173914-d95e9ea2877d h1:Gl8o56PI73PE6YcDzUd49iJJBdp/ye/METanFm8gG64=
@@ -136,8 +136,8 @@ github.com/carabiner-dev/signer v0.6.2 h1:Tww40YP4RKjLSKdgT5nXVRiqd3Czjvkwd2WRDE
 github.com/carabiner-dev/signer v0.6.2/go.mod h1:xIeR0GMK3Hp9gYsd7dGO9W8EwjftWBk3/+flEle6o0Y=
 github.com/carabiner-dev/spdx3 v0.1.0 h1:Q6nMLXV0BhtqDQuwRDOaJDZR670TK4jdOvZqvTW/ctY=
 github.com/carabiner-dev/spdx3 v0.1.0/go.mod h1:d/t010TrZvYZBeYGpvHeId6QpRvGLlqK7cy0E81npPA=
-github.com/carabiner-dev/stash v0.0.0-20260907173633-c7ccf2e6d134 h1:FqgcmCJo/X1ePDcfg0RnpQRQAUxBNh9A0Tj0ZA6nBho=
-github.com/carabiner-dev/stash v0.0.0-20260907173633-c7ccf2e6d134/go.mod h1:zt3Ci22BBpzvoi9FyIvwMEnKmliDof3d7NWJTDwd6p0=
+github.com/carabiner-dev/stash v0.0.0-20260908191435-d6225e020426 h1:OpWSJwPUe5cwDLRS52AIG5UlvEjnA3NClq+nQO74HZI=
+github.com/carabiner-dev/stash v0.0.0-20260908191435-d6225e020426/go.mod h1:a3y+CMfB8JcwycV3dMGJ9sskLpamxzLFEW1cMJoaTc8=
 github.com/carabiner-dev/termtable v1.1.0 h1:b/7IqM52Wqwi9njjnAEIDddUYyX23msFkQVihkwarDs=
 github.com/carabiner-dev/termtable v1.1.0/go.mod h1:f2kBeZo0N9vQEMhfDfxv+DdXXy7eb9Wvu9u1sSyvR2A=
 github.com/carabiner-dev/vcslocator v0.5.0 h1:UpqilJXRJBgwzQHk0MsD03w+8/0GcyC1HbXxX0wZKcU=
@@ -226,8 +226,8 @@ github.com/go-git/go-git-fixtures/v4 v4.3.2-0.20231010084843-55a94097c399 h1:eMj
 github.com/go-git/go-git-fixtures/v4 v4.3.2-0.20231010084843-55a94097c399/go.mod h1:1OCfN199q1Jm3HZlxleg+Dw/mwps2Wbk9frAWm+4FII=
 github.com/go-git/go-git/v5 v5.19.2 h1:wkfn7vOlUBu8ivAWKBWisTiwJK4jYHzTF8Ndv1LyGqY=
 github.com/go-git/go-git/v5 v5.19.2/go.mod h1:QqCBE1EFN5ddFmrliLQ3/ntRCUjZU3EJuwuB/jWEHjk=
-github.com/go-jose/go-jose/v4 v4.1.4 h1:moDMcTHmvE6Groj34emNPLs/qtYXRVcd6S7NHbHz3kA=
-github.com/go-jose/go-jose/v4 v4.1.4/go.mod h1:x4oUasVrzR7071A4TnHLGSPpNOm2a21K9Kf04k1rs08=
+github.com/go-jose/go-jose/v4 v4.1.5 h1:RjgjO2LOtWOJKUC5wpwY9LR3B3vwVAz6JS2YHfYU6eA=
+github.com/go-jose/go-jose/v4 v4.1.5/go.mod h1:x4oUasVrzR7071A4TnHLGSPpNOm2a21K9Kf04k1rs08=
 github.com/go-logr/logr v1.2.2/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=
 github.com/go-logr/logr v1.4.4 h1:tG4xh9yMsRCAiodLVTxyrkzSZ9+o0L1Kg/+cPVcbP/8=
 github.com/go-logr/logr v1.4.4/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
@@ -456,8 +456,8 @@ github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJwooC2xJA040=
 github.com/opencontainers/image-spec v1.1.1/go.mod h1:qpqAh3Dmcf36wStyyWU+kCeDgrGnAve2nCC8+7h8Q0M=
-github.com/openvex/go-vex v0.2.8 h1:m/iH6+0fc7QXwfx7vJ0UeT8Z1oN1zVcyHjcVK+UO11Y=
-github.com/openvex/go-vex v0.2.8/go.mod h1:V09jOICYN/3VS4oU2hthSN8wGI6UAv3FvvYbpYS1xCE=
+github.com/openvex/go-vex v0.2.9 h1:InBYPjk5FQtDjnSQ12RUyQcnMlDO5QAg4QK848LIFm8=
+github.com/openvex/go-vex v0.2.9/go.mod h1:K7NfMaPzwZHZjg5xBvDzl4Wul4ojoNN4ICR5s4xbNHw=
 github.com/ossf/osv-schema/bindings/go v0.0.0-20260730052020-9509daabeece h1:PSGyVVj2mqBaGj9sa/8yv/XNni3JCPZC4xAVdnwww2M=
 github.com/ossf/osv-schema/bindings/go v0.0.0-20260730052020-9509daabeece/go.mod h1:IrUa4QzZUi03J3WXDzZYXVawYipHownNfqqZrqeGXfg=
 github.com/package-url/packageurl-go v0.1.7 h1:iFWg6tzAjLA6F/qX3M5nZaiMHJgc+p2zxVyr/fY+sZY=
@@ -497,8 +497,8 @@ github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 h1:lZUw3E0/J3roVtGQ+SCrUrg3ON6Ng
 github.com/santhosh-tekuri/jsonschema/v5 v5.3.1/go.mod h1:uToXkOrWAZ6/Oc07xWQrPOhJotwFIyu2bBVN41fcDUY=
 github.com/sassoftware/relic/v8 v8.2.0 h1:9/L4S4I6an/JsPNhmcTpqfiOIsLb/iJaePZD1xR+ulE=
 github.com/sassoftware/relic/v8 v8.2.0/go.mod h1:pZy7hLT9WCOKPonV8G/fplvtBLOZd6/kWtKqeHR6nKc=
-github.com/secure-systems-lab/go-securesystemslib v0.11.0 h1:iuCR9kcMFD4QurdKrGvPLoKZLv9YvwPYVr0473BdtFs=
-github.com/secure-systems-lab/go-securesystemslib v0.11.0/go.mod h1:+PMOTjUGwHj2vcZ+TFKlb1tXRbrdWE1LYDT5i9JC80Q=
+github.com/secure-systems-lab/go-securesystemslib v0.11.1 h1:ayahDPjfSIqKegyt5YVGEvQ7SAi72GHXTy+b2YjUd5w=
+github.com/secure-systems-lab/go-securesystemslib v0.11.1/go.mod h1:UyOjhoZLi76ir63u1ptubEevVe6dlNPmNxwgVvKqFFY=
 github.com/sergi/go-diff v1.4.0 h1:n/SP9D5ad1fORl+llWyN+D6qoUETXNZARKjyY2/KVCw=
 github.com/sergi/go-diff v1.4.0/go.mod h1:A0bzQcvG0E7Rwjx0REVgAGH58e96+X0MeOfepqsbeW4=
 github.com/shibumi/go-pathspec v1.3.0 h1:QUyMZhFo0Md5B8zV8x2tesohbb5kfbpTi9rBnKh5dkI=
@@ -565,8 +565,8 @@ github.com/tink-crypto/tink-go-gcpkms/v2 v2.4.0 h1:xpI5pnEQ0erFCS3JmcEl7Blluo8Zi
 github.com/tink-crypto/tink-go-gcpkms/v2 v2.4.0/go.mod h1:wDDAhjfd1t4TjeJCSsmFK7CARPUs/ITi16ZZ8kmAaFQ=
 github.com/tink-crypto/tink-go-hcvault/v2 v2.5.0 h1:eXuNqgrcYelxU1MVikOJDP3wTS5lvihM4ntoAbAMfvs=
 github.com/tink-crypto/tink-go-hcvault/v2 v2.5.0/go.mod h1:3RhcxAqek6xUlRFmJifvU4CYLZN60KMQdIKqpZAZJG0=
-github.com/tink-crypto/tink-go/v2 v2.7.0 h1:k7QnUXJ1cRDpvoy/5l1FimZqMAArRff8vjUqzi5N04o=
-github.com/tink-crypto/tink-go/v2 v2.7.0/go.mod h1:cWNpQ/yAT/QHzAV0kBGMOSJzzYTKofDZdJaUqOPPWCI=
+github.com/tink-crypto/tink-go/v2 v2.8.0 h1:1zODq1bZDqOQdNPjhvwGYLDw9On7mDWPnQf+4xXlpAc=
+github.com/tink-crypto/tink-go/v2 v2.8.0/go.mod h1:aNXZeyxjQU9iqAeARRNmbESXUW6Mao1HRCCTY8B1TFM=
 github.com/transparency-dev/formats v0.1.1 h1:4bVHJc+KdBgpA1OJD1yjI+g0i5Z1graCppTMH8lWKJI=
 github.com/transparency-dev/formats v0.1.1/go.mod h1:qtZ8goRuJ8FTBG9c9+Bj0rn2rUG7eG/AUTkr+Aw3jFw=
 github.com/transparency-dev/merkle v0.0.2 h1:Q9nBoQcZcgPamMkGn7ghV8XiTZ/kRxn1yCG81+twTK4=
