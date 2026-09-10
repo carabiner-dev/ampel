@@ -6,7 +6,7 @@ require (
 	cel.dev/cel-go v0.32.0
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/carabiner-dev/attestation v0.2.1
-	github.com/carabiner-dev/collector v0.3.15
+	github.com/carabiner-dev/collector v0.3.16
 	github.com/carabiner-dev/command v0.3.2
 	github.com/carabiner-dev/hasher v0.2.4
 	github.com/carabiner-dev/osv v0.1.2
@@ -17,7 +17,7 @@ require (
 	github.com/in-toto/attestation v1.2.0
 	github.com/jedib0t/go-pretty/v6 v6.8.3
 	github.com/mitchellh/go-wordwrap v1.0.1
-	github.com/openvex/go-vex v0.2.8
+	github.com/openvex/go-vex v0.2.9
 	github.com/package-url/packageurl-go v0.1.7
 	github.com/pandatix/go-cvss v0.6.4
 	github.com/protobom/cel v0.1.3
@@ -54,7 +54,7 @@ require (
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.9.1 // indirect
 	github.com/go-git/go-git/v5 v5.19.2 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.5 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.26.0 // indirect
@@ -85,7 +85,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pjbgf/sha1cd v0.6.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/secure-systems-lab/go-securesystemslib v0.11.0 // indirect
+	github.com/secure-systems-lab/go-securesystemslib v0.11.1 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
 	github.com/sigstore/protobuf-specs v0.5.2 // indirect
@@ -152,7 +152,7 @@ require (
 	github.com/carabiner-dev/deadrop v0.0.0-20260228173914-d95e9ea2877d // indirect
 	github.com/carabiner-dev/sbomfs v0.2.0 // indirect
 	github.com/carabiner-dev/spdx3 v0.1.0 // indirect
-	github.com/carabiner-dev/stash v0.0.0-20260907173633-c7ccf2e6d134 // indirect
+	github.com/carabiner-dev/stash v0.0.0-20260908191435-d6225e020426 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chainguard-dev/clog v1.8.1 // indirect
@@ -230,7 +230,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tink-crypto/tink-go-awskms/v3 v3.0.0 // indirect
 	github.com/tink-crypto/tink-go-gcpkms/v2 v2.4.0 // indirect
-	github.com/tink-crypto/tink-go/v2 v2.7.0 // indirect
+	github.com/tink-crypto/tink-go/v2 v2.8.0 // indirect
 	github.com/ulikunitz/xz v0.5.16 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.70.0 // indirect
