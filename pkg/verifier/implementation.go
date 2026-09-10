@@ -53,9 +53,9 @@ type AmpelVerifier interface {
 	Transform(*VerificationOptions, map[transformer.Class]transformer.Transformer, *papi.Policy, attestation.Subject, []attestation.Predicate) (attestation.Subject, []attestation.Predicate, error)
 
 	// CheckIdentities verifies that attestations are signed by the policy identities
-	CheckIdentities(context.Context, *VerificationOptions, []*sapi.Identity, []attestation.Envelope) (bool, [][]*sapi.Identity, []error, error)
+	CheckIdentities(context.Context, *VerificationOptions, []*sapi.Identity, []attestation.Envelope) (bool, []admission, []error, error)
 
-	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope, [][]*sapi.Identity) ([]attestation.Predicate, error)
+	FilterAttestations(*VerificationOptions, attestation.Subject, []attestation.Envelope, []admission) ([]attestation.Predicate, error)
 	AssertResult(*papi.Policy, *papi.Result) error
 
 	// VerifySubject runs the verification process.
@@ -476,12 +476,40 @@ func (di *defaultIplementation) Transform(
 	return subject, prepredicates, nil
 }
 
-// CheckIdentities verifies attestation signatures and filters the envelope
-// list to only those signed by a recognized identity. Envelopes that cannot
-// be verified or whose signer does not match any of the policy/context
-// identities are silently discarded — they are simply not candidates for
-// evaluation. The function only fails when no envelopes survive the filter.
-func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *VerificationOptions, policyIdentities []*sapi.Identity, envelopes []attestation.Envelope) (bool, [][]*sapi.Identity, []error, error) {
+// admission records the outcome of CheckIdentities for one envelope: whether
+// it may be used as evidence, whether its signature verified, and, when an
+// identity constraint applies, the allowed identities its signer matched.
+type admission struct {
+	admitted   bool
+	verified   bool
+	identities []*sapi.Identity
+}
+
+// CheckIdentities verifies attestation signatures and decides which envelopes
+// are admitted as evidence. Admission is a two stage gate whose outcome does
+// not depend on how an attestation was signed:
+//
+//  1. Signature: an envelope is admitted only when its signature verified
+//     against the available material (the sigstore trust roots for bundles,
+//     the configured public keys for DSSE envelopes). Bare statements and
+//     envelopes signed with keys the verifier does not hold are unverified,
+//     not errors.
+//     The one exception is opts.AdmitUnverified, which admits unverified envelopes
+//     the caller passed explicitly when no identity constraint applies (see
+//     withExplicitEvidence). Evidence fetched by the collector is never admitted
+//     unverified.
+//
+//  2. Identity: when the policy (or the options, if the policy defines none)
+//     pins signer identities, a verified envelope is admitted only if its
+//     signer matches one of them.
+//
+// Envelopes that fail either gate are dropped from the evidence set. The
+// returned slice carries one admission per envelope. The boolean is false when
+// nothing was admitted although evidence was supplied (or an identity
+// constraint applies), and the error list then explains why nothing was admitted:
+// an identity mismatch, or ErrUnverifiedAttestations when every envelope was
+// unverified.
+func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *VerificationOptions, policyIdentities []*sapi.Identity, envelopes []attestation.Envelope) (bool, []admission, []error, error) {
 	// allIds are the allowed ids (from the policy + any from options)
 	allIds := []*sapi.Identity{}
 
@@ -511,32 +539,14 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 		}
 	}
 
-	// If there are no identities defined, accept all envelopes (no identity
-	// constraint to enforce). A nil ids slice signals to FilterAttestations
-	// that no identity filtering should be applied. Signatures are still
-	// verified so each envelope's verification records the actual signer
-	// identities, which FilterAttestations surfaces to policies as
-	// verification.signers; failures are tolerated as there is no identity
-	// constraint to enforce. Like the verify-and-match step below, the
-	// verification is serialized under the per-run evidence lock because the
-	// envelopes are shared across the policies of a PolicySet.
-	if len(allIds) == 0 {
+	constrained := len(allIds) > 0
+	if constrained {
+		logrus.Debug("Will look for signed attestations from:")
+		for _, i := range allIds {
+			logrus.Debugf("  > %s", i.Principal())
+		}
+	} else {
 		logrus.Debug("No identities defined in policy. Not filtering on signer identity.")
-		if mu := sharedEvidenceLock(ctx); mu != nil {
-			mu.Lock()
-			defer mu.Unlock()
-		}
-		for i, e := range envelopes {
-			if err := e.Verify(opts.Keys); err != nil {
-				logrus.Debugf("attestation %d (type %s): signature verification error: %v", i, e.GetStatement().GetType(), err)
-			}
-		}
-		return true, nil, nil, nil
-	}
-
-	logrus.Debug("Will look for signed attestations from:")
-	for _, i := range allIds {
-		logrus.Debugf("  > %s", i.Principal())
 	}
 
 	// The keys to use are the ones in the options...
@@ -553,85 +563,110 @@ func (di *defaultIplementation) CheckIdentities(ctx context.Context, opts *Verif
 		}
 	}
 
-	// Verify signatures and collect only envelopes with a matching identity.
-	// The envelopes are shared across the concurrently-evaluated policies of a
+	// Verify signatures and decide the admission of each envelope. The
+	// envelopes are shared across the concurrently-evaluated policies of a
 	// PolicySet, and their verification is cached/recomputed on the shared
 	// predicate, so serialize the verify-and-match step under the per-run lock
 	// published on the context (nil outside a concurrent fan-out).
-	validSigners := make([][]*sapi.Identity, len(envelopes))
+	admissions := make([]admission, len(envelopes))
+
 	// observedSigners collects the actual signer identities seen on the
 	// verified attestations. It is used to build a "wanted / got" diagnostic
 	// when no attestation matches an accepted identity.
 	var observedSigners []*sapi.Identity
+	admitted, unverified := 0, 0
 	if mu := sharedEvidenceLock(ctx); mu != nil {
 		mu.Lock()
 		defer mu.Unlock()
 	}
 	for i, e := range envelopes {
+		ptype := e.GetStatement().GetPredicateType()
 		if err := e.Verify(keys); err != nil {
-			logrus.Debugf("attestation %d (type %s): signature verification error, skipping: %v", i, e.GetStatement().GetType(), err)
+			logrus.Debugf("attestation %d (type %s): signature verification error, skipping: %v", i, ptype, err)
+			unverified++
 			continue
 		}
 
-		if e.GetVerification() == nil || !e.GetVerification().GetVerified() {
-			logrus.Debugf("attestation %d (type %s): not verified, skipping", i, e.GetStatement().GetType())
-			continue
-		}
-
-		if v, ok := e.GetVerification().(*sapi.Verification); ok {
-			if sig := v.GetSignature(); sig != nil {
-				observedSigners = append(observedSigners, sig.GetIdentities()...)
+		// Signature gate. Verify records the outcome on the envelope. It does
+		// not fail on a bad or unverifiable signature.
+		v := e.GetVerification()
+		if v == nil || !v.GetVerified() {
+			unverified++
+			if !constrained && opts.AdmitUnverified && isExplicitEvidence(ctx, e) {
+				logrus.Warnf("attestation %d (type %s) is unsigned or its signature could not be verified; admitting it because it was passed explicitly", i, ptype)
+				admissions[i] = admission{admitted: true}
+				admitted++
+				continue
 			}
+			logrus.Debugf("attestation %d (type %s): not verified, skipping", i, ptype)
+			continue
+		}
+		observedSigners = append(observedSigners, envelopeSigners(e)...)
+
+		if !constrained {
+			admissions[i] = admission{admitted: true, verified: true}
+			admitted++
+			continue
 		}
 
+		// Identity gate.
+		var matched []*sapi.Identity
 		for _, id := range allIds {
-			if e.GetVerification().MatchesIdentity(id) {
-				validSigners[i] = append(validSigners[i], id)
+			if v.MatchesIdentity(id) {
+				matched = append(matched, id)
 			}
 		}
-
-		if len(validSigners[i]) == 0 {
-			logrus.Debugf("attestation %d (type %s): no matching signer identity, skipping", i, e.GetStatement().GetType())
+		if len(matched) == 0 {
+			logrus.Debugf("attestation %d (type %s): no matching signer identity, skipping", i, ptype)
+			continue
 		}
+		admissions[i] = admission{admitted: true, verified: true, identities: matched}
+		admitted++
 	}
 
-	// Check if at least one envelope matched a recognized identity.
-	matched := false
-	for _, ids := range validSigners {
-		if len(ids) > 0 {
-			matched = true
-			break
-		}
+	if admitted > 0 {
+		return true, admissions, nil, nil
 	}
-
-	if !matched {
-		return false, validSigners, []error{
-			identityMismatchError(allIds, observedSigners),
+	if constrained {
+		return false, admissions, []error{
+			identityMismatchError(allIds, observedSigners, unverified),
 		}, nil
 	}
-
-	return true, validSigners, nil, nil
+	if len(envelopes) == 0 {
+		return true, admissions, nil, nil
+	}
+	return false, admissions, []error{
+		fmt.Errorf("%w: %d attestation(s) were unsigned or signed with keys the verifier does not hold", ErrUnverifiedAttestations, unverified),
+	}, nil
 }
 
 // identityMismatchError builds a human-readable "wanted / got" diagnostic for a
 // signer-identity check that admitted no attestations. The wanted identities are
-// rendered in their rich (matcher-aware) form; the observed signers as pure
-// principals.
-func identityMismatchError(wanted, got []*sapi.Identity) error {
+// rendered in their rich (matcher-aware) form while the observed signers are
+// recorded as pure principals. "unverified" counts the attestations skipped
+// because their signature did not verify, so an operator can tell a missing key
+// apart from a wrong signer.
+func identityMismatchError(wanted, got []*sapi.Identity, unverified int) error {
+	var err error
 	if len(got) == 0 {
-		return fmt.Errorf(
+		err = fmt.Errorf(
 			"no attestation carried a verified signer identity (wanted one of: %s)",
 			renderIdentities(wanted, (*sapi.Identity).Spec),
 		)
+	} else {
+		err = fmt.Errorf(
+			"attestation signer does not match an accepted identity (wanted one of: %s; got: %s)",
+			renderIdentities(wanted, (*sapi.Identity).Spec),
+			renderIdentities(got, (*sapi.Identity).Principal),
+		)
 	}
-	return fmt.Errorf(
-		"attestation signer does not match an accepted identity (wanted one of: %s; got: %s)",
-		renderIdentities(wanted, (*sapi.Identity).Spec),
-		renderIdentities(got, (*sapi.Identity).Principal),
-	)
+	if unverified > 0 {
+		err = fmt.Errorf("%w; %d attestation(s) were skipped because they are unsigned or their signature could not be verified", err, unverified)
+	}
+	return err
 }
 
-// renderIdentities renders a list of identities to a comma-separated string
+// renderIdentities renders a list of identities to a comma separated string
 // using the provided rendering function, de-duplicating and dropping empties.
 func renderIdentities(ids []*sapi.Identity, render func(*sapi.Identity) string) string {
 	seen := make(map[string]struct{}, len(ids))
@@ -653,34 +688,30 @@ func renderIdentities(ids []*sapi.Identity, render func(*sapi.Identity) string) 
 	return strings.Join(parts, ", ")
 }
 
-// FilterAttestations filters the attestations read to only those required by the
-// policy. This function also restamps the ingested predicates with the identities
-// verified against the policy when ingesting the attestations. Envelopes whose
-// identity list is empty (not admitted by CheckIdentities) are excluded.
+// FilterAttestations turns the envelopes admitted by CheckIdentities into the
+// predicates a policy evaluates, stamping each with the verification outcome
+// CheckIdentities recorded: whether the signature verified and the allowed
+// identities the signer matched. Envelopes that were not admitted are excluded.
 //
-// The matched identities are exposed to the evaluator through a per-policy
+// The verification data is exposed to the evaluator through a per-policy
 // matchedPredicate wrapper rather than by mutating the shared predicate.
-//
-// TODO(puerco): Implement filtering before 1.0
-func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, subject attestation.Subject, envs []attestation.Envelope, ids [][]*sapi.Identity) ([]attestation.Predicate, error) {
+func (di *defaultIplementation) FilterAttestations(opts *VerificationOptions, subject attestation.Subject, envs []attestation.Envelope, admissions []admission) ([]attestation.Predicate, error) {
+	if len(admissions) != len(envs) {
+		return nil, fmt.Errorf("admission list does not match the envelope list (%d admissions for %d envelopes)", len(admissions), len(envs))
+	}
 	preds := make([]attestation.Predicate, 0, len(envs))
 	for i, env := range envs {
 		// Skip envelopes that were not admitted by CheckIdentities.
-		if len(ids) > 0 && len(ids[i]) == 0 {
+		if !admissions[i].admitted {
 			continue
 		}
-		pred := env.GetStatement().GetPredicate()
-		var matchedIds []*sapi.Identity
-		if ids != nil {
-			matchedIds = ids[i]
-		}
 		preds = append(preds, &matchedPredicate{
-			Predicate: pred,
+			Predicate: env.GetStatement().GetPredicate(),
 			verification: &sapi.Verification{
 				Signature: &sapi.SignatureVerification{
 					Date:       timestamppb.Now(),
-					Verified:   true,
-					Identities: matchedIds,
+					Verified:   admissions[i].verified,
+					Identities: admissions[i].identities,
 				},
 			},
 			// Carry the attestation's actual verified signers, independent of
@@ -813,7 +844,7 @@ func (di *defaultIplementation) evaluateChain(
 		}
 		var pass bool
 		var err error
-		var ids [][]*sapi.Identity
+		var ids []admission
 
 		// Check the attestation identities for now, we fallback to the identities
 		// defined in the policy if the link does not have its own. Probably this
@@ -893,7 +924,7 @@ func (di *defaultIplementation) evaluateChain(
 		// Add to link history
 		var goodIds []*sapi.Identity
 		if len(ids) > 0 {
-			goodIds = ids[0]
+			goodIds = ids[0].identities
 		}
 		chain = append(chain, &papi.ChainedSubject{
 			Source:      newResourceDescriptorFromSubject(subject),

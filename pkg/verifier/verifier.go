@@ -60,6 +60,31 @@ func sharedEvidenceLock(ctx context.Context) *sync.Mutex {
 	return mu
 }
 
+// explicitEvidenceKey is the context key under which the verifier publishes
+// the set of envelopes the caller passed explicitly (opts.Attestations and
+// opts.AttestationFiles), as opposed to evidence fetched by the collector. Only
+// these are eligible for the AdmitUnverified opt-in in CheckIdentities.
+type explicitEvidenceKey struct{}
+
+// withExplicitEvidence records the explicitly supplied envelopes on the context.
+func withExplicitEvidence(ctx context.Context, envs []attestation.Envelope) context.Context {
+	set := make(map[attestation.Envelope]struct{}, len(envs))
+	for _, e := range envs {
+		set[e] = struct{}{}
+	}
+	return context.WithValue(ctx, explicitEvidenceKey{}, set)
+}
+
+// isExplicitEvidence reports whether env was passed explicitly to the verifier.
+func isExplicitEvidence(ctx context.Context, env attestation.Envelope) bool {
+	set, ok := ctx.Value(explicitEvidenceKey{}).(map[attestation.Envelope]struct{})
+	if !ok {
+		return false
+	}
+	_, ok = set[env]
+	return ok
+}
+
 // Verify checks a subject against a policy using the available evidence. The
 // policy argument may be a single policy, a policy group or a policy set; the
 // results are published once per call, regardless of the material kind.
@@ -192,6 +217,7 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	if err != nil {
 		return nil, fmt.Errorf("parsing single attestations: %w", err)
 	}
+	ctx = withExplicitEvidence(ctx, atts)
 
 	// Mutate the options set to avoid reparsing the paths
 	opts.AttestationFiles = []string{}
@@ -375,6 +401,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	if err != nil {
 		return nil, fmt.Errorf("parsing single attestations: %w", err)
 	}
+	ctx = withExplicitEvidence(ctx, atts)
 
 	// Publish the subject on the evalcontext so context-value expressions and
 	// the evaluator runtimes can reach it via ctx.
@@ -440,10 +467,15 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	}
 
 	if !allow {
-		return failPolicyWithError(policy, chain, subject, PolicyError{
-			error:    errors.New("attestation identity validation failed"),
-			Guidance: errors.Join(idErrors...).Error(),
-		}), nil
+		reason := errors.Join(idErrors...)
+		perr := PolicyError{error: errors.New("attestation identity validation failed")}
+		if errors.Is(reason, ErrUnverifiedAttestations) {
+			perr.error = ErrUnverifiedAttestations
+		}
+		if reason != nil {
+			perr.Guidance = reason.Error()
+		}
+		return failPolicyWithError(policy, chain, subject, perr), nil
 	}
 
 	// Filter attestations to those applicable to the subject
@@ -538,6 +570,7 @@ func (ampel *Ampel) VerifySubjectWithPolicyGroup(
 	if err != nil {
 		return nil, fmt.Errorf("parsing single attestations: %w", err)
 	}
+	ctx = withExplicitEvidence(ctx, atts)
 
 	// Load the policyset eval ctx definition into the go contect
 	ctx, evalContext := ampel.loadElementEvalContextDef(ctx, group)
