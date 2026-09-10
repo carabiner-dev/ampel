@@ -19,6 +19,11 @@ import (
 
 var ErrMissingAttestations = errors.New("required attestations missing to verify subject")
 
+// ErrUnverifiedAttestations is returned (wrapped) when evidence was supplied
+// but none of it could be admitted because no signature verified: the
+// attestations are unsigned, or signed with keys the verifier does not hold.
+var ErrUnverifiedAttestations = errors.New("no verified attestations available to evaluate the policy")
+
 type AmpelStatusChecker interface {
 	GatherResults(context.Context, *StatusOptions, attestation.Subject) ([]attestation.Envelope, error)
 	ParseAttestedResults(context.Context, *StatusOptions, []attestation.Envelope) ([]attestation.Predicate, error)
