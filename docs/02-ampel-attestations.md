@@ -111,12 +111,32 @@ As mentioned, attestations can be wrapped in signed envelopes. But it is importa
 to differentiate between the signature providing authenticity and inegrity guarantees
 and the _signing identity_.
 
-When loading a signed attestation, AMPEL will verify an attestation's signature
-automatically. If the signature fails, the attestation will be rejected.
+When loading an attestation, AMPEL verifies its signature automatically and
+admits it as evidence only when the signature verified against the material it
+holds: the sigstore trust roots for bundles, the configured public keys
+(`--key` and any keys pinned in the policy identities) for DSSE envelopes. This
+signature gate does not depend on the policy or on how the attestation was
+signed. A bare statement carries no signature, and an envelope signed with a
+key the verifier does not hold cannot be checked; both are simply _unverified_
+and are dropped from the evidence set. When every attestation supplied for a
+subject is unverified, the policy fails with an explicit "no verified
+attestations" error rather than reporting the evidence as missing.
+
+There is one deliberate exception. The `ampel verify` CLI admits unverified
+attestations passed with `--attestation` / `-a`, on the grounds that handing a
+file to the verifier is an explicit choice. Attestations found by collectors are
+never admitted unverified, and the exception ends as soon as the policy (or
+`--signer`) pins signer identities: from then on unverified attestations are
+skipped and only signed evidence from an accepted identity counts. Admitted
+unverified attestations reach policies with `verification.verified` set to
+false so a policy can still tell them apart. Library callers get the same
+behavior through the `AdmitUnverified` verification option.
 
 But when it comes to the signing identity, AMPEL does not do any assumptions. It is
 up to the policy to define who can sign attestations. _Who_ in this context refers
-to a key or sigstore identity, or a mix of both.
+to a key or sigstore identity, or a mix of both. Identities pinned in a policy
+always win over `--signer`: a signed policy cannot be loosened from the command
+line, and an operator who needs more signers extends the policy instead.
 
 ## Producing Result Attestations
 
