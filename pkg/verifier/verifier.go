@@ -383,14 +383,18 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 
 // VerifySubjectWithPolicy verifies a subject against a single policy
 func (ampel *Ampel) VerifySubjectWithPolicy(
-	ctx context.Context, opts *VerificationOptions, policy *papi.Policy, subject attestation.Subject,
+	ctx context.Context, opts *VerificationOptions, policy *papi.Policy, originalSubject attestation.Subject,
 ) (*papi.Result, error) {
+	// The subject may be replaced by the chain and the transformers below
+	// but the result always records the original subject under evaluation.
+	subject := originalSubject
+
 	// Check if the policy is viable before
 	if err := ampel.impl.CheckPolicy(ctx, opts, policy); err != nil {
 		// If the policy failed validation, don't err. Fail the policy
 		perr := PolicyError{}
 		if errors.As(err, &perr) {
-			return failPolicyWithError(policy, nil, subject, perr), nil
+			return failPolicyWithError(policy, nil, originalSubject, perr), nil
 		}
 		// ..else something broke
 		return nil, fmt.Errorf("checking policy: %w", err)
@@ -434,7 +438,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		// If policyFail is true, then we don't return an error but rather
 		// a policy fail result based on the error
 		if policyFail {
-			return failPolicyWithError(policy, chain, subject, err), nil
+			return failPolicyWithError(policy, chain, originalSubject, err), nil
 		}
 		return nil, fmt.Errorf("processing chained subject: %w", err)
 	}
@@ -481,7 +485,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		if reason != nil {
 			perr.Guidance = reason.Error()
 		}
-		return failPolicyWithError(policy, chain, subject, perr), nil
+		return failPolicyWithError(policy, chain, originalSubject, perr), nil
 	}
 
 	// Filter attestations to those applicable to the subject
@@ -508,6 +512,7 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	}
 
 	result.Chain = chain
+	result.Subject = subjectDescriptor(originalSubject)
 
 	// Assert the status from the evaluation results
 	if err := ampel.impl.AssertResult(policy, result); err != nil {
@@ -520,8 +525,12 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 
 // VerifySubjectWithPolicyGroup evaluates a policy group and its blocks
 func (ampel *Ampel) VerifySubjectWithPolicyGroup(
-	ctx context.Context, oOpts *VerificationOptions, group *papi.PolicyGroup, subject attestation.Subject,
+	ctx context.Context, oOpts *VerificationOptions, group *papi.PolicyGroup, originalSubject attestation.Subject,
 ) (*papi.ResultGroup, error) {
+	// The subject may be replaced by the chain below but the result always
+	// records the original subject under evaluation.
+	subject := originalSubject
+
 	// DeepCopy the options as we will mutate them after parsing the initial
 	// attestations set.
 	opts := *oOpts
@@ -536,6 +545,7 @@ func (ampel *Ampel) VerifySubjectWithPolicyGroup(
 
 	// Resuktset to return
 	res := &papi.ResultGroup{
+		Subject:   subjectDescriptor(originalSubject),
 		Status:    papi.StatusPASS,
 		DateStart: timestamppb.Now(),
 		DateEnd:   timestamppb.Now(),
@@ -559,7 +569,7 @@ func (ampel *Ampel) VerifySubjectWithPolicyGroup(
 		// If the policygroup failed validation, don't err. Fail the evaluation
 		perr := PolicyError{}
 		if errors.As(err, &perr) {
-			return failPolicyGroupWithError(group, nil, subject, err), nil
+			return failPolicyGroupWithError(group, nil, originalSubject, err), nil
 		}
 		// else something broke
 		return nil, fmt.Errorf("checking policy: %w", err)
@@ -604,17 +614,12 @@ func (ampel *Ampel) VerifySubjectWithPolicyGroup(
 		// If policyFail is true, then we don't return an error but rather
 		// a policy fail result based on the error
 		if policyFail {
-			return failPolicyGroupWithError(group, chain, subject, err), nil
+			return failPolicyGroupWithError(group, chain, originalSubject, err), nil
 		}
 		return nil, fmt.Errorf("processing chained subject: %w", err)
 	}
 
-	res.Subject = &gointoto.ResourceDescriptor{
-		Name:   subject.GetName(),
-		Uri:    subject.GetUri(),
-		Digest: subject.GetDigest(),
-	}
-
+	res.Chain = chain
 	evalContext.ChainedSubjects = chain
 
 	// Rebuild the go context as we are now shipping the chained subjects.
