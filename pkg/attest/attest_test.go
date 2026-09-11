@@ -145,9 +145,13 @@ func TestAttestTo_PrettyPrint(t *testing.T) {
 	}
 }
 
-func TestAttestAmpel_SubjectDedup(t *testing.T) {
-	// Two results sharing the same digest should yield one subject.
-	rs := newResultSet(t, "deadbeef", "deadbeef")
+// attestSubjects runs the ampel attester on rs and returns the subjects
+// of the resulting statement.
+func attestSubjects(t *testing.T, rs *papi.ResultSet) []struct {
+	Name   string            `json:"name,omitempty"`
+	Digest map[string]string `json:"digest,omitempty"`
+} {
+	t.Helper()
 	var buf bytes.Buffer
 	if err := New().AttestTo(&buf, rs); err != nil {
 		t.Fatalf("AttestTo: %v", err)
@@ -156,8 +160,72 @@ func TestAttestAmpel_SubjectDedup(t *testing.T) {
 	if err := json.Unmarshal(buf.Bytes(), &stmt); err != nil {
 		t.Fatalf("unmarshaling output: %v", err)
 	}
-	if got := len(stmt.Subject); got != 1 {
-		t.Errorf("subject count = %d, want 1 (dedup); subjects: %+v", got, stmt.Subject)
+	return stmt.Subject
+}
+
+func TestAttestAmpel_SetSubject(t *testing.T) {
+	// The statement is about the evaluated subject, once, no matter how
+	// many results the set holds.
+	rs := newResultSet(t, "deadbeef", "deadbeef")
+	subjects := attestSubjects(t, rs)
+	if len(subjects) != 1 || subjects[0].Digest["sha256"] != "deadbeef" {
+		t.Errorf("subjects = %+v, want one with digest deadbeef", subjects)
+	}
+
+	// Results and groups about other artifacts, chained or not, do not
+	// add subjects.
+	rs.Results = append(rs.Results, &papi.Result{Subject: newSubject("cafecafe")})
+	rs.Groups = []*papi.ResultGroup{
+		{Subject: newSubject("deadbeef"), Chain: []*papi.ChainedSubject{{Source: newSubject("cafecafe")}}},
+	}
+	subjects = attestSubjects(t, rs)
+	if len(subjects) != 1 || subjects[0].Digest["sha256"] != "deadbeef" {
+		t.Errorf("subjects = %+v, want only deadbeef", subjects)
+	}
+
+	// A set made only of groups, as group-based policy sets produce,
+	// still carries the evaluated subject.
+	rs.Results = nil
+	subjects = attestSubjects(t, rs)
+	if len(subjects) != 1 || subjects[0].Digest["sha256"] != "deadbeef" {
+		t.Errorf("subjects = %+v, want only deadbeef", subjects)
+	}
+}
+
+func TestAttestAmpel_NoSubject(t *testing.T) {
+	// A set without an evaluated subject cannot be attested
+	rs := newResultSet(t)
+	rs.Results = []*papi.Result{{Subject: newSubject("deadbeef")}}
+	if err := New().AttestTo(&bytes.Buffer{}, rs); err == nil {
+		t.Error("expected an error attesting a set without subject")
+	}
+
+	rs.Subject = &gointoto.ResourceDescriptor{Name: "no-digest"}
+	if err := New().AttestTo(&bytes.Buffer{}, rs); err == nil {
+		t.Error("expected an error attesting a subject without digests")
+	}
+}
+
+func TestAttestAmpel_WrappedInputs(t *testing.T) {
+	// Single results and groups are wrapped into a set that takes their
+	// subject.
+	for name, results := range map[string]papi.Results{
+		"result": &papi.Result{Subject: newSubject("deadbeef"), Status: papi.StatusPASS},
+		"group":  &papi.ResultGroup{Subject: newSubject("deadbeef"), Status: papi.StatusPASS},
+	} {
+		t.Run(name, func(t *testing.T) {
+			var buf bytes.Buffer
+			if err := New().AttestTo(&buf, results); err != nil {
+				t.Fatalf("AttestTo: %v", err)
+			}
+			var stmt statementShape
+			if err := json.Unmarshal(buf.Bytes(), &stmt); err != nil {
+				t.Fatalf("unmarshaling output: %v", err)
+			}
+			if len(stmt.Subject) != 1 || stmt.Subject[0].Digest["sha256"] != "deadbeef" {
+				t.Errorf("subjects = %+v, want one with digest deadbeef", stmt.Subject)
+			}
+		})
 	}
 }
 

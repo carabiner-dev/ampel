@@ -180,6 +180,7 @@ func (a *ResultsAttester) attestAmpel(w io.Writer, results papi.Results, o attes
 	switch r := results.(type) {
 	case *papi.Result:
 		rs := &papi.ResultSet{
+			Subject:   r.Subject,
 			Results:   []*papi.Result{r},
 			DateStart: r.DateStart,
 			DateEnd:   r.DateEnd,
@@ -192,6 +193,7 @@ func (a *ResultsAttester) attestAmpel(w io.Writer, results papi.Results, o attes
 		return a.writeResultSet(w, r, o)
 	case *papi.ResultGroup:
 		rs := &papi.ResultSet{
+			Subject:   r.Subject,
 			Groups:    []*papi.ResultGroup{r},
 			DateStart: r.DateStart,
 			DateEnd:   r.DateEnd,
@@ -229,43 +231,21 @@ func writeStatementJSON(w io.Writer, stmt *intoto.Statement, pretty bool) error 
 }
 
 // writeResultSet builds an in-toto statement carrying a
-// predicates.ResultSet and writes it via a.writeStatement. Subjects
-// are drawn from each Result's first Chain entry when present, with
-// per-digest deduplication so a ResultSet covering many results
-// against the same subject doesn't repeat it.
+// predicates.ResultSet and writes it via a.writeStatement. The statement
+// is about the subject the set was evaluated against, not about the
+// subjects recorded in its results: chained evaluations look at other
+// artifacts along the way, but the verdict is still about the original
+// subject.
 func (a *ResultsAttester) writeResultSet(w io.Writer, resultset *papi.ResultSet, o attestOptions) error {
 	if resultset == nil {
 		return errors.New("unable to attest results, set is nil")
 	}
-
-	stmt := intoto.NewStatement()
-
-	// TODO(puerco): This should probably be a method of the results set
-	seen := []string{}
-	for _, result := range resultset.Results {
-		subject := result.Subject
-		if len(result.Chain) > 0 {
-			subject = result.Chain[0].Source
-		}
-
-		// If we already saw it, skip.
-		if slices.Contains(seen, stringifyDigests(subject)) {
-			continue
-		}
-		seen = append(seen, stringifyDigests(subject))
-
-		haveMatching := false
-		for _, s := range stmt.Subject {
-			if attestation.SubjectsMatch(s, subject) {
-				haveMatching = true
-				break
-			}
-		}
-		if !haveMatching {
-			stmt.AddSubject(subject)
-		}
+	if len(resultset.GetSubject().GetDigest()) == 0 {
+		return errors.New("unable to attest results, the set has no subject with digests")
 	}
 
+	stmt := intoto.NewStatement()
+	stmt.AddSubject(resultset.GetSubject())
 	stmt.PredicateType = predicates.PredicateTypeResultSet
 	stmt.Predicate = &predicates.ResultSet{Parsed: resultset}
 
