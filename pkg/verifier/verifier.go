@@ -111,7 +111,7 @@ func (ampel *Ampel) verify(
 	switch v := policy.(type) {
 	case *papi.Policy:
 		if len(opts.Policies) > 0 && !slices.Contains(opts.Policies, v.Id) {
-			return &papi.ResultSet{}, nil
+			return &papi.ResultSet{Subject: subjectDescriptor(subject)}, nil
 		}
 		res, err := ampel.VerifySubjectWithPolicy(ctx, opts, v, subject)
 		if err != nil {
@@ -131,7 +131,7 @@ func (ampel *Ampel) verify(
 		}
 		return rs, nil
 	case []*papi.PolicySet:
-		rs := &papi.ResultSet{}
+		rs := &papi.ResultSet{Subject: subjectDescriptor(subject)}
 		for j, ps := range v {
 			for i, p := range ps.Policies {
 				if len(opts.Policies) > 0 && !slices.Contains(opts.Policies, p.Id) {
@@ -147,6 +147,16 @@ func (ampel *Ampel) verify(
 		return rs, nil
 	default:
 		return nil, fmt.Errorf("did not get a policy or policy set")
+	}
+}
+
+// subjectDescriptor returns the resource descriptor recording subject as
+// the subject under evaluation in a result set.
+func subjectDescriptor(subject attestation.Subject) *gointoto.ResourceDescriptor {
+	return &gointoto.ResourceDescriptor{
+		Name:   subject.GetName(),
+		Uri:    subject.GetUri(),
+		Digest: subject.GetDigest(),
 	}
 }
 
@@ -176,11 +186,7 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 		},
 		Meta:      policySet.GetMeta(),
 		DateStart: timestamppb.Now(),
-		Subject: &gointoto.ResourceDescriptor{
-			Name:   subject.GetName(),
-			Uri:    subject.GetUri(),
-			Digest: subject.GetDigest(),
-		},
+		Subject:   subjectDescriptor(subject),
 	}
 
 	// Check if the policy is viable before
