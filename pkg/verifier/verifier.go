@@ -18,6 +18,7 @@ import (
 	sapi "github.com/carabiner-dev/signer/api/v1"
 	gointoto "github.com/in-toto/attestation/go/v1"
 	"github.com/nozzle/throttler"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -131,23 +132,59 @@ func (ampel *Ampel) verify(
 		}
 		return rs, nil
 	case []*papi.PolicySet:
-		rs := &papi.ResultSet{Subject: subjectDescriptor(subject)}
-		for j, ps := range v {
-			for i, p := range ps.Policies {
-				if len(opts.Policies) > 0 && !slices.Contains(opts.Policies, p.Id) {
-					continue
-				}
-				res, err := ampel.VerifySubjectWithPolicy(ctx, opts, p, subject)
-				if err != nil {
-					return nil, fmt.Errorf("evaluating policy #%d/%d: %w", j, i, err)
-				}
-				rs.Results = append(rs.Results, res)
-			}
-		}
-		return rs, nil
+		return ampel.verifyPolicySets(ctx, opts, v, subject)
 	default:
 		return nil, fmt.Errorf("did not get a policy or policy set")
 	}
+}
+
+// verifyPolicySets verifies a subject against several policy sets. Each set
+// goes through the policy set path, so its common context values, keys and
+// signer identities apply to its policies, and the results are merged: the
+// subject passes when every set passes. A single set returns its own result
+// set unchanged.
+func (ampel *Ampel) verifyPolicySets(
+	ctx context.Context, opts *VerificationOptions, sets []*papi.PolicySet, subject attestation.Subject,
+) (*papi.ResultSet, error) {
+	merged := &papi.ResultSet{
+		Subject:   subjectDescriptor(subject),
+		DateStart: timestamppb.Now(),
+		Status:    papi.StatusPASS,
+	}
+	for i, set := range sets {
+		set = selectPolicies(set, opts.Policies)
+		rs, err := ampel.VerifySubjectWithPolicySet(ctx, opts, set, subject)
+		if err != nil {
+			return nil, fmt.Errorf("evaluating policy set #%d (%s): %w", i, set.GetId(), err)
+		}
+		if len(sets) == 1 {
+			return rs, nil
+		}
+		if rs.GetStatus() != papi.StatusPASS {
+			merged.Status = papi.StatusFAIL
+		}
+		merged.Results = append(merged.Results, rs.GetResults()...)
+		merged.Groups = append(merged.Groups, rs.GetGroups()...)
+	}
+	merged.DateEnd = timestamppb.Now()
+	return merged, nil
+}
+
+// selectPolicies returns the set with only the policies whose ids are listed,
+// as a copy that keeps the set's common block. An empty list selects every
+// policy and returns the set itself.
+func selectPolicies(set *papi.PolicySet, ids []string) *papi.PolicySet {
+	if len(ids) == 0 {
+		return set
+	}
+	selected, ok := proto.Clone(set).(*papi.PolicySet)
+	if !ok {
+		return set
+	}
+	selected.Policies = slices.DeleteFunc(selected.Policies, func(p *papi.Policy) bool {
+		return !slices.Contains(ids, p.GetId())
+	})
+	return selected
 }
 
 // subjectDescriptor returns the resource descriptor recording subject as
