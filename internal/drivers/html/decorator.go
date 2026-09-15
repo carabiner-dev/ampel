@@ -37,6 +37,8 @@ func (d *Decorator) StatusToDot(status string) string {
 		return "🟢"
 	case papi.StatusSOFTFAIL:
 		return "🟡"
+	case papi.StatusSKIP:
+		return "⚪"
 	default:
 		return "?"
 	}

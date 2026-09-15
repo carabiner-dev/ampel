@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 
@@ -412,4 +413,56 @@ func TestResultStringToSLSAResult(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestAttestTo_SkippedResult checks that a policy which did not apply to the
+// subject cannot be summarized as a VSA or SVR (nothing was verified), while
+// the ampel result attestation still records the skip.
+func TestAttestTo_SkippedResult(t *testing.T) {
+	skipped := &papi.Result{
+		Status:  papi.StatusSKIP,
+		Subject: newSubject("deadbeef"),
+		Policy:  &papi.PolicyRef{Id: "prod-only"},
+		EvalResults: []*papi.EvalResult{{
+			Id: "when", Status: papi.StatusSKIP,
+			Assessment: &papi.Assessment{Message: "Skipped: condition \"context.env == 'prod'\" is false"},
+		}},
+	}
+	for _, format := range []string{"vsa", "svr"} {
+		t.Run(format+"-refused", func(t *testing.T) {
+			var buf bytes.Buffer
+			err := New().AttestTo(&buf, skipped, WithFormat(format))
+			if !errors.Is(err, ErrSkippedResult) {
+				t.Fatalf("expected ErrSkippedResult, got %v", err)
+			}
+			if !strings.Contains(err.Error(), "prod-only") {
+				t.Errorf("error should name the policy: %v", err)
+			}
+			if buf.Len() != 0 {
+				t.Errorf("nothing must be written for a refused attestation, got %q", buf.String())
+			}
+		})
+	}
+	skippedSet := &papi.ResultSet{Status: papi.StatusSKIP, Subject: newSubject("deadbeef"), PolicySet: &papi.PolicyRef{Id: "gated"}, Results: []*papi.Result{skipped}}
+	for _, format := range []string{"vsa", "svr"} {
+		t.Run(format+"-refused-for-skipped-set", func(t *testing.T) {
+			var buf bytes.Buffer
+			err := New().AttestTo(&buf, skippedSet, WithFormat(format))
+			if !errors.Is(err, ErrSkippedResult) {
+				t.Fatalf("expected ErrSkippedResult, got %v", err)
+			}
+			if !strings.Contains(err.Error(), "gated") {
+				t.Errorf("error should name the set: %v", err)
+			}
+		})
+	}
+	t.Run("ampel-records-the-skip", func(t *testing.T) {
+		var buf bytes.Buffer
+		if err := New().AttestTo(&buf, skipped, WithFormat("ampel")); err != nil {
+			t.Fatalf("AttestTo: %v", err)
+		}
+		if !strings.Contains(buf.String(), papi.StatusSKIP) {
+			t.Errorf("the ampel attestation must carry the SKIP status: %s", buf.String())
+		}
+	})
 }

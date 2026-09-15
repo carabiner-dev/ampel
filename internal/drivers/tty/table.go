@@ -81,11 +81,14 @@ func (d *Driver) resultTable(result *papi.Result) *termtable.Table {
 
 	for i, er := range result.GetEvalResults() {
 		cell := ""
-		if er.GetAssessment() != nil {
-			cell = d.Decorator.AssessmentToString(er.GetAssessment())
-		}
-		if er.Status != papi.StatusPASS {
+		switch {
+		case er.Status == papi.StatusSKIP:
+			// Skips explain themselves through their assessment
+			cell = d.Decorator.SkipToString(er.GetAssessment())
+		case er.Status != papi.StatusPASS:
 			cell = d.Decorator.ErrorToString(er.Error)
+		case er.GetAssessment() != nil:
+			cell = d.Decorator.AssessmentToString(er.GetAssessment())
 		}
 		row := t.AddRow()
 		row.AddCell(termtable.WithContent(
@@ -307,6 +310,9 @@ func collectAssessments(d *Driver, r *papi.Result) string {
 	var b strings.Builder
 	for _, er := range r.GetEvalResults() {
 		switch {
+		case er.GetStatus() == papi.StatusSKIP:
+			b.WriteString(d.Decorator.SkipToString(er.GetAssessment()))
+			b.WriteByte('\n')
 		case er.GetStatus() == papi.StatusPASS && r.GetStatus() == papi.StatusPASS:
 			b.WriteString(er.GetAssessment().GetMessage())
 			b.WriteByte('\n')

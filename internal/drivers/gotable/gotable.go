@@ -117,11 +117,14 @@ func (tb *TableBuilder) ResultsTable(result *papi.Result) (table.Writer, error) 
 
 	for i, er := range result.GetEvalResults() {
 		cell := ""
-		if er.GetAssessment() != nil {
-			cell = tb.Decorator.AssessmentToString(er.GetAssessment())
-		}
-		if er.Status != papi.StatusPASS {
+		switch {
+		case er.Status == papi.StatusSKIP:
+			// Skips explain themselves through their assessment
+			cell = er.GetAssessment().GetMessage()
+		case er.Status != papi.StatusPASS:
 			cell = tb.Decorator.ErrorToString(er.Error)
+		case er.GetAssessment() != nil:
+			cell = tb.Decorator.AssessmentToString(er.GetAssessment())
 		}
 		t.AppendRow(
 			table.Row{
@@ -172,9 +175,12 @@ func (tb *TableBuilder) ResultSetTable(set *papi.ResultSet) (table.Writer, error
 	for _, r := range set.GetResults() {
 		assessments := ""
 		for _, er := range r.GetEvalResults() {
-			if er.GetStatus() == papi.StatusPASS && r.GetStatus() == papi.StatusPASS {
+			switch {
+			case er.GetStatus() == papi.StatusSKIP:
 				assessments += er.GetAssessment().GetMessage() + "\n"
-			} else if er.GetStatus() != papi.StatusPASS && r.GetStatus() != papi.StatusPASS {
+			case er.GetStatus() == papi.StatusPASS && r.GetStatus() == papi.StatusPASS:
+				assessments += er.GetAssessment().GetMessage() + "\n"
+			case er.GetStatus() != papi.StatusPASS && r.GetStatus() != papi.StatusPASS:
 				if !strings.Contains(assessments, er.GetError().GetMessage()+"\n") {
 					assessments += tb.Decorator.ErrorToString(er.GetError())
 				}

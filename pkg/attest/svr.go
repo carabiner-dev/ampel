@@ -27,8 +27,14 @@ const svrPredicateType = "https://in-toto.io/attestation/svr/v0.1"
 func (a *ResultsAttester) attestSVR(w io.Writer, results papi.Results, o attestOptions) error {
 	switch r := results.(type) {
 	case *papi.Result:
+		if r.GetStatus() == papi.StatusSKIP {
+			return fmt.Errorf("policy %q: %w", r.GetPolicy().GetId(), ErrSkippedResult)
+		}
 		return a.writeSVRFromResult(w, r, o)
 	case *papi.ResultSet:
+		if r.GetStatus() == papi.StatusSKIP {
+			return fmt.Errorf("policy set %q: %w", r.GetPolicySet().GetId(), ErrSkippedResult)
+		}
 		return a.writeSVRFromResultSet(w, r, o)
 	case *papi.ResultGroup:
 		return errors.New("rendering result groups as SVRs is not supported yet")

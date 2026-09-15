@@ -28,6 +28,11 @@ func (d *Decorator) AssessmentToString(a *papi.Assessment) string {
 	return w2("✔ " + a.GetMessage())
 }
 
+// SkipToString renders the reason an element was skipped.
+func (d *Decorator) SkipToString(a *papi.Assessment) string {
+	return w2(a.GetMessage())
+}
+
 func (d *Decorator) AmpelBanner(legend string) string {
 	if legend != "" {
 		legend = w2(": " + legend)
@@ -43,6 +48,8 @@ func (d *Decorator) StatusToDot(status string) string {
 		return g("●")
 	case papi.StatusSOFTFAIL:
 		return y("●")
+	case papi.StatusSKIP:
+		return w2("○")
 	default:
 		return "?"
 	}
@@ -109,7 +116,7 @@ func (d *Decorator) ControlsToString(result *papi.Result, checkID, def string) s
 
 func (d *Decorator) TenetsToString(result *papi.Result) string {
 	ret := fmt.Sprintf("%d ", len(result.EvalResults))
-	var pass, fail, softfail int
+	var pass, fail, softfail, skip int
 	for _, r := range result.EvalResults {
 		switch r.Status {
 		case papi.StatusFAIL:
@@ -118,6 +125,8 @@ func (d *Decorator) TenetsToString(result *papi.Result) string {
 			softfail++
 		case papi.StatusPASS:
 			pass++
+		case papi.StatusSKIP:
+			skip++
 		}
 	}
 
@@ -130,6 +139,9 @@ func (d *Decorator) TenetsToString(result *papi.Result) string {
 	}
 	if fail > 0 {
 		statuses = append(statuses, fmt.Sprintf("%d %s", fail, papi.StatusFAIL))
+	}
+	if skip > 0 {
+		statuses = append(statuses, fmt.Sprintf("%d %s", skip, papi.StatusSKIP))
 	}
 	ret += fmt.Sprintf("(%s)", strings.Join(statuses, " | "))
 	ret += " Mode: " + result.Meta.AssertMode

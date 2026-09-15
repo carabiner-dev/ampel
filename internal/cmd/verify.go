@@ -87,6 +87,10 @@ var verifyFlagGroups = []flagGroup{
 }
 
 type verifyOptions struct {
+	// FailSkip makes the command exit non-zero when the evaluation result
+	// is SKIP, that is, when no policy applied to the subject.
+	FailSkip bool
+
 	verifier.VerificationOptions
 	keyOpts.Options
 	PolicyLocation        string
@@ -175,6 +179,10 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 		&o.SetExitCode, "exit-code", true, "set a non-zero exit code on policy verification fail",
 	)
 
+	cmd.PersistentFlags().BoolVar(
+		&o.FailSkip, "fail-skip", false, "also set a non-zero exit code when the result is SKIP (no policy applied to the subject)",
+	)
+
 	cmd.PersistentFlags().StringSliceVar(
 		&o.Policies, "pid", []string{}, "list of policy IDs to evaluate from a set (defaults to all)",
 	)
@@ -225,7 +233,7 @@ func (o *verifyOptions) AddFlags(cmd *cobra.Command) {
 	groupFlags(cmd, grpEvidence, "key", "attestation", "collector", "signer")
 	groupFlags(cmd, grpContext, "context", "context-json", "context-yaml", "context-env")
 	groupFlags(cmd, grpResults, "attest-results", "attest-format", "results-path", "format", "publish")
-	groupFlags(cmd, grpVerification, "exit-code", "workers", "allow-empty-set-chain", "skip-unsupported-runtime")
+	groupFlags(cmd, grpVerification, "exit-code", "fail-skip", "workers", "allow-empty-set-chain", "skip-unsupported-runtime")
 	groupFlags(cmd, grpSigning, "sign")
 	// Sweep every flag the SignerSet just registered into the
 	// Signing section. Doing it post-hoc keeps the signer library's
@@ -548,7 +556,7 @@ func (opts *verifyOptions) Run() error {
 		); err != nil {
 			return fmt.Errorf("rendering attestation to stdout: %w", err)
 		}
-		if results.GetStatus() == papi.StatusFAIL && opts.SetExitCode {
+		if opts.exitNonZero(results.GetStatus()) {
 			os.Exit(1)
 		}
 		return nil
@@ -585,7 +593,7 @@ func (opts *verifyOptions) Run() error {
 		}
 	}
 
-	if results.GetStatus() == papi.StatusFAIL && opts.SetExitCode {
+	if opts.exitNonZero(results.GetStatus()) {
 		os.Exit(1)
 	}
 
@@ -665,4 +673,22 @@ func parsePolicyKeys(opt *verifyOptions) ([]key.PublicKeyProvider, error) {
 		ret = append(ret, k)
 	}
 	return ret, nil
+}
+
+// exitNonZero reports if the command must exit with a non-zero code for the
+// given evaluation status. --exit-code=false disables result-based exit
+// codes altogether; with it on, FAIL always exits non-zero and SKIP does
+// too when --fail-skip treats "no policy applied" as a failure.
+func (opts *verifyOptions) exitNonZero(status string) bool {
+	if !opts.SetExitCode {
+		return false
+	}
+	switch status {
+	case papi.StatusFAIL:
+		return true
+	case papi.StatusSKIP:
+		return opts.FailSkip
+	default:
+		return false
+	}
 }
