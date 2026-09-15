@@ -193,6 +193,19 @@ func TestWhenBlocks(t *testing.T) {
 		require.Equal(t, papi.StatusPASS, res.GetEvalResults()[0].GetStatus())
 	})
 
+	t.Run("explicit-and-block-with-passing-policies-passes", func(t *testing.T) {
+		t.Parallel()
+		// Regression: the AND check used to read as
+		// (status == FAIL && mode == "") || mode == "AND", so any result
+		// marked an explicitly AND block as failed.
+		b := block("and-pass", "", gatedPolicy("a", "true"), gatedPolicy("b", "true"))
+		b.Meta.AssertMode = "AND"
+		res, err := ampel.VerifySubjectWithPolicyGroup(context.Background(), whenTestOptions(), group(b), whenTestSubject())
+		require.NoError(t, err)
+		require.Equal(t, papi.StatusPASS, res.GetEvalResults()[0].GetStatus())
+		require.Equal(t, papi.StatusPASS, res.GetStatus())
+	})
+
 	t.Run("and-block-with-skips-and-a-fail-fails", func(t *testing.T) {
 		t.Parallel()
 		failing := gatedPolicy("fails", "true")
