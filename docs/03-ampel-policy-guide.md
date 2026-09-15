@@ -507,6 +507,10 @@ set cannot be attested as a VSA or SVR at all: `ampel verify --format vsa`
 evaluation took place and there is no PASSED or FAILED to report. The ampel
 result attestation still carries the `SKIP` status.
 
+`ampel verify` exits 0 on `SKIP`, like it does on `PASS`: no applicable policy
+failed. Pass `--fail-skip` to exit non-zero instead when nothing applied, for
+pipelines that must not let a subject through unverified.
+
 ## Signer Identities
 
 All data used as evidence such as attestations should be signed. When ingesting
