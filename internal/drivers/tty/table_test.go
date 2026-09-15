@@ -4,6 +4,7 @@
 package tty
 
 import (
+	"bytes"
 	"testing"
 
 	papi "github.com/carabiner-dev/policy/api/v1"
@@ -133,4 +134,25 @@ func TestBlockAssessmentsSkipsFailedTenets(t *testing.T) {
 		},
 	}
 	require.Equal(t, []string{"has CPE"}, blockAssessments(block))
+}
+
+// TestResultTableSkip checks that a skipped policy's row shows the skip
+// reason instead of an empty error cell.
+func TestResultTableSkip(t *testing.T) {
+	t.Parallel()
+	res := &papi.Result{
+		Status: papi.StatusSKIP,
+		Policy: &papi.PolicyRef{Id: "prod-only"},
+		Meta:   &papi.Meta{Description: "Only for production releases"},
+		EvalResults: []*papi.EvalResult{{
+			Id: "when", Status: papi.StatusSKIP,
+			Assessment: &papi.Assessment{Message: "Skipped: condition \"context.env == 'prod'\" is false"},
+		}},
+	}
+	var buf bytes.Buffer
+	_, err := New().resultTable(res).WriteTo(&buf)
+	require.NoError(t, err)
+	out := buf.String()
+	require.Contains(t, out, "SKIP")
+	require.Contains(t, out, "Skipped: condition")
 }

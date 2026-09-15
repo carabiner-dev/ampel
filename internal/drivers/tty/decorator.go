@@ -28,6 +28,11 @@ func (d *Decorator) AssessmentToString(a *papi.Assessment) string {
 	return w2("✔ " + a.GetMessage())
 }
 
+// SkipToString renders the reason an element was skipped.
+func (d *Decorator) SkipToString(a *papi.Assessment) string {
+	return w2(a.GetMessage())
+}
+
 func (d *Decorator) AmpelBanner(legend string) string {
 	if legend != "" {
 		legend = w2(": " + legend)
