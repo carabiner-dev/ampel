@@ -307,6 +307,9 @@ func collectAssessments(d *Driver, r *papi.Result) string {
 	var b strings.Builder
 	for _, er := range r.GetEvalResults() {
 		switch {
+		case er.GetStatus() == papi.StatusSKIP:
+			b.WriteString(er.GetAssessment().GetMessage())
+			b.WriteByte('\n')
 		case er.GetStatus() == papi.StatusPASS && r.GetStatus() == papi.StatusPASS:
 			b.WriteString(er.GetAssessment().GetMessage())
 			b.WriteByte('\n')
