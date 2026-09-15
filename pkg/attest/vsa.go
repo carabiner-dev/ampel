@@ -41,11 +41,22 @@ const (
 // computed by extracting the results of policies chained to a
 // different subject — those policies are expected to have their own
 // controls section, defining the level they check.
+// ErrSkippedResult is returned when asked to attest a verification summary
+// for a result whose policies did not apply to the subject. Nothing was
+// verified, so there is no PASSED or FAILED to report.
+var ErrSkippedResult = errors.New("skipped results cannot be attested: the policy did not apply to the subject")
+
 func (a *ResultsAttester) attestVSA(w io.Writer, results papi.Results, o attestOptions) error {
 	switch r := results.(type) {
 	case *papi.Result:
+		if r.GetStatus() == papi.StatusSKIP {
+			return fmt.Errorf("policy %q: %w", r.GetPolicy().GetId(), ErrSkippedResult)
+		}
 		return a.writeVSAFromResult(w, r, o)
 	case *papi.ResultSet:
+		if r.GetStatus() == papi.StatusSKIP {
+			return fmt.Errorf("policy set %q: %w", r.GetPolicySet().GetId(), ErrSkippedResult)
+		}
 		return a.writeVSAFromResultSet(w, r, o)
 	case *papi.ResultGroup:
 		return errors.New("rendering result groups as VSAs is not supported yet")
