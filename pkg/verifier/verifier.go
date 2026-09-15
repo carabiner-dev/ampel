@@ -149,7 +149,6 @@ func (ampel *Ampel) verifyPolicySets(
 	merged := &papi.ResultSet{
 		Subject:   subjectDescriptor(subject),
 		DateStart: timestamppb.Now(),
-		Status:    papi.StatusPASS,
 	}
 	for i, set := range sets {
 		set = selectPolicies(set, opts.Policies)
@@ -160,13 +159,14 @@ func (ampel *Ampel) verifyPolicySets(
 		if len(sets) == 1 {
 			return rs, nil
 		}
-		if rs.GetStatus() != papi.StatusPASS {
-			merged.Status = papi.StatusFAIL
-		}
 		merged.Results = append(merged.Results, rs.GetResults()...)
 		merged.Groups = append(merged.Groups, rs.GetGroups()...)
 	}
-	merged.DateEnd = timestamppb.Now()
+	// The merged status follows the same rules as a single set: any
+	// failure fails it, all members skipped skips it, otherwise it passes.
+	if err := merged.Assert(); err != nil {
+		return nil, fmt.Errorf("asserting merged result set: %w", err)
+	}
 	return merged, nil
 }
 

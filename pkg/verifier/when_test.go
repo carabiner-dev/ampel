@@ -125,6 +125,26 @@ func TestWhenPolicySet(t *testing.T) {
 		require.Equal(t, papi.StatusSKIP, rs.GetResults()[1].GetStatus())
 	})
 
+	t.Run("all-policies-skipped-skips-the-set", func(t *testing.T) {
+		t.Parallel()
+		set := &papi.PolicySet{Id: "set", Policies: []*papi.Policy{gatedPolicy("a", "false"), gatedPolicy("b", "false")}}
+		rs, err := ampel.VerifySubjectWithPolicySet(context.Background(), whenTestOptions(), set, whenTestSubject())
+		require.NoError(t, err)
+		require.Equal(t, papi.StatusSKIP, rs.GetStatus(), "nothing was verified")
+	})
+
+	t.Run("merged-sets-follow-the-same-rules", func(t *testing.T) {
+		t.Parallel()
+		skipped := &papi.PolicySet{Id: "skipped", Policies: []*papi.Policy{gatedPolicy("a", "false")}}
+		passing := &papi.PolicySet{Id: "passing", Policies: []*papi.Policy{gatedPolicy("b", "true")}}
+		res, err := ampel.Verify(context.Background(), whenTestOptions(), []*papi.PolicySet{skipped, passing}, whenTestSubject())
+		require.NoError(t, err)
+		require.Equal(t, papi.StatusPASS, res.GetStatus())
+		res, err = ampel.Verify(context.Background(), whenTestOptions(), []*papi.PolicySet{skipped, skipped}, whenTestSubject())
+		require.NoError(t, err)
+		require.Equal(t, papi.StatusSKIP, res.GetStatus())
+	})
+
 	t.Run("failing-applicable-policy-still-fails", func(t *testing.T) {
 		t.Parallel()
 		failing := gatedPolicy("fails", "true")
