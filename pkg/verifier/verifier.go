@@ -464,6 +464,16 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("assembling policy context: %w", err)
 	}
 
+	// Check if the policy applies to this subject before fetching any
+	// evidence. A policy whose condition is false is skipped.
+	applies, err := ampel.evaluateWhen(ctx, opts, evaluators, policy.GetWhen(), policy.GetMeta().GetRuntime(), evalContext)
+	if err != nil {
+		return nil, fmt.Errorf("evaluating policy %q condition: %w", policy.GetId(), err)
+	}
+	if !applies {
+		return skipPolicy(policy, originalSubject), nil
+	}
+
 	// Process chained subjects. These have access to all the read attestations
 	// even when some will be discarded in the next step. Computing the chain
 	// will use the configured repositories if more attestations are required.
@@ -686,12 +696,19 @@ func (ampel *Ampel) VerifySubjectWithPolicyGroup(
 
 	// Extract context values
 	for i := range group.GetBlocks() {
-		rs, err := ampel.verifySubjectWithBlock(ctx, &opts, group.GetBlocks()[i], subject)
+		rs, err := ampel.verifySubjectWithBlock(ctx, &opts, evaluators, group, group.GetBlocks()[i], evalContextValues, subject)
 		if err != nil {
 			return nil, fmt.Errorf("verifying block: %w", err)
 		}
 
 		res.EvalResults = append(res.EvalResults, rs)
+	}
+
+	// A group whose blocks all skipped has nothing to assert on
+	if allBlocksSkipped(res.EvalResults) {
+		res.Status = papi.StatusSKIP
+		res.DateEnd = timestamppb.Now()
+		return res, nil
 	}
 
 	// Assert the group results based on the group's assert mode.
@@ -732,7 +749,8 @@ func (ampel *Ampel) VerifySubjectWithPolicyGroup(
 }
 
 func (ampel *Ampel) verifySubjectWithBlock(
-	ctx context.Context, opts *VerificationOptions, block *papi.PolicyBlock, subject attestation.Subject,
+	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
+	group *papi.PolicyGroup, block *papi.PolicyBlock, contextValues map[string]any, subject attestation.Subject,
 ) (*papi.BlockEvalResult, error) {
 	rset := &papi.BlockEvalResult{
 		Status:  papi.StatusPASS,
@@ -740,6 +758,17 @@ func (ampel *Ampel) verifySubjectWithBlock(
 		Id:      block.GetId(),
 		Results: []*papi.Result{},
 		Error:   &papi.Error{},
+	}
+
+	// Check if the block applies before evaluating any of its policies
+	applies, err := ampel.evaluateWhen(ctx, opts, evaluators, block.GetWhen(), group.GetMeta().GetRuntime(), contextValues)
+	if err != nil {
+		return nil, fmt.Errorf("evaluating block %q condition: %w", block.GetId(), err)
+	}
+	if !applies {
+		rset.Status = papi.StatusSKIP
+		rset.Error = &papi.Error{Message: skipMessage(block.GetWhen())}
+		return rset, nil
 	}
 
 	if block.GetMeta().GetAssertMode() == assertModeOR {
@@ -755,7 +784,7 @@ func (ampel *Ampel) verifySubjectWithBlock(
 		}
 		rset.Results = append(rset.Results, res)
 
-		if res.GetStatus() == papi.StatusFAIL && block.GetMeta().GetAssertMode() == "" || block.GetMeta().GetAssertMode() == assertModeAND {
+		if res.GetStatus() == papi.StatusFAIL && (block.GetMeta().GetAssertMode() == "" || block.GetMeta().GetAssertMode() == assertModeAND) {
 			rset.Status = papi.StatusFAIL
 			if opts.LazyBlockEval {
 				break
@@ -768,6 +797,12 @@ func (ampel *Ampel) verifySubjectWithBlock(
 				break
 			}
 		}
+	}
+
+	// A block whose policies all skipped has nothing to assert on
+	if allPoliciesSkipped(rset.Results) {
+		rset.Status = papi.StatusSKIP
+		return rset, nil
 	}
 
 	// Populate the block error from failed policy results
@@ -852,6 +887,99 @@ func (ampel *Ampel) AttestResult(w io.Writer, result *papi.Result) error {
 // consistent.
 func (ampel *Ampel) AttestResults(w io.Writer, results papi.Results) error {
 	return attest.New().AttestTo(w, results)
+}
+
+// evaluateWhen resolves a `when` condition and reports if the element it
+// gates applies to the subject. The expression runs before any evidence is
+// fetched: it sees the subject, the context values in scope and the runtime
+// plugins, but no predicates. It runs in the runtime the condition names,
+// else the runtime of the element, else the default. A condition that is not
+// set always applies. An expression that fails or does not yield a boolean is
+// an error, not a skip.
+func (ampel *Ampel) evaluateWhen(
+	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
+	when *papi.When, runtime string, contextValues map[string]any,
+) (bool, error) {
+	if !when.IsSet() {
+		return true, nil
+	}
+
+	cls := classForRuntime(when.GetRuntime())
+	if cls == "" {
+		cls = classForRuntime(runtime)
+	}
+	if cls == "" {
+		cls = defaultEvaluatorClass
+	}
+	ev, ok := evaluators[cls]
+	if !ok {
+		return false, fmt.Errorf("runtime %q not available", cls)
+	}
+
+	exprCtx := ctx
+	if ec, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext); ok {
+		ec.ContextValues = maps.Clone(contextValues)
+		exprCtx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, ec)
+	}
+
+	out, err := ev.EvalExpression(exprCtx, &opts.EvaluatorOptions, when.GetExpression())
+	if err != nil {
+		return false, fmt.Errorf("evaluating %q: %w", when.GetExpression(), err)
+	}
+	applies, ok := out.(bool)
+	if !ok {
+		return false, fmt.Errorf("condition %q must yield a boolean, got %T", when.GetExpression(), out)
+	}
+	return applies, nil
+}
+
+// skipMessage explains why an element was skipped.
+func skipMessage(when *papi.When) string {
+	return fmt.Sprintf("Skipped: condition %q is false", when.GetExpression())
+}
+
+// skipPolicy returns the result of a policy whose `when` condition is false.
+// The condition is recorded as its single evaluation result so the results
+// attestation explains the skip.
+func skipPolicy(p *papi.Policy, subject attestation.Subject) *papi.Result {
+	now := timestamppb.Now()
+	return &papi.Result{
+		Status:    papi.StatusSKIP,
+		DateStart: now,
+		DateEnd:   now,
+		Policy: &papi.PolicyRef{
+			Id:      p.GetId(),
+			Version: p.GetMeta().GetVersion(),
+		},
+		Meta:    p.GetMeta(),
+		Subject: subjectDescriptor(subject),
+		EvalResults: []*papi.EvalResult{{
+			Id:         "when",
+			Status:     papi.StatusSKIP,
+			Date:       now,
+			Assessment: &papi.Assessment{Message: skipMessage(p.GetWhen())},
+		}},
+	}
+}
+
+// allPoliciesSkipped reports if there are results and every one is a skip.
+func allPoliciesSkipped(results []*papi.Result) bool {
+	for _, r := range results {
+		if r.GetStatus() != papi.StatusSKIP {
+			return false
+		}
+	}
+	return len(results) > 0
+}
+
+// allBlocksSkipped reports if there are block results and every one is a skip.
+func allBlocksSkipped(results []*papi.BlockEvalResult) bool {
+	for _, r := range results {
+		if r.GetStatus() != papi.StatusSKIP {
+			return false
+		}
+	}
+	return len(results) > 0
 }
 
 // failPolicySetWithError completes a policy set and sets the specified error

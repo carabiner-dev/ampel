@@ -10,7 +10,7 @@ require (
 	github.com/carabiner-dev/command v0.3.2
 	github.com/carabiner-dev/hasher v0.2.4
 	github.com/carabiner-dev/osv v0.1.2
-	github.com/carabiner-dev/policy v0.5.5
+	github.com/carabiner-dev/policy v0.5.6-0.20260915030759-d53efd56ddf5
 	github.com/carabiner-dev/predicates v0.5.1
 	github.com/carabiner-dev/termtable v1.1.0
 	github.com/fatih/color v1.19.0
