@@ -428,6 +428,85 @@ value:
 Since context data is expected to change with the environment, the results
 attestation keeps record of the computed values for future auditing.
 
+## Applicability Conditions
+
+A policy or a policy block may declare a `when` condition that decides if it
+applies to the subject under evaluation. When the condition is false the
+element is **skipped**: its result carries the status `SKIP`, records the
+condition, and does not count towards the status of its PolicySet, group or
+block. A block whose policies all skipped is skipped itself, and so is a group
+whose blocks all skipped. PolicySets and PolicyGroups are containers and carry
+no condition of their own.
+
+```json
+{
+    "id": "slsa-v1-provenance",
+    "when": {
+        "expression": "semver.satisfies(context.drop_version, '>=2.0.0')"
+    },
+    "context": {
+        "drop_version": { "type": "string", "required": true }
+    },
+    "tenets": [ ... ]
+}
+```
+
+The condition mirrors the dynamic form of a context value: `expression` is
+an evaluator-language snippet that must yield a boolean, and the optional
+`runtime` selects the evaluator (defaulting to the runtime of the policy, or
+of the group for a block). An absent `when`, or one with an empty expression,
+always evaluates. An expression that errors, or that yields anything other
+than a boolean, fails the evaluation: a condition that cannot be decided
+never silently exempts a subject.
+
+### What a condition can see
+
+Conditions are evaluated **before any evidence is fetched**, right after the
+context values in scope are resolved. They therefore run against a smaller
+environment than tenets:
+
+| Variable | Available | Notes |
+| --- | --- | --- |
+| `context` | yes | The resolved context values in scope: the policy's own, plus those inherited from the `common` block of its PolicySet and PolicyGroup. Every value the expression reads must be declared there; reading an undeclared one fails the evaluation. |
+| `subject` | yes | The subject under evaluation: `name`, `uri`, `digest`. |
+| runtime plugins | yes | `semver`, `hasher`, `url`, `purl`, `github`, ... |
+| `predicates`, `predicate` | **no** | No attestations have been read yet. |
+| `outputs` | **no** | Outputs belong to tenets. |
+| chained subjects | **no** | Chains are resolved after the condition. |
+
+This is deliberate: applicability is a property of what is being verified and
+where, not of the evidence found for it. A policy that must react to the
+contents of an attestation belongs in a tenet.
+
+### Conditions on referenced policies
+
+A `when` set on the stanza that references a policy from another location is
+applied to the referenced policy when the set is compiled, so a library policy
+can be gated without editing it:
+
+```json
+{
+    "id": "provenance-current",
+    "source": { "location": { "uri": "git+https://github.com/carabiner-dev/policies@<commit>#slsa/has-attestation.json" } },
+    "when": { "expression": "semver.satisfies(context.drop_version, '>=2.0.0')" }
+}
+```
+
+### Skips in results
+
+A skipped policy's result has status `SKIP` and a single evaluation result,
+`when`, whose assessment records the condition. A skipped block records the
+condition in its error message. The `tty` output marks them with a hollow
+dot.
+
+Skips are recorded, never summarized as a verification. Within a PolicySet,
+skipped policies are left out of the `VerifiedLevels` of a VSA, and a set
+whose policies and groups all skipped is itself `SKIP`. A skipped policy or
+set cannot be attested as a VSA or SVR at all: `ampel verify --format vsa`
+(or `svr`) fails with "skipped results cannot be attested", because no
+evaluation took place and there is no PASSED or FAILED to report. The ampel
+result attestation still carries the `SKIP` status.
+
 ## Signer Identities
 
 All data used as evidence such as attestations should be signed. When ingesting
