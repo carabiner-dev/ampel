@@ -1,0 +1,62 @@
+# SPDX-FileCopyrightText: Copyright 2026 Carabiner Systems, Inc
+# SPDX-License-Identifier: Apache-2.0
+
+# Runs the documentation examples through policyctl's test harness, the same
+# .ptests.yaml suites the community policies repository uses. It only fires
+# when something under docs/examples/ changes: the examples are self-contained
+# (policy + the attestation it reads) so nothing else in the tree affects them.
+name: examples
+
+on:
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - "docs/examples/**"
+      - ".github/workflows/examples.yaml"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  policy-tests:
+    name: Example Policy Tests
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install policyctl
+        uses: carabiner-dev/actions/install/policyctl@32587e82f960d49b36101e8c45d1956e511965d3 # v1.2.9
+
+      - name: Run example policy tests
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # policyctl reads one .ptests.yaml per directory, so collect the
+          # suites and run each in turn. Discovering them instead of listing
+          # them means a new example directory is picked up automatically.
+          mapfile -t suites < <(find docs/examples -name .ptests.yaml | sort)
+
+          # A missing or misnamed suite makes policyctl exit 0, so guard
+          # against the whole job passing without running anything.
+          if [ "${#suites[@]}" -eq 0 ]; then
+            echo "::error::no .ptests.yaml suites found under docs/examples/"
+            exit 1
+          fi
+
+          status=0
+          for suite in "${suites[@]}"; do
+            dir="$(dirname "${suite}")"
+            echo "::group::${dir}"
+            policyctl test -v "${dir}" || status=1
+            echo "::endgroup::"
+          done
+
+          exit "${status}"

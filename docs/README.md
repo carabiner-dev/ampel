@@ -39,6 +39,14 @@ and `go install github.com/carabiner-dev/ampel/cmd/ampel@latest` works for
 Go users. See the project [README](../README.md#installing) for the full
 list of installation options.
 
+## Runnable Examples
+
+The [`examples/`](examples) directory has one small, commented example of each
+policy document type — a policy, a PolicySet and a PolicyGroup — plus one
+showing how to write policy against a predicate type AMPEL knows nothing
+about. Each ships with the attestation it reads, so they all run as-is with no
+network access. Start there if you learn by poking at things.
+
 ## Table of Contents
 
 - Policy Evaluation Basics

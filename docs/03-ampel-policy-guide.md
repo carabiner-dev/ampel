@@ -41,7 +41,9 @@ AMPEL policies can be written in either **JSON** or **HJSON** format. Both forma
 are fully supported and can be used interchangeably.
 
 ### JSON Format
-Standard JSON format with strict syntax requirements. Example: `examples/sbom/policy.json`
+Standard JSON format with strict syntax requirements. The policies in the
+[carabiner-dev/policies](https://github.com/carabiner-dev/policies) repository
+are mostly written this way.
 
 ### HJSON Format (Recommended for Readability)
 HJSON (Human JSON) is a more user-friendly configuration format that supports:
@@ -50,8 +52,13 @@ HJSON (Human JSON) is a more user-friendly configuration format that supports:
 - **Trailing commas**: No need to remove the last comma in lists
 - **Multiline strings**: Easier to read and maintain
 
-Both `.json` and `.hjson` file extensions are supported. See `examples/sbom/policy.hjson`
-for a complete HJSON example with detailed comments.
+Both `.json` and `.hjson` file extensions are supported. AMPEL sniffs the
+format from the content, not from the extension, so a policy referenced
+remotely works either way.
+
+The [`examples/`](examples) directory has a runnable example of each policy
+document type — a policy, a PolicySet and a PolicyGroup — written in HJSON
+and commented throughout. Each one ships with the attestation it reads.
 
 ## General Policy Structure
 
@@ -63,6 +70,17 @@ the following parts:
 
 The metadata block contains information about the policy itself. It has fields like 
 its description, expiration date, runtime, etc.
+
+Two of them carry the human-readable labels:
+
+- **`name`**: a short, single-line label for the policy, for example
+  `"Expected SLSA Builder"`. Newlines are rejected.
+- **`description`**: the longer explanation of what the policy verifies and
+  why. This is the one that shows up above the results table.
+
+Both are optional, but a policy that other people will read (or reference
+remotely) should set them. PolicySets and PolicyGroups carry the same pair in
+their own metadata. Blocks are the exception: they only have a `description`.
 
 ### Identities
 
