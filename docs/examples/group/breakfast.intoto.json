@@ -1,0 +1,22 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "hello-world",
+      "digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "predicateType": "https://example.com/attestations/breakfast/v1",
+  "predicate": {
+    "servedAt": "2026-09-01T08:00:00Z",
+    "drinks": [
+      "coffee"
+    ],
+    "foods": [
+      "toast",
+      "eggs"
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "hello-world",
+      "digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "predicateType": "https://example.com/attestations/code-review/v1",
+  "predicate": {
+    "repository": "https://github.com/example/hello-world",
+    "commit": "9f4d1c60a2b8e7d3f5a1c8e2b7d4f6a9c3e5b8d1",
+    "author": "alice@example.com",
+    "approved": true,
+    "reviewers": [
+      "bob@example.com",
+      "carol@example.com"
+    ],
+    "reviewedAt": "2026-09-01T11:30:00Z"
+  }
+}

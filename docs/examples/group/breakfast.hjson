@@ -1,0 +1,119 @@
+{
+    // This example is deliberately silly. It exists to make one idea obvious:
+    //
+    //   a PolicyGroup is a list of BLOCKS, and every block is a list of
+    //   ALTERNATIVE ways to satisfy the same requirement.
+    //
+    // Requirements combine with AND (every block must pass), alternatives
+    // inside a block combine with OR (any one policy is enough). So this
+    // group says: "a proper breakfast needs something to drink AND something
+    // to eat, and I am not fussy about which."
+    //
+    // The attestation next to this file uses a made up predicate type that
+    // records what was served:
+    //
+    //   { "drinks": ["coffee"], "foods": ["toast", "eggs"] }
+    id: BREAKFAST
+
+    meta: {
+        // Groups carry a name and a description just like policies and sets.
+        // Blocks are the exception: they only have a description.
+        //
+        // TODO: uncomment when ampel 1.3.11 ships. meta.name on PolicyGroups
+        // landed in 1.3.11
+        // name: "A Proper Breakfast"
+        description: "A proper breakfast has something to drink and something to eat"
+    }
+
+    blocks: [
+        {
+            // Block #1 — something to drink. Coffee or tea, either will do,
+            // hence assert_mode OR. Without it a block defaults to AND and
+            // would demand both.
+            id: something-to-drink
+            meta: {
+                description: "Breakfast includes a drink"
+                assert_mode: "OR"
+            }
+            policies: [
+                {
+                    id: HAS-COFFEE
+                    meta: {
+                        name: "Coffee Was Served"
+                        description: "There is coffee on the table"
+                    }
+                    predicates: { types: [ "https://example.com/attestations/breakfast/v1" ] }
+                    tenets: [
+                        {
+                            id: coffee
+                            code: "size(predicates) > 0 && has(predicates[0].data.drinks) && predicates[0].data.drinks.exists(d, d == 'coffee')"
+                            assessment: { message: "There is coffee. Breakfast may proceed" }
+                            error: { message: "No coffee was served" }
+                        }
+                    ]
+                }
+                {
+                    id: HAS-TEA
+                    meta: {
+                        name: "Tea Was Served"
+                        description: "There is tea on the table"
+                    }
+                    predicates: { types: [ "https://example.com/attestations/breakfast/v1" ] }
+                    tenets: [
+                        {
+                            id: tea
+                            code: "size(predicates) > 0 && has(predicates[0].data.drinks) && predicates[0].data.drinks.exists(d, d == 'tea')"
+                            assessment: { message: "There is tea, which is also acceptable" }
+                            error: { message: "No tea was served" }
+                        }
+                    ]
+                }
+            ]
+        }
+
+        {
+            // Block #2 — something to eat. Same idea, different requirement.
+            // Because the two blocks combine with AND, a breakfast with tea
+            // but nothing to eat still fails the group.
+            id: something-to-eat
+            meta: {
+                description: "Breakfast includes food"
+                assert_mode: "OR"
+            }
+            policies: [
+                {
+                    id: HAS-TOAST
+                    meta: {
+                        name: "Toast Was Served"
+                        description: "There is toast on the table"
+                    }
+                    predicates: { types: [ "https://example.com/attestations/breakfast/v1" ] }
+                    tenets: [
+                        {
+                            id: toast
+                            code: "size(predicates) > 0 && has(predicates[0].data.foods) && predicates[0].data.foods.exists(f, f == 'toast')"
+                            assessment: { message: "There is toast" }
+                            error: { message: "No toast was served" }
+                        }
+                    ]
+                }
+                {
+                    id: HAS-CEREAL
+                    meta: {
+                        name: "Cereal Was Served"
+                        description: "There is cereal on the table"
+                    }
+                    predicates: { types: [ "https://example.com/attestations/breakfast/v1" ] }
+                    tenets: [
+                        {
+                            id: cereal
+                            code: "size(predicates) > 0 && has(predicates[0].data.foods) && predicates[0].data.foods.exists(f, f == 'cereal')"
+                            assessment: { message: "There is cereal" }
+                            error: { message: "No cereal was served" }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

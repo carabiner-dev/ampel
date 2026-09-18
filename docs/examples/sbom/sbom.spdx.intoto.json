@@ -1,0 +1,124 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "hello-world",
+      "digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "predicateType": "https://spdx.dev/Document",
+  "predicate": {
+    "spdxVersion": "SPDX-2.3",
+    "dataLicense": "CC0-1.0",
+    "SPDXID": "SPDXRef-DOCUMENT",
+    "name": "hello-world",
+    "documentNamespace": "https://example.com/spdx/hello-world-8f4d1c60",
+    "creationInfo": {
+      "created": "2026-09-01T12:00:00Z",
+      "creators": [
+        "Tool: example-sbom-generator-1.4.0",
+        "Organization: Example Corp"
+      ]
+    },
+    "packages": [
+      {
+        "SPDXID": "SPDXRef-Package-hello-world",
+        "name": "hello-world",
+        "versionInfo": "1.0.0",
+        "downloadLocation": "NOASSERTION",
+        "filesAnalyzed": false,
+        "licenseConcluded": "Apache-2.0",
+        "licenseDeclared": "Apache-2.0",
+        "supplier": "Organization: Example Corp",
+        "checksums": [
+          {
+            "algorithm": "SHA256",
+            "checksumValue": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ],
+        "externalRefs": [
+          {
+            "referenceCategory": "PACKAGE-MANAGER",
+            "referenceType": "purl",
+            "referenceLocator": "pkg:golang/example.com/hello-world@1.0.0"
+          }
+        ]
+      },
+      {
+        "SPDXID": "SPDXRef-Package-logr",
+        "name": "github.com/go-logr/logr",
+        "versionInfo": "1.4.2",
+        "downloadLocation": "NOASSERTION",
+        "filesAnalyzed": false,
+        "licenseConcluded": "Apache-2.0",
+        "licenseDeclared": "Apache-2.0",
+        "supplier": "Organization: The logr Authors",
+        "externalRefs": [
+          {
+            "referenceCategory": "PACKAGE-MANAGER",
+            "referenceType": "purl",
+            "referenceLocator": "pkg:golang/github.com/go-logr/logr@1.4.2"
+          }
+        ]
+      },
+      {
+        "SPDXID": "SPDXRef-Package-protobom",
+        "name": "github.com/protobom/protobom",
+        "versionInfo": "0.5.2",
+        "downloadLocation": "NOASSERTION",
+        "filesAnalyzed": false,
+        "licenseConcluded": "Apache-2.0",
+        "licenseDeclared": "Apache-2.0",
+        "supplier": "Organization: The Protobom Authors",
+        "externalRefs": [
+          {
+            "referenceCategory": "PACKAGE-MANAGER",
+            "referenceType": "purl",
+            "referenceLocator": "pkg:golang/github.com/protobom/protobom@0.5.2"
+          }
+        ]
+      },
+      {
+        "SPDXID": "SPDXRef-Package-yaml",
+        "name": "sigs.k8s.io/yaml",
+        "versionInfo": "1.4.0",
+        "downloadLocation": "NOASSERTION",
+        "filesAnalyzed": false,
+        "licenseConcluded": "MIT",
+        "licenseDeclared": "MIT",
+        "supplier": "Organization: The Kubernetes Authors",
+        "externalRefs": [
+          {
+            "referenceCategory": "PACKAGE-MANAGER",
+            "referenceType": "purl",
+            "referenceLocator": "pkg:golang/sigs.k8s.io/yaml@1.4.0"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "spdxElementId": "SPDXRef-DOCUMENT",
+        "relationshipType": "DESCRIBES",
+        "relatedSpdxElement": "SPDXRef-Package-hello-world"
+      },
+      {
+        "spdxElementId": "SPDXRef-Package-hello-world",
+        "relationshipType": "DEPENDS_ON",
+        "relatedSpdxElement": "SPDXRef-Package-logr"
+      },
+      {
+        "spdxElementId": "SPDXRef-Package-hello-world",
+        "relationshipType": "DEPENDS_ON",
+        "relatedSpdxElement": "SPDXRef-Package-protobom"
+      },
+      {
+        "spdxElementId": "SPDXRef-Package-hello-world",
+        "relationshipType": "DEPENDS_ON",
+        "relatedSpdxElement": "SPDXRef-Package-yaml"
+      }
+    ]
+  }
+}

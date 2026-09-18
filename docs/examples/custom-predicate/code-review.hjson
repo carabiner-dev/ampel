@@ -1,0 +1,67 @@
+{
+    id: CODE-REVIEW
+
+    meta: {
+        name: "Code Review Approval"
+        description: "Checks that a change was reviewed and approved by two people other than its author"
+    }
+
+    // AMPEL has native support for well known predicate types (SLSA, SPDX,
+    // OpenVEX, ...) but it does not need to know anything about a predicate
+    // to run policy on it. Any in-toto attestation works: name the predicate
+    // type here and the predicate JSON shows up in the CEL runtime as-is.
+    //
+    // The attestation next to this file uses a completely made up type:
+    //
+    //   https://example.com/attestations/code-review/v1
+    //
+    // with a predicate that looks like this:
+    //
+    //   {
+    //     "repository": "...", "commit": "...", "author": "alice@example.com",
+    //     "approved": true, "reviewers": ["bob@example.com", ...]
+    //   }
+    predicates: {
+        types: [ "https://example.com/attestations/code-review/v1" ]
+    }
+
+    tenets: [
+        {
+            // `predicates` is the list of attestations that matched the spec
+            // above. Each entry exposes the raw predicate JSON under `.data`,
+            // so predicate fields are reached as predicates[0].data.<field>.
+            //
+            // Always guard the field access: an attestation that does not
+            // carry the field would otherwise make the expression error out
+            // instead of failing cleanly. `has()` is how CEL does that.
+            id: change-is-approved
+            code: "size(predicates) > 0 && has(predicates[0].data.approved) && predicates[0].data.approved == true"
+            assessment: { message: "The change was approved" }
+            error: {
+                message: "The change is not marked as approved"
+                guidance: "Get the change approved before promoting this artifact"
+            }
+        }
+
+        {
+            // Two reviewers, and neither of them may be the author. Note how
+            // outputs let you name an intermediate value once and then use it
+            // both in the check and in the messages.
+            id: two-independent-reviewers
+            outputs: {
+                reviewers: {
+                    code: "has(predicates[0].data.reviewers) ? predicates[0].data.reviewers : []"
+                }
+                author: {
+                    code: "has(predicates[0].data.author) ? predicates[0].data.author : ''"
+                }
+            }
+            code: "size(outputs.reviewers) >= 2 && outputs.reviewers.all(r, r != outputs.author)"
+            assessment: { message: "Reviewed by {{ .Outputs.reviewers }}" }
+            error: {
+                message: "The change needs two reviewers other than its author"
+                guidance: "Author was {{ .Outputs.author }} and the recorded reviewers are {{ .Outputs.reviewers }}"
+            }
+        }
+    ]
+}

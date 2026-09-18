@@ -1,0 +1,143 @@
+{
+    // A PolicySet bundles several policies that are evaluated together
+    // against the same subject. The set passes when all of its policies do.
+    id: SLSA-BUILD
+
+    meta: {
+        // Like policies, sets carry a short single-line name and a longer
+        // description.
+        //
+        // TODO: uncomment name when ampel 1.3.11 ships. 
+        // name: "SLSA Build Verification"
+        description: "Verifies the SLSA provenance of an artifact: who built it, how, and from where"
+
+        // Declaring the framework lets AMPEL group the results by control in
+        // the reports. Each policy below maps itself to one of its controls
+        // through its meta.controls entry.
+        frameworks: [
+            { id: "SLSA", name: "Supply-Chain Levels for Software Artifacts" }
+        ]
+    }
+
+    // The common block holds data shared by every policy in the set. Context
+    // values defined here are visible to all of them as `context.<name>`,
+    // which is what keeps the three policies below reusable: the expected
+    // builder and repository live in one place instead of being hardcoded
+    // into each tenet.
+    //
+    // Any of these can be overridden at evaluation time without touching the
+    // file, for example:
+    //
+    //   ampel verify ... --context="builderId:https://my.builder/id"
+    common: {
+        context: {
+            builderId: {
+                required: true
+                default: "https://github.com/actions/runner/github-hosted"
+            }
+            buildType: {
+                required: true
+                default: "https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1"
+            }
+            sourceRepo: {
+                required: true
+                default: "https://github.com/example/hello-world"
+            }
+        }
+    }
+
+    policies: [
+        {
+            // Policy #1: the artifact was built by the builder we expect.
+            // This is the check that actually carries the trust: provenance
+            // signed by an unexpected builder tells you nothing good.
+            id: SLSA-BUILDER-ID
+            meta: {
+                name: "Expected SLSA Builder"
+                description: "The artifact was produced by the expected build system"
+                controls: [ { framework: "SLSA", class: "BUILD", id: "LEVEL_2" } ]
+            }
+            predicates: {
+                types: [ "https://slsa.dev/provenance/v1" ]
+            }
+            tenets: [
+                {
+                    id: builder-id
+                    outputs: {
+                        builderId: {
+                            code: "size(predicates) > 0 && has(predicates[0].data.runDetails.builder.id) ? predicates[0].data.runDetails.builder.id : ''"
+                        }
+                    }
+                    code: "outputs.builderId == context.builderId"
+                    assessment: { message: "Built by the expected builder: {{ .Outputs.builderId }}" }
+                    error: {
+                        message: "The artifact was built by an unexpected builder"
+                        guidance: "Expected {{ .Context.builderId }} but the provenance says {{ .Outputs.builderId }}"
+                    }
+                }
+            ]
+        }
+
+        {
+            // Policy #2: the build ran through the expected build type, which
+            // is what pins down the shape of the rest of the provenance.
+            id: SLSA-BUILD-TYPE
+            meta: {
+                name: "Expected SLSA Build Type"
+                description: "The artifact was built through the expected build process"
+                controls: [ { framework: "SLSA", class: "BUILD", id: "LEVEL_2" } ]
+            }
+            predicates: {
+                types: [ "https://slsa.dev/provenance/v1" ]
+            }
+            tenets: [
+                {
+                    id: build-type
+                    outputs: {
+                        buildType: {
+                            code: "size(predicates) > 0 && has(predicates[0].data.buildDefinition.buildType) ? predicates[0].data.buildDefinition.buildType : ''"
+                        }
+                    }
+                    code: "outputs.buildType == context.buildType"
+                    assessment: { message: "Expected build type found: {{ .Outputs.buildType }}" }
+                    error: {
+                        message: "The provenance records an unexpected build type"
+                        guidance: "Expected {{ .Context.buildType }} but the provenance says {{ .Outputs.buildType }}"
+                    }
+                }
+            ]
+        }
+
+        {
+            // Policy #3: the sources came from the repository we expect.
+            // resolvedDependencies is a list, so we look for one entry whose
+            // uri points at our repo (the uri carries a `@ref` suffix, hence
+            // startsWith rather than an equality test).
+            id: SLSA-SOURCE-REPO
+            meta: {
+                name: "Expected Source Repository"
+                description: "The artifact was built from the expected source repository"
+                controls: [ { framework: "SLSA", class: "BUILD", id: "LEVEL_2" } ]
+            }
+            predicates: {
+                types: [ "https://slsa.dev/provenance/v1" ]
+            }
+            tenets: [
+                {
+                    id: source-repo
+                    outputs: {
+                        sources: {
+                            code: "size(predicates) > 0 && has(predicates[0].data.buildDefinition.resolvedDependencies) ? predicates[0].data.buildDefinition.resolvedDependencies.map(d, d.uri) : []"
+                        }
+                    }
+                    code: "outputs.sources.exists(uri, uri.startsWith('git+' + context.sourceRepo))"
+                    assessment: { message: "Built from the expected repository: {{ .Context.sourceRepo }}" }
+                    error: {
+                        message: "The artifact was not built from the expected repository"
+                        guidance: "Expected {{ .Context.sourceRepo }} in the resolved dependencies, found {{ .Outputs.sources }}"
+                    }
+                }
+            ]
+        }
+    ]
+}
