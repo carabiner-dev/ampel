@@ -1,0 +1,42 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "hello-world",
+      "digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "predicateType": "https://slsa.dev/provenance/v1",
+  "predicate": {
+    "buildDefinition": {
+      "buildType": "https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1",
+      "externalParameters": {
+        "workflow": {
+          "ref": "refs/heads/main",
+          "repository": "https://github.com/example/hello-world",
+          "path": ".github/workflows/release.yaml"
+        }
+      },
+      "resolvedDependencies": [
+        {
+          "uri": "git+https://github.com/example/hello-world@refs/heads/main",
+          "digest": {
+            "gitCommit": "9f4d1c60a2b8e7d3f5a1c8e2b7d4f6a9c3e5b8d1"
+          }
+        }
+      ]
+    },
+    "runDetails": {
+      "builder": {
+        "id": "https://github.com/actions/runner/github-hosted"
+      },
+      "metadata": {
+        "invocationId": "https://github.com/example/hello-world/actions/runs/1234567890/attempts/1",
+        "startedOn": "2026-09-01T11:55:00Z",
+        "finishedOn": "2026-09-01T12:00:00Z"
+      }
+    }
+  }
+}

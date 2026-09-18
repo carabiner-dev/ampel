@@ -1,0 +1,93 @@
+{
+    // A policy is identified by its id. This is the string that shows up in
+    // the evaluation results and the one used to reference the policy from
+    // a PolicySet or a PolicyGroup.
+    id: SBOM-CHECKS
+
+    meta: {
+        // name is a short, single-line label for the policy.
+        name: "SBOM Basic Checks"
+
+        // description explains what the policy verifies. Unlike name it can
+        // be as long as you need.
+        description: "Checks the licenses and the dependencies listed in an SBOM"
+    }
+
+    // predicates tells AMPEL which attestations this policy cares about.
+    // Anything else attached to the subject is ignored. These two types are
+    // the SPDX and CycloneDX predicate types, so the policy works with an
+    // SBOM in either format: AMPEL parses both into the same protobom
+    // document, reachable from the CEL code through the `sboms` variable.
+    predicates: {
+        types: [
+            "https://spdx.dev/Document"
+            "https://cyclonedx.org/bom"
+        ]
+    }
+
+    // tenets are the checks that make up the policy. By default ALL of them
+    // must pass for the policy to pass (assert_mode: AND).
+    tenets: [
+        {
+            // Tenet #1: every package in the SBOM carries a license.
+            id: components-have-licenses
+
+            // outputs are CEL expressions evaluated before the tenet code.
+            // Their values are available to the code as `outputs.<name>` and
+            // can be interpolated into the messages below. Here we collect
+            // the concluded license of every package in the SBOM.
+            outputs: {
+                licenses: { code: "sboms[0].get_packages().get_nodes().map(n, n.license_concluded)" }
+            }
+
+            // The check itself: no package may have an empty license, and
+            // NOASSERTION (the SPDX way of saying "we did not look") does
+            // not count as an answer.
+            code: "size(outputs.licenses) > 0 && outputs.licenses.all(l, l != '' && l != 'NOASSERTION')"
+
+            // assessment is the message shown when the tenet PASSES.
+            assessment: { message: "Every package in the SBOM declares a license" }
+
+            // error is shown when it FAILS. guidance is optional and is where
+            // you tell the user how to fix the problem. Both messages support
+            // Go template interpolation of outputs and context values.
+            error: {
+                message: "One or more packages in the SBOM have no license"
+                guidance: "Make sure the SBOM generator records a license for every package. Found: {{ .Outputs.licenses }}"
+            }
+        }
+
+        {
+            // Tenet #2: the licenses that are there are ones we accept.
+            id: licenses-are-allowed
+            outputs: {
+                licenses: { code: "sboms[0].get_packages().get_nodes().map(n, n.license_concluded)" }
+            }
+            code: "outputs.licenses.all(l, l in ['Apache-2.0', 'MIT', 'BSD-3-Clause'])"
+            assessment: { message: "All package licenses are on the allowed list" }
+            error: {
+                message: "The SBOM lists a package under a license that is not allowed"
+                guidance: "Only Apache-2.0, MIT and BSD-3-Clause are allowed. Found: {{ .Outputs.licenses }}"
+            }
+        }
+
+        {
+            // Tenet #3: a specific dependency must be present, looked up by
+            // its package URL. get_nodes_by_identifier() searches the whole
+            // node list for an identifier of the given type and value, so an
+            // exact purl match here.
+            id: required-dependency
+            outputs: {
+                matches: {
+                    code: "size(sboms[0].get_node_list().get_nodes_by_identifier('purl', 'pkg:golang/github.com/protobom/protobom@0.5.2'))"
+                }
+            }
+            code: "outputs.matches > 0"
+            assessment: { message: "The required dependency protobom@0.5.2 is listed in the SBOM" }
+            error: {
+                message: "The SBOM does not list the required dependency"
+                guidance: "This artifact must be built against pkg:golang/github.com/protobom/protobom@0.5.2"
+            }
+        }
+    ]
+}

@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: Copyright 2026 Carabiner Systems, Inc
+# SPDX-License-Identifier: Apache-2.0
+
+# Tests for the SLSA PolicySet example. Paths are relative to this file.
+tests:
+  - name: slsa-build-passes-with-the-expected-provenance
+    policy: slsa-build.hjson
+    expect: PASS
+    subject: "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    attestations:
+      - provenance.intoto.json
+
+  # The examples README claims that overriding sourceRepo makes the set fail.
+  # This keeps that claim honest, and exercises the common context block.
+  - name: slsa-build-fails-when-the-source-repo-is-overridden
+    policy: slsa-build.hjson
+    expect: FAIL
+    subject: "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    attestations:
+      - provenance.intoto.json
+    context:
+      - name: sourceRepo
+        value: "https://github.com/example/other-project"

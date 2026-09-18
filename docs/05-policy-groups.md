@@ -82,6 +82,14 @@ that are evaluated together. Blocks have their own assertion logic:
 }
 ```
 
+## A Runnable Example
+
+[`examples/group/breakfast.hjson`](examples/group/breakfast.hjson) is a tiny,
+deliberately silly group built to make the block structure obvious: it requires
+something to drink AND something to eat, accepting coffee OR tea for the first
+and toast OR cereal for the second. It ships with the attestation it reads, so
+it runs with no setup. See the [examples README](examples/README.md).
+
 ## Block Assertion Modes
 
 Each block has an assertion mode that determines how its policies combine:

@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: Copyright 2026 Carabiner Systems, Inc
+# SPDX-License-Identifier: Apache-2.0
+
+# Tests for the custom predicate example policy. Paths are relative to this file.
+tests:
+  - name: code-review-passes-with-two-independent-reviewers
+    policy: code-review.hjson
+    expect: PASS
+    subject: "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    attestations:
+      - code-review.intoto.json
