@@ -128,8 +128,8 @@ github.com/carabiner-dev/osv v0.1.2 h1:W5nZOGuygnqzB7YbGon6ab3iFHxFZZgzS3m7GEvYn
 github.com/carabiner-dev/osv v0.1.2/go.mod h1:06cHx1aOdlb53feQxjBIRt3NSFfQKg1b1hrHHj/57QQ=
 github.com/carabiner-dev/policy v0.5.6-0.20260915041144-f77225397c6f h1:IeHQB3NFkaAgS4/N3FjRiXhkC//H+YKKym/+AMoeqrM=
 github.com/carabiner-dev/policy v0.5.6-0.20260915041144-f77225397c6f/go.mod h1:E0KFvUp/xVj6ZCoFHdrPJ1i/G2uUDlwpFn26J+z6M+8=
-github.com/carabiner-dev/predicates v0.5.1 h1:eKWvGLMYmB+taCf2ozNc4QikOZIj1vNYfXKb2e8XCuM=
-github.com/carabiner-dev/predicates v0.5.1/go.mod h1:kvGSWOl6OaUJ7b2FH0XDpTQ8ERcFXN6HzJx8ph90bWk=
+github.com/carabiner-dev/predicates v0.5.3 h1:kMtwsLEaecVOHEv8LUjBHm+ECsRqjAtVOnqtNfBjFoc=
+github.com/carabiner-dev/predicates v0.5.3/go.mod h1:AlLDfExvCswnVkR7g04ZSaP4xnQCGKzEEzEdf5izNt0=
 github.com/carabiner-dev/sbomfs v0.2.0 h1:7OG0Su6iz9sPWcAFzSsaauVZQpKayzrJvGWe0NoxbPw=
 github.com/carabiner-dev/sbomfs v0.2.0/go.mod h1:KaTNcHjm5qbu5G0RCc/7uo3U1KZj1IqRZLFiG+nwC8g=
 github.com/carabiner-dev/signer v0.6.2 h1:Tww40YP4RKjLSKdgT5nXVRiqd3Czjvkwd2WRDE7ecJ0=
