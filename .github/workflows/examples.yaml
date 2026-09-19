@@ -32,7 +32,7 @@ jobs:
           persist-credentials: false
 
       - name: Install policyctl
-        uses: carabiner-dev/actions/install/policyctl@32587e82f960d49b36101e8c45d1956e511965d3 # v1.2.9
+        uses: carabiner-dev/actions/install/policyctl@d41fe10fe88deaf493ce026007da73738b9f570c # v1.3.0
         with:
           # Pin the version explicitly: the action's own default at this ref
           # is v0.1.0, which predates the policy parser these examples need
