@@ -6,12 +6,12 @@ require (
 	cel.dev/cel-go v0.32.0
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/carabiner-dev/attestation v0.2.1
-	github.com/carabiner-dev/collector v0.3.16
+	github.com/carabiner-dev/collector v0.3.17
 	github.com/carabiner-dev/command v0.3.2
 	github.com/carabiner-dev/hasher v0.2.4
 	github.com/carabiner-dev/osv v0.1.2
-	github.com/carabiner-dev/policy v0.5.6-0.20260915041144-f77225397c6f
-	github.com/carabiner-dev/predicates v0.5.1
+	github.com/carabiner-dev/policy v0.5.6
+	github.com/carabiner-dev/predicates v0.5.4
 	github.com/carabiner-dev/termtable v1.1.0
 	github.com/fatih/color v1.19.0
 	github.com/in-toto/attestation v1.2.0
@@ -152,7 +152,7 @@ require (
 	github.com/carabiner-dev/deadrop v0.0.0-20260228173914-d95e9ea2877d // indirect
 	github.com/carabiner-dev/sbomfs v0.2.0 // indirect
 	github.com/carabiner-dev/spdx3 v0.1.0 // indirect
-	github.com/carabiner-dev/stash v0.0.0-20260908191435-d6225e020426 // indirect
+	github.com/carabiner-dev/stash v0.0.0-20260914181612-673fcf191e49 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chainguard-dev/clog v1.8.1 // indirect
