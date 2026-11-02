@@ -3,12 +3,12 @@ module github.com/policylabs/ampel
 go 1.26.5
 
 require (
-	cel.dev/cel-go v0.33.1
+	cel.dev/cel-go v0.33.2
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/carabiner-dev/command v0.3.4
 	github.com/carabiner-dev/hasher v0.2.4
 	github.com/carabiner-dev/osv v0.1.2
-	github.com/carabiner-dev/termtable v1.1.0
+	github.com/carabiner-dev/termtable v1.1.1
 	github.com/fatih/color v1.19.0
 	github.com/in-toto/attestation v1.2.0
 	github.com/jedib0t/go-pretty/v6 v6.8.3
