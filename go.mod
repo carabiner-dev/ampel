@@ -104,7 +104,7 @@ require (
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/term v0.47.0 // indirect
-	google.golang.org/grpc v1.84.0 // indirect
+	google.golang.org/grpc v1.85.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 
@@ -213,7 +213,7 @@ require (
 	github.com/policylabs/collector v0.4.0
 	github.com/policylabs/policy v0.6.0
 	github.com/policylabs/predicates v0.6.0
-	github.com/policylabs/signer v0.6.5
+	github.com/policylabs/signer v0.6.6
 	github.com/regclient/regclient v0.11.6 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
