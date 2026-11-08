@@ -209,7 +209,7 @@ require (
 	github.com/ossf/osv-schema/bindings/go v0.0.0-20260730052020-9509daabeece // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/policylabs/attestation v0.3.0
-	github.com/policylabs/collector v0.4.1-0.20261108193334-fcc99c550723
+	github.com/policylabs/collector v0.4.1-0.20261108202120-d195646b3f4e
 	github.com/policylabs/policy v0.6.0
 	github.com/policylabs/predicates v0.6.0
 	github.com/policylabs/signer v0.6.7

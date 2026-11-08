@@ -470,8 +470,8 @@ github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRI
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/policylabs/attestation v0.3.0 h1:tutwsvbq/T5F0Hwt8+M4u42Egk1qP8YbNx4GQ1hnTTA=
 github.com/policylabs/attestation v0.3.0/go.mod h1:z5gJ2M2aAkByYxMLqoOIY31KvAOIX+Ys4ZW2HavM3/o=
-github.com/policylabs/collector v0.4.1-0.20261108193334-fcc99c550723 h1:0W7Wf/GUq88l+bDmA9kCw0MPHyQQFyku2Wj61FX9duo=
-github.com/policylabs/collector v0.4.1-0.20261108193334-fcc99c550723/go.mod h1:J//jg0E5QnlyGoIVU/fYuwlYOx0D+Zxi9pRLHUwyPXY=
+github.com/policylabs/collector v0.4.1-0.20261108202120-d195646b3f4e h1:eTxsQym1H4V0TgLhyDHb8uJ5PX7F0rCDeulDEBW1vr0=
+github.com/policylabs/collector v0.4.1-0.20261108202120-d195646b3f4e/go.mod h1:J//jg0E5QnlyGoIVU/fYuwlYOx0D+Zxi9pRLHUwyPXY=
 github.com/policylabs/policy v0.6.0 h1:NUMtcAH3tC123HHZmXK8H2Xo6izaNovwF3XnHbskIKg=
 github.com/policylabs/policy v0.6.0/go.mod h1:a+8uNqhkyYL2EJsJlHFrUwAMt3iqb4jgjeWhIkQEeS0=
 github.com/policylabs/predicates v0.6.0 h1:PgM9/8X8p/i4+Mr+VkijTb2ukeykrHmmjBnk1GuSq+M=
