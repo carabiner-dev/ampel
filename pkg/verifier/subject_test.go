@@ -15,6 +15,7 @@ import (
 
 	"github.com/policylabs/ampel/pkg/evaluator"
 	"github.com/policylabs/ampel/pkg/evaluator/class"
+	"github.com/policylabs/ampel/pkg/evaluator/evalcontext"
 	"github.com/policylabs/ampel/pkg/evaluator/options"
 )
 
@@ -26,26 +27,26 @@ type chainRewritingImpl struct {
 	effective *gointoto.ResourceDescriptor
 }
 
-func (c *chainRewritingImpl) chain(original attestation.Subject) []*papi.ChainedSubject {
-	return []*papi.ChainedSubject{{
+func (c *chainRewritingImpl) chain(original attestation.Subject) []evalcontext.ChainHop {
+	return []evalcontext.ChainHop{{Record: &papi.ChainedSubject{
 		Source: &gointoto.ResourceDescriptor{
 			Name: original.GetName(), Uri: original.GetUri(), Digest: original.GetDigest(),
 		},
 		Destination: c.effective,
-	}}
+	}}}
 }
 
 func (c *chainRewritingImpl) ProcessChainedSubjects(
 	_ context.Context, _ *VerificationOptions, _ map[class.Class]evaluator.Evaluator, _ *collector.Agent,
 	_ papi.ChainProvider, _ map[string]any, subject attestation.Subject, _ []attestation.Envelope,
-) (attestation.Subject, []*papi.ChainedSubject, bool, error) {
+) (attestation.Subject, []evalcontext.ChainHop, bool, error) {
 	return c.effective, c.chain(subject), false, nil
 }
 
 func (c *chainRewritingImpl) ProcessPolicySetChainedSubjects(
 	_ context.Context, _ *VerificationOptions, _ map[class.Class]evaluator.Evaluator, _ *collector.Agent,
 	_ *papi.PolicySet, _ map[string]any, subject attestation.Subject, _ []attestation.Envelope,
-) ([]attestation.Subject, []*papi.ChainedSubject, bool, error) {
+) ([]attestation.Subject, []evalcontext.ChainHop, bool, error) {
 	return []attestation.Subject{c.effective}, c.chain(subject), false, nil
 }
 

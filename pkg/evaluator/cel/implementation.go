@@ -75,6 +75,7 @@ func (dce *defaulCelEvaluator) CreateEnvironment(_ *options.EvaluatorOptions, pl
 		cel.Variable(VarNameContext, cel.AnyType),
 		cel.Variable(VarNameOutputs, cel.AnyType),
 		cel.Variable(VarNameSubject, cel.AnyType),
+		cel.Variable(VarNameChain, cel.ListType(cel.AnyType)),
 		cel.OptionalTypes(),
 		ext.Bindings(),
 		ext.Strings(),
@@ -131,13 +132,56 @@ func (dce *defaulCelEvaluator) BuildVariables(
 		return nil, fmt.Errorf("loading subject data to runtime: %w", err)
 	}
 	ret[VarNameSubject] = subdata
-
+	chain, err := chainVariable(evalContext.Chain)
+	if err != nil {
+		return nil, err
+	}
+	ret[VarNameChain] = chain
 	logrus.Debugf("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
 	for _, p := range plugins {
 		maps.Copy(ret, p.VarValues(evalContext.Policy, evalContext.Subject, fpreds))
 	}
 	stampRunStart(ret, opts)
 	return &ret, nil
+}
+
+// chainVariable renders the chain the evaluation followed, outermost hop
+// first, for the `chain` variable: each hop carries the subject it was read
+// about (`source`), the subject it selected (`destination`), the predicate
+// type of the attestation it read (`type`) and that attestation's predicate
+// (`predicate`, with `data` and `verification` as any predicate has). A
+// tenet at the end of a chain can thus compare what it finds there with
+// what the chain was read from.
+func chainVariable(hops []evalcontext.ChainHop) ([]any, error) {
+	ret := make([]any, 0, len(hops))
+	for _, hop := range hops {
+		entry := map[string]any{"type": hop.Record.GetLink().GetType()}
+		for key, subject := range map[string]attestation.Subject{
+			"source": hop.Record.GetSource(), "destination": hop.Record.GetDestination(),
+		} {
+			sd, err := extractSubjectData(subject)
+			if err != nil {
+				return nil, fmt.Errorf("loading chain %s data to runtime: %w", key, err)
+			}
+			entry[key] = sd
+		}
+		if hop.Predicate != nil {
+			d := map[string]any{}
+			if err := json.Unmarshal(hop.Predicate.GetData(), &d); err != nil {
+				return nil, fmt.Errorf("unmarshalling chained predicate data: %w", err)
+			}
+			val, err := structpb.NewValue(map[string]any{
+				keyPredicateType: string(hop.Predicate.GetType()),
+				keyData:          d,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("serializing chained predicate: %w", err)
+			}
+			entry["predicate"] = NewPredicateVal(val, hop.Predicate)
+		}
+		ret = append(ret, entry)
+	}
+	return ret, nil
 }
 
 // stampRunStart gives the ampel object the run's start, when the options
@@ -412,11 +456,20 @@ func decodeValue(val ref.Val) (attestation.Subject, error) {
 		if !ok {
 			return nil, fmt.Errorf("string returned not formatted as algorithm:value")
 		}
-		if _, ok := intoto.HashAlgorithms[strings.ToLower(algo)]; !ok {
+		// Algorithm names match regardless of case and are stored in their
+		// canonical casing (sha256, gitCommit, ...), as a struct result's are.
+		canonical := ""
+		for name := range intoto.HashAlgorithms {
+			if strings.EqualFold(name, algo) {
+				canonical = name
+				break
+			}
+		}
+		if canonical == "" {
 			return nil, fmt.Errorf("invalid hash algorithm returned from selector (%q)", v)
 		}
 		return &intoto.ResourceDescriptor{
-			Digest: map[string]string{strings.ToLower(algo): val},
+			Digest: map[string]string{canonical: strings.ToLower(val)},
 		}, nil
 	case map[ref.Val]ref.Val, *structpb.Struct:
 		res, err := val.ConvertToNative(reflect.TypeOf(&intoto.ResourceDescriptor{}))
@@ -598,7 +651,11 @@ func (dce *defaulCelEvaluator) BuildSelectorVariables(
 		return nil, fmt.Errorf("structuring context data: %w", err)
 	}
 	ret[VarNameContext] = s
-
+	chain, err := chainVariable(evalContext.Chain)
+	if err != nil {
+		return nil, err
+	}
+	ret[VarNameChain] = chain
 	logrus.Debugf("%d CEL plugins loaded into the eval engine. Querying for variables", len(plugins))
 	for _, p := range plugins {
 		maps.Copy(ret, p.VarValues(policy, subject, []attestation.Predicate{predicate}))
@@ -646,7 +703,11 @@ func (dce *defaulCelEvaluator) BuildExpressionVariables(
 		return nil, fmt.Errorf("structuring context data: %w", err)
 	}
 	ret[VarNameContext] = s
-
+	chain, err := chainVariable(evalContext.Chain)
+	if err != nil {
+		return nil, err
+	}
+	ret[VarNameChain] = chain
 	for _, p := range plugins {
 		maps.Copy(ret, p.VarValues(evalContext.Policy, evalContext.Subject, fpreds))
 	}

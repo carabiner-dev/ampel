@@ -10,6 +10,7 @@ import (
 	"cel.dev/cel-go/cel"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/policylabs/collector/predicate"
+	papi "github.com/policylabs/policy/api/v1"
 	"github.com/stretchr/testify/require"
 
 	"github.com/policylabs/ampel/pkg/evaluator/evalcontext"
@@ -31,6 +32,12 @@ func TestEvaluateChainedSelector(t *testing.T) {
 			Digest: map[string]string{"sha1": "3714a2a4684014deb874a0e737dffa0ee02dd647", "gitCommit": "3714a2a4684014deb874a0e737dffa0ee02dd647"},
 		}, false},
 		{"string", "\"sha1:\"+predicate.data.materials[0].digest[\"sha1\"]", "testdata/slsa-v0.2.json", 1, &intoto.ResourceDescriptor{
+			Digest: map[string]string{"sha1": "3714a2a4684014deb874a0e737dffa0ee02dd647"},
+		}, false},
+		{"camel-case-algorithm", "\"gitCommit:\"+predicate.data.materials[0].digest[\"sha1\"]", "testdata/slsa-v0.2.json", 1, &intoto.ResourceDescriptor{
+			Digest: map[string]string{"gitCommit": "3714a2a4684014deb874a0e737dffa0ee02dd647"},
+		}, false},
+		{"upper-case-hex", "\"SHA1:3714A2A4684014DEB874A0E737DFFA0EE02DD647\"", "testdata/slsa-v0.2.json", 1, &intoto.ResourceDescriptor{
 			Digest: map[string]string{"sha1": "3714a2a4684014deb874a0e737dffa0ee02dd647"},
 		}, false},
 		{"bad-string", "\"bad string\"", "testdata/slsa-v0.2.json", 1, nil, true},
@@ -230,4 +237,67 @@ func TestLazyExprMap(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestChainVariable proves a tenet, a selector and an expression all see the
+// chain the evaluation followed: each hop's source, destination, predicate
+// type and the predicate the hop was read from, verification included.
+func TestChainVariable(t *testing.T) {
+	t.Parallel()
+	ev := &defaulCelEvaluator{}
+	env, err := ev.CreateEnvironment(nil, nil)
+	require.NoError(t, err)
+	data, err := os.ReadFile("testdata/slsa-v0.2.json")
+	require.NoError(t, err)
+	pred, err := predicate.Parsers.Parse(data)
+	require.NoError(t, err)
+	ectx := &evalcontext.EvaluationContext{
+		Chain: []evalcontext.ChainHop{{
+			Record: &papi.ChainedSubject{
+				Source:      &intoto.ResourceDescriptor{Name: "tag", Digest: map[string]string{"sha1": "aaaa"}},
+				Destination: &intoto.ResourceDescriptor{Digest: map[string]string{"sha1": "3714a2a4684014deb874a0e737dffa0ee02dd647"}},
+				Link:        &papi.ChainedSubjectLink{Type: string(pred.GetType())},
+			},
+			Predicate: pred,
+		}},
+	}
+	tenetVars, err := ev.BuildVariables(&options.EvaluatorOptions{}, nil, &papi.Tenet{}, ectx, nil)
+	require.NoError(t, err)
+	selectorVars, err := ev.BuildSelectorVariables(&options.EvaluatorOptions{}, nil, ectx, nil, nil, nil, pred)
+	require.NoError(t, err)
+	exprVars, err := ev.BuildExpressionVariables(&options.EvaluatorOptions{}, nil, ectx)
+	require.NoError(t, err)
+	for _, tc := range []struct {
+		name     string
+		code     string
+		expected any
+	}{
+		{"one hop", `size(chain)`, int64(1)},
+		{"type", `chain[0].type`, string(pred.GetType())},
+		{"source", `chain[0].source.name`, "tag"},
+		{"destination", `chain[0].destination.digest.sha1`, "3714a2a4684014deb874a0e737dffa0ee02dd647"},
+		{"predicate data", `chain[0].predicate.data.materials[0].digest.sha1`, "3714a2a4684014deb874a0e737dffa0ee02dd647"},
+		{"predicate type", `chain[0].predicate.predicate_type`, string(pred.GetType())},
+		{"predicate verification", `chain[0].predicate.verification.verified`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			ast, err := ev.CompileCode(env, tc.code)
+			require.NoError(t, err)
+			for name, vars := range map[string]*map[string]any{"tenet": tenetVars, "selector": selectorVars, "expression": exprVars} {
+				got, err := ev.EvaluateExpression(env, ast, vars)
+				require.NoError(t, err, name)
+				require.Equal(t, tc.expected, got, name)
+			}
+		})
+	}
+
+	// Without a chain the variable is an empty list, never absent.
+	vars, err := ev.BuildVariables(&options.EvaluatorOptions{}, nil, &papi.Tenet{}, &evalcontext.EvaluationContext{}, nil)
+	require.NoError(t, err)
+	ast, err := ev.CompileCode(env, `size(chain)`)
+	require.NoError(t, err)
+	got, err := ev.EvaluateExpression(env, ast, vars)
+	require.NoError(t, err)
+	require.Equal(t, int64(0), got)
 }

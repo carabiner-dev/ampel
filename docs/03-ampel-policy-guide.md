@@ -491,6 +491,7 @@ decided before any of the block's policies run.
 | `subject` | yes | The subject the tenets evaluate: `name`, `uri`, `digest`. For a policy with a chain this is the subject the chain resolved to, not the one the verification was asked about. |
 | runtime plugins | yes | `semver`, `hasher`, `url`, `purl`, `github`, ... and `ampel`, the engine's own data: `ampel.atLeast('v1.4.0')` makes a policy apply only to engines new enough for it. |
 | `predicates`, `predicate` | yes | The evidence the policy collected: the attestations about the subject that the signer identities admitted, narrowed to the policy's `predicates.types` when it declares any. `predicate` is the first of them. An empty list means no evidence was found. |
+| `chain` | yes | The chain followed to reach the subject, one entry per hop (see below). Empty when the policy has no chain. |
 | `outputs` | **no** | Outputs belong to tenets. |
 
 Because the condition comes last, a policy that does not apply is skipped
@@ -517,6 +518,42 @@ inside an OR block of a PolicyGroup needs:
 
 Dynamic context values are resolved before any evidence is read, so their
 expressions cannot see `predicates`.
+
+### Reading the chain
+
+A policy with a `chain` evaluates its tenets on the subject the chain
+resolved to, and the evidence it collects is about that subject. The hops it
+crossed are not lost: tenets, conditions and selectors see them in the
+`chain` variable, a list with one entry per hop, outermost first (a policy
+set's hops, then the policy's own). Each entry carries:
+
+| Field | Content |
+| --- | --- |
+| `source` | The subject the hop was read about: `name`, `uri`, `digest`. |
+| `destination` | The subject the hop's selector chose, same shape. |
+| `type` | The predicate type of the attestation the hop read. |
+| `predicate` | That attestation's predicate, as `predicate` exposes one: `predicate_type`, `data`, `verification`. |
+
+This is what lets a tenet compare what it finds at the end of a chain with
+what the chain was read from. A release tag whose trailers name the tree
+the tagged commit must carry, for instance, is verified by chaining from the
+tag to the commit and checking the commit against the tag:
+
+```json
+{
+    "id": "tagged-commit-carries-named-tree",
+    "chain": [
+        { "predicate": { "type": "https://carabiner.dev/git/tag/v0", "selector": "\"sha1:\" + predicate.data.object" } }
+    ],
+    "predicates": { "types": ["https://carabiner.dev/git/commit/v0"] },
+    "tenets": [
+        { "id": "tree-matches", "code": "predicate.data.tree == chain[0].predicate.data.trailers[\"Tree\"][0]" }
+    ]
+}
+```
+
+The second hop of a longer chain can likewise read the first through
+`chain[0]` from its selector.
 
 ### Conditions on referenced policies
 
