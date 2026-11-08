@@ -62,11 +62,11 @@ type AmpelVerifier interface {
 
 	// ProcessChainedSubjects proceses the chain of attestations to find the ultimate
 	// subject a policy is supposed to operate on
-	ProcessChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, papi.ChainProvider, map[string]any, attestation.Subject, []attestation.Envelope) (attestation.Subject, []*papi.ChainedSubject, bool, error)
+	ProcessChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, papi.ChainProvider, map[string]any, attestation.Subject, []attestation.Envelope) (attestation.Subject, []evalcontext.ChainHop, bool, error)
 
 	// ProcessPolicySetChainedSubjects executesd a PolicySet's ChainLink and returns
 	// the resulting list of subjects from the evaluator.
-	ProcessPolicySetChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *papi.PolicySet, map[string]any, attestation.Subject, []attestation.Envelope) ([]attestation.Subject, []*papi.ChainedSubject, bool, error)
+	ProcessPolicySetChainedSubjects(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, *collector.Agent, *papi.PolicySet, map[string]any, attestation.Subject, []attestation.Envelope) ([]attestation.Subject, []evalcontext.ChainHop, bool, error)
 
 	// AssembleEvalContextValues builds the policy context values by mixing defaults and defined values
 	AssembleEvalContextValues(context.Context, *VerificationOptions, map[class.Class]evaluator.Evaluator, map[string]*papi.ContextVal) (map[string]any, error)
@@ -781,8 +781,8 @@ func (di *defaultIplementation) evaluateChain(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
 	agent *collector.Agent, chainLinks []*papi.ChainLink, evalContextValues map[string]any, subject attestation.Subject,
 	attestations []attestation.Envelope, globalIdentities []*sapi.Identity, defaultEvalClass string,
-) ([]attestation.Subject, []*papi.ChainedSubject, bool, error) {
-	chain := []*papi.ChainedSubject{}
+) ([]attestation.Subject, []evalcontext.ChainHop, bool, error) {
+	chain := []evalcontext.ChainHop{}
 	logrus.Debug("Processing evidence chain")
 	var subjectsList []attestation.Subject
 
@@ -925,14 +925,17 @@ func (di *defaultIplementation) evaluateChain(
 		if len(ids) > 0 {
 			goodIds = ids[0].identities
 		}
-		chain = append(chain, &papi.ChainedSubject{
-			Source:      newResourceDescriptorFromSubject(subject),
-			Destination: newResourceDescriptorFromSubject(subjectsList[0]),
-			Link: &papi.ChainedSubjectLink{
-				Type:        string(lattestation[0].GetStatement().GetPredicateType()),
-				Attestation: newResourceDescriptorFromSubject(lattestation[0].GetPredicate().GetOrigin()),
-				Identities:  goodIds,
+		chain = append(chain, evalcontext.ChainHop{
+			Record: &papi.ChainedSubject{
+				Source:      newResourceDescriptorFromSubject(subject),
+				Destination: newResourceDescriptorFromSubject(subjectsList[0]),
+				Link: &papi.ChainedSubjectLink{
+					Type:        string(lattestation[0].GetStatement().GetPredicateType()),
+					Attestation: newResourceDescriptorFromSubject(lattestation[0].GetPredicate().GetOrigin()),
+					Identities:  goodIds,
+				},
 			},
+			Predicate: lattestation[0].GetStatement().GetPredicate(),
 		})
 		subject = subjectsList[0]
 	}
@@ -944,10 +947,10 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
 	agent *collector.Agent, material papi.ChainProvider, evalContextValues map[string]any, subject attestation.Subject,
 	attestations []attestation.Envelope,
-) (attestation.Subject, []*papi.ChainedSubject, bool, error) {
+) (attestation.Subject, []evalcontext.ChainHop, bool, error) {
 	// If there are no chained subjects, return the original
 	if material.GetChain() == nil {
-		return subject, []*papi.ChainedSubject{}, false, nil
+		return subject, []evalcontext.ChainHop{}, false, nil
 	}
 
 	defaultEvalClass := ""
@@ -960,10 +963,14 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 			defaultEvalClass = p.GetMeta().GetRuntime()
 		}
 
-		// Here, we only pass the policy, the context will be completed on each eval
-		ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalcontext.EvaluationContext{
-			Policy: p,
-		})
+		// Here, we only add the policy, the context will be completed on
+		// each eval; what the policy set put in it (its chain) stays.
+		chainContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+		if !ok {
+			chainContext = evalcontext.EvaluationContext{}
+		}
+		chainContext.Policy = p
+		ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, chainContext)
 
 		ids = p.GetIdentities()
 	case *papi.PolicyGroup:
@@ -1000,12 +1007,9 @@ func (di *defaultIplementation) ProcessChainedSubjects(
 	// policy computed at the policy level.
 	// Add the (eval) context, to the (go) context :P
 	evalContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
-	if ok {
-		if evalContext.ChainedSubjects != nil {
-			chain = slices.Concat(evalContext.ChainedSubjects, chain)
-		}
+	if ok && evalContext.Chain != nil {
+		chain = slices.Concat(evalContext.Chain, chain)
 	}
-
 	return subjects[0], chain, fail, nil
 }
 
@@ -1269,15 +1273,16 @@ func (di *defaultIplementation) VerifySubject(
 		policyPredMap[attestation.PredicateType(tp)] = struct{}{}
 	}
 
-	// Populate the context data
-	ctx = context.WithValue(
-		ctx, evalcontext.EvaluationContextKey{},
-		evalcontext.EvaluationContext{
-			Subject:       subject,
-			Policy:        p,
-			ContextValues: evalContextValues,
-		},
-	)
+	// Populate the context data. The tenets' context starts from the
+	// verifier's, so the chain it followed to reach the subject travels on.
+	tenetContext, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext)
+	if !ok {
+		tenetContext = evalcontext.EvaluationContext{}
+	}
+	tenetContext.Subject = subject
+	tenetContext.Policy = p
+	tenetContext.ContextValues = evalContextValues
+	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, tenetContext)
 
 	for i, tenet := range p.Tenets {
 		key := classForRuntime(tenet.Runtime)
@@ -1407,8 +1412,8 @@ func (di *defaultIplementation) ProcessPolicySetChainedSubjects(
 	ctx context.Context, opts *VerificationOptions, evaluators map[class.Class]evaluator.Evaluator,
 	agent *collector.Agent, policySet *papi.PolicySet, evalContextValues map[string]any, subject attestation.Subject,
 	attestations []attestation.Envelope,
-) ([]attestation.Subject, []*papi.ChainedSubject, bool, error) {
-	chain := []*papi.ChainedSubject{}
+) ([]attestation.Subject, []evalcontext.ChainHop, bool, error) {
+	chain := []evalcontext.ChainHop{}
 
 	// If there are no chained subjects, then the list of subject contains only
 	// the original subject. If there is a chain defined, then the subject will

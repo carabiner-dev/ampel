@@ -389,7 +389,7 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 	}
 
 	// Process policySet chain
-	subjects, chain, policyFail, err := ampel.impl.ProcessPolicySetChainedSubjects(
+	subjects, hops, policyFail, err := ampel.impl.ProcessPolicySetChainedSubjects(
 		ctx, &opts, evaluators, ampel.Collector, policySet, evalContextValues, subject, atts,
 	)
 	if err != nil {
@@ -401,7 +401,8 @@ func (ampel *Ampel) VerifySubjectWithPolicySet(
 		return nil, fmt.Errorf("processing chained subject: %w", err)
 	}
 
-	evalContext.ChainedSubjects = chain
+	evalContext.Chain = hops
+	evalContext.ChainedSubjects = evalcontext.Record(hops)
 
 	// Rebuild the go context as we are now shipping the chained subjects.
 	ctx = context.WithValue(ctx, evalcontext.EvaluationContextKey{}, evalContext)
@@ -557,9 +558,10 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 	// Process chained subjects. These have access to all the read attestations
 	// even when some will be discarded in the next step. Computing the chain
 	// will use the configured repositories if more attestations are required.
-	chainedSubject, chain, policyFail, err := ampel.impl.ProcessChainedSubjects(
+	chainedSubject, hops, policyFail, err := ampel.impl.ProcessChainedSubjects(
 		ctx, opts, evaluators, ampel.Collector, policy, evalContext, subject, atts,
 	)
+	chain := evalcontext.Record(hops)
 	switch {
 	case err != nil && policyFail:
 		// A chain that cannot be completed fails the policy, if it applies.
@@ -568,6 +570,9 @@ func (ampel *Ampel) VerifySubjectWithPolicy(
 		return nil, fmt.Errorf("processing chained subject: %w", err)
 	default:
 		subject = chainedSubject
+		// The condition and the tenets see the chain the policy followed.
+		ec.Chain = hops
+		ec.ChainedSubjects = chain
 	}
 
 	var preds []attestation.Predicate
@@ -752,11 +757,10 @@ func (ampel *Ampel) VerifySubjectWithPolicyGroup(
 	// Process chained subjects. These have access to all the read attestations
 	// even when some will be discarded in the next step. Computing the chain
 	// will use the configured repositories if more attestations are required.
-	var chain []*papi.ChainedSubject
-
-	subject, chain, policyFail, err := ampel.impl.ProcessChainedSubjects(
+	subject, hops, policyFail, err := ampel.impl.ProcessChainedSubjects(
 		ctx, &opts, evaluators, ampel.Collector, group, evalContextValues, subject, atts,
 	)
+	chain := evalcontext.Record(hops)
 	if err != nil {
 		// If policyFail is true, then we don't return an error but rather
 		// a policy fail result based on the error
@@ -767,6 +771,7 @@ func (ampel *Ampel) VerifySubjectWithPolicyGroup(
 	}
 
 	res.Chain = chain
+	evalContext.Chain = hops
 	evalContext.ChainedSubjects = chain
 
 	// Rebuild the go context as we are now shipping the chained subjects.
@@ -1231,6 +1236,7 @@ func (ampel *Ampel) loadElementEvalContextDef(ctx context.Context, element papi.
 		evalContext.Subject = parent.Subject
 		evalContext.Policy = parent.Policy
 		evalContext.ChainedSubjects = parent.ChainedSubjects
+		evalContext.Chain = parent.Chain
 	}
 
 	// If the policy material has an eval context definition, then parse it and add

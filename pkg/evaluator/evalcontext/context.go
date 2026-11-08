@@ -35,6 +35,12 @@ type (
 		// policy evaluator how the subject was obtained, typically
 		// by the policy set.
 		ChainedSubjects []*papi.ChainedSubject
+		// Chain is the chain the evaluation followed to reach Subject,
+		// one hop per link, outermost first: the policy set's hops, then
+		// the policy's own. Each hop keeps the predicate its selector
+		// read, so a tenet can compare what it finds at the end of the
+		// chain with what the chain was read from.
+		Chain []ChainHop
 
 		// Recognized identities for attestation validation.
 		Identities []*sapi.Identity
@@ -46,4 +52,20 @@ type (
 		// empty slice means the evidence was collected and none survived.
 		Predicates []attestation.Predicate
 	}
+
+	// ChainHop is one link of a followed chain: the record of the hop, as
+	// the results carry it, and the predicate the hop's selector read.
+	ChainHop struct {
+		Record    *papi.ChainedSubject
+		Predicate attestation.Predicate
+	}
 )
+
+// Record returns the hops' records, the chain as the results carry it.
+func Record(hops []ChainHop) []*papi.ChainedSubject {
+	ret := make([]*papi.ChainedSubject, 0, len(hops))
+	for _, hop := range hops {
+		ret = append(ret, hop.Record)
+	}
+	return ret
+}

@@ -18,6 +18,7 @@ import (
 
 	"github.com/policylabs/ampel/pkg/evaluator"
 	"github.com/policylabs/ampel/pkg/evaluator/class"
+	"github.com/policylabs/ampel/pkg/evaluator/evalcontext"
 	eoptions "github.com/policylabs/ampel/pkg/evaluator/options"
 )
 
@@ -1106,4 +1107,53 @@ func TestProcessChainedSubjectsEmptyChainFails(t *testing.T) {
 	require.ErrorContains(t, gotErr, "no subject returned")
 	require.True(t, fail, "an empty chain is a policy failure")
 	require.IsType(t, PolicyError{}, gotErr) //nolint:testifylint // Checking for type, not value
+}
+
+// TestEvaluateChainKeepsHopPredicates proves every hop a chain follows keeps
+// the predicate its selector read, beside the record the results carry, so
+// a tenet at the end of the chain can read what the chain was read from.
+func TestEvaluateChainKeepsHopPredicates(t *testing.T) {
+	t.Parallel()
+	di := &defaultIplementation{}
+	factory := evaluator.Factory{}
+	def, err := factory.Get(&eoptions.Default, DefaultVerificationOptions.DefaultEvaluator)
+	require.NoError(t, err)
+	evaluators := map[class.Class]evaluator.Evaluator{
+		defaultEvaluatorClass: def,
+		DefaultVerificationOptions.DefaultEvaluator.BaseClass(): def,
+	}
+	subject := &gointoto.ResourceDescriptor{
+		Name:   "test",
+		Digest: map[string]string{"sha256": "851074691728c479a4c83628de8310eaca792cc7"},
+	}
+	opts := DefaultVerificationOptions
+	opts.AttestationFiles = []string{"testdata/wtf-frontend.spdx.json", "testdata/link1.json"}
+	attestations, err := di.ParseAttestations(t.Context(), &opts, subject)
+	require.NoError(t, err)
+	links := []*papi.ChainLink{
+		{Source: &papi.ChainLink_Predicate{Predicate: &papi.ChainedPredicate{
+			Type:     "https://spdx.dev/Document",
+			Selector: "'sha1:856314ba21181a746186c24f1647d06e45048964'",
+		}}},
+		{Source: &papi.ChainLink_Predicate{Predicate: &papi.ChainedPredicate{
+			Type:     "https://example.com/",
+			Selector: "'sha1:93836eee21527f010b77faa3379ccba2f3dbc1b3'",
+		}}},
+	}
+	subjects, hops, failed, err := di.evaluateChain(
+		t.Context(), &opts, evaluators, nil, links, nil, subject, attestations, []*sapi.Identity{}, "",
+	)
+	require.NoError(t, err)
+	require.False(t, failed)
+	require.Len(t, subjects, 1)
+	require.Len(t, hops, 2)
+	for i, hop := range hops {
+		require.NotNil(t, hop.Record, "hop %d record", i)
+		require.NotNil(t, hop.Predicate, "hop %d predicate", i)
+		require.Equal(t, links[i].GetPredicate().GetType(), hop.Record.GetLink().GetType())
+		require.Equal(t, links[i].GetPredicate().GetType(), string(hop.Predicate.GetType()))
+	}
+	require.Equal(t, "856314ba21181a746186c24f1647d06e45048964", hops[0].Record.GetDestination().GetDigest()["sha1"])
+	require.Equal(t, hops[0].Record.GetDestination().GetDigest(), hops[1].Record.GetSource().GetDigest())
+	require.Equal(t, []*papi.ChainedSubject{hops[0].Record, hops[1].Record}, evalcontext.Record(hops))
 }
