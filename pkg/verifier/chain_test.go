@@ -72,3 +72,42 @@ func TestChainReachesTenets(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, papi.StatusSKIP, res.GetStatus())
 }
+
+// TestSelectorSeesEarlierHops proves a chain's later selectors see the hops
+// followed before them, so a second hop can branch on what the first read.
+func TestSelectorSeesEarlierHops(t *testing.T) {
+	t.Parallel()
+	opts := whenTestOptions()
+	opts.AttestationFiles = []string{"testdata/wtf-frontend.spdx.json", "testdata/link1.json", "testdata/link2.json"}
+	opts.AdmitUnverified = true
+	subject := &gointoto.ResourceDescriptor{
+		Name:   "test",
+		Digest: map[string]string{"sha256": "851074691728c479a4c83628de8310eaca792cc7"},
+	}
+	policy := &papi.Policy{
+		Id:   "second-hop-reads-first",
+		Meta: &papi.Meta{},
+		Chain: []*papi.ChainLink{
+			{Source: &papi.ChainLink_Predicate{Predicate: &papi.ChainedPredicate{
+				Type:     "https://spdx.dev/Document",
+				Selector: "'sha1:856314ba21181a746186c24f1647d06e45048964'",
+			}}},
+			{Source: &papi.ChainLink_Predicate{Predicate: &papi.ChainedPredicate{
+				Type: "https://example.com/",
+				// Branches on the first hop: the SPDX document it was read from.
+				Selector: `chain[0].predicate.data.spdxVersion == "SPDX-2.3" ? "sha1:93836eee21527f010b77faa3379ccba2f3dbc1b3" : "sha1:0000000000000000000000000000000000000000"`,
+			}}},
+		},
+		Predicates: &papi.PredicateSpec{Types: []string{"https://example.com/"}},
+		Tenets: []*papi.Tenet{{
+			Id:   "t1",
+			Code: `size(chain) == 2 && chain[1].source.digest.sha1 == "856314ba21181a746186c24f1647d06e45048964" && subject.digest.sha1 == "93836eee21527f010b77faa3379ccba2f3dbc1b3"`,
+		}},
+	}
+	ampel, err := New()
+	require.NoError(t, err)
+	res, err := ampel.VerifySubjectWithPolicy(context.Background(), opts, policy, subject)
+	require.NoError(t, err)
+	require.Equal(t, papi.StatusPASS, res.GetStatus(), res.GetEvalResults())
+	require.Len(t, res.GetChain(), 2)
+}
