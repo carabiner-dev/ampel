@@ -783,6 +783,10 @@ func (di *defaultIplementation) evaluateChain(
 	attestations []attestation.Envelope, globalIdentities []*sapi.Identity, defaultEvalClass string,
 ) ([]attestation.Subject, []evalcontext.ChainHop, bool, error) {
 	chain := []evalcontext.ChainHop{}
+	var priorChain []evalcontext.ChainHop
+	if ectx, ok := ctx.Value(evalcontext.EvaluationContextKey{}).(evalcontext.EvaluationContext); ok {
+		priorChain = ectx.Chain
+	}
 	logrus.Debug("Processing evidence chain")
 	var subjectsList []attestation.Subject
 
@@ -890,6 +894,9 @@ func (di *defaultIplementation) evaluateChain(
 		}
 		ectx.Subject = subject
 		ectx.ContextValues = evalContextValues
+		// The selector sees the hops followed so far: the ones the caller's
+		// context already carries (a policy set's) and this chain's.
+		ectx.Chain = slices.Concat(priorChain, chain)
 		ctx := context.WithValue(ctx, evalcontext.EvaluationContextKey{}, ectx)
 
 		// Execute the selector
